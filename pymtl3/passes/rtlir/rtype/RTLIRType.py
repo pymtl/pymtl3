@@ -13,6 +13,7 @@ RTLIR data type module.
 """
 import copy
 import inspect
+import math
 
 import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits, is_bitstruct_inst
@@ -78,6 +79,14 @@ class Array( BaseRTLIRType ):
   def get_dim_sizes( s ):
     return s.dim_sizes
 
+  def get_index_width( s ):
+    assert s.dim_sizes, 'rt.Array is created without dimension!'
+    n_elements = s.dim_sizes[0]
+    if n_elements <= 1:
+      return 1
+    else:
+      return math.ceil(math.log2(n_elements))
+
   def get_sub_type( s ):
     return s.sub_type
 
@@ -110,6 +119,9 @@ class Signal( BaseRTLIRType ):
 
   def get_dtype( s ):
     return s.dtype
+
+  def get_index_width( s ):
+    return s.dtype.get_index_width()
 
   def _is_unpacked( s ):
     return s.unpacked

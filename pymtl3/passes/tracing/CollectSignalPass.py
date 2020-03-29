@@ -8,11 +8,10 @@ Author : Kaishuo Cheng, Shunning Jiang
 Date   : Nov 9, 2019
 """
 
-from collections import defaultdict
 
 import py
 
-from pymtl3.datatypes import Bits, is_bitstruct_class, to_bits
+from pymtl3.datatypes import Bits, is_bitstruct_class
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import ModelTypeError, PassOrderError
@@ -34,16 +33,17 @@ class CollectSignalPass( BasePass ):
 
     # Give all ' and " characters a preceding backslash for .format
     wav_srcs = []
+    wavmeta.text_sigs = {}
 
     # Now we create per-cycle signal value collect functions
+    signal_names = []
     for x in top._dsl.all_signals:
-      if x.is_top_level_signal() and ( not repr(x).endswith('.clk') or x is top.clk ):
-        if is_bitstruct_class( x._dsl.Type ):
-          wav_srcs.append( "wavmeta.text_sigs['{0}'].append( to_bits({0}).bin() )".format(x) )
-        elif issubclass( x._dsl.Type, Bits ):
-          wav_srcs.append( "wavmeta.text_sigs['{0}'].append( {0}.bin() )".format(x) )
+      if x.is_top_level_signal() and x.get_field_name() != "clk" and x.get_field_name() != "reset":
+        signal_names.append( (x._dsl.level, repr(x)) )
 
-    wavmeta.text_sigs = defaultdict(list)
+    for _, x in [(0, 's.reset')] + sorted(signal_names):
+      wavmeta.text_sigs[x] = []
+      wav_srcs.append(f"wavmeta.text_sigs['{x}'].append( {x}.to_bits().bin() )")
 
     # TODO use integer index instead of dict, should be easy
     src =  """

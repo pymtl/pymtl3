@@ -42,18 +42,18 @@ def checksum_vrtl( words ):
   dut.sim_reset()
 
   # Wait until the checksum unit is ready to receive input
-  dut.send.rdy = b1(1)
+  dut.send.rdy @= 1
   while not dut.recv.rdy:
-    dut.tick()
+    dut.sim_tick()
 
   # Feed in the input
-  dut.recv.en = b1(1)
-  dut.recv.msg = bits_in
-  dut.tick()
+  dut.recv.en  @= 1
+  dut.recv.msg @= bits_in
+  dut.sim_tick()
 
   # Wait until the checksum unit is about to send the message
   while not dut.send.en:
-    dut.tick()
+    dut.sim_tick()
 
   # Return the result
   return dut.send.msg
@@ -108,16 +108,11 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
-    ncycles = 0
     th.sim_reset()
-    print( "" )
 
     # Tick the simulator
-    print("{:3}: {}".format( ncycles, th.line_trace() ))
-    while not th.done() and ncycles < max_cycles:
-      th.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, th.line_trace() ))
+    while not th.done() and th.sim_cycle_count() < max_cycles:
+      th.sim_tick()
 
     # Check timeout
-    assert ncycles < max_cycles
+    assert th.sim_cycle_count() < max_cycles

@@ -113,7 +113,7 @@ def test_L1_const_index():
   # The expression structure is removed and only the constant value
   # is left in this node.
   assert ns.connections == \
-    [(sexp.ConstInstance(a.const_[2], 42), sexp.CurCompAttr(comp, 'out'))]
+    [(sexp.ConstInstance(Bits32(a.const_[2]), 42), sexp.CurCompAttr(comp, 'out'))]
 
 def test_L1_bit_selection():
   a = CaseConnectBitSelToOutComp.DUT()

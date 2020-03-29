@@ -31,9 +31,9 @@ def run_tv_test( dut, test_vectors ):
   # Define input/output functions
 
   def tv_in( dut, tv ):
-    dut.enq.en  = tv[0]
-    dut.enq.msg = tv[2]
-    dut.deq.en  = tv[3]
+    dut.enq.en  @= tv[0]
+    dut.enq.msg @= tv[2]
+    dut.deq.en  @= tv[3]
 
   def tv_out( dut, tv ):
     if tv[1] != '?': assert dut.enq.rdy == tv[1]
@@ -80,10 +80,10 @@ class TestHarness( Component ):
 
     @update
     def dut2sink():
-      s.dut.deq.en = b1(0)
+      s.dut.deq.en @= 0
 
       if s.dut.deq.rdy and s.sink.recv.rdy():
-        s.dut.deq.en = b1(1)
+        s.dut.deq.en @= 1
         s.sink.recv( s.dut.deq.ret )
 
   def done( s ):

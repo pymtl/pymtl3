@@ -129,7 +129,7 @@ class ComponentLevel3( ComponentLevel2 ):
     lambda_upblk = ast.FunctionDef(
       name=blk_name,
       args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
-      body=[ast.Assign(targets=[lhs], value=rhs, lineno=2, col_offset=6)],
+      body=[ast.AugAssign(target=lhs, op=ast.MatMult(), value=rhs, lineno=2, col_offset=6)],
       decorator_list=[],
       returns=None,
       lineno=1, col_offset=4,
@@ -208,7 +208,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     # Add the source code to linecache for the compiled function
 
-    new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=") )
+    new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "@=") )
     linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name)
 
     ComponentLevel1._update( s, blk )

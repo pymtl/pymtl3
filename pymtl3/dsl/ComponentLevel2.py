@@ -26,17 +26,19 @@ from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal,
 from .ConstraintTypes import RD, WR, U, ValueConstraint
 from .errors import (
     InvalidConstraintError,
-    InvalidFFAssignError,
     InvalidFuncCallError,
     InvalidIndexError,
     InvalidPlaceholderError,
-    InvalidUpblkWriteError,
     MultiWriterError,
     NotElaboratedError,
     PyMTLDeprecationError,
     SignalTypeError,
     UpblkFuncSameNameError,
+    UpdateBlockWriteError,
+    UpdateFFBlockWriteError,
+    UpdateFFNonTopLevelSignalError,
     VarNotDeclaredError,
+    WriteNonSignalError,
 )
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
@@ -102,7 +104,7 @@ class ComponentLevel2( ComponentLevel1 ):
       name_rd[ name ]  = _rd   = []
       name_wr[ name ]  = _wr   = []
       name_fc[ name ]  = _fc   = []
-      AstHelper.extract_reads_writes_calls( s, func, _ast, is_update_ff, _rd, _wr, _fc )
+      AstHelper.extract_reads_writes_calls( s, func, _ast, _rd, _wr, _fc )
 
   def _elaborate_read_write_func( s ):
 
@@ -201,27 +203,69 @@ class ComponentLevel2( ComponentLevel1 ):
 
       all_objs = set()
 
-      for obj_name, nodelist in names:
+      # Now we turn names into actual objects
+      for obj_name, nodelist, op in names:
         if obj_name[0][0] == "s":
-
           objs = set()
           lookup_variable( s, 1, 1 )
-          for obj in objs:
-            if not isinstance( obj, Signal ) and is_write:
-              raise InvalidUpblkWriteError( s, func, nodelist[0].lineno, obj )
+
+          if not is_write or not objs:
+            all_objs |= objs
+            continue
+
+          # Now we perform write checks
+
+          for obj in objs: # The objects in objs are all NamedObject
+            if not isinstance( obj, Signal ):
+              raise WriteNonSignalError( s, func, nodelist[0].lineno, obj )
             all_objs.add( obj )
 
-          # Check <<= in update_ff
+          # Check all assignments in update_ff and update
+          # - <<= in update_ff
+          # - @= in update
+          # - = in update/update_ff
+
           if update_ff:
+            # - signals can only be at LHS of <<=
+            #   * only top level signals
+            # - signals cannot be at LHS of @= or =
+
+            if op is None:
+              raise UpdateFFBlockWriteError( s, func, '=', nodelist[0].lineno,
+                "Fix the '=' assignment with '<<='")
+            elif op == 'for':
+              raise UpdateFFBlockWriteError( s, func, op, nodelist[0].lineno,
+                "Fix the loop variable in for-loop assignment")
+            elif not isinstance( op, ast.LShift ):
+              if isinstance( op, ast.MatMult ):
+                raise UpdateFFBlockWriteError( s, func, '@=', nodelist[0].lineno,
+                  "Fix the '@=' assignment with '<<='")
+
+              raise UpdateFFBlockWriteError( s, func, op+'=', nodelist[0].lineno,
+                "Fix the signal assignment with '<<='")
+
+
             for x in objs:
-              x._dsl.needs_double_buffer = True
               if not x.is_top_level_signal():
-                raise InvalidFFAssignError( s, func, nodelist[0].lineno,
-                  "has an invalid left value. It needs to be a top level signal, not a slice or a subfield.")
-              if not issubclass( x._dsl.Type, Bits ) and not is_bitstruct_class( x._dsl.Type ):
-                raise InvalidFFAssignError( s, func, nodelist[0].lineno,
-                  "has a wrong type on the left value. "
-                  "We only allow <<= on Bits/BitStruct type signals, not {x._dsl.Type}")
+                raise UpdateFFNonTopLevelSignalError( s, func, nodelist[0].lineno )
+
+              x._dsl.needs_double_buffer = True
+
+          else: # update
+            # - signals can only be at LHS of @=
+            # - signals cannot be at LHS of <<= or =
+            if op is None:
+              raise UpdateBlockWriteError( s, func, '=', nodelist[0].lineno,
+                "Fix the '=' assignment with '@='")
+            elif op == 'for':
+              raise UpdateBlockWriteError( s, func, op, nodelist[0].lineno,
+                "Fix the loop variable in for-loop assignment")
+            elif not isinstance( op, ast.MatMult ):
+              if isinstance( op, ast.LShift ):
+                raise UpdateBlockWriteError( s, func, '<<=', nodelist[0].lineno,
+                  "Fix the '<<=' assignment with '@='")
+              raise UpdateBlockWriteError( s, func, op+'=', nodelist[0].lineno,
+                "Fix the signal assignment with '@='")
 
         # This is a function call without "s." prefix, check func list
         elif obj_name[0][0] in s._dsl.name_func:

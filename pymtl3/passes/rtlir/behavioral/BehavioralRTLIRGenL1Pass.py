@@ -18,6 +18,7 @@ from pymtl3.datatypes import (
     reduce_or,
     reduce_xor,
     sext,
+    trunc,
     zext,
 )
 from pymtl3.passes.BasePass import BasePass, PassMetadata
@@ -85,7 +86,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     if isinstance( obj, int ):
       return bir.Number( obj )
     elif isinstance( obj, Bits ):
-      return bir.SizeCast( obj.nbits, bir.Number( obj.value ) )
+      return bir.SizeCast( obj.nbits, bir.Number( obj.uint() ) )
     else:
       return None
 
@@ -154,20 +155,23 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     ret = bir.Assign( targets, value, blocking = blocking[s._upblk_type] )
     ret.ast = node
     return ret
+    # raise PyMTLSyntaxError( s.blk, node,
+    #     'plain assignment = is not a translatable construct. Please use @= or <<= instead!')
 
   def visit_AugAssign( s, node ):
     """Return the behavioral RTLIR of a non-blocking assignment
 
-    If the given AugAssign is not non-blocking assignment, throw PyMTLSyntaxError
+    If the given AugAssign is not @= or <<=, throw PyMTLSyntaxError
     """
-    if isinstance( node.op, ast.LShift ):
+    if isinstance( node.op, (ast.LShift, ast.MatMult) ):
       value = s.visit( node.value )
       targets = [ s.visit( node.target ) ]
-      ret = bir.Assign( targets, value, blocking = False )
+      blocking = False if isinstance(node.op, ast.LShift) else True
+      ret = bir.Assign( targets, value, blocking )
       ret.ast = node
       return ret
     raise PyMTLSyntaxError( s.blk, node,
-        'invalid operation: augmented assignment is not non-blocking assignment!' )
+        'invalid operation: augmented assignment is not @= or <<= assignment!' )
 
   def visit_Call( s, node ):
     """Return the behavioral RTLIR of method calls.
@@ -201,10 +205,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       if len( node.args ) != 1:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly one argument should be given to Bits!' )
-      value = s.visit( node.args[0] )
-      ret = bir.SizeCast( nbits, value )
-      ret.ast = node
-      return ret
+      ret = bir.SizeCast( nbits, s.visit( node.args[0] ) )
 
     # concat method
     elif obj is concat:
@@ -213,30 +214,51 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
           'at least one argument should be given to concat!' )
       values = [s.visit(c) for c in node.args]
       ret = bir.Concat( values )
-      ret.ast = node
-      return ret
 
     # zext method
     elif obj is zext:
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to zext!' )
-      nbits = s.visit( node.args[1] )
-      value = s.visit( node.args[0] )
-      ret = bir.ZeroExt( nbits, value )
-      ret.ast = node
-      return ret
+
+      nbits = s.const_extractor.enter( node.args[1] )
+      if isinstance(nbits, type) and issubclass( nbits, Bits ):
+        nbits = nbits.nbits
+      if not isinstance( nbits, int ):
+        raise PyMTLSyntaxError( s.blk, node,
+          'the 2nd argument of zext {nbits} is not a constant int or BitsN type!' )
+
+      ret = bir.ZeroExt( nbits, s.visit( node.args[0] ) )
 
     # sext method
     elif obj is sext:
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to sext!' )
-      nbits = s.visit( node.args[1] )
-      value = s.visit( node.args[0] )
-      ret = bir.SignExt( nbits, value )
-      ret.ast = node
-      return ret
+
+      nbits = s.const_extractor.enter( node.args[1] )
+      if isinstance(nbits, type) and issubclass( nbits, Bits ):
+        nbits = nbits.nbits
+      if not isinstance( nbits, int ):
+        raise PyMTLSyntaxError( s.blk, node,
+          'the 2nd argument of sext {nbits} is not a constant int or BitsN type!' )
+
+      ret = bir.SignExt( nbits, s.visit( node.args[0] ) )
+
+    # trunc method
+    elif obj is trunc:
+      if len( node.args ) != 2:
+        raise PyMTLSyntaxError( s.blk, node,
+          'exactly two arguments should be given to trunc!' )
+
+      nbits = s.const_extractor.enter( node.args[1] )
+      if isinstance(nbits, type) and issubclass( nbits, Bits ):
+        nbits = nbits.nbits
+      if not isinstance( nbits, int ):
+        raise PyMTLSyntaxError( s.blk, node,
+          'the 2nd argument of trunc {nbits} is not a constant int or BitsN type!' )
+
+      ret = bir.Truncate( nbits, s.visit( node.args[0] ) )
 
     # reduce methods
     elif obj is reduce_and or obj is reduce_or or obj is reduce_xor:
@@ -249,15 +271,15 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       if len( node.args ) != 1:
         raise PyMTLSyntaxError( s.blk, node,
           f'exactly two arguments should be given to reduce {op} methods!' )
-      value = s.visit( node.args[0] )
-      ret = bir.Reduce( op, value )
-      ret.ast = node
-      return ret
+
+      ret = bir.Reduce( op, s.visit( node.args[0] ) )
 
     else:
       # Only Bits class instantiation is supported at L1
-      raise PyMTLSyntaxError( s.blk, node,
-        f'Unrecognized method call {obj.__name__}!' )
+      raise PyMTLSyntaxError( s.blk, node, f'Unrecognized method call {obj.__name__}!' )
+
+    ret.ast = node
+    return ret
 
   def visit_Attribute( s, node ):
     obj = s.const_extractor.enter( node )
@@ -466,9 +488,9 @@ class ConstantExtractor( ast.NodeVisitor ):
     s.globals = global_ns
     s.cache = {}
     s.closure = closure_ns
-    s.pymtl_functions = {concat, sext, zext,
-                             reduce_or, reduce_and, reduce_xor,
-                             copy.copy, copy.deepcopy}
+    s.pymtl_functions = { concat, sext, zext, trunc,
+                          reduce_or, reduce_and, reduce_xor,
+                          copy.copy, copy.deepcopy }
 
   def generic_visit( s, node ):
     return None

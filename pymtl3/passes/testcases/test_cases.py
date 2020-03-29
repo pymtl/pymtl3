@@ -28,9 +28,9 @@ def _set( *args ):
     _tv_in_str += '  pass'
   for attr, Bits, idx in zip( args[0::3], args[1::3], args[2::3] ):
     if isinstance(Bits, str):
-      _tv_in_str += f'  m.{attr} = {Bits}( tv[{idx}] )\n'
+      _tv_in_str += f'  m.{attr} @= {Bits}( tv[{idx}] )\n'
     else:
-      _tv_in_str += f'  m.{attr} = {Bits.__name__}( tv[{idx}] )\n'
+      _tv_in_str += f'  m.{attr} @= {Bits.__name__}( tv[{idx}] )\n'
   exec( _tv_in_str, globals(), local_dict )
   return local_dict['tv_in']
 
@@ -186,7 +186,7 @@ class Bits16InOutPassThroughComp( Component ):
     s.out = OutPort( Bits16 )
     @update
     def pass_through():
-      s.out = s.in_
+      s.out @= s.in_
 
 class Bits1OutComp( Component ):
   def construct( s ):
@@ -211,7 +211,7 @@ class Bits32OutTmpDrivenComp( Component ):
     @update
     def upblk():
       u = Bits32(0)
-      s.out = u
+      s.out @= u
 
 class Bits32OutFreeVarDrivenComp( Component ):
   def construct( s ):
@@ -219,9 +219,9 @@ class Bits32OutFreeVarDrivenComp( Component ):
     @update
     def upblk():
       if 1:
-        s.out = Bits32(STATE_IDLE)
+        s.out @= STATE_IDLE
       else:
-        s.out = Bits32(STATE_WORK)
+        s.out @= STATE_WORK
 
 class Bits32OutDrivenSubComp( Component ):
   def construct( s ):
@@ -249,7 +249,7 @@ class Bits32DummyBarComp( Component ):
     s.out = OutPort( Bits32 )
     @update
     def upblk():
-      s.out = s.in_ + Bits32(42)
+      s.out @= s.in_ + Bits32(42)
 
 #-------------------------------------------------------------------------
 # Test Components
@@ -323,7 +323,7 @@ class CaseBits32ClosureConstruct:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = foo
+        s.out @= foo
 
 class CaseBits32ArrayClosureConstruct:
   class DUT( Component ):
@@ -332,7 +332,7 @@ class CaseBits32ArrayClosureConstruct:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = foo[2]
+        s.out @= foo[2]
 
 class CaseBits32ClosureGlobal:
   class DUT( Component ):
@@ -340,7 +340,7 @@ class CaseBits32ClosureGlobal:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = pymtl_Bits_global_freevar
+        s.out @= pymtl_Bits_global_freevar
 
 class CaseStructClosureGlobal:
   class DUT( Component ):
@@ -350,7 +350,7 @@ class CaseStructClosureGlobal:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = foo.foo
+        s.out @= foo.foo
 
 class CasePythonClassAttr:
   class DUT( Component ):
@@ -362,18 +362,45 @@ class CasePythonClassAttr:
       s.out2 = OutPort( Bits32 )
       @update
       def upblk():
-        s.out1 = Enum.int_attr
-        s.out2 = Enum.bit_attr
+        s.out1 @= Enum.int_attr
+        s.out2 @= Enum.bit_attr
   TV_IN = _set()
   TV_OUT = \
   _check(
       'out1', Bits32, 0,
       'out2', Bits32, 1,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,   1,  ],
       [  42,   1,  ],
+  ]
+
+class CaseTypeBundle:
+  class DUT( Component ):
+    def construct( s ):
+      class TypeBundle:
+        BitsType = Bits32
+        BitStructType = Bits32Foo
+      s.out1 = OutPort( TypeBundle.BitsType )
+      s.out2 = OutPort( TypeBundle.BitStructType )
+      s.out3 = OutPort( TypeBundle.BitStructType )
+      @update
+      def upblk():
+        s.out1 @= TypeBundle.BitsType(42)
+        s.out2 @= TypeBundle.BitStructType(1)
+        s.out3 @= 1
+  TV_IN = _set()
+  TV_OUT = \
+  _check(
+      'out1', Bits32, 0,
+      'out2', Bits32Foo, 1,
+      'out3', Bits32Foo, 2,
+  )
+  TV =\
+  [
+      [  42,   1,  1, ],
+      [  42,   1,  1, ],
   ]
 
 class CaseBoolTmpVarComp:
@@ -385,9 +412,9 @@ class CaseBoolTmpVarComp:
       def upblk():
         matched = s.in_ == 0
         if matched:
-          s.out = 1
+          s.out @= 1
         else:
-          s.out = 0
+          s.out @= 0
   TV_IN = _set(
       'in_', Bits32, 0
   )
@@ -395,7 +422,7 @@ class CaseBoolTmpVarComp:
   _check(
       'out', Bits32, 1,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [  0,   1,  ],
       [  1,   0,  ],
@@ -412,7 +439,7 @@ class CaseReducesInx3OutComp:
       s.out = OutPort( Bits1 )
       @update
       def v_reduce():
-        s.out = reduce_and( s.in_1 ) & reduce_or( s.in_2 ) | reduce_xor( s.in_3 )
+        s.out @= reduce_and( s.in_1 ) & reduce_or( s.in_2 ) | reduce_xor( s.in_3 )
   TV_IN = \
   _set(
       'in_1', Bits32, 0,
@@ -421,7 +448,7 @@ class CaseReducesInx3OutComp:
   )
   TV_OUT = \
   _check( 'out', Bits1, 3 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  0,   1,    2,  1   ],
       [ -1,   1,   -1,  1   ],
@@ -436,8 +463,8 @@ class CaseBits16IndexBasicComp:
       s.out = [ OutPort( Bits16 ) for _ in range( 2 ) ]
       @update
       def index_basic():
-        s.out[ 0 ] = s.in_[ 0 ] + s.in_[ 1 ]
-        s.out[ 1 ] = s.in_[ 2 ] + s.in_[ 3 ]
+        s.out[ 0 ] @= s.in_[ 0 ] + s.in_[ 1 ]
+        s.out[ 1 ] @= s.in_[ 2 ] + s.in_[ 3 ]
 
 class CaseBits8Bits16MismatchAssignComp:
   class DUT( Component ):
@@ -446,7 +473,7 @@ class CaseBits8Bits16MismatchAssignComp:
       s.out = OutPort( Bits8 )
       @update
       def mismatch_width_assign():
-        s.out = s.in_
+        s.out @= s.in_
 
 class CaseBits32Bits64SlicingBasicComp:
   class DUT( Component ):
@@ -455,8 +482,8 @@ class CaseBits32Bits64SlicingBasicComp:
       s.out = OutPort( Bits64 )
       @update
       def slicing_basic():
-        s.out[ 0:16 ] = s.in_[ 16:32 ]
-        s.out[ 16:32 ] = s.in_[ 0:16 ]
+        s.out[ 0:16 ] @= s.in_[ 16:32 ]
+        s.out[ 16:32 ] @= s.in_[ 0:16 ]
 
 class CaseBits16ConstAddComp:
   class DUT( Component ):
@@ -465,7 +492,7 @@ class CaseBits16ConstAddComp:
       s.out = OutPort( Bits16 )
       @update
       def bits_basic():
-        s.out = s.in_ + Bits16( 10 )
+        s.out @= s.in_ + Bits16( 10 )
 
 class CaseSlicingOverIndexComp:
   class DUT( Component ):
@@ -474,8 +501,8 @@ class CaseSlicingOverIndexComp:
       s.out = [ OutPort( Bits16 ) for _ in range( 5 ) ]
       @update
       def index_bits_slicing():
-        s.out[0][0:8] = s.in_[1][8:16] + s.in_[2][0:8] + Bits8( 10 )
-        s.out[1] = s.in_[3][0:16] + s.in_[4] + Bits16( 1 )
+        s.out[0][0:8] @= s.in_[1][8:16] + s.in_[2][0:8] + 10
+        s.out[1] @= s.in_[3][0:16] + s.in_[4] + 1
 
 class CaseSubCompAddComp:
   class DUT( Component ):
@@ -487,7 +514,7 @@ class CaseSubCompAddComp:
       connect( s.in_, s.b.in_ )
       @update
       def multi_components_A():
-        s.out = s.in_ + s.b.out
+        s.out @= s.in_ + s.b.out
 
 class CaseIfBasicComp:
   class DUT( Component ):
@@ -496,15 +523,15 @@ class CaseIfBasicComp:
       s.out = OutPort( Bits8 )
       @update
       def if_basic():
-        if s.in_[ 0:8 ] == Bits8( 255 ):
-          s.out = s.in_[ 8:16 ]
+        if s.in_[ 0:8 ] == 255:
+          s.out @= s.in_[ 8:16 ]
         else:
-          s.out = Bits8( 0 )
+          s.out @= 0
   TV_IN = \
   _set( 'in_', Bits16, 0 )
   TV_OUT = \
   _check( 'out', Bits8, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 255,   0, ],
       [  -1, 255, ],
@@ -522,11 +549,11 @@ class CaseIfDanglingElseInnerComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        if Bits1(1):
-          if Bits1(0):
-            s.out = s.in_1
+        if 1:
+          if 0:
+            s.out @= s.in_1
           else:
-            s.out = s.in_2
+            s.out @= s.in_2
   TV_IN = \
   _set(
       'in_1', Bits32, 0,
@@ -534,7 +561,7 @@ class CaseIfDanglingElseInnerComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,  -1 ],
       [   42,     0,   0 ],
@@ -551,11 +578,11 @@ class CaseIfDanglingElseOutterComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        if Bits1(1):
-          if Bits1(0):
-            s.out = s.in_1
+        if 1:
+          if 0:
+            s.out @= s.in_1
         else:
-          s.out = s.in_2
+          s.out @= s.in_2
   TV_IN = \
   _set(
       'in_1', Bits32, 0,
@@ -563,7 +590,7 @@ class CaseIfDanglingElseOutterComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0 ],
       [   42,     0,   0 ],
@@ -581,12 +608,12 @@ class CaseElifBranchComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        if Bits1(1):
-          s.out = s.in_1
-        elif Bits1(0):
-          s.out = s.in_2
+        if 1:
+          s.out @= s.in_1
+        elif 0:
+          s.out @= s.in_2
         else:
-          s.out = s.in_3
+          s.out @= s.in_3
   TV_IN = \
   _set(
       'in_1', Bits32, 0,
@@ -595,7 +622,7 @@ class CaseElifBranchComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 3 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  0 ],
       [   42,     0,  42, 42 ],
@@ -613,21 +640,21 @@ class CaseNestedIfComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        if Bits1(1):
-          if Bits1(0):
-            s.out = s.in_1
+        if 1:
+          if 0:
+            s.out @= s.in_1
           else:
-            s.out = s.in_2
-        elif Bits1(0):
-          if Bits1(1):
-            s.out = s.in_2
+            s.out @= s.in_2
+        elif 0:
+          if 1:
+            s.out @= s.in_2
           else:
-            s.out = s.in_3
+            s.out @= s.in_3
         else:
-          if Bits1(1):
-            s.out = s.in_3
+          if 1:
+            s.out @= s.in_3
           else:
-            s.out = s.in_1
+            s.out @= s.in_1
   TV_IN = \
   _set(
       'in_1', Bits32, 0,
@@ -636,7 +663,7 @@ class CaseNestedIfComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 3 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  -1 ],
       [   42,     0,  42,   0 ],
@@ -653,7 +680,7 @@ class CaseForBasicComp:
       @update
       def for_basic():
         for i in range( 8 ):
-          s.out[ 2*i:2*i+1 ] = s.in_[ 2*i:2*i+1 ] + s.in_[ 2*i+1:(2*i+1)+1 ]
+          s.out[ 2*i:2*i+1 ] @= s.in_[ 2*i:2*i+1 ] + s.in_[ 2*i+1:(2*i+1)+1 ]
 
 class CaseForFreeVarStepComp:
   class DUT( Component ):
@@ -664,7 +691,7 @@ class CaseForFreeVarStepComp:
       @update
       def upblk():
         for i in range( 0, 2, freevar ):
-          s.out = s.in_[0:8]
+          s.out @= s.in_[0:8]
 
 class CaseTypeNameAsFieldNameComp:
   class DUT( Component ):
@@ -681,9 +708,9 @@ class CaseForRangeLowerUpperStepPassThroughComp:
       @update
       def upblk():
         for i in range(0, 5, 2):
-          s.out[i] = s.in_[i]
+          s.out[i] @= s.in_[i]
         for i in range(1, 5, 2):
-          s.out[i] = s.in_[i]
+          s.out[i] @= s.in_[i]
   TV_IN = \
   _set(
       'in_[0]', Bits32, 0,
@@ -700,7 +727,7 @@ class CaseForRangeLowerUpperStepPassThroughComp:
       'out[3]', Bits32, 8,
       'out[4]', Bits32, 9,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  -1,   0,    0,    -1,   0,  -1,   0, ],
       [   42,     0,  42,   0,  42,   42,     0,  42,   0,  42, ],
@@ -717,7 +744,7 @@ class CaseIfExpInForStmtComp:
       @update
       def upblk():
         for i in range(5):
-          s.out[i] = s.in_[i] if i == 1 else s.in_[0]
+          s.out[i] @= s.in_[i] if i == 1 else s.in_[0]
   TV_IN = \
   _set(
       'in_[0]', Bits32, 0,
@@ -734,7 +761,7 @@ class CaseIfExpInForStmtComp:
       'out[3]', Bits32, 8,
       'out[4]', Bits32, 9,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  -1,   0,    0,    -1,   0,   0,   0, ],
       [   42,     0,  42,   0,  42,   42,     0,  42,  42,  42, ],
@@ -751,7 +778,7 @@ class CaseIfExpUnaryOpInForStmtComp:
       @update
       def upblk():
         for i in range(5):
-          s.out[i] = (~s.in_[i]) if i == 1 else s.in_[0]
+          s.out[i] @= (~s.in_[i]) if i == 1 else s.in_[0]
   TV_IN = \
   _set(
       'in_[0]', Bits32, 0,
@@ -768,7 +795,7 @@ class CaseIfExpUnaryOpInForStmtComp:
       'out[3]', Bits32, 8,
       'out[4]', Bits32, 9,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  -1,   0,    0,    ~-1,   0,   0,   0, ],
       [   42,     0,  42,   0,  42,   42,     ~0,  42,  42,  42, ],
@@ -785,10 +812,10 @@ class CaseIfBoolOpInForStmtComp:
       @update
       def upblk():
         for i in range(5):
-          if ( s.in_[i] != Bits32(0) ) and ( ( s.in_[i+1] != Bits32(0) ) if i<4 else ( s.in_[4] != Bits32(0) )):
-            s.out[i] = s.in_[i]
+          if ( s.in_[i] != 0 ) & ( ( s.in_[i+1] != 0 ) if i<4 else ( s.in_[4] != 0 )):
+            s.out[i] @= s.in_[i]
           else:
-            s.out[i] = Bits32(0)
+            s.out[i] @= 0
   TV_IN = \
   _set(
       'in_[0]', Bits32, 0,
@@ -805,7 +832,7 @@ class CaseIfBoolOpInForStmtComp:
       'out[3]', Bits32, 8,
       'out[4]', Bits32, 9,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  -1,   0,     0,     0,    0,    0,    0, ],
       [   42,     0,  42,   0,  42,     0,     0,    0,    0,   42, ],
@@ -822,11 +849,11 @@ class CaseIfTmpVarInForStmtComp:
       @update
       def upblk():
         for i in range(5):
-          if ( s.in_[i]  != Bits32(0) ) and ( ( s.in_[i+1] != Bits32(0) ) if i<4 else ( s.in_[4] != Bits32(0) ) ):
+          if ( s.in_[i]  != 0 ) & ( ( s.in_[i+1] != 0 ) if i<4 else ( s.in_[4] != 0 ) ):
             tmpvar = s.in_[i]
           else:
-            tmpvar = Bits32(0)
-          s.out[i] = tmpvar
+            tmpvar = b32(0)
+          s.out[i] @= tmpvar
   TV_IN = \
   _set(
       'in_[0]', Bits32, 0,
@@ -843,7 +870,7 @@ class CaseIfTmpVarInForStmtComp:
       'out[3]', Bits32, 8,
       'out[4]', Bits32, 9,
   )
-  TEST_VECTOR = \
+  TV =\
   [
     [    0,    -1,   0,  -1,   0,     0,     0,    0,    0,    0, ],
     [   42,     0,  42,   0,  42,     0,     0,    0,    0,   42, ],
@@ -860,7 +887,7 @@ class CaseFixedSizeSliceComp:
       @update
       def upblk():
         for i in range(2):
-          s.out[i] = s.in_[i*8 : i*8 + 8]
+          s.out[i] @= s.in_[i*8 : i*8 + 8]
   TV_IN = \
   _set( 'in_', Bits16, 0 )
   TV_OUT = \
@@ -868,7 +895,7 @@ class CaseFixedSizeSliceComp:
       'out[0]', Bits8, 1,
       'out[1]', Bits8, 2,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [     -1, 0xff, 0xff ],
       [      1, 0x01, 0x00 ],
@@ -885,10 +912,10 @@ class CaseTwoUpblksSliceComp:
       s.out = OutPort( Bits8 )
       @update
       def multi_upblks_1():
-        s.out[ 0:4 ] = s.in_
+        s.out[ 0:4 ] @= s.in_
       @update
       def multi_upblks_2():
-        s.out[ 4:8 ] = s.in_
+        s.out[ 4:8 ] @= s.in_
 
 class CaseTwoUpblksFreevarsComp:
   class DUT( Component ):
@@ -898,10 +925,10 @@ class CaseTwoUpblksFreevarsComp:
       s.out = [ OutPort( Bits2 ) for _ in range(2) ]
       @update
       def multi_upblks_1():
-        s.out[0] = STATE_IDLE
+        s.out[0] @= STATE_IDLE
       @update
       def multi_upblks_2():
-        s.out[1] = STATE_WORK
+        s.out[1] @= STATE_WORK
 
 class CaseTwoUpblksStructTmpWireComp:
   class DUT( Component ):
@@ -913,11 +940,11 @@ class CaseTwoUpblksStructTmpWireComp:
       @update
       def multi_upblks_1():
         u = s.in_foo
-        s.out_foo = u.foo
+        s.out_foo @= u.foo
       @update
       def multi_upblks_2():
         u = s.in_bar
-        s.out_bar = u.bar
+        s.out_bar @= u.bar
 
 class CaseFlipFlopAdder:
   class DUT( Component ):
@@ -937,7 +964,7 @@ class CaseConstSizeSlicingComp:
       @update
       def upblk():
         for i in range(2):
-          s.out[i] = s.in_[i*8 : i*8 + 8]
+          s.out[i] @= s.in_[i*8 : i*8 + 8]
 
 class CaseBits32TmpWireComp:
   class DUT( Component ):
@@ -946,8 +973,8 @@ class CaseBits32TmpWireComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        u = s.in_ + Bits32(42)
-        s.out = u
+        u = s.in_ + 42
+        s.out @= u
 
 class CaseBits32MultiTmpWireComp:
   class DUT( Component ):
@@ -956,10 +983,10 @@ class CaseBits32MultiTmpWireComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        u = s.in_ + Bits32(42)
-        v = s.in_ + Bits32(40)
-        s.out = u
-        s.out = v
+        u = s.in_ + 42
+        v = s.in_ + 40
+        s.out @= u
+        s.out @= v
 
 class CaseBits32FreeVarToTmpVarComp:
   class DUT( Component ):
@@ -969,7 +996,7 @@ class CaseBits32FreeVarToTmpVarComp:
       @update
       def upblk():
         u = STATE_IDLE
-        s.out = u
+        s.out @= u
 
 class CaseBits32ConstBitsToTmpVarComp:
   class DUT( Component ):
@@ -978,7 +1005,7 @@ class CaseBits32ConstBitsToTmpVarComp:
       @update
       def upblk():
         u = Bits32(0)
-        s.out = u
+        s.out @= u
 
 class CaseBits32ConstIntToTmpVarComp:
   class DUT( Component ):
@@ -987,7 +1014,7 @@ class CaseBits32ConstIntToTmpVarComp:
       @update
       def upblk():
         u = 1
-        s.out = u
+        s.out @= u
 
 class CaseBits32TmpWireAliasComp:
   class DUT( Component ):
@@ -996,12 +1023,12 @@ class CaseBits32TmpWireAliasComp:
       s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @update
       def multi_upblks_1():
-        u = s.in_ + Bits32(42)
-        s.out[0] = u
+        u = s.in_ + 42
+        s.out[0] @= u
       @update
       def multi_upblks_2():
-        u = s.in_ + Bits32(42)
-        s.out[1] = u
+        u = s.in_ + 42
+        s.out[1] @= u
 
 class CaseStructTmpWireComp:
   class DUT( Component ):
@@ -1011,7 +1038,7 @@ class CaseStructTmpWireComp:
       @update
       def upblk():
         u = s.in_
-        s.out = u.foo
+        s.out @= u.foo
 
 class CaseTmpWireOverwriteConflictComp:
   class DUT( Component ):
@@ -1021,9 +1048,9 @@ class CaseTmpWireOverwriteConflictComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        u = s.in_1 + Bits32(42)
-        u = s.in_2 + Bits16(1)
-        s.out = u
+        u = s.in_1 + 42
+        u = s.in_2 + 1
+        s.out @= u
 
 class CaseScopeTmpWireOverwriteConflictComp:
   class DUT( Component ):
@@ -1034,11 +1061,11 @@ class CaseScopeTmpWireOverwriteConflictComp:
       @update
       def upblk():
         if 1:
-          u = s.in_1 + Bits32(42)
-          s.out = u
+          u = s.in_1 + 42
+          s.out @= u
         else:
-          u = s.in_2 + Bits16(1)
-          s.out = u
+          u = s.in_2 + 1
+          s.out @= u
 
 class CaseHeteroCompArrayComp:
   class DUT( Component ):
@@ -1063,7 +1090,7 @@ class CaseHeteroCompArrayComp:
       'out_1', Bits32, 2,
       'out_2', Bits32, 3,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,     -1,     0,    41],
       [   42,      0,    42,    42],
@@ -1081,14 +1108,14 @@ class CaseSizeCastPaddingStructPort:
       s.out = OutPort( Bits64 )
       @update
       def upblk():
-        s.out = Bits64( s.in_ )
+        s.out @= Bits64( s.in_ )
   TV_IN = \
   _set(
       'in_', Bits32Foo, 0,
   )
   TV_OUT = \
   _check( 'out', Bits64, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,     concat(   Bits32(0),     Bits32(0)  ) ],
       [   42,     concat(   Bits32(0),     Bits32(42) ) ],
@@ -1103,7 +1130,7 @@ class CaseBits32x2ConcatComp:
       s.out = OutPort( Bits64 )
       @update
       def upblk():
-        s.out = concat( s.in_1, s.in_2 )
+        s.out @= concat( s.in_1, s.in_2 )
   TV_IN = \
   _set(
       'in_1', Bits32, 0,
@@ -1111,7 +1138,7 @@ class CaseBits32x2ConcatComp:
   )
   TV_OUT = \
   _check( 'out', Bits64, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    0,     concat(    Bits32(0),     Bits32(0) ) ],
       [   42,    0,     concat(   Bits32(42),     Bits32(0) ) ],
@@ -1125,12 +1152,12 @@ class CaseBits32x2ConcatConstComp:
       s.out = OutPort( Bits64 )
       @update
       def upblk():
-        s.out = concat( Bits32(42), Bits32(0) )
+        s.out @= concat( Bits32(42), Bits32(0) )
   TV_IN = \
   _set()
   TV_OUT = \
   _check( 'out', Bits64, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    concat(    Bits32(42),    Bits32(0) ) ],
   ]
@@ -1142,12 +1169,12 @@ class CaseBits32x2ConcatMixedComp:
       s.out = OutPort( Bits64 )
       @update
       def upblk():
-        s.out = concat( s.in_, Bits32(0) )
+        s.out @= concat( s.in_, Bits32(0) )
   TV_IN = \
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits64, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,  concat(    Bits32(42),    Bits32(0) ) ],
       [  -1,  concat(    Bits32(-1),    Bits32(0) ) ],
@@ -1159,20 +1186,20 @@ class CaseBits32x2ConcatFreeVarComp:
   class DUT( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
-      s.out = OutPort( Bits64 )
+      s.out = OutPort( Bits33 )
       @update
       def upblk():
-        s.out = concat( s.in_, STATE_IDLE )
+        s.out @= concat( s.in_, STATE_IDLE )
   TV_IN = \
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
-  _check( 'out', Bits64, 1 )
-  TEST_VECTOR = \
+  _check( 'out', Bits33, 1 )
+  TV =\
   [
-      [  42,  concat(    Bits32(42),    Bits32(0) ) ],
-      [  -1,  concat(    Bits32(-1),    Bits32(0) ) ],
-      [  -2,  concat(    Bits32(-2),    Bits32(0) ) ],
-      [   2,  concat(     Bits32(2),    Bits32(0) ) ],
+      [  42,  concat(    Bits32(42),    Bits1(0) ) ],
+      [  -1,  concat(    Bits32(-1),    Bits1(0) ) ],
+      [  -2,  concat(    Bits32(-2),    Bits1(0) ) ],
+      [   2,  concat(     Bits32(2),    Bits1(0) ) ],
   ]
 
 class CaseBits32x2ConcatUnpackedSignalComp:
@@ -1182,7 +1209,7 @@ class CaseBits32x2ConcatUnpackedSignalComp:
       s.out = OutPort( Bits64 )
       @update
       def upblk():
-        s.out = concat( s.in_[0], s.in_[1] )
+        s.out @= concat( s.in_[0], s.in_[1] )
   TV_IN = \
   _set(
       'in_[0]', Bits32, 0,
@@ -1190,7 +1217,7 @@ class CaseBits32x2ConcatUnpackedSignalComp:
   )
   TV_OUT = \
   _check( 'out', Bits64, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,   2,  concat(    Bits32(42),     Bits32(2) ) ],
       [  -1,  42,  concat(    Bits32(-1),    Bits32(42) ) ],
@@ -1205,12 +1232,12 @@ class CaseBits64SextInComp:
       s.out = OutPort( Bits64 )
       @update
       def upblk():
-        s.out = sext( s.in_, 64 )
+        s.out @= sext( s.in_, 64 )
   TV_IN = \
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits64, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,   sext(    Bits32(42),    64 ) ],
       [  -2,   sext(    Bits32(-2),    64 ) ],
@@ -1225,17 +1252,37 @@ class CaseBits64ZextInComp:
       s.out = OutPort( Bits64 )
       @update
       def upblk():
-        s.out = zext( s.in_, 64 )
+        s.out @= zext( s.in_, 64 )
   TV_IN = \
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits64, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,   zext(    Bits32(42),    64 ) ],
       [  -2,   zext(    Bits32(-2),    64 ) ],
       [  -1,   zext(    Bits32(-1),    64 ) ],
       [   2,   zext(     Bits32(2),    64 ) ],
+  ]
+
+class CaseBits64TruncInComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits8 )
+      @update
+      def upblk():
+        s.out @= trunc( s.in_, 8 )
+  TV_IN = \
+  _set( 'in_', Bits32, 0 )
+  TV_OUT = \
+  _check( 'out', Bits8, 1 )
+  TV =\
+  [
+      [  42,   trunc(    Bits32(42),    8 ) ],
+      [  -2,   trunc(    Bits32(-2),    8 ) ],
+      [  -1,   trunc(    Bits32(-1),    8 ) ],
+      [   2,   trunc(     Bits32(2),    8 ) ],
   ]
 
 class CaseBits32BitSelUpblkComp:
@@ -1245,12 +1292,12 @@ class CaseBits32BitSelUpblkComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = s.in_[1]
+        s.out @= s.in_[1]
   TV_IN = \
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits1, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [   0,   0 ],
       [  -1,   1 ],
@@ -1265,12 +1312,12 @@ class CaseBits64PartSelUpblkComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.in_[4:36]
+        s.out @= s.in_[4:36]
   TV_IN = \
   _set( 'in_', Bits64, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [   -1,   -1 ],
       [   -2,   -1 ],
@@ -1288,12 +1335,12 @@ class CasePassThroughComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.in_
+        s.out @= s.in_
   TV_IN = \
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    0 ],
       [   42,   42 ],
@@ -1314,7 +1361,7 @@ class CaseSequentialPassThroughComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,     0 ],
       [   42,     0 ],
@@ -1333,7 +1380,7 @@ class CaseConnectPassThroughLongNameComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    0 ],
       [   42,   42 ],
@@ -1347,12 +1394,12 @@ class CaseLambdaConnectComp:
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
-      s.out //= lambda: s.in_ + Bits32(42)
+      s.out //= lambda: s.in_ + 42
   TV_IN = \
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,   42 ],
       [   -1,   41 ],
@@ -1368,13 +1415,13 @@ class CaseLambdaConnectWithListComp:
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = [ OutPort( Bits32 ) for _ in range(2) ]
-      s.out[1] //= lambda: s.in_ + Bits32(42)
+      s.out[1] //= lambda: s.in_ + 42
 
   TV_IN = \
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out[1]', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,   42 ],
       [   -1,   41 ],
@@ -1392,12 +1439,12 @@ class CaseBits32FooInBits32OutComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.in_.foo
+        s.out @= s.in_.foo
   TV_IN = \
   _set( 'in_', Bits32Foo, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,   0 ],
       [   -1,  -1 ],
@@ -1413,7 +1460,7 @@ class CaseBits32FooKwargComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = Bits32Foo( foo = Bits32( 42 ) )
+        s.out @= Bits32Foo( foo = 42 )
 
 class CaseBits32FooInstantiationComp:
   class DUT( Component ):
@@ -1421,7 +1468,7 @@ class CaseBits32FooInstantiationComp:
       s.out = OutPort( Bits32Foo )
       @update
       def upblk():
-        s.out = Bits32Foo( Bits32( 42 ) )
+        s.out @= Bits32Foo( 42 )
 
 class CaseConstStructInstComp:
   class DUT( Component ):
@@ -1430,12 +1477,12 @@ class CaseConstStructInstComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.in_.foo
+        s.out @= s.in_.foo
   TV_IN = \
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 0 ],
   ]
@@ -1447,12 +1494,12 @@ class CaseStructPackedArrayUpblkComp:
       s.out = OutPort( Bits96 )
       @update
       def upblk():
-        s.out = concat( s.in_.foo[0], s.in_.foo[1], s.in_.foo[2] )
+        s.out @= concat( s.in_.foo[0], s.in_.foo[1], s.in_.foo[2] )
   TV_IN = \
   _set( 'in_', Bits32x5Foo, 0 )
   TV_OUT = \
   _check( 'out', Bits96, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  [ b32(0), b32(0), b32(0), b32(0),b32(0) ], concat( b32(0),   b32(0),   b32(0)  ) ],
       [  [ b32(-1),b32(-1),b32(-1),b32(0),b32(0) ], concat( b32(-1),  b32(-1),  b32(-1) ) ],
@@ -1470,7 +1517,7 @@ class CaseConnectLiteralStructComp:
   _set()
   TV_OUT = \
   _check( 'out', "(lambda x: x)", 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [   NestedStructPackedPlusScalar(42, [ Bits32(1) , Bits32(2)  ], Bits32Foo(3) ) ],
   ]
@@ -1482,12 +1529,12 @@ class CaseNestedStructPackedArrayUpblkComp:
       s.out = OutPort( Bits96 )
       @update
       def upblk():
-        s.out = concat( s.in_.bar[0], s.in_.woo.foo, s.in_.foo )
+        s.out @= concat( s.in_.bar[0], s.in_.woo.foo, s.in_.foo )
   TV_IN = \
   _set( 'in_', '(lambda x: x)', 0 )
   TV_OUT = \
   _check( 'out', Bits96, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [   NestedStructPackedPlusScalar(0, [ Bits32(0) , Bits32(0)  ], Bits32Foo(5) ), concat(   Bits32(0), Bits32(5),   Bits32(0) ) ],
       [  NestedStructPackedPlusScalar(-1, [ Bits32(-1), Bits32(-2) ], Bits32Foo(6) ), concat(  Bits32(-1), Bits32(6),  Bits32(-1) ) ],
@@ -1508,7 +1555,7 @@ class CaseConnectNestedStructPackedArrayComp:
   _set( 'in_', '(lambda x: x)', 0 )
   TV_OUT = \
   _check( 'out', Bits96, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [   NestedStructPackedPlusScalar(0, [ Bits32(0) , Bits32(0)  ], Bits32Foo(5) ), concat(   Bits32(0), Bits32(5),   Bits32(0) ) ],
       [  NestedStructPackedPlusScalar(-1, [ Bits32(-1), Bits32(-2) ], Bits32Foo(6) ), concat(  Bits32(-1), Bits32(6),  Bits32(-1) ) ],
@@ -1524,7 +1571,7 @@ class CaseInterfaceAttributeComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.in_.foo
+        s.out @= s.in_.foo
 
 class CaseArrayInterfacesComp:
   class DUT( Component ):
@@ -1533,7 +1580,7 @@ class CaseArrayInterfacesComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.in_[2].foo
+        s.out @= s.in_[2].foo
 
 class CaseBits32SubCompPassThroughComp:
   class DUT( Component ):
@@ -1542,7 +1589,7 @@ class CaseBits32SubCompPassThroughComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.comp.out
+        s.out @= s.comp.out
 
 class CaseArrayBits32SubCompPassThroughComp:
   class DUT( Component ):
@@ -1551,7 +1598,7 @@ class CaseArrayBits32SubCompPassThroughComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.comp[2].out
+        s.out @= s.comp[2].out
 
 class CaseSubCompTmpDrivenComp:
   class DUT( Component ):
@@ -1561,7 +1608,7 @@ class CaseSubCompTmpDrivenComp:
       @update
       def upblk():
         u = s.subcomp.out
-        s.out = u
+        s.out @= u
 
 class CaseSubCompFreeVarDrivenComp:
   class DUT( Component ):
@@ -1571,9 +1618,9 @@ class CaseSubCompFreeVarDrivenComp:
       @update
       def upblk():
         if 1:
-          s.out = s.subcomp.out
+          s.out @= s.subcomp.out
         else:
-          s.out = Bits32(STATE_IDLE)
+          s.out @= STATE_IDLE
 
 class CaseConstBits32AttrComp:
   class DUT( Component ):
@@ -1616,7 +1663,7 @@ class CaseConnectInToWireComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 5 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 0,   0,    0,  0,  0,   0 ],
       [ 0,   0,   42,  0,  0,  42 ],
@@ -1632,8 +1679,8 @@ class CaseWiresDrivenComp:
       s.bar = Wire( Bits4 )
       @update
       def upblk():
-        s.foo = Bits32(42)
-        s.bar = Bits4(0)
+        s.foo @= 42
+        s.bar @= 0
 
 class CaseBits32Wirex5DrivenComp:
   class DUT( Component ):
@@ -1642,7 +1689,7 @@ class CaseBits32Wirex5DrivenComp:
       @update
       def upblk():
         for i in range(5):
-          s.foo[i] = Bits32(0)
+          s.foo[i] @= 0
 
 class CaseStructWireDrivenComp:
   class DUT( Component ):
@@ -1650,7 +1697,7 @@ class CaseStructWireDrivenComp:
       s.foo = Wire( Bits32Foo )
       @update
       def upblk():
-        s.foo.foo = Bits32(42)
+        s.foo.foo @= 42
 
 class CaseStructConstComp:
   class DUT( Component ):
@@ -1674,7 +1721,7 @@ class CaseConnectConstToOutComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 42 ],
   ]
@@ -1689,7 +1736,7 @@ class CaseConnectBitSelToOutComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits1, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,   0, ],
       [    1,   1, ],
@@ -1709,7 +1756,7 @@ class CaseConnectSliceToOutComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits4, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,   0, ],
       [    1,   0, ],
@@ -1728,7 +1775,7 @@ class CaseConnectBitsConstToOutComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 0 ],
   ]
@@ -1749,14 +1796,14 @@ class CaseConnectArrayStructAttrToOutComp:
   TV_IN = \
   _set( 'in_', Bits32x5Foo, 0 )
   TV_OUT = \
-  _check( 'out', Bits96, 1 )
-  TEST_VECTOR = \
+  _check( 'out', Bits32, 1 )
+  TV =\
   [
-      [  [ b32(0), b32(0), b32(0), b32(0),b32(0) ], b32(0),  ],
-      [  [ b32(-1),b32(-1),b32(-1),b32(0),b32(0) ], b32(-1), ],
-      [  [ b32(42),b32(42),b32(-1),b32(0),b32(0) ], b32(42), ],
-      [  [ b32(42),b32(42),b32(42),b32(0),b32(0) ], b32(42), ],
-      [  [ b32(-1),b32(-1),b32(42),b32(0),b32(0) ], b32(-1), ],
+      [  [ b32(0), b32(0), b32(0), b32(0),b32(0) ], 0,  ],
+      [  [ b32(-1),b32(-1),b32(-1),b32(0),b32(0) ], -1, ],
+      [  [ b32(42),b32(42),b32(-1),b32(0),b32(0) ], 42, ],
+      [  [ b32(42),b32(42),b32(42),b32(0),b32(0) ], 42, ],
+      [  [ b32(-1),b32(-1),b32(42),b32(0),b32(0) ], -1, ],
   ]
 
 class CaseConnectConstStructAttrToOutComp:
@@ -1769,7 +1816,7 @@ class CaseConnectConstStructAttrToOutComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = [ [ 42 ] ]
+  TV =[ [ 42 ] ]
 
 class CaseBits32IfcInComp:
   class DUT( Component ):
@@ -1792,7 +1839,7 @@ class CaseArrayBits32IfcInUpblkComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.in_[1].foo
+        s.out @= s.in_[1].foo
   TV_IN = \
   _set(
       'in_[0].foo', Bits32, 0,
@@ -1800,7 +1847,7 @@ class CaseArrayBits32IfcInUpblkComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    0,      0 ],
       [    0,   42,     42 ],
@@ -1829,7 +1876,7 @@ class CaseConnectValRdyIfcComp:
       'out.msg', Bits32, 4,
       'in_.rdy', Bits1, 5,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    42,   1,    0,    42,    1 ],
       [    1,    -1,   1,    1,    -1,    1 ],
@@ -1845,9 +1892,9 @@ class CaseConnectValRdyIfcUpblkComp:
       s.out = Bits32OutValRdyIfc()
       @update
       def upblk():
-        s.out.val = s.in_.val
-        s.out.msg = s.in_.msg
-        s.in_.rdy = s.out.rdy
+        s.out.val @= s.in_.val
+        s.out.msg @= s.in_.msg
+        s.in_.rdy @= s.out.rdy
   TV_IN = \
   _set(
       'in_.val', Bits1, 0,
@@ -1860,7 +1907,7 @@ class CaseConnectValRdyIfcUpblkComp:
       'out.msg', Bits32, 4,
       'in_.rdy', Bits1, 5,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    42,   1,    0,    42,    1 ],
       [    1,    -1,   1,    1,    -1,    1 ],
@@ -1886,7 +1933,7 @@ class CaseConnectArrayBits32FooIfcComp:
       'out[0].foo.foo',   Bits32,  2,
       'out[1].foo.foo',   Bits32,  3,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 1,      0,    1,      0, ],
       [ 0,     42,    0,     42, ],
@@ -1924,7 +1971,7 @@ class CaseConnectArrayNestedIfcComp:
       'out[1].memifc.msg', Bits32, 14,
       'in_[1].memifc.rdy', Bits1,  15,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 1,  1,      0,    0,    1,  1,      0,    0,  1,  1,      0,    0,    1,  1,      0,    0, ],
       [ 1,  0,     42,    1,    1,  0,     42,    1,  1,  0,     42,    1,    1,  0,     42,    1, ],
@@ -1941,7 +1988,7 @@ class CaseBits32IfcTmpVarOutComp:
       @update
       def upblk():
         u = s.ifc.foo
-        s.out = u
+        s.out @= u
 
 class CaseStructIfcTmpVarOutComp:
   class DUT( Component ):
@@ -1951,7 +1998,7 @@ class CaseStructIfcTmpVarOutComp:
       @update
       def upblk():
         u = s.ifc.foo
-        s.out = u.foo
+        s.out @= u.foo
 
 class CaseBits32ConnectSubCompAttrComp:
   class DUT( Component ):
@@ -1963,7 +2010,7 @@ class CaseBits32ConnectSubCompAttrComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = [ [ 42 ] ]
+  TV =[ [ 42 ] ]
 
 class CaseBits32SubCompAttrUpblkComp:
   class DUT( Component ):
@@ -1972,12 +2019,12 @@ class CaseBits32SubCompAttrUpblkComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.b.out
+        s.out @= s.b.out
   TV_IN = \
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 42 ],
   ]
@@ -1998,7 +2045,7 @@ class CaseConnectSubCompIfcHierarchyComp:
       'ifc.msg', Bits32, 1,
       'ifc.val', Bits1,  2,
   )
-  TEST_VECTOR = [ [ 42, 42, 1 ] ]
+  TV =[ [ 42, 42, 1 ] ]
 
 class CaseConnectArraySubCompArrayStructIfcComp:
   class DUT( Component ):
@@ -2012,7 +2059,7 @@ class CaseConnectArraySubCompArrayStructIfcComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 42, 42 ],
       [  1,  1 ],
@@ -2030,13 +2077,13 @@ class CaseBehavioralArraySubCompArrayStructIfcComp:
       def upblk():
         for i in range(2):
           for j in range(1):
-            s.b[i].ifc[j].foo[0].foo = s.in_
-        s.out = s.b[1].out
+            s.b[i].ifc[j].foo[0].foo @= s.in_
+        s.out @= s.b[1].out
   TV_IN = \
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 42, 42 ],
       [  1,  1 ],
@@ -2056,7 +2103,7 @@ class CaseBits32ArrayConnectSubCompAttrComp:
   _check(
       'out',     Bits32, 0,
   )
-  TEST_VECTOR = [ [ 42 ] ]
+  TV =[ [ 42 ] ]
 
 class CaseBits32ArraySubCompAttrUpblkComp:
   class DUT( Component ):
@@ -2065,12 +2112,12 @@ class CaseBits32ArraySubCompAttrUpblkComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.b[1].out
+        s.out @= s.b[1].out
   TV_IN = \
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 42 ],
   ]
@@ -2098,7 +2145,7 @@ class CaseGenericAdderComp:
       s.out = OutPort( Type )
       @update
       def add_upblk():
-        s.out = s.in_1 + s.in_2
+        s.out @= s.in_1 + s.in_2
     def line_trace( s ): return 'sum = ' + str(s.out)
 
 class CaseGenericMuxComp:
@@ -2109,7 +2156,7 @@ class CaseGenericMuxComp:
       s.out = OutPort( Type )
       @update
       def add_upblk():
-        s.out = s.in_[ s.sel ]
+        s.out @= s.in_[ s.sel ]
     def line_trace( s ): return "out = " + str( s.out )
 
 class CaseStructConnectWireComp:
@@ -2131,8 +2178,8 @@ class CaseNestedStructConnectWireComp:
       @update
       def upblk():
         for i in range(3):
-          s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
-        s.out_sum = s.sum[0] + s.sum[1] + s.sum[2]
+          s.sum[i] @= s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
+        s.out_sum @= s.sum[0] + s.sum[1] + s.sum[2]
       connect( s.out_foo, s.in_.foo )
       connect( s.out_bar, s.in_.inner.bar )
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
@@ -2149,8 +2196,8 @@ class CaseNestedStructConnectWireSubComp:
       @update
       def upblk():
         for i in range(3):
-          s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
-        s.out_sum = s.sum[0] + s.sum[1] + s.sum[2]
+          s.sum[i] @= s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
+        s.out_sum @= s.sum[0] + s.sum[1] + s.sum[2]
       connect( s.out_foo, s.b.out )
       connect( s.out_bar, s.in_.inner.bar )
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
@@ -2163,11 +2210,11 @@ class CaseGenericConditionalDriveComp:
       @update
       def index_upblk():
         if s.in_[0] > s.in_[1]:
-          s.out[0] = Type(1)
-          s.out[1] = Type(0)
+          s.out[0] @= 1
+          s.out[1] @= 0
         else:
-          s.out[0] = Type(0)
-          s.out[1] = Type(1)
+          s.out[0] @= 0
+          s.out[1] @= 1
     def line_trace( s ): return "s.in0  = " + str( s.in_[0] ) +\
                                 "s.in1  = " + str( s.in_[1] ) +\
                                 "s.out0 = " + str( s.out[0] ) +\
@@ -2216,7 +2263,7 @@ class CaseVerilogReservedComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.buf
+        s.out @= s.buf
 
 class CaseInterfaceArrayNonStaticIndexComp:
   class DUT( Component ):
@@ -2225,7 +2272,7 @@ class CaseInterfaceArrayNonStaticIndexComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.in_[s.in_[0].foo].foo
+        s.out @= s.in_[s.in_[0].foo[0]].foo
   TV_IN = \
   _set(
       'in_[0].foo', Bits32, 0,
@@ -2233,7 +2280,7 @@ class CaseInterfaceArrayNonStaticIndexComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  0,   0,    0 ],
       [  1,   0,    0 ],
@@ -2253,7 +2300,7 @@ class CaseStructBitsUnagreeableComp:
       s.out = OutPort( Bits16 )
       @update
       def upblk():
-        s.out = s.in_
+        s.out @= s.in_
 
 class CaseConcatComponentComp:
   class DUT( Component ):
@@ -2262,7 +2309,7 @@ class CaseConcatComponentComp:
       s.out = OutPort( Bits16 )
       @update
       def upblk():
-        s.out = concat( s, s.in_ )
+        s.out @= concat( s, s.in_ )
 
 class CaseZextVaribleNbitsComp:
   class DUT( Component ):
@@ -2271,7 +2318,7 @@ class CaseZextVaribleNbitsComp:
       s.out = OutPort( Bits16 )
       @update
       def upblk():
-        s.out = zext( s.in_, s.in_ )
+        s.out @= zext( s.in_, s.in_ )
 
 class CaseZextSmallNbitsComp:
   class DUT( Component ):
@@ -2280,7 +2327,7 @@ class CaseZextSmallNbitsComp:
       s.out = OutPort( Bits16 )
       @update
       def upblk():
-        s.out = zext( s.in_, 4 )
+        s.out @= zext( s.in_, 4 )
 
 class CaseSextVaribleNbitsComp:
   class DUT( Component ):
@@ -2289,7 +2336,7 @@ class CaseSextVaribleNbitsComp:
       s.out = OutPort( Bits16 )
       @update
       def upblk():
-        s.out = sext( s.in_, s.in_ )
+        s.out @= sext( s.in_, s.in_ )
 
 class CaseSextSmallNbitsComp:
   class DUT( Component ):
@@ -2298,7 +2345,25 @@ class CaseSextSmallNbitsComp:
       s.out = OutPort( Bits16 )
       @update
       def upblk():
-        s.out = sext( s.in_, 4 )
+        s.out @= sext( s.in_, 4 )
+
+class CaseTruncVaribleNbitsComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits8 )
+      s.out = OutPort( Bits16 )
+      @update
+      def upblk():
+        s.out @= trunc( s.in_, s.in_ )
+
+class CaseTruncLargeNbitsComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits8 )
+      s.out = OutPort( Bits16 )
+      @update
+      def upblk():
+        s.out @= trunc( s.in_, 16 )
 
 class CaseDroppedAttributeComp:
   class DUT( Component ):
@@ -2308,7 +2373,7 @@ class CaseDroppedAttributeComp:
       s.out = OutPort( Bits16 )
       @update
       def upblk():
-        s.out = s.in_
+        s.out @= s.in_
 
 class CaseL1UnsupportedSubCompAttrComp:
   class DUT( Component ):
@@ -2318,7 +2383,7 @@ class CaseL1UnsupportedSubCompAttrComp:
       s.comp_array = [ Bits1OutComp() for _ in range(5) ]
       @update
       def upblk():
-        s.out = s.comp_array[ 0 ].out
+        s.out @= s.comp_array[ 0 ].out
 
 class CaseIndexOutOfRangeComp:
   class DUT( Component ):
@@ -2327,7 +2392,7 @@ class CaseIndexOutOfRangeComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = s.in_[4]
+        s.out @= s.in_[4]
 
 class CaseBitSelOutOfRangeComp:
   class DUT( Component ):
@@ -2336,7 +2401,7 @@ class CaseBitSelOutOfRangeComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = s.in_[4]
+        s.out @= s.in_[4]
 
 class CaseIndexOnStructComp:
   class DUT( Component ):
@@ -2345,7 +2410,7 @@ class CaseIndexOnStructComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = s.in_[16]
+        s.out @= s.in_[16]
 
 class CaseSliceOnStructComp:
   class DUT( Component ):
@@ -2354,7 +2419,7 @@ class CaseSliceOnStructComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = s.in_[0:16]
+        s.out @= s.in_[0:16]
 
 class CaseSliceBoundLowerComp:
   class DUT( Component ):
@@ -2363,7 +2428,7 @@ class CaseSliceBoundLowerComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = s.in_[4:0]
+        s.out @= s.in_[4:0]
 
 class CaseSliceVariableBoundComp:
   class DUT( Component ):
@@ -2374,7 +2439,7 @@ class CaseSliceVariableBoundComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = s.in_[s.slice_l:s.slice_r]
+        s.out @= s.in_[s.slice_l:s.slice_r]
 
 class CaseSliceOutOfRangeComp:
   class DUT( Component ):
@@ -2383,7 +2448,7 @@ class CaseSliceOutOfRangeComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = s.in_[0:5]
+        s.out @= s.in_[0:5]
 
 class CaseLHSConstComp:
   class DUT( Component ):
@@ -2391,7 +2456,7 @@ class CaseLHSConstComp:
       u, s.v = 42, 42
       @update
       def upblk():
-        s.v = u
+        s.v @= u
 
 class CaseLHSComponentComp:
   class DUT( Component ):
@@ -2399,7 +2464,7 @@ class CaseLHSComponentComp:
       s.u = Bits16InOutPassThroughComp()
       @update
       def upblk():
-        s.u = 42
+        s.u @= 42
 
 class CaseRHSComponentComp:
   class DUT( Component ):
@@ -2407,7 +2472,7 @@ class CaseRHSComponentComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s
+        s.out @= s
 
 class CaseZextOnComponentComp:
   class DUT( Component ):
@@ -2415,7 +2480,7 @@ class CaseZextOnComponentComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = zext( s, 1 )
+        s.out @= zext( s, 1 )
 
 class CaseSextOnComponentComp:
   class DUT( Component ):
@@ -2423,7 +2488,7 @@ class CaseSextOnComponentComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = sext( s, 1 )
+        s.out @= sext( s, 1 )
 
 class CaseSizeCastComponentComp:
   class DUT( Component ):
@@ -2431,7 +2496,7 @@ class CaseSizeCastComponentComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = Bits32( s )
+        s.out @= Bits32( s )
 
 class CaseAttributeSignalComp:
   class DUT( Component ):
@@ -2440,7 +2505,7 @@ class CaseAttributeSignalComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.in_.foo
+        s.out @= s.in_.foo
 
 class CaseComponentInIndexComp:
   class DUT( Component ):
@@ -2449,7 +2514,7 @@ class CaseComponentInIndexComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.in_[ s ]
+        s.out @= s.in_[ s ]
 
 class CaseComponentBaseIndexComp:
   class DUT( Component ):
@@ -2457,7 +2522,7 @@ class CaseComponentBaseIndexComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s[ 1 ]
+        s.out @= s[ 1 ]
 
 class CaseComponentLowerSliceComp:
   class DUT( Component ):
@@ -2467,7 +2532,7 @@ class CaseComponentLowerSliceComp:
       s.out = OutPort( Bits4 )
       @update
       def upblk():
-        s.out = s.in_[ s.idx:4 ]
+        s.out @= s.in_[ s.idx:4 ]
 
 class CaseComponentHigherSliceComp:
   class DUT( Component ):
@@ -2477,7 +2542,7 @@ class CaseComponentHigherSliceComp:
       s.out = OutPort( Bits4 )
       @update
       def upblk():
-        s.out = s.in_[ 0:s.idx ]
+        s.out @= s.in_[ 0:s.idx ]
 
 class CaseSliceOnComponentComp:
   class DUT( Component ):
@@ -2485,7 +2550,7 @@ class CaseSliceOnComponentComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s[ 0:4 ]
+        s.out @= s[ 0:4 ]
 
 class CaseUpblkArgComp:
   class DUT( Component ):
@@ -2571,9 +2636,11 @@ class CaseKwArgsComp:
 class CaseNonNameCalledComp:
   class DUT( Component ):
     def construct( s ):
+      import copy
+      s.out = OutPort( Bits32 )
       @update
       def upblk():
-        x = copy.copy( x )
+        s.out @= copy.copy( 42 )
 
 class CaseFuncNotFoundComp:
   class DUT( Component ):
@@ -2631,7 +2698,7 @@ class CaseLambdaFuncComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = lambda: 42
+        s.out @= lambda: 42
 
 class CaseDictComp:
   class DUT( Component ):
@@ -2639,7 +2706,7 @@ class CaseDictComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = { 1:42 }
+        s.out @= { 1:42 }
 
 class CaseSetComp:
   class DUT( Component ):
@@ -2647,7 +2714,7 @@ class CaseSetComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = { 42 }
+        s.out @= { 42 }
 
 class CaseListComp:
   class DUT( Component ):
@@ -2655,7 +2722,7 @@ class CaseListComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = [ 42 ]
+        s.out @= [ 42 ]
 
 class CaseTupleComp:
   class DUT( Component ):
@@ -2663,7 +2730,7 @@ class CaseTupleComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = ( 42, )
+        s.out @= ( 42, )
 
 class CaseListComprehensionComp:
   class DUT( Component ):
@@ -2671,7 +2738,7 @@ class CaseListComprehensionComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = [ 42 for _ in range(1) ]
+        s.out @= [ 42 for _ in range(1) ]
 
 class CaseSetComprehensionComp:
   class DUT( Component ):
@@ -2679,7 +2746,7 @@ class CaseSetComprehensionComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = { 42 for _ in range(1) }
+        s.out @= { 42 for _ in range(1) }
 
 class CaseDictComprehensionComp:
   class DUT( Component ):
@@ -2687,7 +2754,7 @@ class CaseDictComprehensionComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = { 1:42 for _ in range(1) }
+        s.out @= { 1:42 for _ in range(1) }
 
 class CaseGeneratorExprComp:
   class DUT( Component ):
@@ -2695,7 +2762,7 @@ class CaseGeneratorExprComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = ( 42 for _ in range(1) )
+        s.out @= ( 42 for _ in range(1) )
 
 class CaseYieldComp:
   class DUT( Component ):
@@ -2703,7 +2770,7 @@ class CaseYieldComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = yield
+        s.out @= yield
 
 class CaseReprComp:
   class DUT( Component ):
@@ -2712,7 +2779,7 @@ class CaseReprComp:
       @update
       def upblk():
         # Python 2 only: s.out = `42`
-        s.out = repr(42)
+        s.out @= repr(42)
 
 class CaseStrComp:
   class DUT( Component ):
@@ -2720,7 +2787,7 @@ class CaseStrComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = '42'
+        s.out @= '42'
 
 class CaseClassdefComp:
   class DUT( Component ):
@@ -2825,7 +2892,7 @@ class CaseAddComponentComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = Bits1( 1 ) + s
+        s.out @= Bits1( 1 ) + s
 
 class CaseInvComponentComp:
   class DUT( Component ):
@@ -2833,7 +2900,7 @@ class CaseInvComponentComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = ~s
+        s.out @= ~s
 
 class CaseComponentStartRangeComp:
   class DUT( Component ):
@@ -2842,7 +2909,7 @@ class CaseComponentStartRangeComp:
       @update
       def upblk():
         for i in range( s, 8, 1 ):
-          s.out = ~Bits1( 1 )
+          s.out @= ~Bits1( 1 )
 
 class CaseComponentEndRangeComp:
   class DUT( Component ):
@@ -2851,7 +2918,7 @@ class CaseComponentEndRangeComp:
       @update
       def upblk():
         for i in range( 0, s, 1 ):
-          s.out = ~Bits1( 1 )
+          s.out @= ~Bits1( 1 )
 
 class CaseComponentStepRangeComp:
   class DUT( Component ):
@@ -2860,7 +2927,7 @@ class CaseComponentStepRangeComp:
       @update
       def upblk():
         for i in range( 0, 8, s ):
-          s.out = ~Bits1( 1 )
+          s.out @= ~Bits1( 1 )
 
 class CaseComponentIfCondComp:
   class DUT( Component ):
@@ -2869,9 +2936,9 @@ class CaseComponentIfCondComp:
       @update
       def upblk():
         if s:
-          s.out = Bits1( 1 )
+          s.out @= Bits1( 1 )
         else:
-          s.out = ~Bits1( 1 )
+          s.out @= ~Bits1( 1 )
 
 class CaseComponentIfExpCondComp:
   class DUT( Component ):
@@ -2879,7 +2946,7 @@ class CaseComponentIfExpCondComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = Bits1(1) if s else ~Bits1(1)
+        s.out @= Bits1(1) if s else ~Bits1(1)
 
 class CaseComponentIfExpBodyComp:
   class DUT( Component ):
@@ -2887,7 +2954,7 @@ class CaseComponentIfExpBodyComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = s if 1 else ~Bits1(1)
+        s.out @= s if 1 else ~Bits1(1)
 
 class CaseComponentIfExpElseComp:
   class DUT( Component ):
@@ -2895,7 +2962,7 @@ class CaseComponentIfExpElseComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = Bits1(1) if 1 else s
+        s.out @= Bits1(1) if 1 else s
 
 class CaseStructIfCondComp:
   class DUT( Component ):
@@ -2905,9 +2972,9 @@ class CaseStructIfCondComp:
       @update
       def upblk():
         if s.in_:
-          s.out = Bits1(1)
+          s.out @= Bits1(1)
         else:
-          s.out = ~Bits1(1)
+          s.out @= ~Bits1(1)
 
 class CaseZeroStepRangeComp:
   class DUT( Component ):
@@ -2916,7 +2983,7 @@ class CaseZeroStepRangeComp:
       @update
       def upblk():
         for i in range( 0, 4, 0 ):
-          s.out = Bits1( 1 )
+          s.out @= Bits1( 1 )
 
 class CaseVariableStepRangeComp:
   class DUT( Component ):
@@ -2926,7 +2993,7 @@ class CaseVariableStepRangeComp:
       @update
       def upblk():
         for i in range( 0, 4, s.in_ ):
-          s.out = Bits1( 1 )
+          s.out @= Bits1( 1 )
 
 class CaseStructIfExpCondComp:
   class DUT( Component ):
@@ -2935,7 +3002,7 @@ class CaseStructIfExpCondComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = Bits1(1) if s.in_ else ~Bits1(1)
+        s.out @= Bits1(1) if s.in_ else ~Bits1(1)
 
 class CaseDifferentTypesIfExpComp:
   class DUT( Component ):
@@ -2944,7 +3011,7 @@ class CaseDifferentTypesIfExpComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = Bits1(1) if 1 else s.in_
+        s.out @= Bits1(1) if 1 else s.in_
 
 class CaseNotStructComp:
   class DUT( Component ):
@@ -2953,7 +3020,7 @@ class CaseNotStructComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = not s.in_
+        s.out @= ~ s.in_
 
 class CaseAndStructComp:
   class DUT( Component ):
@@ -2962,7 +3029,7 @@ class CaseAndStructComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = Bits1( 1 ) and s.in_
+        s.out @= Bits1( 1 ) & s.in_
 
 class CaseAddStructBits1Comp:
   class DUT( Component ):
@@ -2971,7 +3038,7 @@ class CaseAddStructBits1Comp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = Bits1( 1 ) + s.in_
+        s.out @= Bits1( 1 ) + s.in_
 
 class CaseExplicitBoolComp:
   class DUT( Component ):
@@ -2980,7 +3047,7 @@ class CaseExplicitBoolComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = Bool( Bits1(1) )
+        s.out @= Bool( Bits1(1) )
 
 class CaseTmpVarUsedBeforeAssignmentComp:
   class DUT( Component ):
@@ -2988,7 +3055,7 @@ class CaseTmpVarUsedBeforeAssignmentComp:
       s.out = OutPort( Bits4 )
       @update
       def upblk():
-        s.out = u + Bits4( 1 )
+        s.out @= u + Bits4( 1 )
 
 class CaseForLoopElseComp:
   class DUT( Component ):
@@ -2997,9 +3064,9 @@ class CaseForLoopElseComp:
       @update
       def upblk():
         for i in range(4):
-          s.out = Bits4( 1 )
+          s.out @= Bits4( 1 )
         else:
-          s.out = Bits4( 1 )
+          s.out @= Bits4( 1 )
 
 class CaseSignalAsLoopIndexComp:
   class DUT( Component ):
@@ -3009,7 +3076,7 @@ class CaseSignalAsLoopIndexComp:
       @update
       def upblk():
         for s.in_ in range(4):
-          s.out = Bits4( 1 )
+          s.out @= Bits4( 1 )
 
 class CaseRedefLoopIndexComp:
   class DUT( Component ):
@@ -3019,7 +3086,7 @@ class CaseRedefLoopIndexComp:
       def upblk():
         for i in range(4):
           for i in range(4):
-            s.out = Bits4( 1 )
+            s.out @= Bits4( 1 )
 
 class CaseSignalAfterInComp:
   class DUT( Component ):
@@ -3029,7 +3096,7 @@ class CaseSignalAfterInComp:
       @update
       def upblk():
         for i in s.in_:
-          s.out = Bits4( 1 )
+          s.out @= Bits4( 1 )
 
 class CaseFuncCallAfterInComp:
   class DUT( Component ):
@@ -3039,7 +3106,7 @@ class CaseFuncCallAfterInComp:
       @update
       def upblk():
         for i in foo():
-          s.out = Bits4( 1 )
+          s.out @= Bits4( 1 )
 
 class CaseNoArgsToRangeComp:
   class DUT( Component ):
@@ -3048,7 +3115,7 @@ class CaseNoArgsToRangeComp:
       @update
       def upblk():
         for i in range():
-          s.out = Bits4( 1 )
+          s.out @= Bits4( 1 )
 
 class CaseTooManyArgsToRangeComp:
   class DUT( Component ):
@@ -3057,7 +3124,7 @@ class CaseTooManyArgsToRangeComp:
       @update
       def upblk():
         for i in range( 0, 4, 1, 1 ):
-          s.out = Bits4( 1 )
+          s.out @= Bits4( 1 )
 
 class CaseInvalidIsComp:
   class DUT( Component ):
@@ -3065,7 +3132,7 @@ class CaseInvalidIsComp:
       s.out = OutPort( Bits4 )
       @update
       def upblk():
-        s.out = Bits1( 1 ) is Bits1( 1 )
+        s.out @= Bits1( 1 ) is Bits1( 1 )
 
 class CaseInvalidIsNotComp:
   class DUT( Component ):
@@ -3073,7 +3140,7 @@ class CaseInvalidIsNotComp:
       s.out = OutPort( Bits4 )
       @update
       def upblk():
-        s.out = Bits1( 1 ) is not Bits1( 1 )
+        s.out @= Bits1( 1 ) is not Bits1( 1 )
 
 class CaseInvalidInComp:
   class DUT( Component ):
@@ -3081,7 +3148,7 @@ class CaseInvalidInComp:
       s.out = OutPort( Bits4 )
       @update
       def upblk():
-        s.out = Bits1( 1 ) in Bits1( 1 )
+        s.out @= Bits1( 1 ) in Bits1( 1 )
 
 class CaseInvalidNotInComp:
   class DUT( Component ):
@@ -3089,7 +3156,7 @@ class CaseInvalidNotInComp:
       s.out = OutPort( Bits4 )
       @update
       def upblk():
-        s.out = Bits1( 1 ) not in Bits1( 1 )
+        s.out @= Bits1( 1 ) not in Bits1( 1 )
 
 class CaseInvalidDivComp:
   class DUT( Component ):
@@ -3097,7 +3164,7 @@ class CaseInvalidDivComp:
       s.out = OutPort( Bits4 )
       @update
       def upblk():
-        s.out = Bits1( 1 ) // Bits1( 1 )
+        s.out @= Bits1( 1 ) // Bits1( 1 )
 
 class CaseMultiOpComparisonComp:
   class DUT( Component ):
@@ -3105,7 +3172,7 @@ class CaseMultiOpComparisonComp:
       s.out = OutPort( Bits4 )
       @update
       def upblk():
-        s.out = Bits1( 0 ) <= Bits2( 1 ) <= Bits2( 2 )
+        s.out @= Bits1( 0 ) <= Bits2( 1 ) <= Bits2( 2 )
 
 class CaseInvalidBreakComp:
   class DUT( Component ):
@@ -3128,7 +3195,7 @@ class CaseBitsAttributeComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = s.in_.foo
+        s.out @= s.in_.foo
 
 class CaseStructMissingAttributeComp:
   class DUT( Component ):
@@ -3137,7 +3204,7 @@ class CaseStructMissingAttributeComp:
       s.out = OutPort( Bits1 )
       @update
       def upblk():
-        s.out = s.in_.bar
+        s.out @= s.in_.bar
 
 class CaseInterfaceMissingAttributeComp:
   class DUT( Component ):
@@ -3146,7 +3213,7 @@ class CaseInterfaceMissingAttributeComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.in_.bar
+        s.out @= s.in_.bar
 
 class CaseSubCompMissingAttributeComp:
   class DUT( Component ):
@@ -3155,7 +3222,7 @@ class CaseSubCompMissingAttributeComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out = s.comp.bar
+        s.out @= s.comp.bar
 
 class CaseCrossHierarchyAccessComp:
   class DUT( Component ):
@@ -3164,7 +3231,7 @@ class CaseCrossHierarchyAccessComp:
       s.a_out = OutPort( Bits32 )
       @update
       def upblk():
-        s.a_out = s.comp.comp.out
+        s.a_out @= s.comp.comp.out
 
 class CaseStarArgComp:
   class DUT( Component ):

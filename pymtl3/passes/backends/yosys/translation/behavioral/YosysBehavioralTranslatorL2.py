@@ -110,10 +110,10 @@ class YosysBehavioralRTLIRToVVisitorL2(
   # visit_BoolOp
   #-----------------------------------------------------------------------
 
-  def visit_BoolOp( s, node ):
-    for child in node.values:
-      child._top_expr = 1
-    return super().visit_BoolOp( node )
+  # def visit_BoolOp( s, node ):
+  #   for child in node.values:
+  #     child._top_expr = 1
+  #   return super().visit_BoolOp( node )
 
   #-----------------------------------------------------------------------
   # visit_BinOp
@@ -139,4 +139,5 @@ class YosysBehavioralRTLIRToVVisitorL2(
 
   def visit_LoopVar( s, node ):
     s.check_res( node, node.name )
-    return "__loopvar__" + s.blk.__name__ + "_" + node.name
+    nbits = node.Type.get_dtype().get_length()
+    return f"{nbits}'(__loopvar__{s.blk.__name__}_{node.name})"

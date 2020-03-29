@@ -11,8 +11,7 @@ except:
   from pymtl3.datatypes import Bits
 
   def read_bytearray_bits( arr, addr, nbytes ):
-    ret = Bits( nbytes << 3, 0 )
-
+    ret = 0
     begin = int(addr)
     addr  = begin + nbytes - 1
 
@@ -20,7 +19,7 @@ except:
       ret = (ret << 8) + arr[addr]
       addr -= 1
 
-    return ret
+    return Bits( nbytes << 3, ret )
 
 try:
   from mamba import write_bytearray_bits

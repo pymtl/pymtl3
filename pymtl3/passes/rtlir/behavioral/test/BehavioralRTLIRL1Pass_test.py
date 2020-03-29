@@ -24,6 +24,7 @@ from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 from pymtl3.passes.testcases import (
     CaseAssignMultiTargetComp,
     CaseAttributeSignalComp,
+    CaseBits64TruncInComp,
     CaseBitsArgsComp,
     CaseBitSelOutOfRangeComp,
     CaseClassdefComp,
@@ -80,6 +81,8 @@ from pymtl3.passes.testcases import (
     CaseStrComp,
     CaseStructBitsUnagreeableComp,
     CaseTmpComponentComp,
+    CaseTruncLargeNbitsComp,
+    CaseTruncVaribleNbitsComp,
     CaseTryExceptComp,
     CaseTryFinallyComp,
     CaseTupleComp,
@@ -120,6 +123,9 @@ def local_do_test( m ):
   except AttributeError:
     pass
 
+def test_L1_call_name( do_test ):
+  do_test( CaseNonNameCalledComp )
+
 #-------------------------------------------------------------------------
 # PyMTL type errors
 #-------------------------------------------------------------------------
@@ -133,20 +139,28 @@ def test_L1_concat_component( do_test ):
     do_test( CaseConcatComponentComp )
 
 def test_L1_zext_variable_nbits( do_test ):
-  with expected_failure( PyMTLTypeError, "not a constant number" ):
+  with expected_failure( PyMTLSyntaxError, "not a constant int or BitsN type" ):
     do_test( CaseZextVaribleNbitsComp )
 
 def test_L1_zext_small_nbits( do_test ):
-  with expected_failure( PyMTLTypeError, "not greater" ):
+  with expected_failure( PyMTLTypeError, "less than the bitwidth of the operand" ):
     do_test( CaseZextSmallNbitsComp )
 
 def test_L1_sext_variable_nbits( do_test ):
-  with expected_failure( PyMTLTypeError, "not a constant number" ):
+  with expected_failure( PyMTLSyntaxError, "not a constant int or BitsN type" ):
     do_test( CaseSextVaribleNbitsComp )
 
 def test_L1_sext_small_nbits( do_test ):
-  with expected_failure( PyMTLTypeError, "not greater" ):
+  with expected_failure( PyMTLTypeError, "less than the bitwidth of the operand" ):
     do_test( CaseSextSmallNbitsComp )
+
+def test_L1_trunc_variable_nbits( do_test ):
+  with expected_failure( PyMTLSyntaxError, "not a constant int or BitsN type" ):
+    do_test( CaseTruncVaribleNbitsComp )
+
+def test_L1_trunc_large_nbits( do_test ):
+  with expected_failure( PyMTLTypeError, "larger than the bitwidth of the operand" ):
+    do_test( CaseTruncLargeNbitsComp )
 
 def test_L1_wrong_attribute( do_test ):
   with expected_failure( PyMTLTypeError, "does not have attribute in_" ):
@@ -298,10 +312,6 @@ def test_L1_call_double_star_arg( do_test ):
 def test_L1_call_keyword_arg( do_test ):
   with expected_failure( PyMTLSyntaxError, "keyword argument" ):
     do_test( CaseKwArgsComp )
-
-def test_L1_call_name( do_test ):
-  with expected_failure( PyMTLSyntaxError, "function is not found" ):
-    do_test( CaseNonNameCalledComp )
 
 def test_L1_call_not_found( do_test ):
   with expected_failure( PyMTLSyntaxError, "function is not found" ):

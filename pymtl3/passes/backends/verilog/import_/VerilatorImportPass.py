@@ -36,6 +36,8 @@ from ..util.utility import (
     wrap,
 )
 from ..VerilogPlaceholderPass import VerilogPlaceholderPass
+from .verilator_wrapper_c_template import template as c_template
+from .verilator_wrapper_py_template import template as py_template
 
 
 class VerilatorImportPass( BasePass ):
@@ -273,11 +275,6 @@ class VerilatorImportPass( BasePass ):
     verilator_xinit_seed = ip_cfg.get_vl_xinit_seed()
     ip_cfg.vprint("\n=====Generate C wrapper=====")
 
-    # The wrapper template should be in the same directory as this file
-    template_name = \
-      os.path.dirname( os.path.abspath( __file__ ) ) + \
-      os.path.sep + 'verilator_wrapper.c.template'
-
     # Generate port declarations for the verilated model in C
     port_defs = []
     for _, v_name, port, _ in ports:
@@ -296,11 +293,8 @@ class VerilatorImportPass( BasePass ):
     port_inits = '\n'.join( port_inits )
 
     # Fill in the C wrapper template
-    with open(template_name) as template:
-      with open( wrapper_name, 'w' ) as output:
-        c_wrapper = template.read()
-        c_wrapper = c_wrapper.format( **locals() )
-        output.write( c_wrapper )
+    with open( wrapper_name, 'w' ) as output:
+      output.write( c_template.format( **locals() ) )
 
     ip_cfg.vprint(f"Successfully generated C wrapper {wrapper_name}!", 2)
     return port_cdefs
@@ -357,10 +351,6 @@ class VerilatorImportPass( BasePass ):
     """Return the file name of the generated PyMTL component wrapper."""
     ip_cfg.vprint("\n=====Generate PyMTL wrapper=====")
 
-    # Load the wrapper template
-    template_name = \
-      os.path.dirname( os.path.abspath( __file__ ) ) + \
-      os.path.sep + 'verilator_wrapper.py.template'
     wrapper_name = ip_cfg.get_py_wrapper_path()
 
     # Port definitions of verilated model
@@ -391,30 +381,28 @@ class VerilatorImportPass( BasePass ):
       external_trace_c_def = ''
 
     # Fill in the python wrapper template
-    with open(template_name) as template:
-      with open( wrapper_name, 'w' ) as output:
-        py_wrapper = template.read()
-        py_wrapper = py_wrapper.format(
-          component_name        = ip_cfg.translated_top_module,
-          has_clk               = int(ph_cfg.has_clk),
-          clk                   = 'inv_clk' if not ph_cfg.has_clk else \
-                                  next(filter(lambda x: x[0][0]=='clk', ports))[1],
-          lib_file              = ip_cfg.get_shared_lib_path(),
-          port_cdefs            = ('  '*4+'\n').join( port_cdefs ),
-          port_defs             = '\n'.join( port_defs ),
-          structs_input         = '\n'.join( structs_input ),
-          structs_output        = '\n'.join( structs_output ),
-          set_comb_input        = '\n'.join( set_comb_input ),
-          set_comb_output       = '\n'.join( set_comb_output ),
-          line_trace            = line_trace,
-          in_line_trace         = in_line_trace,
-          dump_vcd              = int(ip_cfg.vl_trace),
-          has_vl_trace_filename = bool(ip_cfg.vl_trace_filename),
-          vl_trace_filename     = ip_cfg.vl_trace_filename,
-          external_trace        = int(ip_cfg.vl_line_trace),
-          trace_c_def           = external_trace_c_def,
-        )
-        output.write( py_wrapper )
+    with open( wrapper_name, 'w' ) as output:
+      py_wrapper = py_template.format(
+        component_name        = ip_cfg.translated_top_module,
+        has_clk               = int(ph_cfg.has_clk),
+        clk                   = 'inv_clk' if not ph_cfg.has_clk else \
+                                next(filter(lambda x: x[0][0]=='clk', ports))[1],
+        lib_file              = ip_cfg.get_shared_lib_path(),
+        port_cdefs            = ('  '*4+'\n').join( port_cdefs ),
+        port_defs             = '\n'.join( port_defs ),
+        structs_input         = '\n'.join( structs_input ),
+        structs_output        = '\n'.join( structs_output ),
+        set_comb_input        = '\n'.join( set_comb_input ),
+        set_comb_output       = '\n'.join( set_comb_output ),
+        line_trace            = line_trace,
+        in_line_trace         = in_line_trace,
+        dump_vcd              = int(ip_cfg.vl_trace),
+        has_vl_trace_filename = bool(ip_cfg.vl_trace_filename),
+        vl_trace_filename     = ip_cfg.vl_trace_filename,
+        external_trace        = int(ip_cfg.vl_line_trace),
+        trace_c_def           = external_trace_c_def,
+      )
+      output.write( py_wrapper )
 
     ip_cfg.vprint(f"Successfully generated PyMTL wrapper {wrapper_name}!", 2)
     return symbols
@@ -708,9 +696,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
     nbits = dtype.get_length()
     l, r = pos, pos+nbits
     if d == 'i':
-      ret = [ f"{rhs}[{l}:{r}] = {lhs}" ]
+      ret = [ f"{rhs}[{l}:{r}] @= {lhs}" ]
     else:
-      ret = [ f"{lhs} = {rhs}[{l}:{r}]" ]
+      ret = [ f"{lhs} @= {rhs}[{l}:{r}]" ]
     return ret, r
 
   def _gen_struct_write( s, d, lhs, rhs, dtype, pos ):
@@ -751,7 +739,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     blocks   = [ f's.{mangled_rhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  f'@update',
                  f'def isignal_{mangled_rhs}():',
-                 f'  s.{mangled_rhs} = {rhs}' ]
+                 f'  s.{mangled_rhs} @= {rhs}' ]
     set_comb = ( s._gen_ref_write( lhs, 's.'+mangled_rhs, dtype_nbits ) )
     return set_comb, blocks
 
@@ -842,9 +830,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
     blocks   = [ f's.{mangled_lhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  f'@update',
                  f'def osignal_{mangled_lhs}():',
-                 f'  {lhs} = s.{mangled_lhs}' ]
+                 f'  {lhs} @= s.{mangled_lhs}' ]
 
-    set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits )
+    set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits, '@=' )
     return set_comb, blocks
 
   def gen_port_struct_output( s, lhs, mangled_lhs, rhs, dtype, symbols ):
@@ -864,7 +852,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     # We create a new struct if we are copying values from verilator
     # world to pymtl land and send it out through the output of this
     # component
-    upblk_content = [ f"{lhs} = {dtype_name}()" ]
+    upblk_content = [ f"{lhs} @= {dtype_name}()" ]
     body, pos = s._gen_struct_write( 'o', lhs, 's.'+mangled_lhs, dtype, 0 )
     assert pos == dtype.get_length()
 
@@ -875,7 +863,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
     # We create a long Bits object tmp first
     # Then we load the full Bits to tmp
-    set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits )
+    set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits, '@=' )
     return set_comb, blocks
 
   def gen_port_output( s, lhs, pnames, rhs, dtype, symbols ):
@@ -1000,9 +988,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
       dtype = port.get_dtype()
     return dtype.get_length()
 
-  def _gen_ref_write( s, lhs, rhs, nbits ):
+  def _gen_ref_write( s, lhs, rhs, nbits, equal='=' ):
     if nbits <= 64:
-      return [ f"{lhs}[0] = int({rhs})" ]
+      return [ f"{lhs}[0] {equal} int({rhs})" ]
     else:
       ret = []
       ITEM_BITWIDTH = 32
@@ -1010,12 +998,12 @@ m->{name}{sub} = {deference}model->{name}{sub};
       for idx in range(num_assigns):
         l = ITEM_BITWIDTH*idx
         r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
-        ret.append( f"{lhs}[{idx}] = int({rhs}[{l}:{r}])" )
+        ret.append( f"{lhs}[{idx}] {equal} int({rhs}[{l}:{r}])" )
       return ret
 
-  def _gen_ref_read( s, lhs, rhs, nbits ):
+  def _gen_ref_read( s, lhs, rhs, nbits, equal='=' ):
     if nbits <= 64:
-      return [ f"{lhs} = Bits{nbits}({rhs}[0])" ]
+      return [ f"{lhs} {equal} Bits{nbits}({rhs}[0])" ]
     else:
       ret = []
       ITEM_BITWIDTH = 32
@@ -1024,7 +1012,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         l = ITEM_BITWIDTH*idx
         r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
         _nbits = r - l
-        ret.append( f"{lhs}[{l}:{r}] = Bits{_nbits}({rhs}[{idx}])" )
+        ret.append( f"{lhs}[{l}:{r}] {equal} Bits{_nbits}({rhs}[{idx}])" )
       return ret
 
   def _gen_bits_decl( s, nbits ):

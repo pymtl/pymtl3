@@ -99,7 +99,7 @@ class MemoryCL( Component ):
 
           if   req.type_ == MemMsgType.READ:
             resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
-                                    s.mem.read( req.addr, len_ ) )
+                                    zext( s.mem.read( req.addr, len_ ), req_classes[i].data_nbits ) )
 
           elif req.type_ == MemMsgType.WRITE:
             s.mem.write( req.addr, len_, req.data )
@@ -108,6 +108,7 @@ class MemoryCL( Component ):
             resp = resp_classes[i]( req.type_, req.opaque, 0, 0, 0 )
 
           else: # AMOS
+            assert req.len == 0
             resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
                s.mem.amo( req.type_, req.addr, len_, req.data ) )
 

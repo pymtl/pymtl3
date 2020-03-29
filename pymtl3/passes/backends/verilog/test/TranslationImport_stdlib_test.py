@@ -34,7 +34,7 @@ def local_do_test( _m ):
     # Mark component `_m` as to be translated and imported
     _m.set_metadata( TranslationImportPass.enable, True )
     m = TranslationImportPass()( _m )
-    sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
+    sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
     sim.run_test()
   finally:
     try:
@@ -46,14 +46,12 @@ def local_do_test( _m ):
 
 def test_arbiter_rr_arb_4( do_test ):
   # Customized test function
-  def run_test( cls, args, test_vectors ):
-    m = cls( *args )
-    BitsN = mk_bits( args[0] )
-    def tv_in( model, test_vector ):
-      model.reqs = BitsN(test_vector[0])
-    def tv_out( model, test_vector ):
-      assert model.grants == BitsN(test_vector[1])
-    m._test_vectors = test_vectors
+  def run_test( m, tvs ):
+    def tv_in( model, tv ):
+      model.reqs @= tv[0]
+    def tv_out( model, tv ):
+      assert model.grants == tv[1]
+    m._tvs = tvs
     m._tv_in, m._tv_out = tv_in, tv_out
     do_test( m )
 
@@ -68,15 +66,13 @@ def test_arbiter_rr_arb_4( do_test ):
     test_func.__globals__['run_test'] = _run_test
 
 def test_arbiter_rr_arb_en_4( do_test ):
-  def run_test( cls, args, test_vectors ):
-    m = cls( *args )
-    BitsN = mk_bits( args[0] )
-    def tv_in( model, test_vector ):
-      model.en   = Bits1( test_vector[0] )
-      model.reqs = BitsN( test_vector[1] )
-    def tv_out( model, test_vector ):
-      assert model.grants == BitsN(test_vector[2])
-    m._test_vectors = test_vectors
+  def run_test( m, tvs ):
+    def tv_in( model, tv ):
+      model.en   @= tv[0]
+      model.reqs @= tv[1]
+    def tv_out( model, tv ):
+      assert model.grants == tv[2]
+    m._tvs = tvs
     m._tv_in, m._tv_out = tv_in, tv_out
     do_test( m )
 
@@ -89,21 +85,17 @@ def test_arbiter_rr_arb_en_4( do_test ):
     test_func.__globals__['run_en_test'] = _run_test
 
 def test_crossbar3( do_test ):
-  def run_test( cls, args, test_vectors ):
-    m = cls( *args )
-    T = args[1]
-    Tsel = mk_bits( clog2( args[0] ) )
-
-    def tv_in( model, test_vector ):
+  def run_test( m, tvs ):
+    def tv_in( model, tv ):
       n = len( model.in_ )
       for i in range(n):
-        model.in_[i] = T(test_vector[i])
-        model.sel[i] = Tsel(test_vector[n+i])
-    def tv_out( model, test_vector ):
+        model.in_[i] @= tv[i]
+        model.sel[i] @= tv[n+i]
+    def tv_out( model, tv ):
       n = len( model.in_ )
       for i in range(n):
-        assert model.out[i] == T(test_vector[n*2+i])
-    m._test_vectors = test_vectors
+        assert model.out[i] == tv[n*2+i]
+    m._tvs = tvs
     m._tv_in, m._tv_out = tv_in, tv_out
     do_test( m )
 
@@ -116,12 +108,12 @@ def test_crossbar3( do_test ):
     test_func.__globals__['run_test_crossbar'] = _run_test
 
 def test_encoder_5_directed( do_test ):
-  def run_test( m, test_vectors ):
-    def tv_in( model, test_vector ):
-      model.in_ = test_vector[0]
-    def tv_out( model, test_vector ):
-      assert model.out == test_vector[1]
-    m._test_vectors = test_vectors
+  def run_test( m, tvs ):
+    def tv_in( model, tv ):
+      model.in_ @= tv[0]
+    def tv_out( model, tv ):
+      assert model.out == tv[1]
+    m._tvs = tvs
     m._tv_in, m._tv_out = tv_in, tv_out
     do_test( m )
 
@@ -137,77 +129,40 @@ def test_encoder_5_directed( do_test ):
 # Queue tests
 #-------------------------------------------------------------------------
 
-def _queue_test_tv_in( model, tv ):
-  model.enq.val = tv[0]
-  model.enq.msg = tv[2]
-  model.deq.rdy = tv[4]
+# Swap run_test_queue with modified version that calls the local do_test
+def _run_queue_test( do_test, test_func ):
 
-def _queue_test_tv_out( model, tv ):
-  if tv[1] != '?': assert model.enq.rdy == tv[1]
-  if tv[3] != '?': assert model.deq.val == tv[3]
-  if tv[5] != '?': assert model.deq.msg == tv[5]
+  def _run_test( m, tvs ):
+    def tv_in( model, tv ):
+      model.enq.val @= tv[0]
+      model.enq.msg @= tv[2]
+      model.deq.rdy @= tv[4]
+    def tv_out( model, tv ):
+      if tv[1] != '?': assert model.enq.rdy == tv[1]
+      if tv[3] != '?': assert model.deq.val == tv[3]
+      if tv[5] != '?': assert model.deq.msg == tv[5]
+    m._tvs = tvs
+    m._tv_in, m._tv_out = tv_in, tv_out
+    do_test( m )
+
+  original_run_test = test_func.__globals__['run_test_queue']
+  test_func.__globals__['run_test_queue'] = _run_test
+  try:
+    test_func()
+  finally:
+    test_func.__globals__['run_test_queue'] = original_run_test
 
 def test_bypass_Bits( do_test ):
-  def _run_queue_test( m, test_vectors ):
-    m._test_vectors = test_vectors
-    m._tv_in, m._tv_out = _queue_test_tv_in, _queue_test_tv_out
-    do_test( m )
-  test_func = _bypass_Bits
-  _run_test = test_func.__globals__['run_test_queue']
-  test_func.__globals__['run_test_queue'] = _run_queue_test
-  try:
-    test_func()
-  finally:
-    test_func.__globals__['run_test_queue'] = _run_test
+  _run_queue_test( do_test, _bypass_Bits )
 
 def test_pipe_Bits( do_test ):
-  def _run_queue_test( m, test_vectors ):
-    m._test_vectors = test_vectors
-    m._tv_in, m._tv_out = _queue_test_tv_in, _queue_test_tv_out
-    do_test( m )
-  test_func = _pipe_Bits
-  _run_test = test_func.__globals__['run_test_queue']
-  test_func.__globals__['run_test_queue'] = _run_queue_test
-  try:
-    test_func()
-  finally:
-    test_func.__globals__['run_test_queue'] = _run_test
+  _run_queue_test( do_test, _pipe_Bits )
 
 def test_normal_Bits( do_test ):
-  def _run_queue_test( m, test_vectors ):
-    m._test_vectors = test_vectors
-    m._tv_in, m._tv_out = _queue_test_tv_in, _queue_test_tv_out
-    do_test( m )
-  test_func = _normal_Bits
-  _run_test = test_func.__globals__['run_test_queue']
-  test_func.__globals__['run_test_queue'] = _run_queue_test
-  try:
-    test_func()
-  finally:
-    test_func.__globals__['run_test_queue'] = _run_test
+  _run_queue_test( do_test, _normal_Bits )
 
 def test_2entry_normal_Bits( do_test ):
-  def _run_queue_test( m, test_vectors ):
-    m._test_vectors = test_vectors
-    m._tv_in, m._tv_out = _queue_test_tv_in, _queue_test_tv_out
-    do_test( m )
-  test_func = _n2
-  _run_test = test_func.__globals__['run_test_queue']
-  test_func.__globals__['run_test_queue'] = _run_queue_test
-  try:
-    test_func()
-  finally:
-    test_func.__globals__['run_test_queue'] = _run_test
+  _run_queue_test( do_test, _n2 )
 
 def test_3entry_normal_Bits( do_test ):
-  def _run_queue_test( m, test_vectors ):
-    m._test_vectors = test_vectors
-    m._tv_in, m._tv_out = _queue_test_tv_in, _queue_test_tv_out
-    do_test( m )
-  test_func = _n3
-  _run_test = test_func.__globals__['run_test_queue']
-  test_func.__globals__['run_test_queue'] = _run_queue_test
-  try:
-    test_func()
-  finally:
-    test_func.__globals__['run_test_queue'] = _run_test
+  _run_queue_test( do_test, _n3 )

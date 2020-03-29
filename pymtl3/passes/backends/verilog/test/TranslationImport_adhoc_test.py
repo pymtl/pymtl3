@@ -52,7 +52,7 @@ def run_test( case ):
     _m.set_metadata( TranslationImportPass.enable, True )
     _m.apply( VerilogPlaceholderPass() )
     m = TranslationImportPass()( _m )
-    sim = TestVectorSimulator( m, case.TEST_VECTOR, case.TV_IN, case.TV_OUT )
+    sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
     sim.run_test()
   finally:
     try:

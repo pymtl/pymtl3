@@ -255,7 +255,7 @@ CaseBits32FreeVarToTmpVarComp = set_attributes( CaseBits32FreeVarToTmpVarComp,
     'REF_TMPVAR',
     '''\
         tmpvars:
-          tmpvar: u in upblk of Vector32
+          tmpvar: u in upblk of Vector1
     ''',
     'REF_SRC',
     '''\
@@ -271,7 +271,7 @@ CaseBits32FreeVarToTmpVarComp = set_attributes( CaseBits32FreeVarToTmpVarComp,
         wire_decls:
         component_decls:
         tmpvars:
-          tmpvar: u in upblk of Vector32
+          tmpvar: u in upblk of Vector1
         upblk_srcs:
           upblk_src: upblk
         connections:
@@ -326,7 +326,7 @@ CaseBits32ConstIntToTmpVarComp = set_attributes( CaseBits32ConstIntToTmpVarComp,
     'REF_TMPVAR',
     '''\
         tmpvars:
-          tmpvar: u in upblk of Vector32
+          tmpvar: u in upblk of Vector1
     ''',
     'REF_SRC',
     '''\
@@ -341,7 +341,7 @@ CaseBits32ConstIntToTmpVarComp = set_attributes( CaseBits32ConstIntToTmpVarComp,
         wire_decls:
         component_decls:
         tmpvars:
-          tmpvar: u in upblk of Vector32
+          tmpvar: u in upblk of Vector1
         upblk_srcs:
           upblk_src: upblk
         connections:

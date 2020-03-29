@@ -15,13 +15,15 @@ from pymtl3.dsl.Connectable import InPort, Interface, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import RD, WR, U
 from pymtl3.dsl.errors import (
     InvalidConstraintError,
-    InvalidFFAssignError,
     InvalidFuncCallError,
-    InvalidUpblkWriteError,
     MultiWriterError,
     PyMTLDeprecationError,
     UpblkCyclicError,
+    UpdateBlockWriteError,
+    UpdateFFBlockWriteError,
+    UpdateFFNonTopLevelSignalError,
     VarNotDeclaredError,
+    WriteNonSignalError,
 )
 
 from .sim_utils import simple_sim_pass
@@ -50,9 +52,9 @@ class TestSource( ComponentLevel2 ):
     @update
     def up_src():
       if not s.input_:
-        s.out = Type()
+        s.out @= Type()
       else:
-        s.out = s.input_.popleft()
+        s.out @= s.input_.popleft()
 
   def done( s ):
     return not s.input_
@@ -125,11 +127,11 @@ def test_simple():
 
       @update
       def upA():
-        s.a = s.b + 1
+        s.a @= s.b + 1
 
       @update
       def upB():
-        s.b = s.b + 1
+        s.b @= s.b + 1
 
     def done( s ):
       return True
@@ -146,11 +148,11 @@ def test_cyclic_impl_dependency():
 
       @update
       def upA():
-        s.a = s.b
+        s.a @= s.b
 
       @update
       def upB():
-        s.b = s.a
+        s.b @= s.a
 
     def done( s ):
       return True
@@ -247,10 +249,10 @@ def test_invalid_ff_assignment1():
 
   try:
     _test_model( Top )
-  except InvalidFFAssignError as e:
+  except UpdateFFBlockWriteError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown InvalidFFAssignError.")
+  raise Exception("Should've thrown UpdateFFBlockWriteError.")
 
 def test_invalid_ff_assignment2():
 
@@ -261,14 +263,14 @@ def test_invalid_ff_assignment2():
       @update_ff
       def up_from_src():
         temp **= s.wire0 + 1
-        s.wire0 += temp
+        s.wire0 <<= temp
 
   try:
     _test_model( Top )
-  except InvalidFFAssignError as e:
+  except UnboundLocalError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown InvalidFFAssignError.")
+  raise Exception("Should've thrown UnboundLocalError.")
 
 def test_invalid_ff_assignment_slice():
 
@@ -282,10 +284,10 @@ def test_invalid_ff_assignment_slice():
 
   try:
     _test_model( Top )
-  except InvalidFFAssignError as e:
+  except UpdateFFNonTopLevelSignalError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown InvalidFFAssignError.")
+  raise Exception("Should've thrown UpdateFFNonTopLevelSignalError.")
 
 def test_2d_array_vars():
 
@@ -301,14 +303,14 @@ def test_2d_array_vars():
 
       @update
       def up_from_src():
-        s.wire[0][0] = s.src.out
-        s.wire[0][1] = s.src.out + 1
+        s.wire[0][0] @= s.src.out
+        s.wire[0][1] @= s.src.out + 1
 
       s.reg = Wire(Bits32)
 
       @update
       def up_reg():
-        s.reg = s.wire[0][0] + s.wire[0][1]
+        s.reg @= s.wire[0][0] + s.wire[0][1]
 
       s.add_constraints(
         U(up_reg) < RD(s.reg), # up_reg writes s.reg
@@ -317,7 +319,7 @@ def test_2d_array_vars():
       @update
       def upA():
         for i in range(2):
-          s.wire[1][i] = s.reg + i
+          s.wire[1][i] @= s.reg + i
 
       for i in range(2):
         s.add_constraints(
@@ -326,7 +328,7 @@ def test_2d_array_vars():
 
       @update
       def up_to_sink():
-        s.sink.in_ = s.wire[1][0] + s.wire[1][1]
+        s.sink.in_ @= s.wire[1][0] + s.wire[1][1]
 
       up_sink = s.sink.get_update_block("up_sink")
 
@@ -356,7 +358,7 @@ def test_wire_up_constraint():
 
       @update
       def up_from_src():
-        s.sink.in_ = s.src.out + 1
+        s.sink.in_ @= s.src.out + 1
 
       s.add_constraints(
         U(up_from_src) < RD(s.sink.in_),
@@ -371,24 +373,34 @@ def test_wire_up_constraint():
 
   _test_model( Top )
 
+class A:
+  pass
 # write two disjoint slices
 def test_write_two_disjoint_slices():
 
   class Top(ComponentLevel2):
     def construct( s ):
       s.A  = Wire( Bits32 )
+      s.B  = Wire( Bits16 )
 
+      s.x = 16
+      x = A()
+      x.y = 4
       @update
       def up_wr_0_16():
-        s.A[0:16] = Bits16( 0xff )
+        s.x <<= 123
+        x.y = 123
+        s.A[0:16] @= Bits16( 0xff )
 
       @update
       def up_wr_16_30():
-        s.A[16:30] = Bits16( 0xff )
+        s.A[16:32] @= Bits16( 0xff )
+        s.B @= s.A[1:17]
 
       @update
       def up_rd_12_30():
         assert s.A[12:30] == 0xff0
+        print(s.B)
 
     def done( s ):
       return True
@@ -409,7 +421,7 @@ def test_wr_A_b_rd_A_impl():
 
       @update
       def up_wr_A_b():
-        s.A.b = Bits32(123)
+        s.A.b @= 123
 
       @update
       def up_rd_A():
@@ -434,18 +446,18 @@ def test_add_loopback():
 
       @update
       def up_from_src():
-        s.wire0 = s.src.out + 1
+        s.wire0 @= s.src.out + 1
 
       s.reg0 = Wire(Bits32)
 
       @update
       def upA():
-        s.reg0 = s.wire0 + s.wire1
+        s.reg0 @= s.wire0 + s.wire1
 
       @update
       def up_to_sink_and_loop_back():
-        s.sink.in_ = s.reg0
-        s.wire1 = s.reg0
+        s.sink.in_ @= s.reg0
+        s.wire1 @= s.reg0
 
       s.add_constraints(
         U(upA) < WR(s.wire1),
@@ -476,7 +488,7 @@ def test_add_loopback_ff():
 
       @update
       def up_from_src():
-        s.wire0 = s.src.out + 1
+        s.wire0 @= s.src.out + 1
 
       s.reg0 = Wire(Bits32)
 
@@ -487,8 +499,8 @@ def test_add_loopback_ff():
 
       @update
       def up_to_sink_and_loop_back():
-        s.sink.in_ = s.reg0
-        s.wire1 = s.reg0
+        s.sink.in_ @= s.reg0
+        s.wire1 @= s.reg0
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -513,8 +525,8 @@ def test_2d_array_vars_impl():
 
       @update
       def up_from_src():
-        s.wire[0][0] = s.src.out
-        s.wire[0][1] = s.src.out + 1
+        s.wire[0][0] @= s.src.out
+        s.wire[0][1] @= s.src.out + 1
 
       s.reg = Wire(Bits32)
 
@@ -525,11 +537,11 @@ def test_2d_array_vars_impl():
       @update
       def upA():
         for i in range(2):
-          s.wire[1][i] = s.reg + i
+          s.wire[1][i] @= s.reg + i
 
       @update
       def up_to_sink():
-        s.sink.in_ = s.wire[1][0] + s.wire[1][1]
+        s.sink.in_ @= s.wire[1][0] + s.wire[1][1]
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -554,7 +566,7 @@ def test_simple_func_impl():
 
       @s.func
       def assignb( b ):
-        s.b = b + (s.counter_assign == -1) # never -1
+        s.b @= b + (s.counter_assign < 0) # never -1
 
       @update
       def up_write():
@@ -562,7 +574,7 @@ def test_simple_func_impl():
           assign( Bits32(1), Bits32(2) )
         else:
           assign( Bits32(10), Bits32(20) )
-        s.counter_assign += 1
+        s.counter_assign @= s.counter_assign + 1
 
       @update
       def up_read():
@@ -570,13 +582,13 @@ def test_simple_func_impl():
           assert s.a == 1 and s.b == min(100,2)
         else:
           assert s.a == 10 and s.b == 20
-        s.counter_read += 1
+        s.counter_read @= s.counter_read + 1
 
       # The order doesn't matter. As a result, funcs should be processed
       # after construction time
       @s.func
       def assign( a, b ):
-        s.a = a + (s.counter_assign == -1)
+        s.a = a + (s.counter_assign < 0)
         assignb( b )
 
     def done( s ):
@@ -650,7 +662,7 @@ def test_update_ff_swap():
   A.elaborate()
   simple_sim_pass( A, 0x123 )
 
-  T, time = 0, 20
+  T, time = 1, 20
   while T < time:
     A.tick()
     assert A.wire0 == T
@@ -673,7 +685,7 @@ def test_var_written_in_both_ff_and_up():
 
       @update
       def comb():
-        s.wire1 = 1
+        s.wire1 @= 1
 
     def line_trace( s ):
       return "wire0={} , wire1={}".format(s.wire0, s.wire1)
@@ -713,15 +725,15 @@ def test_write_component_update():
 
       @update
       def up():
-        s.a = Bits32(12)
+        s.a @= Bits32(12)
 
   x = Top()
   try:
     x.elaborate()
-  except InvalidUpblkWriteError as e:
+  except WriteNonSignalError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown InvalidUpblkWriteError.")
+  raise Exception("Should've thrown WriteNonSignalError.")
 
 def test_write_component_update_ff():
 
@@ -740,10 +752,10 @@ def test_write_component_update_ff():
   x = Top()
   try:
     x.elaborate()
-  except InvalidUpblkWriteError as e:
+  except WriteNonSignalError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown InvalidUpblkWriteError.")
+  raise Exception("Should've thrown WriteNonSignalError.")
 
 def test_write_interface_update_ff():
 
@@ -762,7 +774,7 @@ def test_write_interface_update_ff():
   x = Top()
   try:
     x.elaborate()
-  except InvalidUpblkWriteError as e:
+  except WriteNonSignalError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown InvalidUpblkWriteError.")
+  raise Exception("Should've thrown WriteNonSignalError.")

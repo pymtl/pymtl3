@@ -50,7 +50,11 @@ module VQueue
   end
 
   always_ff @(posedge clk) begin
-    if (enq_en) begin
+    if (reset) begin
+      for (int i = 0; i < num_entries; i += 1)
+        data_reg[i] <= 'd0;
+    end
+    else if (enq_en) begin
       data_reg[enq_ptr] <= enq_msg;
     end
   end

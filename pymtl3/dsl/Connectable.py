@@ -311,7 +311,7 @@ class Signal( NamedObject, Connectable ):
     return leaf_signals
 
   def is_sliced_signal( s ):
-    return not s._dsl.slice is None
+    return s._dsl.slice is not None
 
   def is_top_level_signal( s ):
     return s._dsl.top_level_signal is s

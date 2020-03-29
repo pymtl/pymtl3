@@ -10,9 +10,9 @@ def run_test_queue( model, test_vectors ):
   # Define functions mapping the test vector to ports in model
 
   def tv_in( model, tv ):
-    model.enq.val = tv[0]
-    model.enq.msg = tv[2]
-    model.deq.rdy = tv[4]
+    model.enq.val @= tv[0]
+    model.enq.msg @= tv[2]
+    model.deq.rdy @= tv[4]
 
   def tv_out( model, tv ):
     if tv[1] != '?': assert model.enq.rdy == tv[1]

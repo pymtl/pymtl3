@@ -160,14 +160,14 @@ class ProcCtrl( Component ):
 
     @update
     def comb_reg_en_F():
-      s.reg_en_F = ~s.stall_F | s.squash_F
+      s.reg_en_F @= ~s.stall_F | s.squash_F
 
     @update_ff
     def reg_F():
       if s.reset:
-        s.val_F <<= b1( 0 )
+        s.val_F <<= 0
       elif s.reg_en_F:
-        s.val_F <<= b1( 1 )
+        s.val_F <<= 1
 
     # forward declaration of branch (no jump) logic
 
@@ -178,40 +178,40 @@ class ProcCtrl( Component ):
     @update
     def comb_PC_sel_F():
       if   s.pc_redirect_X:
-        s.pc_sel_F = b1( 1 ) # branch target
+        s.pc_sel_F @= 1 # branch target
       else:
-        s.pc_sel_F = b1( 0 ) # use pc+4
+        s.pc_sel_F @= 0 # use pc+4
 
     s.next_val_F = Wire()
 
     @update
     def comb_F_squash():
-      s.squash_F = s.val_F & ( s.osquash_D | s.osquash_X  )
-      s.imemresp_drop = s.squash_F
+      s.squash_F @= s.val_F & ( s.osquash_D | s.osquash_X  )
+      s.imemresp_drop @= s.squash_F
 
     @update
     def comb_F():
 
       # ostall due to imemresp
 
-      s.ostall_F = s.val_F & ~s.imemresp_rdy
+      s.ostall_F @= s.val_F & ~s.imemresp_rdy
 
       # stall and squash in F stage
 
-      s.stall_F  = s.val_F & ( s.ostall_F | s.ostall_D | s.ostall_X |
-                               s.ostall_M | s.ostall_W )
+      s.stall_F  @= s.val_F & ( s.ostall_F | s.ostall_D | s.ostall_X |
+                                s.ostall_M | s.ostall_W )
 
       # imem req is special, it actually be sent out _before_ the F
       # stage, we need to send memreq everytime we are getting squashed
       # because we need to redirect the PC. We also need to factor in
       # reset. When we are resetting we shouldn't send out imem req.
 
-      s.imemreq_en  = ~s.reset & (~s.stall_F | s.squash_F) & s.imemreq_rdy
-      s.imemresp_en = ~s.stall_F | s.squash_F
+      s.imemreq_en  @= ~s.reset & (~s.stall_F | s.squash_F) & s.imemreq_rdy
+      s.imemresp_en @= ~s.stall_F | s.squash_F
 
       # We drop the mem response when we are getting squashed
 
-      s.next_val_F    = s.val_F & ~s.stall_F & ~s.squash_F
+      s.next_val_F  @= s.val_F & ~s.stall_F & ~s.squash_F
 
     #---------------------------------------------------------------------
     # D stage
@@ -219,12 +219,12 @@ class ProcCtrl( Component ):
 
     @update
     def comb_reg_en_D():
-      s.reg_en_D = ~s.stall_D | s.squash_D
+      s.reg_en_D @= ~s.stall_D | s.squash_D
 
     @update_ff
     def reg_D():
       if s.reset:
-        s.val_D <<= Bits1(0)
+        s.val_D <<= 0
       elif s.reg_en_D:
         s.val_D <<= s.next_val_F
 
@@ -317,64 +317,63 @@ class ProcCtrl( Component ):
     @update
     def comb_control_table_D():
       inst = s.inst_type_decoder_D.out
-      #                                     br     rs1 imm    op2    rs2 alu      dmm wbmux rf  cs cs
-      #                                 val type    en type   muxsel  en fn       typ sel   wen rr rw
-      if   inst == NOP  : s.cs = concat( y, br_na,  n, imm_x, bm_x,   n, alu_x,   nr, wm_a, n,  n, n )
-      elif inst == CSRRX: s.cs = concat( y, br_na,  n, imm_i, bm_imm, n, alu_cp1, nr, wm_c, y,  y, n )
-      elif inst == CSRR : s.cs = concat( y, br_na,  n, imm_i, bm_csr, n, alu_cp1, nr, wm_a, y,  y, n )
-      elif inst == CSRW : s.cs = concat( y, br_na,  y, imm_i, bm_imm, n, alu_cp0, nr, wm_a, n,  n, y )
-      elif inst == ADD  : s.cs = concat( y, br_na,  y, imm_x, bm_rf,  y, alu_add, nr, wm_a, y,  n, n )
-      elif inst == SLL  : s.cs = concat( y, br_na,  y, imm_x, bm_rf,  y, alu_sll, nr, wm_a, y,  n, n )
-      elif inst == SRL  : s.cs = concat( y, br_na,  y, imm_x, bm_rf,  y, alu_srl, nr, wm_a, y,  n, n )
-      elif inst == ADDI : s.cs = concat( y, br_na,  y, imm_i, bm_imm, n, alu_add, nr, wm_a, y,  n, n )
-      elif inst == LW   : s.cs = concat( y, br_na,  y, imm_i, bm_imm, n, alu_add, ld, wm_m, y,  n, n )
-      elif inst == SW   : s.cs = concat( y, br_na,  y, imm_s, bm_imm, y, alu_add, st, wm_m, n,  n, n )
-      elif inst == BNE  : s.cs = concat( y, br_ne,  y, imm_b, bm_rf,  y, alu_x,   nr, wm_x, n,  n, n )
+      #                                      br     rs1 imm    op2    rs2 alu      dmm wbmux rf  cs cs
+      #                                  val type    en type   muxsel  en fn       typ sel   wen rr rw
+      if   inst == NOP  : s.cs @= concat( y, br_na,  n, imm_x, bm_x,   n, alu_x,   nr, wm_a, n,  n, n )
+      elif inst == CSRRX: s.cs @= concat( y, br_na,  n, imm_i, bm_imm, n, alu_cp1, nr, wm_c, y,  y, n )
+      elif inst == CSRR : s.cs @= concat( y, br_na,  n, imm_i, bm_csr, n, alu_cp1, nr, wm_a, y,  y, n )
+      elif inst == CSRW : s.cs @= concat( y, br_na,  y, imm_i, bm_imm, n, alu_cp0, nr, wm_a, n,  n, y )
+      elif inst == ADD  : s.cs @= concat( y, br_na,  y, imm_x, bm_rf,  y, alu_add, nr, wm_a, y,  n, n )
+      elif inst == SLL  : s.cs @= concat( y, br_na,  y, imm_x, bm_rf,  y, alu_sll, nr, wm_a, y,  n, n )
+      elif inst == SRL  : s.cs @= concat( y, br_na,  y, imm_x, bm_rf,  y, alu_srl, nr, wm_a, y,  n, n )
+      elif inst == ADDI : s.cs @= concat( y, br_na,  y, imm_i, bm_imm, n, alu_add, nr, wm_a, y,  n, n )
+      elif inst == LW   : s.cs @= concat( y, br_na,  y, imm_i, bm_imm, n, alu_add, ld, wm_m, y,  n, n )
+      elif inst == SW   : s.cs @= concat( y, br_na,  y, imm_s, bm_imm, y, alu_add, st, wm_m, n,  n, n )
+      elif inst == BNE  : s.cs @= concat( y, br_ne,  y, imm_b, bm_rf,  y, alu_x,   nr, wm_x, n,  n, n )
 
       # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''
       # Implement instruction AND in RTL processor
       # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
       #; Add a single line to set up control signals for AND instruction.
 
-      elif inst == AND  : s.cs = concat( y, br_na,  y, imm_x, bm_rf,  y, alu_and, nr, wm_a, y,  n, n )
+      elif inst == AND  : s.cs @= concat( y, br_na,  y, imm_x, bm_rf,  y, alu_and, nr, wm_a, y,  n, n )
 
       # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
-      else:               s.cs = concat( n, br_x,   n, imm_x, bm_x,   n, alu_x,   nr, wm_x, n,  n, n )
+      else:               s.cs @= concat( n, br_x,   n, imm_x, bm_x,   n, alu_x,   nr, wm_x, n,  n, n )
 
-      s.inst_val_D       = s.cs[19:20]
-      s.br_type_D        = s.cs[18:19]
-      s.rs1_en_D         = s.cs[17:18]
-      s.imm_type_D       = s.cs[14:17]
-      s.op2_sel_D        = s.cs[12:14]
-      s.rs2_en_D         = s.cs[11:12]
-      s.alu_fn_D         = s.cs[7:11]
-      s.dmemreq_type_D   = s.cs[5:7]
-      s.wb_result_sel_D  = s.cs[3:5]
-      s.rf_wen_pending_D = s.cs[2:3]
-      s.csrr_D           = s.cs[1:2]
-      s.csrw_D           = s.cs[0:1]
+      s.inst_val_D       @= s.cs[19:20]
+      s.br_type_D        @= s.cs[18:19]
+      s.rs1_en_D         @= s.cs[17:18]
+      s.imm_type_D       @= s.cs[14:17]
+      s.op2_sel_D        @= s.cs[12:14]
+      s.rs2_en_D         @= s.cs[11:12]
+      s.alu_fn_D         @= s.cs[7:11]
+      s.dmemreq_type_D   @= s.cs[5:7]
+      s.wb_result_sel_D  @= s.cs[3:5]
+      s.rf_wen_pending_D @= s.cs[2:3]
+      s.csrr_D           @= s.cs[1:2]
+      s.csrw_D           @= s.cs[0:1]
 
       # setting the actual write address
 
-      s.rf_waddr_D = s.inst_D[RD]
+      s.rf_waddr_D @= s.inst_D[RD]
 
       # csrr/csrw logic
 
-      s.proc2mngr_en_D  = s.csrw_D & ( s.inst_D[CSRNUM] == CSR_PROC2MNGR )
-      s.mngr2proc_D     = s.csrr_D & ( s.inst_D[CSRNUM] == CSR_MNGR2PROC )
+      s.proc2mngr_en_D @= s.csrw_D & ( s.inst_D[CSRNUM] == CSR_PROC2MNGR )
+      s.mngr2proc_D    @= s.csrr_D & ( s.inst_D[CSRNUM] == CSR_MNGR2PROC )
 
       # accelerator
-      if s.csrr_D and (s.inst_D[CSRNUM] != CSR_MNGR2PROC):
-        s.xcelreq_type_D = XcelMsgType.READ
-        s.xcelreq_D = b1(1)
-
-      elif s.csrw_D and (s.inst_D[CSRNUM] != CSR_PROC2MNGR):
-        s.xcelreq_type_D = XcelMsgType.WRITE
-        s.xcelreq_D = b1(1)
+      if s.csrr_D & (s.inst_D[CSRNUM] != CSR_MNGR2PROC):
+        s.xcelreq_type_D @= XcelMsgType.READ
+        s.xcelreq_D @= 1
+      elif s.csrw_D & (s.inst_D[CSRNUM] != CSR_PROC2MNGR):
+        s.xcelreq_type_D @= XcelMsgType.WRITE
+        s.xcelreq_D @= 1
       else:
-        s.xcelreq_type_D = b1(0)
-        s.xcelreq_D = b1(0)
+        s.xcelreq_type_D @= 0
+        s.xcelreq_D @= 0
 
     # forward wire declaration for hazard checking
 
@@ -397,35 +396,35 @@ class ProcCtrl( Component ):
 
     # bypassing logic
 
-    byp_d = b2( 0 )
-    byp_x = b2( 1 )
-    byp_m = b2( 2 )
-    byp_w = b2( 3 )
+    byp_d = 0
+    byp_x = 1
+    byp_m = 2
+    byp_w = 3
 
     @update
     def comb_bypass_D():
 
-      s.op1_byp_sel_D = byp_d
+      s.op1_byp_sel_D @= byp_d
 
       if s.rs1_en_D:
 
-        if   s.val_X & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
-                     & s.rf_wen_pending_X:    s.op1_byp_sel_D = byp_x
-        elif s.val_M & ( s.inst_D[ RS1 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != b5(0) ) \
-                     & s.rf_wen_pending_M:    s.op1_byp_sel_D = byp_m
-        elif s.val_W & ( s.inst_D[ RS1 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != b5(0) ) \
-                     & s.rf_wen_pending_W:    s.op1_byp_sel_D = byp_w
+        if   s.val_X & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
+                     & s.rf_wen_pending_X:    s.op1_byp_sel_D @= byp_x
+        elif s.val_M & ( s.inst_D[ RS1 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != 0 ) \
+                     & s.rf_wen_pending_M:    s.op1_byp_sel_D @= byp_m
+        elif s.val_W & ( s.inst_D[ RS1 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != 0 ) \
+                     & s.rf_wen_pending_W:    s.op1_byp_sel_D @= byp_w
 
-      s.op2_byp_sel_D = byp_d
+      s.op2_byp_sel_D @= byp_d
 
       if s.rs2_en_D:
 
-        if   s.val_X & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
-                     & s.rf_wen_pending_X:    s.op2_byp_sel_D = byp_x
-        elif s.val_M & ( s.inst_D[ RS2 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != b5(0) ) \
-                     & s.rf_wen_pending_M:    s.op2_byp_sel_D = byp_m
-        elif s.val_W & ( s.inst_D[ RS2 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != b5(0) ) \
-                     & s.rf_wen_pending_W:    s.op2_byp_sel_D = byp_w
+        if   s.val_X & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
+                     & s.rf_wen_pending_X:    s.op2_byp_sel_D @= byp_x
+        elif s.val_M & ( s.inst_D[ RS2 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != 0 ) \
+                     & s.rf_wen_pending_M:    s.op2_byp_sel_D @= byp_m
+        elif s.val_W & ( s.inst_D[ RS2 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != 0 ) \
+                     & s.rf_wen_pending_W:    s.op2_byp_sel_D @= byp_w
 
     # hazards checking logic
     # Although bypassing is added, we might still have RAW when there is
@@ -433,23 +432,23 @@ class ProcCtrl( Component ):
 
     @update
     def comb_hazard_D():
-      s.ostall_ld_X_rs1_D = s.rs1_en_D & s.val_X & s.rf_wen_pending_X \
-                            & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
-                            & ( s.dmemreq_type_X == ld )
+      s.ostall_ld_X_rs1_D @= s.rs1_en_D & s.val_X & s.rf_wen_pending_X \
+                             & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
+                             & ( s.dmemreq_type_X == ld )
 
-      s.ostall_ld_X_rs2_D = s.rs2_en_D & s.val_X & s.rf_wen_pending_X \
-                            & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
-                            & ( s.dmemreq_type_X == ld )
+      s.ostall_ld_X_rs2_D @= s.rs2_en_D & s.val_X & s.rf_wen_pending_X \
+                             & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
+                             & ( s.dmemreq_type_X == ld )
 
-      s.ostall_xcel_X_rs1_D = s.rs1_en_D & s.val_X & s.rf_wen_pending_X \
-                            & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
-                            & s.xcelreq_X
+      s.ostall_xcel_X_rs1_D @= s.rs1_en_D & s.val_X & s.rf_wen_pending_X \
+                             & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
+                             & s.xcelreq_X
 
-      s.ostall_xcel_X_rs2_D = s.rs2_en_D & s.val_X & s.rf_wen_pending_X \
-                            & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
-                            & s.xcelreq_X
+      s.ostall_xcel_X_rs2_D @= s.rs2_en_D & s.val_X & s.rf_wen_pending_X \
+                             & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
+                             & s.xcelreq_X
 
-      s.ostall_hazard_D   = s.ostall_ld_X_rs1_D   | s.ostall_ld_X_rs2_D | \
+      s.ostall_hazard_D  @= s.ostall_ld_X_rs1_D   | s.ostall_ld_X_rs2_D | \
                             s.ostall_xcel_X_rs1_D | s.ostall_xcel_X_rs2_D
 
     s.next_val_D = Wire()
@@ -458,23 +457,23 @@ class ProcCtrl( Component ):
     def comb_D():
 
       # ostall due to mngr2proc not ready
-      s.ostall_mngr_D = s.mngr2proc_D & ~s.mngr2proc_rdy # This is get, rdy means we can get the message
+      s.ostall_mngr_D @= s.mngr2proc_D & ~s.mngr2proc_rdy # This is get, rdy means we can get the message
 
       # put together all ostall conditions
-      s.ostall_D = s.val_D & ( s.ostall_mngr_D | s.ostall_hazard_D )
+      s.ostall_D @= s.val_D & ( s.ostall_mngr_D | s.ostall_hazard_D )
 
       # stall in D stage
-      s.stall_D  = s.val_D & ( s.ostall_D | s.ostall_X | s.ostall_M | s.ostall_W   )
+      s.stall_D  @= s.val_D & ( s.ostall_D | s.ostall_X | s.ostall_M | s.ostall_W   )
 
       # D won't osquash
       # squash in D stage
-      s.squash_D = s.val_D & s.osquash_X
+      s.squash_D @= s.val_D & s.osquash_X
 
       # next valid bit
-      s.next_val_D = s.val_D & ~s.stall_D & ~s.squash_D
+      s.next_val_D @= s.val_D & ~s.stall_D & ~s.squash_D
 
       # enable signal for send/get interface
-      s.mngr2proc_en  = s.val_D & ~s.stall_D & ~s.squash_D & s.mngr2proc_D
+      s.mngr2proc_en @= s.val_D & ~s.stall_D & ~s.squash_D & s.mngr2proc_D
 
     #---------------------------------------------------------------------
     # X stage
@@ -482,7 +481,7 @@ class ProcCtrl( Component ):
 
     @update
     def comb_reg_en_X():
-      s.reg_en_X  = ~s.stall_X
+      s.reg_en_X @= ~s.stall_X
 
     s.inst_type_X      = Wire( Bits8 )
     s.rf_wen_pending_X = Wire()
@@ -496,7 +495,7 @@ class ProcCtrl( Component ):
     @update_ff
     def reg_X():
       if s.reset:
-        s.val_X <<= b1( 0 )
+        s.val_X <<= 0
       elif s.reg_en_X:
         s.val_X            <<= s.next_val_D
         s.rf_wen_pending_X <<= s.rf_wen_pending_D
@@ -514,7 +513,7 @@ class ProcCtrl( Component ):
 
     @update
     def comb_br_X():
-      s.pc_redirect_X = s.val_X & (s.br_type_X == br_ne) & s.ne_X
+      s.pc_redirect_X @= s.val_X & (s.br_type_X == br_ne) & s.ne_X
 
     s.ostall_dmem_X = Wire()
     s.ostall_xcel_X = Wire()
@@ -526,38 +525,38 @@ class ProcCtrl( Component ):
 
       # ostall due to dmemreq
 
-      s.ostall_dmem_X = ( s.dmemreq_type_X != nr ) & ~s.dmemreq_rdy
+      s.ostall_dmem_X @= ( s.dmemreq_type_X != nr ) & ~s.dmemreq_rdy
 
       # ostall due to xcelreq
-      s.ostall_xcel_X = s.xcelreq_X & ~s.xcelreq_rdy # This is send
+      s.ostall_xcel_X @= s.xcelreq_X & ~s.xcelreq_rdy # This is send
 
-      s.ostall_X = s.val_X & ( s.ostall_dmem_X | s.ostall_xcel_X )
+      s.ostall_X @= s.val_X & ( s.ostall_dmem_X | s.ostall_xcel_X )
 
       # stall in X stage
 
-      s.stall_X  = s.val_X & ( s.ostall_X | s.ostall_M | s.ostall_W )
+      s.stall_X  @= s.val_X & ( s.ostall_X | s.ostall_M | s.ostall_W )
 
       # osquash due to taken branches
       # Note that, in the same combinational block, we have to calculate
       # s.stall_X first then use it in osquash_X. Several people have
       # stuck here just because they calculate osquash_X before stall_X!
 
-      s.osquash_X = s.val_X & ~s.stall_X & s.pc_redirect_X
+      s.osquash_X @= s.val_X & ~s.stall_X & s.pc_redirect_X
 
       # send dmemreq enable if not stalling
 
-      s.dmemreq_en = s.val_X & ~s.stall_X & ( s.dmemreq_type_X != nr )
+      s.dmemreq_en @= s.val_X & ~s.stall_X & ( s.dmemreq_type_X != nr )
 
-      s.dmemreq_type = b4( s.dmemreq_type_X == st )  # 0-load/DC, 1-store
+      s.dmemreq_type @= zext( s.dmemreq_type_X == st, 4 )  # 0-load/DC, 1-store
 
       # send xcelreq enable if not stalling
 
-      s.xcelreq_en = s.val_X & ~s.stall_X & s.xcelreq_X
-      s.xcelreq_type = s.xcelreq_type_X
+      s.xcelreq_en @= s.val_X & ~s.stall_X & s.xcelreq_X
+      s.xcelreq_type @= s.xcelreq_type_X
 
       # next valid bit
 
-      s.next_val_X = s.val_X & ~s.stall_X
+      s.next_val_X @= s.val_X & ~s.stall_X
 
     #---------------------------------------------------------------------
     # M stage
@@ -565,7 +564,7 @@ class ProcCtrl( Component ):
 
     @update
     def comb_reg_en_M():
-      s.reg_en_M = ~s.stall_M
+      s.reg_en_M @= ~s.stall_M
 
     s.inst_type_M      = Wire( Bits8 )
     s.rf_wen_pending_M = Wire()
@@ -576,7 +575,7 @@ class ProcCtrl( Component ):
     @update_ff
     def reg_M():
       if s.reset:
-        s.val_M            <<= b1( 0 )
+        s.val_M            <<= 0
       elif s.reg_en_M:
         s.val_M            <<= s.next_val_X
         s.rf_wen_pending_M <<= s.rf_wen_pending_X
@@ -596,23 +595,23 @@ class ProcCtrl( Component ):
 
       # ostall due to xcel resp or dmem resp
 
-      s.ostall_xcel_M = (s.xcelreq_M & ~s.xcelresp_rdy)
-      s.ostall_dmem_M = (s.dmemreq_type_M != nr ) & ~s.dmemresp_rdy
+      s.ostall_xcel_M @= (s.xcelreq_M & ~s.xcelresp_rdy)
+      s.ostall_dmem_M @= (s.dmemreq_type_M != nr ) & ~s.dmemresp_rdy
 
-      s.ostall_M = s.val_M & ( s.ostall_dmem_M | s.ostall_xcel_M )
+      s.ostall_M @= s.val_M & ( s.ostall_dmem_M | s.ostall_xcel_M )
 
       # stall in M stage
 
-      s.stall_M  = s.val_M & ( s.ostall_M | s.ostall_W )
+      s.stall_M  @= s.val_M & ( s.ostall_M | s.ostall_W )
 
       # dmemresp/xcelresp get enable if not stalling
 
-      s.dmemresp_en = s.val_M & ~s.stall_M & ( s.dmemreq_type_M != nr )
-      s.xcelresp_en = s.val_M & ~s.stall_M & s.xcelreq_M
+      s.dmemresp_en @= s.val_M & ~s.stall_M & ( s.dmemreq_type_M != nr )
+      s.xcelresp_en @= s.val_M & ~s.stall_M & s.xcelreq_M
 
       # next valid bit
 
-      s.next_val_M   = s.val_M & ~s.stall_M
+      s.next_val_M  @= s.val_M & ~s.stall_M
 
     #---------------------------------------------------------------------
     # W stage
@@ -620,7 +619,7 @@ class ProcCtrl( Component ):
 
     @update
     def comb_reg_en_W():
-      s.reg_en_W = ~s.stall_W
+      s.reg_en_W @= ~s.stall_W
 
     s.inst_type_W      = Wire( Bits8 )
     s.proc2mngr_en_W   = Wire()
@@ -629,7 +628,7 @@ class ProcCtrl( Component ):
     @update_ff
     def reg_W():
       if s.reset:
-        s.val_W <<= b1( 0 )
+        s.val_W <<= 0
       elif s.reg_en_W:
         s.val_W            <<= s.next_val_M
         s.rf_wen_pending_W <<= s.rf_wen_pending_M
@@ -644,18 +643,18 @@ class ProcCtrl( Component ):
 
       # set RF write enable if valid
 
-      s.rf_wen_W = s.val_W & s.rf_wen_pending_W
+      s.rf_wen_W @= s.val_W & s.rf_wen_pending_W
 
       # ostall due to proc2mngr
 
-      s.ostall_W = s.val_W & s.proc2mngr_en_W & ~s.proc2mngr_rdy
+      s.ostall_W @= s.val_W & s.proc2mngr_en_W & ~s.proc2mngr_rdy
 
       # stall in W stage
 
-      s.stall_W  = s.val_W & s.ostall_W
+      s.stall_W  @= s.val_W & s.ostall_W
 
       # proc2mngr send is enabled if not stalling
 
-      s.proc2mngr_en = s.val_W & ~s.stall_W & s.proc2mngr_en_W
+      s.proc2mngr_en @= s.val_W & ~s.stall_W & s.proc2mngr_en_W
 
-      s.commit_inst = s.val_W & ~s.stall_W
+      s.commit_inst @= s.val_W & ~s.stall_W

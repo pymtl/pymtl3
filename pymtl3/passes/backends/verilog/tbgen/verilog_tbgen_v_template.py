@@ -1,3 +1,5 @@
+template = \
+'''
 `define HOLD_TIME 1
 `define INTRA_CYCLE_TIME 2
 `define SETUP_TIME 1
@@ -5,19 +7,19 @@
 
 `timescale 1ns/1ns
 
-`define T({args_strs}) \
+`define T({args_strs}) \\
         t({args_strs},`__LINE__)
 
-`define CHECK(lineno, out, ref, port_name) \
-  if (out != ref) begin \
-    $display("The test bench received an incorrect value!"); \
-    $display("- row number     : %0d", lineno); \
-    $display("- port name      : %s", port_name); \
-    $display("- expected value : 0x%x", ref); \
-    $display("- actual value   : 0x%x", out); \
+`define CHECK(lineno, out, ref, port_name) \\
+  if (out != ref) begin \\
+    $display("The test bench received an incorrect value!"); \\
+    $display("- row number     : %0d", lineno); \\
+    $display("- port name      : %s", port_name); \\
+    $display("- expected value : 0x%x", ref); \\
+    $display("- actual value   : 0x%x", out); \\
   end
-  //   $finish; \
-  // end else \
+  //   $finish; \\
+  // end else \\
   //   $display("Signal %s in cycle %0d passed",name, lineno);
 
 module {harness_name};
@@ -65,3 +67,4 @@ module {harness_name};
     $finish;
   end
 endmodule
+'''

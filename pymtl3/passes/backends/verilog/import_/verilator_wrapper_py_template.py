@@ -1,3 +1,5 @@
+template = \
+'''
 #=========================================================================
 # V{component_name}_v.py
 #=========================================================================
@@ -9,27 +11,10 @@ normal PyMTL model. This template is based on PyMTL v2.
 
 import os
 
-from cffi  import FFI
+from cffi import FFI
 
 from pymtl3.datatypes import *
 from pymtl3.dsl import Component, connect, InPort, OutPort, Wire, update, update_ff
-
-# def full_vector( wire, signal ):
-
-#   def to_string( num, nbits ):
-#     ndigits = (nbits-1)//4+1
-#     return "{{0:#0{{1}}x}}".format( num, ndigits+2 )
-
-#   nbits = wire.nbits
-#   if nbits <= 64:
-#     return to_string( signal[0], nbits )
-#   else:
-#     ret = ""
-#     num_elements = (nbits-1)//32+1
-#     for idx in range(num_elements):
-#       _nbits = 32 if idx != num_elements-1 else nbits%32
-#       ret = to_string( signal[idx], _nbits )[2:] + ret
-#     return "0x" + ret
 
 #-------------------------------------------------------------------------
 # {component_name}
@@ -177,3 +162,4 @@ class {component_name}( Component ):
 
   def internal_line_trace( s ):
 {in_line_trace}
+'''

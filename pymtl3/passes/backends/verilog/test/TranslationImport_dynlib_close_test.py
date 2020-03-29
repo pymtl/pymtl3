@@ -20,7 +20,7 @@ def run_test( _m ):
     _m.set_metadata( TranslationImportPass.enable, True )
     _m.set_metadata( VerilatorImportPass.vl_trace, True )
     m = TranslationImportPass()( _m )
-    sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
+    sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
     sim.run_test()
   finally:
     try:
@@ -37,7 +37,7 @@ def test_dynlib_close():
         s.out = OutPort( Bits32 )
         @update
         def upblk():
-          s.out = s.in_
+          s.out @= s.in_
   class Seq:
     class A( Component ):
       def construct( s ):
@@ -50,10 +50,10 @@ def test_dynlib_close():
   comb_a = Comb.A()
   # TestVectorSimulator properties
   def tv_in( m, tv ):
-    m.in_ = Bits32(tv[0])
+    m.in_ @= Bits32(tv[0])
   def tv_out( m, tv ):
     assert m.out == Bits32(tv[1])
-  comb_a._test_vectors = [
+  comb_a._tvs = [
     [    0,   0  ],
     [   42,   42 ],
     [   24,   24 ],
@@ -66,11 +66,11 @@ def test_dynlib_close():
 
   seq_a = Seq.A()
   def tv_in( m, tv ):
-    m.in_ = Bits32(tv[0])
+    m.in_ @= Bits32(tv[0])
   def tv_out( m, tv ):
     if tv[1] != '*':
       assert m.out == Bits32(tv[1])
-  seq_a._test_vectors = [
+  seq_a._tvs = [
     [    0,   '*' ],
     [   42,    0  ],
     [   24,    42 ],
