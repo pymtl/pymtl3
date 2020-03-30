@@ -122,6 +122,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   def check_valid( s, m, cfg, irepr ):
     pmap, src, flist, include = \
         cfg.port_map, cfg.src_file, cfg.v_flist, cfg.v_include
+    pmap = {p._dsl._my_name:n for p, n in pmap.items()}
 
     # Check params
     for param_name, value in cfg.params.items():

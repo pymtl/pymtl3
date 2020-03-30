@@ -52,8 +52,8 @@ def test_reg( do_test ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
       s.set_metadata( VerilogPlaceholderPass.port_map, {
-          "clk" : "clk", "reset" : "reset",
-          "in_" : "d",   "out" : "q",
+          s.clk : "clk", s.reset : "reset",
+          s.in_ : "d",   s.out : "q",
       } )
   a = VReg()
   a._tvs = [
@@ -80,7 +80,7 @@ def test_vl_uninit( do_test ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
       s.set_metadata( VerilogPlaceholderPass.port_map, {
-          "in_" : "d", "out" : "q",
+          s.in_ : "d", s.out : "q",
       } )
       s.set_metadata( VerilatorImportPass.vl_xinit, 'ones' )
   a = VUninit()
@@ -106,7 +106,7 @@ def test_reg_incomplete_portmap( do_test ):
       s.out = OutPort( Bits32 )
 
       s.set_metadata( VerilogPlaceholderPass.port_map, {
-          "in_" : "d",   "out" : "q",
+          s.in_ : "d",   s.out : "q",
       } )
   a = VReg()
   a._tvs = [
@@ -408,7 +408,7 @@ def test_non_top_portmap( do_test ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
       s.set_metadata( VerilogPlaceholderPass.port_map, {
-          "in_" : "d", "out" : "q",
+          s.in_ : "d", s.out : "q",
       } )
   class Top( Component ):
     def construct( s ):
@@ -441,7 +441,7 @@ def test_reg_external_trace( do_test ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
       s.set_metadata( VerilogPlaceholderPass.port_map, {
-          "in_" : "d", "out" : "q",
+          s.in_ : "d", s.out : "q",
       } )
       s.set_metadata( VerilatorImportPass.vl_line_trace, True )
       s.set_metadata( TranslationImportPass.enable, True )
@@ -472,7 +472,7 @@ def test_reg_infer_external_trace( do_test ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
       s.set_metadata( VerilogPlaceholderPass.port_map, {
-          "in_" : "d", "out" : "q",
+          s.in_ : "d", s.out : "q",
       } )
       s.set_metadata( TranslationImportPass.enable, True )
   a = VRegTrace()

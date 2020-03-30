@@ -39,6 +39,8 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True, sep='__' ):
      element is mapped in port_map, or _all_ of the elements are mapped.
   """
 
+  port_map = {p._dsl._my_name:n for p, n in port_map.items()}
+
   def _mangle_vector( pname, vname, port, dtype, port_idx ):
     return [([pname], port_map[pname] if pname in port_map else vname, 
              rt.Port(port.direction, dtype), port_idx)]

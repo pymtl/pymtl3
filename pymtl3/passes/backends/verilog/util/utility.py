@@ -139,6 +139,8 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True, sep='__' ):
      element is mapped in port_map, or _all_ of the elements are mapped.
   """
 
+  port_map = {p._dsl._my_name:n for p, n in port_map.items()}
+
   # [pnames], vname, rtype, port_idx
 
   def _mangle_port( pname, vname, port, n_dim ):
