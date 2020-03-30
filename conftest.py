@@ -1,4 +1,3 @@
-import argparse
 import os
 import pytest
 
@@ -11,7 +10,7 @@ if 'CI' in os.environ:
 
 def pytest_addoption(parser):
   try:
-    group = parser.getgroup("pytest_pymtl3")
+    group = parser.getgroup("pytest-pymtl3")
     group.addoption( "--test-verilog", action="store", default='', nargs='?',
                       const='zeros', choices=[ '', 'zeros', 'ones', 'rand' ],
                       help="run verilog translation, " )

@@ -7,6 +7,7 @@ https://github.com/pypa/sampleproject/blob/master/setup.py
 """
 
 
+import os
 from os import path
 
 from setuptools import find_packages, setup
@@ -39,6 +40,16 @@ def get_long_description():
 #-------------------------------------------------------------------------
 # setup
 #-------------------------------------------------------------------------
+
+if 'CI' in os.environ:
+  # Do not install pytest-pymtl3 if we are on CI
+  entry_points = {}
+else:
+  entry_points = {
+    'pytest11' : [
+      'pytest-pymtl3 = pymtl3.utils.pytest_pymtl3',
+    ]
+  }
 
 setup(
 
@@ -90,10 +101,6 @@ setup(
     'greenlet',
   ],
 
-  entry_points = {
-    'pytest11' : [
-      'pytest_pymtl3 = pymtl3.utils.pytest_pymtl3',
-    ]
-  }
+  entry_points = entry_points,
 
 )
