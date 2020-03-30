@@ -68,12 +68,12 @@ class VerilogPlaceholderPass( PlaceholderPass ):
         cfg.top_module = irepr.get_name()
 
       # If the placeholder has parameters, use the mangled unique component
-      # name. Otherwise use {class_name}_wrapper to avoid duplicated defs.
+      # name. Otherwise use {class_name}_noparam to avoid duplicated defs.
       has_params = bool( irepr.get_params() ) or bool( cfg.params )
       if has_params:
         cfg.pickled_top_module = get_component_unique_name( irepr )
       else:
-        cfg.pickled_top_module = f"{irepr.get_name()}_wrapper"
+        cfg.pickled_top_module = f"{irepr.get_name()}_noparam"
 
       # Only try to infer the name of Verilog source file if both
       # flist and the source file are not specified.

@@ -35,6 +35,8 @@ def get_component_full_name( c_rtype ):
   for arg_name, arg_value in comp_params:
     assert arg_name != ''
     comp_name += '__' + arg_name + '_' + get_string(arg_value)
+  if not comp_params:
+    comp_name += '_noparam'
   return comp_name
 
 def get_ordered_upblks( m ):
