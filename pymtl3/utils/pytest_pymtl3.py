@@ -8,8 +8,8 @@
 # Author : Peitian Pan
 # Date   : March 30, 2020
 
-import os
 import pytest
+
 
 def pytest_addoption(parser):
   group = parser.getgroup("pytest_pymtl3")
