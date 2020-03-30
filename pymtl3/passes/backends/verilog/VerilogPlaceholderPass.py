@@ -83,7 +83,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
       # Pickled file name should always be the same as the top level
       # module name.
-      cfg.pickled_source_file = f"{cfg.pickled_top_module}.v"
+      cfg.pickled_source_file = f"{cfg.pickled_top_module}__pickled.v"
 
       # What is the original file/flist of the pickled source file?
       if cfg.src_file:

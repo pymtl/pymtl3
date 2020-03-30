@@ -78,7 +78,7 @@ def mk_TranslationPass( _VTranslator ):
           else:
             filename = fname
         else:
-          filename = module_name
+          filename = f"{module_name}__pickled"
 
         output_file = filename + '.v'
         temporary_file = filename + '.v.tmp'
