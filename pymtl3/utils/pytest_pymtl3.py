@@ -11,8 +11,6 @@
 import pytest
 
 
-pytest_plugins = "pytest-pymtl3"
-
 def pytest_addoption(parser):
   group = parser.getgroup("pytest-pymtl3")
   group.addoption( "--test-verilog", dest="test_verilog", action="store",
