@@ -1,3 +1,4 @@
+import argparse
 import os
 import pytest
 
@@ -9,10 +10,15 @@ if 'CI' in os.environ:
   settings.register_profile("CI", max_examples=10)
 
 def pytest_addoption(parser):
-  parser.addoption( "--test-verilog", action="store", default='', nargs='?', const='zeros', choices=[ '', 'zeros', 'ones', 'rand' ],
-                    help="run verilog translation, " )
-  parser.addoption( "--dump-vcd", action="store_true",
-                    help="dump vcd for each test" )
+  try:
+    group = parser.getgroup("pytest_pymtl3")
+    group.addoption( "--test-verilog", action="store", default='', nargs='?',
+                      const='zeros', choices=[ '', 'zeros', 'ones', 'rand' ],
+                      help="run verilog translation, " )
+    group.addoption( "--dump-vcd", action="store_true",
+                      help="dump vcd for each test" )
+  except ValueError:
+    pass
 
 @pytest.fixture
 def test_verilog(request):

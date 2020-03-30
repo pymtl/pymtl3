@@ -15,16 +15,20 @@ def pytest_addoption(parser):
   group = parser.getgroup("pytest_pymtl3")
   group.addoption( "--test-verilog", dest="test_verilog", action="store",
                     default='', nargs='?', const='zeros',
-                    choices=[ '', 'zeros', 'ones', 'rand' ],
-                    help="run verilog translation, " )
+                    help="run verilog translation" )
   group.addoption( "--dump-vcd", dest="dump_vcd", action="store_true",
-                    default=False,
-                    help="dump vcd for each test" )
+                    default=False, help="dump vcd for each test" )
 
 @pytest.fixture
 def test_verilog(request):
   """Test Verilog translation rather than python."""
-  return request.config.getoption("test_verilog")
+  flag = request.config.getoption("test_verilog")
+  try:
+    return int(flag)
+  except ValueError:
+    assert flag in ['', 'zeros', 'ones', 'rand'], \
+        f"--test-verilog should be an int or one of '', 'zeros', 'ones', 'rand'!"
+    return flag
 
 @pytest.fixture
 def dump_vcd(request):
