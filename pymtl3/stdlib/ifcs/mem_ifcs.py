@@ -236,7 +236,7 @@ class MemIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.ReqType( amo, 0, addr, nbytes ) )
+    s.right.req( s.ReqType( amo, 0, addr, nbytes, data ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
