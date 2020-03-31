@@ -33,14 +33,14 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
   #: A dict that maps the module parameters to their values.
   #:
-  #: Type: ``{ 'str' : int }``; input
+  #: Type: ``{ str : int }``; input
   #:
   #: Default value: ``{}``
   params     = MetadataKey()
 
   #: A dict that maps the PyMTL port name to the external source port name.
   #:
-  #: Type: ``{ str : str }``; input
+  #: Type: ``{ port : str }``; input
   #:
   #: Default value: ``{}``
   port_map   = MetadataKey()
