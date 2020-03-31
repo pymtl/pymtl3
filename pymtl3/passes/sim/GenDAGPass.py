@@ -12,7 +12,7 @@ from collections import defaultdict, deque
 from linecache import cache as line_cache
 
 from pymtl3.datatypes import *
-from pymtl3.datatypes.helpers import get_bitstruct_inst_all_classes
+from pymtl3.datatypes.bitstructs import get_bitstruct_inst_all_classes
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import LeftoverPlaceholderError
 from pymtl3.passes.BasePass import BasePass, PassMetadata
@@ -54,9 +54,9 @@ class GenDAGPass( BasePass ):
     # compilation, we minimize the effect.
 
     # TODO see if directly compiling AST instead of source can be faster
-    def compile_net_blk( _globals, src ):
+    def compile_net_blk( _globals, src, writer ):
       _locals = {}
-      fname = f"Net at {_globals['s']!r}"
+      fname = f"Net (writer is {writer!r}"
       custom_exec( compile( src, filename=fname, mode="exec"), _globals, _locals )
       line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
       return list(_locals.values())[0]
@@ -65,8 +65,70 @@ class GenDAGPass( BasePass ):
       if len(signals) == 1:
         continue
 
-      readers = [ x for x in signals if x is not writer ]
-      fanout  = len( readers )
+      all_readers = [ x for x in signals if x is not writer ]
+      all_fanout  = len( all_readers )
+
+      # Here we remove every top-level signal from the reader list, but need to keep a shallow
+      # one as the delegate
+      #
+      # - writer: a,  reader: b, c
+      #   nothing
+      # - writer: a,  reader: b[0], c
+      #   # 1 selected_reader
+      #   b[0] @= a
+      # - writer: a,  reader: b[0], c[0]
+      #   x = a[0]
+      #   b[0] @= x
+      #   c[0] @= x
+      # - writer: a[0],  reader: b, c
+      #   # 1 selected_reader
+      #   b @= a[0]
+      # - writer: a[0],  reader: b[0], c
+      #   x = a[0]
+      #   b[0] @= x
+      #   c    @= x
+      # - writer: a[0],  reader: b[0], c[0]
+      #   x = a[0]
+      #   b[0] @= x
+      #   c[0] @= x
+
+      readers = []
+      if isinstance( writer, Const ) or writer.is_top_level_signal():
+        for x in all_readers:
+          if not x.is_top_level_signal():
+            readers.append( x )
+      else:
+        residence = None
+        for x in all_readers:
+          if x.is_top_level_signal():
+            if residence is None:
+              residence = x
+              readers.append( x )
+            # skip other top signals
+          else:
+            readers.append( x )
+
+      fanout = len(readers)
+
+      genblk_name = f"{writer!r}__{all_fanout}_{fanout}".replace( " ", "" ) \
+                      .replace( ".", "_" ).replace( ":", "_" ) \
+                      .replace( "[", "_" ).replace( "]", "_" ) \
+                      .replace( "(", "_" ).replace( ")", "_" ) \
+                      .replace( ",", "_" )
+
+      # If all signals are top-level, we still need to generate an empty
+      # to convey the constraints using all_readers
+
+      if fanout == 0:
+        blk = compile_net_blk( {}, f"""def {genblk_name}(): pass""", writer )
+
+        top._dag.genblks.add( blk )
+        if writer.is_signal():
+          top._dag.genblk_reads[ blk ] = [ writer ]
+        top._dag.genblk_writes[ blk ] = all_readers
+        continue
+      # readers = all_readers
+      # fanout  = all_fanout
 
       wr_lca  = writer.get_host_component()
       rd_lcas = [ x.get_host_component() for x in readers ]
@@ -75,7 +137,7 @@ class GenDAGPass( BasePass ):
       # at the same level all objects' ancestors are the same
 
       mindep  = min( wr_lca.get_component_level(),
-                     min( [ x.get_component_level() for x in rd_lcas ] ) )
+                min( [ x.get_component_level() for x in rd_lcas ] ) )
 
       # First navigate all objects to the same level deep
 
@@ -118,22 +180,18 @@ class GenDAGPass( BasePass ):
         wstr = f"s.{repr(writer)[lca_len+1:]}"
 
       rstrs   = [ f"s.{repr(x)[lca_len+1:]}" for x in readers ]
-      upblk_name = f"{writer!r}__{fanout}".replace( " ", "" ) \
-                      .replace( ".", "_" ).replace( ":", "_" ) \
-                      .replace( "[", "_" ).replace( "]", "_" ) \
-                      .replace( "(", "_" ).replace( ")", "_" ) \
-                      .replace( ",", "_" )
 
       gen_src = """
 def {}():
-  {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
+  x = {}
+  {}""".format( genblk_name, wstr, '\n  '.join([ f"{rstr} @= x" for rstr in rstrs ]) )
 
-      blk = compile_net_blk( _globals, gen_src )
+      blk = compile_net_blk( _globals, gen_src, writer )
 
       top._dag.genblks.add( blk )
       if writer.is_signal():
         top._dag.genblk_reads[ blk ] = [ writer ]
-      top._dag.genblk_writes[ blk ] = readers
+      top._dag.genblk_writes[ blk ] = all_readers
 
     # Get the final list of update blocks
     top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks

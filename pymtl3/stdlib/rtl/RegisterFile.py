@@ -20,13 +20,13 @@ class RegisterFile( Component ):
     @update
     def up_rf_read():
       for i in range( rd_ports ):
-        s.rdata[i] = s.regs[ s.raddr[i] ]
+        s.rdata[i] @= s.regs[ s.raddr[i] ]
 
     if const_zero:
       @update_ff
       def up_rf_write_constzero():
         for i in range( wr_ports ):
-          if s.wen[i] & (s.waddr[i] != addr_type(0)):
+          if s.wen[i] & (s.waddr[i] != 0):
             s.regs[ s.waddr[i] ] <<= s.wdata[i]
     else:
       @update_ff

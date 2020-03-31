@@ -1,0 +1,70 @@
+template = \
+'''
+`define HOLD_TIME 1
+`define INTRA_CYCLE_TIME 2
+`define SETUP_TIME 1
+`define CYCLE_TIME (`HOLD_TIME+`INTRA_CYCLE_TIME+`SETUP_TIME)
+
+`timescale 1ns/1ns
+
+`define T({args_strs}) \\
+        t({args_strs},`__LINE__)
+
+`define CHECK(lineno, out, ref, port_name) \\
+  if (out != ref) begin \\
+    $display("The test bench received an incorrect value!"); \\
+    $display("- row number     : %0d", lineno); \\
+    $display("- port name      : %s", port_name); \\
+    $display("- expected value : 0x%x", ref); \\
+    $display("- actual value   : 0x%x", out); \\
+  end
+  //   $finish; \\
+  // end else \\
+  //   $display("Signal %s in cycle %0d passed",name, lineno);
+
+module {harness_name};
+  // convention
+  logic clk;
+  logic reset;
+
+  {signal_decls};
+
+  task t(
+    {task_signal_decls},
+    integer lineno
+  );
+  begin
+    {task_assign_strs};
+    #`INTRA_CYCLE_TIME;
+    {task_check_strs};
+    #(`SETUP_TIME+`HOLD_TIME);
+  end
+  endtask
+
+  // use 25% clock cycle, so #1 for setup #2 for sim #1 for hold
+  always #(`CYCLE_TIME/2) clk = ~clk;
+
+  {dut_name} DUT
+  (
+    {dut_clk_decl},
+    {dut_reset_decl},
+    {dut_signal_decls}
+  );
+
+  initial begin
+    clk   = 1'b1; // NEED TO DO THIS TO HAVE RISING EDGE AT TIME 0
+    reset = 1'b0; // TODO reset active low/high
+
+    #`HOLD_TIME;
+    reset = 1'b1;
+    #`CYCLE_TIME;
+    #`CYCLE_TIME;
+    // 2 cycles plus hold
+    reset = 1'b0;
+
+    `include "{cases_file_name}"
+
+    $finish;
+  end
+endmodule
+'''

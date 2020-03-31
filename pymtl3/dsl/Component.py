@@ -7,9 +7,6 @@ Add clk/reset signals.
 Author : Yanghui Ou
   Date : Apr 6, 2019
 """
-from collections import defaultdict
-
-from pymtl3.datatypes import Bits1
 
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
@@ -33,8 +30,8 @@ class Component( ComponentLevel7 ):
     if not s._dsl.constructed:
 
       # clk and reset signals are added here.
-      s.clk   = InPort( Bits1 )
-      s.reset = InPort( Bits1 )
+      s.clk   = InPort()
+      s.reset = InPort()
 
       # Merge the actual keyword args and those args set by set_parameter
       if s._dsl.param_tree is None:
@@ -70,7 +67,7 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def _collect_objects_local( s, filt ):
+  def _collect_objects_local( s, filt, sort_key = None ):
     assert s._dsl.constructed
     ret = set()
     stack = []
@@ -85,7 +82,10 @@ class Component( ComponentLevel7 ):
       # ONLY LIST IS SUPPORTED
       elif isinstance( u, list ):
         stack.extend( u )
-    return ret
+    if sort_key:
+      return sorted( ret, key = sort_key )
+    else:
+      return list(ret)
 
   def _flush_pending_value_connections( s ):
     if s._dsl._has_pending_value_connections:
@@ -499,6 +499,8 @@ class Component( ComponentLevel7 ):
       pypyjit.set_param("off")
     except:
       pass
+    if not hasattr( s._dsl, "elaborate_top" ):
+      s.elaborate()
 
     assert type(pass_instance) is not type, f"Should pass in a pass instance like " \
                                             f"'{pass_instance.__name__}()' instead of '{pass_instance.__name__}'"
@@ -508,84 +510,6 @@ class Component( ComponentLevel7 ):
   def check( s ):
     s._check_valid_dsl_code()
 
-  # TODO maybe we should implement these two lock/unlock APIs as passes?
-  # They expose kernel implementation details though ...
-  def lock_in_simulation( s ):
-    s._check_called_at_elaborate_top( "lock_in_simulation" )
-
-    swapped_signals = defaultdict(list)
-
-    # Swap all Signal objects with actual data
-
-    Q = [ (s, s) ]
-    while Q:
-      current_obj, host = Q.pop()
-      if isinstance( current_obj, list ):
-        for i, obj in enumerate( current_obj ):
-          if isinstance( obj, Signal ):
-            try:
-              current_obj[i] = obj.default_value()
-            except Exception as e:
-              raise type(e)(str(e) + f' happens at {obj!r}')
-
-            try:
-              current_obj[i] <<= obj.default_value()
-            except Exception:
-              pass
-
-            swapped_signals[ host ].append( (current_obj, i, obj, True) )
-
-          elif isinstance( obj, Component ):
-            Q.append( (obj, obj) )
-          elif isinstance( obj, (Interface, list) ):
-            Q.append( (obj, host) )
-
-      elif isinstance( current_obj, NamedObject ):
-        for i, obj in current_obj.__dict__.items():
-          if i[0] != '_': # impossible to have tuple
-            if isinstance( obj, Signal ):
-              try:
-                value = obj.default_value()
-              except Exception as e:
-                raise type(e)(str(e) + f' happens at {obj!r}')
-
-              try:
-                value <<= obj.default_value()
-              except Exception:
-                pass
-
-              setattr( current_obj, i, value )
-
-              swapped_signals[ host ].append( (current_obj, i, obj, False) )
-
-            elif isinstance( obj, Component ):
-              Q.append( (obj, obj) )
-            elif isinstance( obj, (Interface, list) ):
-              Q.append( (obj, host) )
-
-    s._dsl.swapped_signals = swapped_signals
-    s._dsl.locked_simulation = True
-
-  def unlock_simulation( s ):
-    s._check_called_at_elaborate_top( "unlock_simulation" )
-    try:
-      assert s._dsl.locked_simulation
-    except:
-      raise AttributeError("Cannot unlock an unlocked/never locked model.")
-
-    swapped_values  = defaultdict(list)
-    for component, records in s._dsl.swapped_signals.items():
-      for current_obj, i, obj, is_list in records:
-        if is_list:
-          swapped_values[ component ].append( (current_obj, i, current_obj[i], is_list) )
-          current_obj[i] = obj
-        else:
-          swapped_values[ component ].append( (current_obj, i, getattr(current_obj, i), is_list) )
-          setattr( current_obj, i, obj )
-
-    s._dsl.swapped_values = swapped_values
-    s._dsl.locked_simulation = False
-
   """ APIs that provide local metadata of a component """
 
   def get_component_level( s ):
@@ -594,17 +518,17 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_child_components( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, Component ) )
+  def get_child_components( s, sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, Component ), sort_key )
 
-  def get_input_value_ports( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, InPort ) )
+  def get_input_value_ports( s, sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, InPort ), sort_key )
 
-  def get_output_value_ports( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, OutPort ) )
+  def get_output_value_ports( s , sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, OutPort ), sort_key )
 
-  def get_wires( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, Wire ) )
+  def get_wires( s , sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, Wire ), sort_key )
 
   def get_update_blocks( s ):
     assert s._dsl.constructed
@@ -642,9 +566,9 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       return s._collect_all_single( filt )
 
-  def get_local_object_filter( s, filt ):
+  def get_local_object_filter( s, filt, sort_key = None ):
     assert callable( filt )
-    return s._collect_objects_local( filt )
+    return s._collect_objects_local( filt, sort_key )
 
   def get_all_components( s ):
     try:

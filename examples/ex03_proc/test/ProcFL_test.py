@@ -63,18 +63,14 @@ class ProcFL_Tests:
     th.load( mem_image )
 
     # Create a simulator and run simulation
-    th.apply( SimulationPass() )
+    th.apply( SimulationPass(print_line_trace=True) )
     th.sim_reset()
 
-    print()
-    ncycles = 0
-    while not th.done() and ncycles < max_cycles:
-      th.tick()
-      print("{:3}: {}".format( ncycles, th.line_trace() ))
-      ncycles += 1
+    while not th.done() and th.sim_cycle_count() < max_cycles:
+      th.sim_tick()
 
     # Force a test failure if we timed out
-    assert ncycles < max_cycles
+    assert th.sim_cycle_count() < max_cycles
 
   #-----------------------------------------------------------------------
   # add

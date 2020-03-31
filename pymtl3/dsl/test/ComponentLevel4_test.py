@@ -115,7 +115,7 @@ def test_2regs():
   class Top( ComponentLevel4 ):
 
     def construct( s ):
-      s.in_ = Wire(Bits32)
+      s.in_ = 0
 
       @update
       def up_src():
@@ -133,7 +133,7 @@ def test_2regs():
       def up_reg0_to_reg1():
         s.reg1.write( s.reg0.read() + 1)
 
-      s.out = Wire(Bits32)
+      s.out = 0
       @update
       def up_sink():
         s.out = s.reg1.read()

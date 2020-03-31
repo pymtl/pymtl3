@@ -25,8 +25,8 @@ class YosysTranslator( VTranslator ):
 
 """
 
-  def rtlir_tr_initialize( s ):
-    pass
+  # def rtlir_tr_initialize( s ):
+  #   pass
 
   def rtlir_tr_src_layout( s, hierarchy ):
     s.set_header()
@@ -53,12 +53,41 @@ endmodule
     file_info = structural.component_file_info
     ports_template = "{port_decls}{ifc_decls}"
     full_name = structural.component_full_name
-    module_name = structural.component_unique_name
+
+    if structural.component_explicit_module_name:
+      module_name = \
+          structural.component_explicit_module_name
+    elif structural.component_is_top and s._mangled_placeholder_top_module_name:
+      module_name = s._mangled_placeholder_top_module_name
+    else:
+      module_name = structural.component_unique_name
+
+    if structural.component_no_synthesis:
+      no_synth_begin = '`ifndef SYNTHESIS\n'
+      no_synth_end   = '`endif'
+    else:
+      no_synth_begin = ''
+      no_synth_end   = ''
+
+    s._top_module_name = structural.component_name
+    s._top_module_full_name = module_name
 
     if full_name != module_name:
       optional_full_name = f"Full name: {full_name}\n// "
     else:
       optional_full_name = ""
+
+    if structural.placeholder_src:
+      # This is a placeholder
+      placeholder_src = structural.placeholder_src
+      template = \
+"""\
+// PyMTL Placeholder {component_name} Definition
+// {optional_full_name}At {file_info}
+
+{no_synth_begin}{placeholder_src}
+{no_synth_end}"""
+      return template.format( **locals() )
 
     port_dct = structural.decl_ports
     structural.p_port_decls = port_dct["port_decls"]

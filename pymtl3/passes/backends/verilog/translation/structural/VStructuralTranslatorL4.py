@@ -29,11 +29,17 @@ class VStructuralTranslatorL4(
 
   def rtlir_tr_subcomp_port_decl( s, m, c_id, c_rtype, c_array_type, port_id,
       port_rtype, port_dtype, port_array_type ):
+    obj = c_rtype.obj
+    if obj.has_metadata(s._placeholder_pass.placeholder_config):
+      pmap = obj.get_metadata(s._placeholder_pass.placeholder_config).get_port_map()
+    else:
+      pmap= lambda x: x
     return {
         'direction' : port_rtype.get_direction(),
         'data_type' : port_dtype['data_type'],
         'packed_type' : port_dtype['packed_type'],
         'id' : port_id,
+        'ph_id' : pmap(port_id),
         'unpacked_type' : port_array_type['unpacked_type'],
     }
 
@@ -43,12 +49,21 @@ class VStructuralTranslatorL4(
   def rtlir_tr_subcomp_ifc_port_decl( s, m, c_id, c_rtype, c_array_type,
       ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_array_type ):
     if isinstance( port_rtype, rt.Port ):
+      obj = c_rtype.obj
+      if obj.has_metadata(s._placeholder_pass.placeholder_config):
+        pmap = obj.get_metadata(s._placeholder_pass.placeholder_config).get_port_map()
+      else:
+        pmap = lambda x: x
+      vname = f'{ifc_id}__{port_id}'
+      pyname = vname.replace('__', '.')
+      ph_id = vname if pmap(pyname) == pyname else pmap(pyname)
       port_dtype = s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
       return [{
           'direction' : port_rtype.get_direction(),
           'data_type' : port_dtype['data_type'],
           'packed_type' : port_dtype['packed_type'],
-          'id' : f'{ifc_id}__{port_id}',
+          'id' : vname,
+          'ph_id' : ph_id,
           'unpacked_type' : ifc_array_type['unpacked_type']+port_array_type['unpacked_type'],
       }]
     else:
@@ -135,15 +150,16 @@ class VStructuralTranslatorL4(
         for i, dscp in enumerate(port_conns + ifc_conns):
           comma = ',\n' if i != len(port_conns+ifc_conns)-1 else ''
           port_name = dscp['id']
+          ph_port_name = dscp['ph_id']
           port_wire = f"{orig_c_id}__{dscp['id']}{unpacked_str}"
           if (port_name == 'clk' and no_clk) or (port_name == 'reset' and no_reset):
             comma = ',\n' if i != len(port_conns+ifc_conns)-1 else '\n'
             newline = '\n' if i != len(port_conns+ifc_conns)-1 else ''
             port_conn_decls.append("`ifndef SYNTHESIS\n")
-            port_conn_decls.append(f".{port_name}( {port_wire} ){comma}")
+            port_conn_decls.append(f".{ph_port_name}( {port_wire} ){comma}")
             port_conn_decls.append(f"`endif{newline}")
           else:
-            port_conn_decls.append(f".{port_name}( {port_wire} ){comma}")
+            port_conn_decls.append(f".{ph_port_name}( {port_wire} ){comma}")
 
         make_indent( port_conn_decls, 2 )
         port_conn_decls = ''.join(port_conn_decls)

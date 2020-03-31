@@ -10,23 +10,19 @@ from pymtl3.stdlib.test import TestVectorSimulator
 from .arbiters import RoundRobinArbiter, RoundRobinArbiterEn
 
 
-def run_test( cls, args, test_vectors ):
-
-  model = cls( *args )
-
-  BitsN = mk_bits( args[0] )
+def run_test( model, tvs ):
 
   # Define functions mapping the test vector to ports in model
 
-  def tv_in( model, test_vector ):
-    model.reqs = BitsN(test_vector[0])
+  def tv_in( model, tv ):
+    model.reqs @= tv[0]
 
-  def tv_out( model, test_vector ):
-    assert model.grants == BitsN(test_vector[1])
+  def tv_out( model, tv ):
+    assert model.grants == tv[1]
 
   # Run the test
 
-  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = TestVectorSimulator( model, tvs, tv_in, tv_out )
 
   sim.run_test()
 
@@ -36,7 +32,7 @@ def run_test( cls, args, test_vectors ):
 # RoundRobinArbiter with four requesters
 def test_rr_arb_4():
 
-  run_test( RoundRobinArbiter, (4,), [
+  run_test( RoundRobinArbiter(4), [
 
     # reqs     grants
     [ 0b0000,  0b0000 ],
@@ -70,24 +66,20 @@ def test_rr_arb_4():
 # run_en_test
 #------------------------------------------------------------------------------
 # Test driver for RoundRobinArbiterEn
-def run_en_test( cls, args, test_vectors ):
-
-  model = cls( *args )
-
-  BitsN = mk_bits( args[0] )
+def run_en_test( model, tvs ):
 
   # Define functions mapping the test vector to ports in model
 
-  def tv_in( model, test_vector ):
-    model.en   = Bits1( test_vector[0] )
-    model.reqs = BitsN( test_vector[1] )
+  def tv_in( model, tv ):
+    model.en   @= tv[0]
+    model.reqs @= tv[1]
 
-  def tv_out( model, test_vector ):
-    assert model.grants == BitsN(test_vector[2])
+  def tv_out( model, tv ):
+    assert model.grants == tv[2]
 
   # Run the test
 
-  sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+  sim = TestVectorSimulator( model, tvs, tv_in, tv_out )
   sim.run_test()
 
 #------------------------------------------------------------------------------
@@ -96,7 +88,7 @@ def run_en_test( cls, args, test_vectors ):
 # RoundRobinArbiterEn with four requesters
 def test_rr_arb_en_4( dump_vcd, test_verilog ):
 
-  run_en_test( RoundRobinArbiterEn, (4,), [
+  run_en_test( RoundRobinArbiterEn(4), [
 
     # reqs     grants
     [ 0, 0b0000,  0b0000 ],

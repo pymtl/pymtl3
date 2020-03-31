@@ -17,6 +17,7 @@ from ....testcases import (
     CaseNestedStructPackedArrayUpblkComp,
     CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
+    CaseTypeBundle,
 )
 from ..YosysBehavioralTranslatorL3 import YosysBehavioralRTLIRToVVisitorL3
 
@@ -43,6 +44,7 @@ def run_test( case, m ):
       CaseStructPackedArrayUpblkComp,
       CaseNestedStructPackedArrayUpblkComp,
       CaseSizeCastPaddingStructPort,
+      CaseTypeBundle,
     ]
 )
 def test_yosys_behavioral_L3( case ):

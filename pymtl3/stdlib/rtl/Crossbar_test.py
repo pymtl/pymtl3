@@ -12,12 +12,7 @@ from .Crossbar import Crossbar
 #-----------------------------------------------------------------------
 # run_test_crossbar
 #-----------------------------------------------------------------------
-def run_test_crossbar( cls, args, test_vectors ):
-
-  model = cls( *args )
-
-  n, T = args
-  Tsel = mk_bits( clog2( n ) )
+def run_test_crossbar( model, test_vectors ):
 
   # Define functions mapping the test vector to ports in model
 
@@ -25,14 +20,14 @@ def run_test_crossbar( cls, args, test_vectors ):
     n = len( model.in_ )
 
     for i in range(n):
-      model.in_[i] = T(test_vector[i])
-      model.sel[i] = Tsel(test_vector[n+i])
+      model.in_[i] @= test_vector[i]
+      model.sel[i] @= test_vector[n+i]
 
   def tv_out( model, test_vector ):
     n = len( model.in_ )
 
     for i in range(n):
-      assert model.out[i] == T(test_vector[n*2+i])
+      assert model.out[i] == test_vector[n*2+i]
 
   # Run the test
 
@@ -44,8 +39,7 @@ def run_test_crossbar( cls, args, test_vectors ):
 #-----------------------------------------------------------------------
 
 def test_crossbar3():
-  model = Crossbar( 3, Bits16 )
-  run_test_crossbar( Crossbar, (3, Bits16), [
+  run_test_crossbar( Crossbar( 3, Bits16 ), [
     [ 0xdead, 0xbeef, 0xcafe, 0, 1, 2, 0xdead, 0xbeef, 0xcafe ],
     [ 0xdead, 0xbeef, 0xcafe, 0, 2, 1, 0xdead, 0xcafe, 0xbeef ],
     [ 0xdead, 0xbeef, 0xcafe, 1, 2, 0, 0xbeef, 0xcafe, 0xdead ],

@@ -5,6 +5,7 @@
 # Date   : Jul 28, 2019
 """Configuration of Verilator import pass."""
 
+import copy
 import os
 import subprocess
 from textwrap import fill, indent
@@ -147,8 +148,8 @@ class VerilatorImportConfigs( BasePassConfigs ):
     "vl_Wno_list": Checker( lambda v: isinstance(v, list) and all(w in VerilogPlaceholderConfigs.Warnings for w in v),
                             "expects a list of warnings" ),
 
-    "vl_xinit": Checker( lambda v: v in ['zeros', 'ones', 'rand'],
-                  "vl_xinit should be one of ['zeros', 'ones', 'rand']" ),
+    "vl_xinit": Checker( lambda v: (v in ['zeros', 'ones', 'rand']) or isinstance(v, int),
+                  "vl_xinit should be an integer or one of ['zeros', 'ones', 'rand']" ),
 
     "vl_trace_timescale": Checker( lambda v: isinstance(v, str) and len(v) > 2 and v[-1] == 's' and \
                                     v[-2] in ['p', 'n', 'u', 'm'] and \
@@ -224,10 +225,16 @@ class VerilatorImportConfigs( BasePassConfigs ):
       return 0
     elif s.vl_xinit == 'ones':
       return 1
-    elif s.vl_xinit == 'rand':
+    elif ( s.vl_xinit == 'rand' ) or isinstance( s.vl_xinit, int ):
       return 2
     else:
-      raise InvalidPassOptionValue("vl_xinit should be one of 'zeros', 'ones', or 'rand'!")
+      raise InvalidPassOptionValue("vl_xinit should be an int or one of 'zeros', 'ones', or 'rand'!")
+
+  def get_vl_xinit_seed( s ):
+    if isinstance( s.vl_xinit, int ):
+      return s.vl_xinit
+    else:
+      return 0
 
   def get_c_wrapper_path( s ):
     return f'{s.translated_top_module}_v.cpp'
@@ -304,7 +311,7 @@ class VerilatorImportConfigs( BasePassConfigs ):
     return " ".join(w for w in [lint, style, fatal, wno] if w)
 
   def _get_all_includes( s ):
-    includes = s.c_include_path
+    includes = copy.copy(s.c_include_path)
 
     # Try to obtain verilator include path either from environment variable
     # or from `pkg-config`
@@ -330,7 +337,7 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     return includes
 
   def _get_c_src_files( s ):
-    srcs = s.c_srcs
+    srcs = copy.copy(s.c_srcs)
     top_module = s.translated_top_module
     vl_mk_dir = s.vl_mk_dir
     vl_class_mk = f"{vl_mk_dir}/V{top_module}_classes.mk"

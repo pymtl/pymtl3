@@ -20,7 +20,7 @@ from pymtl3.passes.testcases import (
 
 
 def test_py_int():
-  assert rdt.get_rtlir_dtype( 42 ) == rdt.Vector(32) 
+  assert rdt.get_rtlir_dtype( 42 ) == rdt.Vector(6) 
 
 def test_py_float():
   with expected_failure( RTLIRConversionError ):

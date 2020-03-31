@@ -131,11 +131,11 @@ class SomeMasterCL( Component ):
     def up_master_req():
       if s.xcel.req.rdy():
         if s.flag:
-          s.xcel.req( ReqType( XcelMsgType.WRITE, AddrType(s.addr),
+          s.xcel.req( ReqType( XcelMsgType.WRITE, AddrType(s.addr, trunc_int=True),
                                DataType(0xface0000 | s.addr) ) )
           s.flag = not s.flag
         else:
-          s.xcel.req( ReqType( XcelMsgType.READ, AddrType(s.addr),
+          s.xcel.req( ReqType( XcelMsgType.READ, AddrType(s.addr, trunc_int=True),
                                DataType(0) ) )
           s.addr += 1
           s.flag = not s.flag
@@ -239,14 +239,14 @@ class SomeMasterRTL( Component ):
 
     @update
     def up_req():
-      s.xcel.req.en = s.xcel.req.rdy if ~s.reset else Bits1(0)
-      s.xcel.req.msg.type_ = XcelMsgType.WRITE if s.flag else XcelMsgType.READ
-      s.xcel.req.msg.addr = s.addr
-      s.xcel.req.msg.data = DataType( 0xface0000 | int(s.addr) )
+      s.xcel.req.en @= ~s.reset & s.xcel.req.rdy
+      s.xcel.req.msg.type_ @= XcelMsgType.WRITE if s.flag else XcelMsgType.READ
+      s.xcel.req.msg.addr  @= s.addr
+      s.xcel.req.msg.data  @= 0xface0000 | int(s.addr)
 
     @update
     def up_resp():
-      s.xcel.resp.rdy = Bits1(1)
+      s.xcel.resp.rdy @= 1
 
   def done( s ):
     return s.count == s.nregs
@@ -286,12 +286,12 @@ class SomeMinionRTL( Component ):
 
     @update
     def up_wen():
-      s.wen = s.req_q.deq.rdy and s.req_q.deq.ret.type_ == XcelMsgType.WRITE
+      s.wen @= s.req_q.deq.rdy & (s.req_q.deq.ret.type_ == XcelMsgType.WRITE)
 
     @update
     def up_resp():
-      s.xcel.resp.en = s.req_q.deq.rdy and s.xcel.resp.rdy
-      s.req_q.deq.en = s.req_q.deq.rdy and s.xcel.resp.rdy
+      s.xcel.resp.en @= s.req_q.deq.rdy & s.xcel.resp.rdy
+      s.req_q.deq.en @= s.req_q.deq.rdy & s.xcel.resp.rdy
 
   def line_trace( s ):
     return "{}".format( s.xcel )

@@ -30,10 +30,10 @@ class Encoder( Component ):
 
     @update
     def encode():
-      s.out = OutType( 0 )
+      s.out @= 0
       for i in range( s.in_nbits ):
         if s.in_[i]:
-          s.out = OutType( i )
+          s.out @= i
 
   def line_trace( s ):
     return "in:{:0>{n}b} | out:{}".format(

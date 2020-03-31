@@ -29,19 +29,19 @@ def mk_xcel_transaction( words ):
   words = [ b16(x) for x in words ]
   bits = words_to_b128( words )
   reqs = []
-  reqs.append( Req( wr, b5(0), bits[0 :32 ] ) )
-  reqs.append( Req( wr, b5(1), bits[32:64 ] ) )
-  reqs.append( Req( wr, b5(2), bits[64:96 ] ) )
-  reqs.append( Req( wr, b5(3), bits[96:128] ) )
-  reqs.append( Req( wr, b5(4), b32(1)       ) )
-  reqs.append( Req( rd, b5(5), b32(0)       ) )
+  reqs.append( Req( wr, 0, bits[0 :32 ] ) )
+  reqs.append( Req( wr, 1, bits[32:64 ] ) )
+  reqs.append( Req( wr, 2, bits[64:96 ] ) )
+  reqs.append( Req( wr, 3, bits[96:128] ) )
+  reqs.append( Req( wr, 4, 1            ) )
+  reqs.append( Req( rd, 5, 0            ) )
 
   resps = []
-  resps.append( Resp( wr, b32(0)          ) )
-  resps.append( Resp( wr, b32(0)          ) )
-  resps.append( Resp( wr, b32(0)          ) )
-  resps.append( Resp( wr, b32(0)          ) )
-  resps.append( Resp( wr, b32(0)          ) )
+  resps.append( Resp( wr, 0               ) )
+  resps.append( Resp( wr, 0               ) )
+  resps.append( Resp( wr, 0               ) )
+  resps.append( Resp( wr, 0               ) )
+  resps.append( Resp( wr, 0               ) )
   resps.append( Resp( rd, checksum(words) ) )
 
   return reqs, resps
@@ -84,6 +84,7 @@ def checksum_xcel_cl( words ):
   dut = WrappedChecksumXcelCL()
   dut.elaborate()
   dut.apply( SimulationPass() )
+  dut.sim_reset()
 
   reqs, _ = mk_xcel_transaction( words )
 
@@ -91,18 +92,17 @@ def checksum_xcel_cl( words ):
 
     # Wait until xcel is ready to accept a request
     while not dut.recv.rdy():
-      dut.tick()
+      dut.sim_tick()
 
     # Send the request message to xcel
     dut.recv( req )
-    dut.tick()
+    dut.sim_tick()
 
     # Wait until xcel is ready to give a response
     while not dut.give.rdy():
-      dut.tick()
+      dut.sim_tick()
 
     resp_msg = dut.give()
-    dut.tick()
 
   return resp_msg.data
 
@@ -180,19 +180,14 @@ class ChecksumXcelCLSrcSink_Tests:
     # Create a simulator
     th.elaborate()
     th.apply( SimulationPass() )
-    ncycles = 0
     th.sim_reset()
-    print( "" )
 
     # Tick the simulator
-    print("{:3}: {}".format( ncycles, th.line_trace() ))
-    while not th.done() and ncycles < max_cycles:
-      th.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, th.line_trace() ))
+    while not th.done() and th.sim_cycle_count() < max_cycles:
+      th.sim_tick()
 
     # Check timeout
-    assert ncycles < max_cycles
+    assert th.sim_cycle_count() < max_cycles
 
   #-----------------------------------------------------------------------
   # test_xcel_srcsink_simple

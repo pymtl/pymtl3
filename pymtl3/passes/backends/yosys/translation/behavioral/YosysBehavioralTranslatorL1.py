@@ -55,7 +55,7 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
       return ret
 
   def get_loopvars( s ):
-    loopvars = list( s.loopvars )
+    loopvars = sorted(list( s.loopvars ))
     for i, loopvar in enumerate( loopvars ):
       loopvars[i] = "integer " + loopvar + ";"
     if loopvars:
@@ -87,6 +87,13 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
       target._top_expr = 1
     node.value._top_expr = 1
     return super().visit_Assign( node )
+
+  #-----------------------------------------------------------------------
+  # visit_Number
+  #-----------------------------------------------------------------------
+
+  # def visit_Number( s, node ):
+  #   nbits = node.Type.get_dtype().get_length()
 
   #-----------------------------------------------------------------------
   # visit_Concat
@@ -143,8 +150,6 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
         n_zero = nbits - cur_nbits
         return f"{{ {{ {n_zero} {{ 1'b0 }} }}, {value_str} }}"
 
-    if isinstance( value, Bits ):
-      value = int(value)
     return f"{nbits}'d{value}"
 
   #-----------------------------------------------------------------------
@@ -160,10 +165,12 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
     if isinstance(Type, rt.Const):
       obj = Type.get_object()
       if isinstance( obj, int ):
-        node.sexpr['s_attr'] = f"32'd{obj}"
+        nbits = node.Type.get_dtype().get_length()
+        node.sexpr['s_attr'] = f"{nbits}'d{obj}"
         node.sexpr['s_index'] = ""
       elif isinstance( obj, Bits ):
-        nbits = obj.nbits
+        # nbits = obj.nbits
+        nbits = node.Type.get_dtype().get_length()
         value = int( obj )
         node.sexpr['s_attr'] = f"{nbits}'d{value}"
         node.sexpr['s_index'] = ""
@@ -212,6 +219,8 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
         except AttributeError:
           raise VerilogTranslationError( s.blk, node,
             f"{value} is not an array of constants!" )
+        if isinstance(node.Type, rt.Const):
+          nbits = node.Type.get_dtype().get_length()
         node.sexpr['s_index'] = f"{nbits}'d{const_value}"
         node.sexpr['index'] = []
         node.sexpr['s_attr'] = ""
@@ -253,7 +262,8 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
 
   def visit_FreeVar( s, node ):
     if isinstance( node.obj, int ):
-      return f"32'd{node.obj}"
+      nbits = node.Type.get_dtype().get_length()
+      return f"{nbits}'d{node.obj}"
     elif isinstance( node.obj, Bits ):
       nbits = node.obj.nbits
       value = int( node.obj )

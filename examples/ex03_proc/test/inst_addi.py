@@ -119,6 +119,6 @@ def gen_random_test():
   for i in range(50):
     src  = Bits32( random.randint(0,0xffffffff) )
     imm  = Bits12( random.randint(0,0xfff) )
-    dest = src.int() + sext(imm,32)
+    dest = src + sext(imm,32)
     asm_code.append( gen_rimm_value_test( "addi", src.uint(), imm.uint(), dest.uint() ) )
   return asm_code

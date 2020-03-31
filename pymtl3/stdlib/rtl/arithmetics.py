@@ -6,12 +6,12 @@ class Mux( Component ):
 
   def construct( s, Type, ninputs ):
     s.in_ = [ InPort( Type ) for _ in range(ninputs) ]
-    s.sel = InPort( int if Type is int else mk_bits( clog2(ninputs) ) )
     s.out = OutPort( Type )
+    s.sel = InPort( clog2(ninputs) )
 
     @update
     def up_mux():
-      s.out = s.in_[ s.sel ]
+      s.out @= s.in_[ s.sel ]
 
 # Rshifter
 
@@ -19,12 +19,12 @@ class RightLogicalShifter( Component ):
 
   def construct( s, Type, shamt_nbits = 1 ):
     s.in_   = InPort( Type )
-    s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
+    s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )
 
     @update
     def up_rshifter():
-      s.out = s.in_ >> s.shamt
+      s.out @= s.in_ >> s.shamt
 
 # Lshifter
 
@@ -32,12 +32,12 @@ class LeftLogicalShifter( Component ):
 
   def construct( s, Type, shamt_nbits = 1 ):
     s.in_   = InPort( Type )
-    s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
+    s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )
 
     @update
     def up_lshifter():
-      s.out = s.in_ << s.shamt
+      s.out @= s.in_ << s.shamt
 
 # Incrementer
 
@@ -49,7 +49,7 @@ class Incrementer( Component ):
 
     @update
     def up_incrementer():
-      s.out = s.in_ + Type(amount)
+      s.out @= s.in_ + amount
 
 # Adder
 
@@ -62,7 +62,7 @@ class Adder( Component ):
 
     @update
     def up_adder():
-      s.out = s.in0 + s.in1
+      s.out @= s.in0 + s.in1
 
 # And
 
@@ -75,7 +75,7 @@ class And( Component ):
 
     @update
     def up_and():
-      s.out = s.in0 & s.in1
+      s.out @= s.in0 & s.in1
 
 # Subtractor
 
@@ -88,7 +88,7 @@ class Subtractor( Component ):
 
     @update
     def up_subtractor():
-      s.out = s.in0 - s.in1
+      s.out @= s.in0 - s.in1
 
 # ZeroComparator
 
@@ -96,12 +96,12 @@ class ZeroComparator( Component ):
 
   def construct( s, Type ):
     s.in_ = InPort( Type )
-    s.out = OutPort( bool if Type is int else Bits1 )
+    s.out = OutPort()
 
     @update
     def up_zerocomp():
       # s.out = Bits1( s.in_ == Type(0) )
-      s.out = s.in_ == Type(0)
+      s.out @= s.in_ == Type(0)
 
 # LeftThanComparator
 
@@ -110,11 +110,11 @@ class LTComparator( Component ):
   def construct( s, Type ):
     s.in0 = InPort( Type )
     s.in1 = InPort( Type )
-    s.out = OutPort( bool if Type is int else Bits1 )
+    s.out = OutPort()
 
     @update
     def up_ltcomp():
-      s.out = Bits1(s.in0 < s.in1)
+      s.out @= s.in0 < s.in1
 
 # LeftThanOrEqualToComparator
 
@@ -123,8 +123,8 @@ class LEComparator( Component ):
   def construct( s, Type ):
     s.in0 = InPort( Type )
     s.in1 = InPort( Type )
-    s.out = OutPort( bool if Type is int else Bits1 )
+    s.out = OutPort()
 
     @update
     def up_lecomp():
-      s.out = Bits1(s.in0 <= s.in1)
+      s.out @= s.in0 <= s.in1

@@ -103,6 +103,6 @@ def test_py_objs():
   # Print out the simulation line trace.
   print( "\n==== Line trace ====" )
   print( "   buf1    buf2")
+  incr.sim_reset()
   for i in range( 6 ):
-    incr.tick()
-    print("{:2}: {}".format( i, incr.line_trace() ))
+    incr.sim_tick()

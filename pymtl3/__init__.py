@@ -25,7 +25,11 @@ from .dsl.ConstraintTypes import RD, WR, M, U
 from .dsl.MetadataKey import MetadataKey
 from .dsl.Placeholder import Placeholder
 from .passes import TracingConfigs
-from .passes.backends.verilog import TranslationImportPass, VerilatorImportPass
+from .passes.backends.verilog import (
+    TranslationImportPass,
+    VerilatorImportPass,
+    VerilogTBGenPass,
+)
 from .passes.PassGroups import SimulationPass
 
 __all__ = [
@@ -36,12 +40,11 @@ __all__ = [
   'non_blocking', 'CalleeIfcCL', 'CallerIfcCL',
   'blocking', 'CalleeIfcFL', 'CallerIfcFL',
 
-  'SimulationPass', 'TracingConfigs', 'TranslationImportPass', 'VerilatorImportPass',
+  'SimulationPass', 'TracingConfigs', 'TranslationImportPass', 'VerilatorImportPass', 'VerilogTBGenPass',
   'Component', 'Placeholder',
 
-  'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',
+  'trunc', 'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',
   'mk_bits', 'Bits',
   'mk_bitstruct', 'bitstruct',
-  'to_bits', 'get_nbits',
 ] + [ "Bits{}".format(x) for x in _bitwidths ] \
   + [ "b{}".format(x) for x in _bitwidths ]

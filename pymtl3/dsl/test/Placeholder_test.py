@@ -39,7 +39,7 @@ def test_placeholder_no_upblk():
       s.out = OutPort( nbits )
       @update
       def up_x():
-        s.out = s.in_ + 1
+        s.out @= s.in_ + 1
   try:
     a = Wrong()
     a.elaborate()
@@ -95,7 +95,7 @@ class Real( Component ):
     s.out = OutPort( nbits )
     @update
     def up_x2():
-      s.out = s.in_ << 1
+      s.out @= s.in_ << 1
 
   def line_trace( s ):
     return "{}>{}".format( s.in_, s.out )

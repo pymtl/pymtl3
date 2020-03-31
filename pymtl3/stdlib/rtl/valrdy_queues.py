@@ -23,12 +23,12 @@ class PipeQueue1RTL( Component ):
 
     @update
     def up_pipeq_set_enq_rdy():
-      s.enq.rdy = ~s.full | s.deq.rdy
+      s.enq.rdy @= ~s.full | s.deq.rdy
 
     @update
     def up_pipeq_full():
-      s.buffer.en = s.enq.val & s.enq.rdy
-      s.next_full = s.enq.val | (s.full & ~s.deq.rdy)
+      s.buffer.en @= s.enq.val & s.enq.rdy
+      s.next_full @= s.enq.val | (s.full & ~s.deq.rdy)
 
   def line_trace( s ):
     return s.enq.line_trace() + " > " + \
@@ -59,17 +59,17 @@ class BypassQueue1RTL( Component ):
 
     @update
     def up_bypq_set_enq_rdy():
-      s.enq.rdy = ~s.full
+      s.enq.rdy @= ~s.full
 
     @update
     def up_bypq_internal():
-      s.buffer.en = (~s.deq.rdy) & (s.enq.val & s.enq.rdy)
-      s.next_full = (~s.deq.rdy) & s.deq.val
+      s.buffer.en @= (~s.deq.rdy) & (s.enq.val & s.enq.rdy)
+      s.next_full @= (~s.deq.rdy) & s.deq.val
 
     # this enables the sender to make enq.val depend on enq.rdy
     @update
     def up_bypq_set_deq_val():
-      s.deq.val = s.full | s.enq.val
+      s.deq.val @= s.full | s.enq.val
 
   def line_trace( s ):
     return s.enq.line_trace() + " > " + \
@@ -96,12 +96,12 @@ class NormalQueue1RTL( Component ):
 
     @update
     def up_normq_set_enq_rdy():
-      s.enq.rdy = ~s.full
+      s.enq.rdy @= ~s.full
 
     @update
     def up_normq_internal():
-      s.buffer.en = s.enq.val & s.enq.rdy
-      s.next_full = (s.full & ~s.deq.rdy) | s.buffer.en
+      s.buffer.en @= s.enq.val & s.enq.rdy
+      s.next_full @= (s.full & ~s.deq.rdy) | s.buffer.en
 
   def line_trace( s ):
     return s.enq.line_trace() + " > " + \
@@ -117,7 +117,7 @@ class NormalQueueRTL( Component ):
 
     s.enq              = InValRdyIfc( Type )
     s.deq              = OutValRdyIfc( Type )
-    s.num_free_entries = OutPort( mk_bits( clog2(num_entries) ) )
+    s.num_free_entries = OutPort( mk_bits( clog2(num_entries+1) ) )
 
     # Ctrl and Dpath unit instantiation
 
@@ -144,7 +144,7 @@ class NormalQueueRTL( Component ):
     connect( s.dpath.raddr,    s.ctrl.raddr )
 
   def line_trace( s ):
-    return "{} () {}".format( s.enq, s.deq )
+    return "{} () {}".format( s.enq.line_trace(), s.deq.line_trace() )
 
 #-----------------------------------------------------------------------
 # NormalQueueRTLDpath
@@ -153,7 +153,8 @@ class NormalQueueRTLDpath( Component ):
 
   def construct( s, num_entries, Type ):
 
-    AddrType    = mk_bits( clog2( num_entries ) )
+    SizeType      = mk_bits( clog2( num_entries+1 ) )
+    AddrType      = mk_bits( clog2( num_entries ) )
 
     s.enq_bits  = InPort  ( Type )
     s.deq_bits  = OutPort ( Type )
@@ -182,9 +183,10 @@ class NormalQueueRTLCtrl( Component ):
 
   def construct( s, num_entries ):
 
-    AddrType      = mk_bits( clog2( num_entries ) )
+    s.num_entries = num_entries
 
-    s.num_entries = AddrType( num_entries )
+    SizeType      = mk_bits( clog2( num_entries+1 ) )
+    AddrType      = mk_bits( clog2( num_entries ) )
 
     # Interface Ports
 
@@ -192,7 +194,7 @@ class NormalQueueRTLCtrl( Component ):
     s.enq_rdy          = OutPort ( Bits1 )
     s.deq_val          = OutPort ( Bits1 )
     s.deq_rdy          = InPort  ( Bits1 )
-    s.num_free_entries = OutPort ( AddrType )
+    s.num_free_entries = OutPort ( SizeType )
 
     # Control signal (ctrl -> dpath)
     s.wen              = OutPort ( Bits1 )
@@ -221,61 +223,60 @@ class NormalQueueRTLCtrl( Component ):
 
       # only enqueue/dequeue if valid and ready
 
-      s.do_enq = s.enq_rdy and s.enq_val
-      s.do_deq = s.deq_rdy and s.deq_val
+      s.do_enq @= s.enq_rdy & s.enq_val
+      s.do_deq @= s.deq_rdy & s.deq_val
 
       # write enable
 
-      s.wen     = s.do_enq
+      s.wen @= s.do_enq
 
       # enq ptr incrementer
 
-      if s.enq_ptr == s.last_idx: s.enq_ptr_inc = AddrType(0)
-      else:                       s.enq_ptr_inc = s.enq_ptr + AddrType(1)
+      if s.enq_ptr == s.last_idx: s.enq_ptr_inc @= 0
+      else:                       s.enq_ptr_inc @= s.enq_ptr + 1
 
       # deq ptr incrementer
 
-      if s.deq_ptr == s.last_idx: s.deq_ptr_inc = AddrType(0)
-      else:                       s.deq_ptr_inc = s.deq_ptr + AddrType(1)
+      if s.deq_ptr == s.last_idx: s.deq_ptr_inc @= 0
+      else:                       s.deq_ptr_inc @= s.deq_ptr + 1
 
       # set the next ptr value
 
-      if s.do_enq: s.enq_ptr_next = s.enq_ptr_inc
-      else:        s.enq_ptr_next = s.enq_ptr
+      if s.do_enq: s.enq_ptr_next @= s.enq_ptr_inc
+      else:        s.enq_ptr_next @= s.enq_ptr
 
-      if s.do_deq: s.deq_ptr_next = s.deq_ptr_inc
-      else:        s.deq_ptr_next = s.deq_ptr
+      if s.do_deq: s.deq_ptr_next @= s.deq_ptr_inc
+      else:        s.deq_ptr_next @= s.deq_ptr
 
       # number of free entries calculation
 
       if   s.reset:
-        s.num_free_entries = s.num_entries
+        s.num_free_entries @= s.num_entries
       elif s.full:
-        s.num_free_entries = AddrType( 0 )
+        s.num_free_entries @= 0
       elif s.empty:
-        s.num_free_entries = s.num_entries
+        s.num_free_entries @= s.num_entries
       elif s.enq_ptr > s.deq_ptr:
-        s.num_free_entries = s.num_entries - ( s.enq_ptr - s.deq_ptr )
+        s.num_free_entries @= s.num_entries - zext( s.enq_ptr - s.deq_ptr, SizeType)
       elif s.deq_ptr > s.enq_ptr:
-        s.num_free_entries = s.deq_ptr - s.enq_ptr
+        s.num_free_entries @= zext( s.deq_ptr - s.enq_ptr, SizeType )
 
-      s.full_next_cycle = (s.do_enq and not s.do_deq and
-                                (s.enq_ptr_next == s.deq_ptr))
+      s.full_next_cycle @= s.do_enq & ~s.do_deq & (s.enq_ptr_next == s.deq_ptr)
 
     @update
     def up_ctrl_signals():
 
       # set output signals
 
-      s.empty   = not s.full and (s.enq_ptr == s.deq_ptr)
+      s.empty   @= ~s.full & (s.enq_ptr == s.deq_ptr)
 
-      s.enq_rdy = not s.full
-      s.deq_val = not s.empty
+      s.enq_rdy @= ~s.full
+      s.deq_val @= ~s.empty
 
       # set control signals
 
-      s.waddr   = s.enq_ptr
-      s.raddr   = s.deq_ptr
+      s.waddr   @= s.enq_ptr
+      s.raddr   @= s.deq_ptr
 
     @update_ff
     def seq():
@@ -287,7 +288,7 @@ class NormalQueueRTLCtrl( Component ):
         s.deq_ptr <<= s.deq_ptr_next
         s.enq_ptr <<= s.enq_ptr_next
 
-      if   s.reset:               s.full <<= Bits1(0)
-      elif s.full_next_cycle:     s.full <<= Bits1(1)
-      elif (s.do_deq and s.full): s.full <<= Bits1(0)
-      else:                       s.full <<= s.full
+      if   s.reset:             s.full <<= Bits1(0)
+      elif s.full_next_cycle:   s.full <<= Bits1(1)
+      elif (s.do_deq & s.full): s.full <<= Bits1(0)
+      else:                     s.full <<= s.full

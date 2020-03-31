@@ -36,7 +36,7 @@ class And( Component ):
 
     @update
     def up_and():
-      s.out = s.in0 & s.in1
+      s.out @= s.in0 & s.in1
 
 class GiveIfcRTL( CalleeIfcRTL ):
   def construct( s, Type ):
@@ -137,9 +137,9 @@ class GetRTL2GiveCL( Component ):
     @update
     def up_get_rtl():
       if s.entry is None and s.get.rdy:
-        s.get.en = b1(1)
+        s.get.en @= b1(1)
       else:
-        s.get.en = b1(0)
+        s.get.en @= b1(0)
 
     @update
     def up_entry():

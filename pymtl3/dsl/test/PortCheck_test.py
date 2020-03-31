@@ -31,7 +31,7 @@ def test_illegal_inport_write():
 
       @update
       def up_B_write():
-        s.in_[1:10] = 10
+        s.in_[1:10] @= 10
 
   class Top( ComponentLevel3 ):
     def construct( s ):
@@ -64,7 +64,7 @@ def test_illegal_inport_deep_write():
 
       @update
       def up_write_b_in():
-        s.b.b.in_[1:10] = 10
+        s.b.b.in_[1:10] @= 10
 
   try:
     _test_model( Top )
@@ -89,7 +89,7 @@ def test_legal_inport_write():
 
       @update
       def up_write_b_in():
-        s.b.in_[1:10] = 10
+        s.b.in_[1:10] @= 10
 
   _test_model( Top )
 
@@ -109,7 +109,7 @@ def test_illegal_outport_write():
 
       @update
       def up_write_a_out():
-        s.a.out[1:10] = 10
+        s.a.out[1:10] @= 10
 
   try:
     _test_model( Top )
@@ -138,7 +138,7 @@ def test_illegal_outport_deep_write():
 
       @update
       def up_write_a_out():
-        s.a.a.out[1:10] = 10
+        s.a.a.out[1:10] @= 10
 
   try:
     _test_model( Top )
@@ -155,7 +155,7 @@ def test_legal_outport_write():
 
       @update
       def up_A_write():
-        s.out[0:2] = 2
+        s.out[0:2] @= 2
 
   class Top( ComponentLevel3 ):
     def construct( s ):
@@ -179,7 +179,7 @@ def test_illegal_wire_write():
 
       @update
       def up_write_a_out():
-        s.a.wire[1:10] = 10
+        s.a.wire[1:10] @= 10
 
   try:
     _test_model( Top )
@@ -195,7 +195,7 @@ def test_illegal_wire_read():
       s.wire = Wire( Bits32 )
       @update
       def up_write_wire():
-        s.wire[1:10] = 10
+        s.wire[1:10] @= 10
 
   class Top( ComponentLevel3 ):
     def construct( s ):
@@ -220,7 +220,7 @@ def test_legal_port_connect():
 
       @update
       def up_A_write():
-        s.out = 123
+        s.out @= 123
 
   class B( ComponentLevel3 ):
     def construct( s ):
@@ -265,7 +265,7 @@ def test_illegal_same_host():
       s.out = OutPort(32)
       @update
       def up_A_write():
-        s.out = 123
+        s.out @= 123
 
   class AWrap(ComponentLevel3):
     def construct( s ):
@@ -295,7 +295,7 @@ def test_illegal_rdhost_is_wrhost_parent():
       s.out = OutPort(32)
       @update
       def up_A_write():
-        s.out = 123
+        s.out @= 123
 
   class AWrap(ComponentLevel3):
     def construct( s ):
@@ -321,7 +321,7 @@ def test_illegal_wrhost_is_rdhost_parent():
       s.out = OutPort(32)
       @update
       def up_A_write():
-        s.out = 123
+        s.out @= 123
 
   class B( ComponentLevel3 ):
     def construct( s ):
@@ -356,7 +356,7 @@ def test_illegal_hosts_same_parent():
       s.out = OutPort(32)
       @update
       def up_A_write():
-        s.out = 123
+        s.out @= 123
 
   class B( ComponentLevel3 ):
     def construct( s ):
@@ -391,7 +391,7 @@ def test_illegal_hosts_too_far():
       s.out = OutPort(32)
       @update
       def up_A_write():
-        s.out = 123
+        s.out @= 123
 
   class AWrap( ComponentLevel3 ):
     def construct( s ):

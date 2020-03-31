@@ -46,7 +46,7 @@ class ProcFL( Component ):
         s.PC = b32( 0x200 )
         return
 
-      s.commit_inst = Bits1( 0 )
+      s.commit_inst @= 0
 
       try:
         s.raw_inst = s.imem.read( s.PC, 4 ) # line trace
@@ -123,7 +123,7 @@ class ProcFL( Component ):
         print( "Unexpected error at PC={:0>8s}!".format( str(s.PC) ) )
         raise
 
-      s.commit_inst = b1( 1 )
+      s.commit_inst @= 1
 
   #-----------------------------------------------------------------------
   # line_trace

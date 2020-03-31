@@ -32,7 +32,7 @@ def test_api_not_elaborated():
       s.out = OutPort( nbits )
       @update
       def up_x():
-        s.out = s.in_ + 1
+        s.out @= s.in_ + 1
 
   class Y( Component ):
     def construct( s, nbits=0 ):
@@ -69,7 +69,7 @@ class Real_shamt( Component ):
     s.out = OutPort( Bits32 )
     @update
     def up_real():
-      s.out = s.in_ << shamt
+      s.out @= s.in_ << shamt
 
   def line_trace( s ):
     return "{}>{}".format( s.in_, s.out )
@@ -80,7 +80,7 @@ class Real_shamt2( Component ):
     s.out = OutPort( Bits32 )
     @update
     def up_real():
-      s.out = s.in_ + shamt
+      s.out @= s.in_ + shamt
 
   def line_trace( s ):
     return "{}>{}".format( s.in_, s.out )
@@ -222,11 +222,11 @@ def test_replace_component_upblk_rw_port():
 
       @update
       def up_in():
-        s.inner.in_ = s.in_
+        s.inner.in_ @= s.in_
 
       @update
       def up_out():
-        s.w = s.inner.out
+        s.w @= s.inner.out
 
       s.inner = Real_shamt( 5 )#( in_ = s.in_, out = s.w )
 
@@ -266,7 +266,7 @@ def test_replace_component_func_rw_port():
 
       @s.func
       def assign_in( x ):
-        s.inner.in_ = x
+        s.inner.in_ @= x
 
       @update
       def up_in():
@@ -274,7 +274,7 @@ def test_replace_component_func_rw_port():
 
       @s.func
       def read_out():
-        s.w = s.inner.out
+        s.w @= s.inner.out
 
       @update
       def up_out():
@@ -315,7 +315,7 @@ def test_ctrl_dpath_connected_replaced_both():
 
       @update
       def out():
-        s.out = s.wire + 10
+        s.out @= s.wire + 10
 
   class Module2( Component ):
     def construct( s ):
@@ -327,7 +327,7 @@ def test_ctrl_dpath_connected_replaced_both():
 
       @update
       def out():
-        s.out = s.wire + 444
+        s.out @= s.wire + 444
 
   class Inner( Component ):
     def construct( s ):
@@ -375,7 +375,7 @@ def test_connect_upblk_orders():
       s.out2 = OutPort( Bits32 )
       @update
       def up_out():
-        s.out = Bits32(0)
+        s.out @= Bits32(0)
 
       s.wire = Wire(Bits32)
       @update_ff
@@ -384,7 +384,7 @@ def test_connect_upblk_orders():
 
       @update
       def up_out2():
-        s.out2 = Bits32(0)
+        s.out2 @= Bits32(0)
 
   class Top( Component ):
     def construct( s ):

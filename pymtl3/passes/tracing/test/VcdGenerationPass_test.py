@@ -24,12 +24,12 @@ def run_test( dut, tv, tv_in, tv_out ):
   dut.apply( SimulationPass() )
   for v in tv:
     tv_in( dut, v )
-    dut.tick()
+    dut.sim_tick()
     tv_out( dut, v )
   with open(vcd_file_name+".vcd") as fd:
     file_str = ''.join( fd.readlines() )
-    all_signals = dut.get_input_value_ports() | \
-                  dut.get_output_value_ports() | \
+    all_signals = dut.get_input_value_ports() + \
+                  dut.get_output_value_ports() + \
                   dut.get_wires()
     for signal in all_signals:
       assert signal._dsl.my_name in file_str
@@ -43,10 +43,10 @@ def test_vector_signals():
 
       @update
       def add_upblk():
-        s.out = s.in0 + s.in1
+        s.out @= s.in0 + s.in1
   def tv_in( m, tv ):
-    m.in0 = tv[0]
-    m.in1 = tv[1]
+    m.in0 @= tv[0]
+    m.in1 @= tv[1]
   def tv_out( m, tv ):
     assert m.out == tv[2]
 
@@ -75,17 +75,17 @@ def test_bitstruct_signals():
 
       @update
       def add_upblk():
-        s.out = s.in0.bar + s.in1
+        s.out @= s.in0.bar + s.in1
   def tv_in( m, tv ):
-    m.in0 = tv[0]
-    m.in1 = tv[1]
+    m.in0 @= tv[0]
+    m.in1 @= tv[1]
   def tv_out( m, tv ):
     assert m.out == tv[2]
 
   run_test( A2(), [
     #     in0                 in1      out
-    [  bs(b1(0), b32(0)), b32(-1), b32(-1), ],
-    [  bs(b1(0), b32(1)),  b32(1),  b32(2), ],
-    [ bs(b1(0), b32(-1)),  b32(0), b32(-1), ],
-    [ bs(b1(0), b32(42)), b32(42), b32(84), ],
+    [  bs(0, 0),  b32(-1), b32(-1), ],
+    [  bs(0, 1),  b32(1),  b32(2), ],
+    [  bs(0, -1), b32(0), b32(-1), ],
+    [  bs(0, 42), b32(42), b32(84), ],
   ], tv_in, tv_out )

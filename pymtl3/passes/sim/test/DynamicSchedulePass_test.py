@@ -11,8 +11,8 @@ from pymtl3.dsl.errors import UpblkCyclicError
 
 from ..DynamicSchedulePass import DynamicSchedulePass
 from ..GenDAGPass import GenDAGPass
+from ..PrepareSimPass import PrepareSimPass
 from ..SimpleSchedulePass import SimpleSchedulePass
-from ..SimpleTickPass import SimpleTickPass
 
 
 def _test_model( cls ):
@@ -20,14 +20,14 @@ def _test_model( cls ):
   A.elaborate()
   A.apply( GenDAGPass() )
   A.apply( DynamicSchedulePass() )
-  A.apply( SimpleTickPass() )
-  A.lock_in_simulation()
-  A.eval_combinational()
+  A.apply( PrepareSimPass() )
+
+  A.sim_reset()
+  A.sim_eval_combinational()
 
   T = 0
   while T < 5:
-    A.tick()
-    print(A.line_trace())
+    A.sim_tick()
     T += 1
   return A
 
@@ -49,39 +49,36 @@ def test_false_cyclic_dependency():
 
       @update
       def up1():
-        s.a = 10 + s.i
-        s.b = s.d + 1
+        s.a @= 10 + s.i
+        s.b @= s.d + 1
 
       @update
       def up2():
-        s.c = s.a + 1
-        s.e = s.d + 1
+        s.c @= s.a + 1
+        s.e @= s.d + 1
 
       @update
       def up3():
-        s.d = s.c + 1
+        s.d @= s.c + 1
         print("up3 prints out d =", s.d)
 
       @update
       def up4():
-        s.f = s.d + 1
+        s.f @= s.d + 1
 
       @update
       def up5():
-        s.g = s.c + 1
-        s.h = s.j + 1
+        s.g @= s.c + 1
+        s.h @= s.j + 1
         print("up5 prints out h =", s.h)
 
       @update
       def up6():
-        s.i = s.i + 1
+        s.i @= s.i + 1
 
       @update
       def up7():
-        s.j = s.g + 1
-
-    def done( s ):
-      return True
+        s.j @= s.g + 1
 
     def line_trace( s ):
       return "a {} | b {} | c {} | d {} | e {} | f {} | g {} | h {} | i {} | j {}" \
@@ -101,19 +98,16 @@ def test_combinational_loop():
 
       @update
       def up1():
-        s.b = s.d + 1
+        s.b @= s.d + 1
 
       @update
       def up2():
-        s.c = s.b + 1
+        s.c @= s.b + 1
 
       @update
       def up3():
-        s.d = s.c + 1
+        s.d @= s.c + 1
         print("up3 prints out d =", s.d)
-
-    def done( s ):
-      return True
 
     def line_trace( s ):
       return "a {} | b {} | c {} | d {}" \
@@ -135,7 +129,7 @@ def test_very_deep_dag():
 
       @update
       def up():
-        s.out = s.in_ + 1
+        s.out @= s.in_ + 1
 
     def done( s ):
       return True
@@ -149,8 +143,6 @@ def test_very_deep_dag():
       for i in range(N-1):
         s.inners[i].out //= s.inners[i+1].in_
 
-    def done( s ):
-      return True
     def line_trace( s ):
       return ""
 
@@ -166,7 +158,7 @@ def test_sequential_break_loop():
 
       @update
       def up1():
-        s.b = s.c + 1
+        s.b @= s.c + 1
 
       @update_ff
       def up2():
@@ -195,14 +187,13 @@ def test_connect_slice_int():
       s.y //= s.x[0:8]
       @update
       def sx():
-        s.x = 10 # Except
+        s.x @= 10 # no Except
 
-  try:
-    _test_model( Top )
-  except TypeError as e:
-    assert str(e).startswith( "'int' object is not subscriptable" )
-    return
-  raise Exception("Should've thrown TypeError: 'int' object is not subscriptable")
+    def line_trace( s ):
+      return f"{s.x}"
+
+  # with @=, we don't have the subscript exception anymore
+  _test_model( Top )
 
 def test_const_connect_nested_struct_signal_to_struct():
 
@@ -225,9 +216,9 @@ def test_const_connect_nested_struct_signal_to_struct():
   x.elaborate()
   x.apply( GenDAGPass() )
   x.apply( DynamicSchedulePass() )
-  x.apply( SimpleTickPass() )
-  x.lock_in_simulation()
-  x.tick()
+  x.apply( PrepareSimPass(print_line_trace=False) )
+  x.sim_reset()
+  x.sim_tick()
   assert x.out == SomeMsg2(SomeMsg1(1,2),3)
 
 def test_const_connect_cannot_handle_same_name_nested_struct():
@@ -249,10 +240,14 @@ def test_const_connect_cannot_handle_same_name_nested_struct():
     a: A.SomeMsg1
     b: B.SomeMsg1
 
+  @bitstruct
+  class SomeMsg3:
+    a: SomeMsg2
+
   class Top( Component ):
     def construct( s ):
-      s.out = OutPort(SomeMsg2)
-      connect( s.out, SomeMsg2(A.SomeMsg1(1,2),B.SomeMsg1(3,4)) )
+      s.out = OutPort(SomeMsg3)
+      connect( s.out.a, SomeMsg2(A.SomeMsg1(1,2),B.SomeMsg1(3,4)) )
 
   x = Top()
   x.elaborate()
@@ -263,3 +258,24 @@ def test_const_connect_cannot_handle_same_name_nested_struct():
     assert str(e) == "Cannot handle two subfields with the same struct name but different structs"
     return
   raise Exception("Should've thrown AssertionError")
+
+def test_equal_top_level():
+  class A(Component):
+    def construct( s ):
+      @update
+      def up():
+        print(1)
+
+  a = A()
+  a.apply( GenDAGPass() )
+  a.apply( DynamicSchedulePass() )
+  a.apply( PrepareSimPass() )
+  a.sim_reset()
+
+  try:
+    a.reset = 0
+    a.sim_tick()
+  except AssertionError as e:
+    print(e)
+    assert str(e).startswith("Please use @= to assign top level InPort")
+    return

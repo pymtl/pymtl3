@@ -11,6 +11,7 @@ is a data type object or simply a data type. RTLIR instance type Signal
 can be parameterized by the generated type objects.
 """
 from functools import reduce
+from math import ceil, log2
 
 import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst
@@ -29,12 +30,22 @@ class BaseRTLIRDataType:
 
 class Vector( BaseRTLIRDataType ):
   """RTLIR data type class for vector type."""
-  def __init__( s, nbits ):
+  def __init__( s, nbits, is_explicit = True ):
     assert nbits > 0, 'vector bitwidth should be a positive integer!'
     s.nbits = nbits
+    s._is_explicit = is_explicit
 
   def get_length( s ):
-    return s.nbits
+    return int(s.nbits)
+
+  def get_index_width( s ):
+    if s.nbits <= 1:
+      return 1
+    else:
+      return ceil(log2(s.nbits))
+
+  def is_explicit( s ):
+    return s._is_explicit
 
   def __eq__( s, other ):
     return (isinstance(other, Vector) and s.nbits == other.nbits) or \
@@ -87,7 +98,10 @@ class Struct( BaseRTLIRDataType ):
     return s.cls
 
   def get_length( s ):
-    return sum( d.get_length() for d in s.properties.values() )
+    return int(sum( d.get_length() for d in s.properties.values() ))
+
+  def get_index_width( s ):
+    assert False, 'rdt.Struct cannot be indexed!'
 
   def has_property( s, p ):
     return p in s.properties
@@ -121,6 +135,9 @@ class Bool( BaseRTLIRDataType ):
   def get_length( s ):
     return 1
 
+  def get_index_width( s ):
+    assert False, 'rdt.Bool cannot be indexed!'
+
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""
     return isinstance( obj, ( Bool, Vector ) )
@@ -152,7 +169,7 @@ class PackedArray( BaseRTLIRDataType ):
     return hash((type(s), tuple(s.dim_sizes), s.sub_dtype))
 
   def get_length( s ):
-    return s.sub_dtype.get_length()*reduce( lambda p,x: p*x, s.dim_sizes, 1 )
+    return int(s.sub_dtype.get_length()*reduce( lambda p,x: p*x, s.dim_sizes, 1 ))
 
   def get_next_dim_type( s ):
     if len( s.dim_sizes ) == 1:
@@ -161,6 +178,14 @@ class PackedArray( BaseRTLIRDataType ):
 
   def get_dim_sizes( s ):
     return s.dim_sizes
+
+  def get_index_width( s ):
+    assert s.dim_sizes, 'rdt.PackedArray is created without dimension!'
+    n_elements = s.dim_sizes[0]
+    if n_elements <= 1:
+      return 1
+    else:
+      return ceil(log2(n_elements))
 
   def get_sub_dtype( s ):
     return s.sub_dtype
@@ -220,7 +245,7 @@ def get_rtlir_dtype( obj ):
 
       # python int object
       elif Type is int:
-        return Vector( 32 )
+        return Vector( _get_nbits_from_value( obj ), False )
 
       # Struct data type
       elif is_bitstruct_class( Type ):
@@ -236,9 +261,7 @@ def get_rtlir_dtype( obj ):
 
     # Python integer objects
     elif isinstance( obj, int ):
-      # Following the Verilog bitwidth rule: number literals have 32 bit width
-      # by default.
-      return Vector( 32 )
+      return Vector( _get_nbits_from_value( obj ), False )
 
     # PyMTL Bits objects
     elif isinstance( obj, Bits ):
@@ -253,3 +276,11 @@ def get_rtlir_dtype( obj ):
   except AssertionError as e:
     msg = '' if e.args[0] is None else e.args[0]
     raise RTLIRConversionError( obj, msg )
+
+def _get_nbits_from_value( value ):
+  if -1 <= value <= 1:
+    return 1
+  if value < 0:
+    return ceil(log2(abs(value)))
+  else:
+    return ceil(log2(value+1))

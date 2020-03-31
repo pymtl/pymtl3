@@ -86,6 +86,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     from pymtl3.passes.backends.verilog.VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
     return VerilogPlaceholderConfigs
 
+  # Override
   def visit_placeholder( s, m ):
     c = s.__class__
     super().visit_placeholder( m )

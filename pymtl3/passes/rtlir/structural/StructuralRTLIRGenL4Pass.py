@@ -20,19 +20,19 @@ class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
   def gen_metadata( s, m ):
     if not hasattr( m, '_pass_structural_rtlir_gen' ):
       m._pass_structural_rtlir_gen = PassMetadata()
-    for child in m.get_child_components():
+    for child in m.get_child_components(repr):
       s.gen_metadata( child )
 
   # Override
   def gen_rtlir_types( s, m ):
     super().gen_rtlir_types( m )
-    for child in m.get_child_components():
+    for child in m.get_child_components(repr):
       s.gen_rtlir_types( child )
 
   # Override
   def gen_constants( s, m ):
     super().gen_constants( m )
-    for child in m.get_child_components():
+    for child in m.get_child_components(repr):
       s.gen_constants( child )
 
   # Override
@@ -43,5 +43,5 @@ class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
     """
     super().sort_connections( m )
 
-    for child in m.get_child_components():
+    for child in m.get_child_components(repr):
       s.sort_connections( child )

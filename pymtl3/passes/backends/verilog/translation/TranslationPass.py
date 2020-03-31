@@ -121,7 +121,7 @@ class TranslationPass( BasePass ):
     def traverse( m ):
       nonlocal tr_cfgs
       tr_cfgs[m] = s.get_translation_config()( m )
-      for _m in m.get_child_components():
+      for _m in m.get_child_components(repr):
         traverse( _m )
 
     traverse( m )
@@ -175,5 +175,5 @@ class TranslationPass( BasePass ):
       m.set_metadata( c.translated_top_module, module_name  )
 
     else:
-      for child in m.get_child_components():
+      for child in m.get_child_components(repr):
         s.traverse_hierarchy( child )
