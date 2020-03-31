@@ -4,8 +4,9 @@
 # Tests for the Bits class.
 # Shunning: grabbed from PyMTL2. Thanks Derek Lockhart
 
-import pytest
 from copy import deepcopy
+
+import pytest
 
 from ..bits_import import Bits
 
