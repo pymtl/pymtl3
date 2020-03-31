@@ -36,6 +36,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   top_module = MetadataKey()
   src_file   = MetadataKey()
   v_flist    = MetadataKey()
+  v_libs     = MetadataKey()
   v_include  = MetadataKey()
   separator  = MetadataKey()
 
