@@ -46,4 +46,4 @@ def checksum( words ):
     sum1 = ( sum1 + word ) & 0xffff
     sum2 = ( sum2 + sum1 ) & 0xffff
 
-  return ( zext(sum2,32) << 16 ) | zext(sum1,32)
+  return concat( sum2, sum1 )
