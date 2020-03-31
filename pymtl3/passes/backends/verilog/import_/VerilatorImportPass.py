@@ -498,10 +498,9 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
   # create_py_wrapper
   #-----------------------------------------------------------------------
+  # Return the file name of the generated PyMTL component wrapper.
 
   def create_py_wrapper( s, m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, cached ):
-    # Return the file name of the generated PyMTL component wrapper.
-
     ip_cfg.vprint("\n=====Generate PyMTL wrapper=====")
 
     wrapper_name = ip_cfg.get_py_wrapper_path()
@@ -563,10 +562,9 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
   # import_component
   #-----------------------------------------------------------------------
+  # Return the PyMTL component imported from `wrapper_name`.v.
 
   def import_component( s, m, ph_cfg, ip_cfg, symbols ):
-    # Return the PyMTL component imported from `wrapper_name`.v.
-
     ip_cfg.vprint("=====Create python object=====")
 
     component_name = ip_cfg.translated_top_module
@@ -638,9 +636,9 @@ class VerilatorImportPass( BasePass ):
   #-------------------------------------------------------------------------
   # gen_signal_decl_c
   #-------------------------------------------------------------------------
+  # Return C variable declaration of `port`.
 
   def gen_signal_decl_c( s, name, port ):
-    # Return C variable declaration of `port`.
 
     c_dim = s._get_c_dim( port )
     nbits = s._get_c_nbits( port )
@@ -662,9 +660,9 @@ class VerilatorImportPass( BasePass ):
   #-------------------------------------------------------------------------
   # gen_signal_init_c
   #-------------------------------------------------------------------------
+  # Return C port variable initialization.
 
   def gen_signal_init_c( s, name, port ):
-    # Return C port variable initialization.
 
     ret       = []
     c_dim     = s._get_c_dim( port )
@@ -703,9 +701,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
   #-------------------------------------------------------------------------
   # gen_signal_decl_py
   #-------------------------------------------------------------------------
+  # Return the PyMTL definition of all interface ports of `rtype`.
 
   def gen_signal_decl_py( s, rtype ):
-    # Return the PyMTL definition of all interface ports of `rtype`.
 
     #-----------------------------------------------------------------------
     # Methods that generate signal declarations
@@ -1070,9 +1068,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
   #-------------------------------------------------------------------------
   # gen_line_trace_py
   #-------------------------------------------------------------------------
+  # Return the line trace method body that shows all interface ports.
 
   def gen_line_trace_py( s, packed_ports ):
-    # Return the line trace method body that shows all interface ports.
     template = '{0}={{s.{0}}},'
     trace_string = ''
     for pnames, _, _, _ in packed_ports:
@@ -1083,14 +1081,12 @@ m->{name}{sub} = {deference}model->{name}{sub};
   #-------------------------------------------------------------------------
   # gen_internal_line_trace_py
   #-------------------------------------------------------------------------
+  # Return the line trace method body that shows all CFFI ports.
+  # Now that there could be multiple pnames that correspond to one vname,
+  # I'm not sure how to generate internal line trace... maybe we should
+  # deprecate internal_line_trace since it's not used by many anyways?
 
   def gen_internal_line_trace_py( s, packed_ports ):
-    # Return the line trace method body that shows all CFFI ports.
-
-    # Now that there could be multiple pnames that correspond to one vname,
-    # I'm not sure how to generate internal line trace... maybe we should
-    # deprecate internal_line_trace since it's not used by many anyways?
-
     # ret = [ '_ffi_m = s._ffi_m', 'lt = ""' ]
     # template = \
     #   "lt += '{vname} = {{}}, '.format(full_vector(s.{pname}, _ffi_m.{vname}))"
