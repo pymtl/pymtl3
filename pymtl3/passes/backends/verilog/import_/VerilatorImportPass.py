@@ -369,7 +369,8 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def create_verilator_model( s, m, ph_cfg, ip_cfg, cached ):
-    """Verilate module `m`."""
+    # Verilate module `m`.
+
     ip_cfg.vprint("\n=====Verilate model=====")
 
     if not cached:
@@ -411,13 +412,11 @@ class VerilatorImportPass( BasePass ):
   # create_verilator_c_wrapper
   #-----------------------------------------------------------------------
 
-  def create_verilator_c_wrapper(
-      s, m, ph_cfg, ip_cfg, ports, cached ):
-    """Return the file name of generated C component wrapper.
+  def create_verilator_c_wrapper( s, m, ph_cfg, ip_cfg, ports, cached ):
+    # Return the file name of generated C component wrapper.
+    # Create a C wrapper that calls verilator C API and provides interfaces
+    # that can be later called through CFFI.
 
-    Create a C wrapper that calls verilator C API and provides interfaces
-    that can be later called through CFFI.
-    """
     component_name = ip_cfg.translated_top_module
     dump_vcd = int(ip_cfg.vl_trace)
     vcd_timescale = ip_cfg.vl_trace_timescale
@@ -457,7 +456,8 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def create_shared_lib( s, m, ph_cfg, ip_cfg, cached ):
-    """Return the name of compiled shared lib."""
+    # Return the name of compiled shared lib.
+
     full_name = ip_cfg.translated_top_module
     dump_vcd = ip_cfg.vl_trace
     ip_cfg.vprint("\n=====Compile shared library=====")
@@ -499,9 +499,9 @@ class VerilatorImportPass( BasePass ):
   # create_py_wrapper
   #-----------------------------------------------------------------------
 
-  def create_py_wrapper(
-      s, m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, cached ):
-    """Return the file name of the generated PyMTL component wrapper."""
+  def create_py_wrapper( s, m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, cached ):
+    # Return the file name of the generated PyMTL component wrapper.
+
     ip_cfg.vprint("\n=====Generate PyMTL wrapper=====")
 
     wrapper_name = ip_cfg.get_py_wrapper_path()
@@ -565,7 +565,8 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def import_component( s, m, ph_cfg, ip_cfg, symbols ):
-    """Return the PyMTL component imported from `wrapper_name`.v."""
+    # Return the PyMTL component imported from `wrapper_name`.v.
+
     ip_cfg.vprint("=====Create python object=====")
 
     component_name = ip_cfg.translated_top_module
@@ -639,7 +640,8 @@ class VerilatorImportPass( BasePass ):
   #-------------------------------------------------------------------------
 
   def gen_signal_decl_c( s, name, port ):
-    """Return C variable declaration of `port`."""
+    # Return C variable declaration of `port`.
+
     c_dim = s._get_c_dim( port )
     nbits = s._get_c_nbits( port )
     UNSIGNED_8  = 'unsigned char'
@@ -662,7 +664,8 @@ class VerilatorImportPass( BasePass ):
   #-------------------------------------------------------------------------
 
   def gen_signal_init_c( s, name, port ):
-    """Return C port variable initialization."""
+    # Return C port variable initialization.
+
     ret       = []
     c_dim     = s._get_c_dim( port )
     nbits     = s._get_c_nbits( port )
@@ -702,7 +705,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
   #-------------------------------------------------------------------------
 
   def gen_signal_decl_py( s, rtype ):
-    """Return the PyMTL definition of all interface ports of `rtype`."""
+    # Return the PyMTL definition of all interface ports of `rtype`.
 
     #-----------------------------------------------------------------------
     # Methods that generate signal declarations
@@ -1069,7 +1072,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
   #-------------------------------------------------------------------------
 
   def gen_line_trace_py( s, packed_ports ):
-    """Return the line trace method body that shows all interface ports."""
+    # Return the line trace method body that shows all interface ports.
     template = '{0}={{s.{0}}},'
     trace_string = ''
     for pnames, _, _, _ in packed_ports:
@@ -1082,10 +1085,12 @@ m->{name}{sub} = {deference}model->{name}{sub};
   #-------------------------------------------------------------------------
 
   def gen_internal_line_trace_py( s, packed_ports ):
-    """Return the line trace method body that shows all CFFI ports."""
+    # Return the line trace method body that shows all CFFI ports.
+
     # Now that there could be multiple pnames that correspond to one vname,
     # I'm not sure how to generate internal line trace... maybe we should
     # deprecate internal_line_trace since it's not used by many anyways?
+
     # ret = [ '_ffi_m = s._ffi_m', 'lt = ""' ]
     # template = \
     #   "lt += '{vname} = {{}}, '.format(full_vector(s.{pname}, _ffi_m.{vname}))"
