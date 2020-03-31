@@ -372,7 +372,7 @@ class Bits:
     nbits = self._nbits
     try:
       if other.nbits != nbits:
-        raise ValueError( f"Operands of '%' (mod) operation must have matching bitwidth, "\
+        raise ValueError( f"Operands of '<<' (lshift) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       uint = other._uint
       if uint >= nbits:
@@ -391,7 +391,7 @@ class Bits:
     nbits = self._nbits
     try:
       if other.nbits != nbits:
-        raise ValueError( f"Operands of '%' (mod) operation must have matching bitwidth, "\
+        raise ValueError( f"Operands of '>>' (rshift) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( nbits, self._uint >> other._uint )
     except AttributeError:
