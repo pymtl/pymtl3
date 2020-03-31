@@ -21,7 +21,7 @@ Following the above principles, here is how to determine the bitwidth of an expr
 
   - If both sides have explicit bitwidth
 
-    - the shorter side will be zero-extended to have the same bitwidth as the longer side.
+    - it is an error if bitwidth of both sides mismatch.
     - the result has an explicit bitwidth indicated in the operation bitwidth rule table.
 
   - If both sides have inferred bitwidth
@@ -37,13 +37,13 @@ Following the above principles, here is how to determine the bitwidth of an expr
 - For binary operations ``<<`` and ``>>``
 
   - The bitwidth of the right hand side is ignored.
-  - If the left hand side has explicit bitwidth, then the result has the same explicit bitwidth.
-  - If the left hand side has inferred bitwidth, then the result has the same inferred bitwidth.
+  - If the left hand side has explicit bitwidth, then the result has an explicit bitwidth indicated in the operation bitwidth rule table.
+  - If the left hand side has inferred bitwidth, then the result has an inferred bitwidth indicated in the operation bitwidth rule table.
 
 - For unary operations
 
-  - If the operand has explicit bitwidth, then the result has the same explicit bitwidth.
-  - If the operand has inferred bitwidth, then the result has the same inferred bitwidth.
+  - If the operand has explicit bitwidth, then the result has an explicit bitwidth indicated in the operation bitwidth rule table.
+  - If the operand has inferred bitwidth, then the result has an inferred bitwidth indicated in the operation bitwidth rule table.
 
 Opeartion bitwidth rules
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -89,10 +89,6 @@ operations. Note that the Verilog rules only apply to self-determined expression
      - max(n, m)
    * - i^j
      - i^j
-     - max(n, m)
-     - max(n, m)
-   * - i^~j
-     - i^~j
      - max(n, m)
      - max(n, m)
    * - ~i
