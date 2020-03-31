@@ -5,6 +5,7 @@
 # Shunning: grabbed from PyMTL2. Thanks Derek Lockhart
 
 import pytest
+from copy import deepcopy
 
 from ..bits_import import Bits
 
@@ -85,6 +86,9 @@ def test_set_bit():
   x[2] = Bits(1,0)
   assert x.uint() == 0
 
+  with pytest.raises( ValueError ):
+    x[2] = Bits(2,1)
+
 def test_bit_bounds_checking():
 
   x = Bits( 4, 0b1100 )
@@ -112,6 +116,9 @@ def test_get_slice():
   assert x[1:] == 0b110
   assert x[:3] == 0b100
 
+  with pytest.raises( IndexError ):
+    x[1:3:1]
+
 def test_set_slice():
 
   x = Bits( 4, 0b1100 )
@@ -130,13 +137,22 @@ def test_set_slice():
   assert x.uint() == 0b0110
 
   with pytest.raises( ValueError ):
-    x[1:3] = 0b110
+    x[1:3] = Bits(1,1)
+
+  with pytest.raises( ValueError ):
+    x[1:3] = Bits(3,1)
+
+  x[1:3] = Bits(2,1)
+  assert x.uint() == 0b0010
 
   x[:]   = 0b1111
   assert x.uint() == 0b1111
 
   with pytest.raises( ValueError ):
     x[:]   = 0b10000
+
+  with pytest.raises( IndexError ):
+    x[1:4:2] = 1
 
 def test_slice_bounds_checking():
 
@@ -203,6 +219,8 @@ def test_eq():
 
   assert not x == None
   assert not Bits( 4, 0 ) == None
+  with pytest.raises( ValueError ):
+    Bits(4,3) == Bits(3, 2)
 
 def test_ne():
 
@@ -270,7 +288,8 @@ def test_lt():
   assert 1 < y
   with pytest.raises( ValueError ):
     x < -1
-
+  with pytest.raises( ValueError ):
+    Bits(4,3) < Bits(3, 2)
 
 def test_gt():
 
@@ -284,6 +303,8 @@ def test_gt():
   assert 9 > y
   with pytest.raises( ValueError ):
     x > -1
+  with pytest.raises( ValueError ):
+    Bits(4,3) > Bits(3, 2)
 
 def test_lte():
 
@@ -306,6 +327,8 @@ def test_lte():
   assert 3 <= y
   with pytest.raises( ValueError ):
     x <= -1
+  with pytest.raises( ValueError ):
+    Bits(4,3) <= Bits(3, 2)
 
 def test_gte():
 
@@ -329,6 +352,8 @@ def test_gte():
   assert 3 <= y
   with pytest.raises( ValueError ):
     x >= -1
+  with pytest.raises( ValueError ):
+    Bits(4,3) >= Bits(3, 2)
 
 def test_invert():
 
@@ -353,7 +378,7 @@ def test_add():
 
   a = Bits( 4, 1 )
   b = Bits( 4, 1 )
-  c = Bits( 1, 1 )
+  c = Bits( 4, 1 )
   assert a + b + 1 == 3
   assert a + b + c == 3
   assert c + b + a == 3
@@ -361,6 +386,9 @@ def test_add():
     x + -1
   with pytest.raises( ValueError ):
     x + 100000000000000000000000000
+
+  with pytest.raises( ValueError ):
+    a = Bits(4,3) + Bits(3,1)
 
 def test_sub():
 
@@ -381,6 +409,74 @@ def test_sub():
   with pytest.raises( ValueError ):
     x - 100000000000000000000000000
 
+  with pytest.raises( ValueError ):
+    a = Bits(4,3) - Bits(3,1)
+
+def test_rsub():
+  x = Bits(4, 5)
+  y = 8
+  z = y - x
+  assert z.nbits == 4 and z.uint() == 3
+  y = 16
+  with pytest.raises( ValueError ):
+    z = y - x
+
+def test_floordiv():
+
+  x = Bits( 4, 5 )
+  y = Bits( 4, 4 )
+  assert x // y == 1
+  assert x // Bits(4, 4) == 1
+  assert x // 4 == 1
+  y = Bits( 4, 6 )
+  assert x // y == 0
+  assert x // 6 == 0
+  assert 6 // x == 1
+  with pytest.raises( ValueError ):
+    x // -1
+  with pytest.raises( ValueError ):
+    x // 100000000000000000000000000
+
+  with pytest.raises( ValueError ):
+    a = Bits(4,3) // Bits(3,1)
+
+def test_rfloordiv():
+  x = Bits(4, 3)
+  y = 8
+  z = y // x
+  assert z.nbits == 4 and z.uint() == 2
+  y = 16
+  with pytest.raises( ValueError ):
+    z = y // x
+
+def test_mod():
+
+  x = Bits( 4, 5 )
+  y = Bits( 4, 4 )
+  assert x % y == 1
+  assert x % Bits(4, 4) == 1
+  assert x % 4 == 1
+  y = Bits( 4, 6 )
+  assert x % y == 5
+  assert x % 6 == 5
+  assert 6 % x == 1
+  with pytest.raises( ValueError ):
+    x % -1
+  with pytest.raises( ValueError ):
+    x % 100000000000000000000000000
+
+  with pytest.raises( ValueError ):
+    a = Bits(4,3) % Bits(3,1)
+
+def test_rmod():
+  x = Bits(4, 3)
+  y = 8
+  z = y % x
+  assert z.nbits == 4 and z.uint() == 2
+  y = 16
+  with pytest.raises( ValueError ):
+    z = y % x
+
 def test_lshift():
 
   x = Bits( 8, 0b1100 )
@@ -391,6 +487,13 @@ def test_lshift():
   assert y << x == 0b00000000
   assert y << 0 == 0b00000100
   assert y << 1 == 0b00001000
+  assert x << 255 == 0
+
+  with pytest.raises( ValueError ):
+    a = Bits(4,3) << Bits(3,1)
+  with pytest.raises( ValueError ):
+    a = x << 256
+
 
 def test_rshift():
 
@@ -405,6 +508,12 @@ def test_rshift():
   assert y >> 0 == 0b00000100
   assert y >> 2 == 0b00000001
   assert y >> 5 == 0b00000000
+  assert x >> 255 == 0
+
+  with pytest.raises( ValueError ):
+    a = Bits(4,3) >> Bits(3,1)
+  with pytest.raises( ValueError ):
+    a = x >> 256
 
 def test_and():
 
@@ -418,6 +527,9 @@ def test_and():
   with pytest.raises( ValueError ):
     x & 100000000000000000000000000
 
+  with pytest.raises( ValueError ):
+    a = Bits(4,3) & Bits(3,1)
+
 def test_or():
 
   x = Bits( 8, 0b11001100 )
@@ -429,6 +541,8 @@ def test_or():
     x | -1
   with pytest.raises( ValueError ):
     x | 100000000000000000000000000
+  with pytest.raises( ValueError ):
+    a = Bits(4,3) | Bits(3,1)
 
 def test_xor():
 
@@ -445,6 +559,8 @@ def test_xor():
     x ^ -1
   with pytest.raises( ValueError ):
     x ^ 100000000000000000000000000
+  with pytest.raises( ValueError ):
+    a = Bits(4,3) ^ Bits(3,1)
 
 # Now we always require the user to perform sext/zext of the multiply operand
 def test_mult():
@@ -455,7 +571,7 @@ def test_mult():
   assert x * 0b1000 == 0b0000000000000000
   x = Bits( 8, 0b11111111 )
   y = Bits( 8, 0b11111111 )
-  assert Bits( 16, x.uint() ) * y == 0b0000000000000001111111000000001
+  assert Bits( 16, x.uint() ) * Bits( 16, y.uint() ) == 0b0000000000000001111111000000001
   assert Bits( 16, x.uint() ) * 0b11111111 == 0b0000000000000001111111000000001
   assert 0b11111111 * Bits(16, x.uint() ) == 0b0000000000000001111111000000001
 
@@ -464,11 +580,13 @@ def test_mult():
   #assert x * 0b1111111111 == 0b0000000000000001111111000000001
 
   y = Bits( 8, 0b10000000 )
-  assert Bits( 16, x.uint() ) * y == 0b0000000000000000111111110000000
+  assert Bits( 16, x.uint() ) * Bits( 16, y.uint() ) == 0b0000000000000000111111110000000
   with pytest.raises( ValueError ):
     x * -1
   with pytest.raises( ValueError ):
     x * 100000000000000000000000000
+  with pytest.raises( ValueError ):
+    a = Bits(4,3) * Bits(3,1)
 
 def test_constructor():
 
@@ -483,14 +601,22 @@ def test_constructor():
   assert Bits( 4 ) == Bits( 4, 0 )
   assert Bits( 4 ).uint() == 0
 
+  with pytest.raises( ValueError ):
+    a = Bits(4,17)
+
 def test_construct_from_bits():
 
   assert Bits( 4, Bits(4, -2) ).uint() == 0b1110
   assert Bits( 4, Bits(4, -4) ).uint() == 0b1100
 
+  with pytest.raises( ValueError ):
+    a = Bits( 4, Bits(3, -4) )
+  with pytest.raises( ValueError ):
+    a = Bits( 4, Bits(5, -4) )
+
   a = Bits( 8, 5 )
-  assert a                         == 0x05
-  assert Bits( 16, a.uint() ).uint()      == 0x0005
+  assert a                                  == 0x05
+  assert Bits( 16, a.uint() ).uint()        == 0x0005
   assert Bits( 16, (~a + 1).uint() ).uint() == 0x00FB
   b = Bits( 32, 5 )
   assert b                         == 0x00000005
@@ -576,3 +702,61 @@ def test_slice_bits():
   assert data[ :x]   == 0b01
   with pytest.raises( IndexError ):
     assert data[x:x] == 0b1
+
+def test_clone():
+  a = Bits(4,3)
+  b = a.clone()
+  assert a is not b
+  assert a == b
+
+def test_deepcopy():
+  a = Bits(4,3)
+  b = deepcopy( a )
+  assert a is not b
+  assert a == b
+
+def test_ilshift():
+
+  a = Bits(8,12)
+  with pytest.raises( ValueError ):
+    a <<= 256
+  a <<= 2
+  a <<= Bits(8,1)
+  assert a._next == 1
+  with pytest.raises( ValueError ):
+    a <<= Bits(7,1)
+  with pytest.raises( ValueError ):
+    a <<= Bits(9,1)
+  a._flip()
+  assert a == 1
+
+def test_imatmul():
+
+  a = Bits(8,12)
+
+  with pytest.raises( NotImplementedError ):
+    a @ 1
+
+  with pytest.raises( ValueError ):
+    a @= 256
+  a @= 2
+  a @= Bits(8,1)
+  assert a == 1
+  with pytest.raises( ValueError ):
+    a @= Bits(7,1)
+  with pytest.raises( ValueError ):
+    a @= Bits(9,1)
+
+def test_hash():
+  a = Bits(4,12)
+  assert hash(a) == hash( (4,12) )
+
+def test_repr():
+  assert repr( Bits(15,35) ) == 'Bits15(0x0023)'
+  assert repr( Bits(16,35) ) == 'Bits16(0x0023)'
+  assert repr( Bits(17,35) ) == 'Bits17(0x00023)'
+
+def test_bin_oct_hex():
+  assert Bits(15,35).bin() == "0b000000000100011"
+  assert Bits(15,35).oct() == "0o00043"
+  assert Bits(15,35).hex() == "0x0023"
