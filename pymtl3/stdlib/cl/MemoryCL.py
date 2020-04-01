@@ -76,13 +76,8 @@ class MemoryCL( Component ):
     s.req_qs  = [ DelayPipeDeqCL( req_latency )( enq = s.ifc[i].req ) for i in range(nports) ]
     s.resp_qs = [ DelayPipeSendCL( resp_latency )( send = s.ifc[i].resp ) for i in range(nports) ]
 
-    # Trace
-    s.trace = ""
-
     @s.update
     def up_mem():
-      # init trace
-      s.trace = ""
 
       for i in range(s.nports):
 
@@ -139,15 +134,12 @@ class MemoryCL( Component ):
 
           s.resp_qs[i].enq( resp )
 
-          # update trace
-          s.trace += f"[{i}] {MemMsgType.str[req.type_.uint()]} "
-          s.trace += f"0x{req.addr.uint():0>8x} "
-          s.trace += f"req=0x{req.data.uint():0>8x} "
-          s.trace += f"resp=0x{resp.data.uint():0>8x} "
-
   #-----------------------------------------------------------------------
   # line_trace
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return s.trace
+    msg = ""
+    for i in range( s.nports ):
+      msg += f"[{i}] {str(s.ifc[i].req)} {str(s.ifc[i].resp)} "
+    return msg
