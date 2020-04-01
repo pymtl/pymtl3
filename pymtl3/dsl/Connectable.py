@@ -210,8 +210,10 @@ class Signal( NamedObject, Connectable ):
           xd.top_level_signal = sd.top_level_signal
           xd.elaborate_top = sd.elaborate_top
 
-          xd.my_name   = name + "".join([ f"[{y}]" for y in indices ])
-          xd.full_name = f"{sd.full_name}.{xd.my_name}"
+          xd.my_name     = name + "".join([ f"[{y}]" for y in indices ])
+          xd.full_name   = f"{sd.full_name}.{xd.my_name}"
+          xd._my_name    = name
+          xd._my_indices = indices
 
         if parent_is_list:
           parent.append( x )
