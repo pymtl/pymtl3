@@ -1,10 +1,10 @@
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import MemMsgType
-from pymtl3.stdlib.ifcs.mem_ifcs import MemMinionIfcFL
-from pymtl3.third_party.pypy.fast_bytearray_funcs import (
+from pymtl3.extra.pypy.fast_bytearray_funcs import (
     read_bytearray_bits,
     write_bytearray_bits,
 )
+from pymtl3.stdlib.ifcs import MemMsgType
+from pymtl3.stdlib.ifcs.mem_ifcs import MemMinionIfcFL
 
 AMO_FUNS = { MemMsgType.AMO_ADD  : lambda m,a : m+a,
              MemMsgType.AMO_AND  : lambda m,a : m&a,
