@@ -7,7 +7,6 @@ https://github.com/pypa/sampleproject/blob/master/setup.py
 """
 
 
-import os
 from os import path
 
 from setuptools import find_packages, setup

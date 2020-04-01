@@ -9,8 +9,8 @@
 # Date   : March 30, 2020
 
 import os
-import pytest
 
+import pytest
 
 if 'CI' in os.environ:
   # Set up the CI hypothesis profile which limits the max number of tries
