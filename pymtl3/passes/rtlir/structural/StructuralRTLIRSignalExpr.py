@@ -55,26 +55,6 @@ class _Index( BaseSignalExpr ):
   def get_base( s ):
     return s.base
 
-  @staticmethod
-  def is_packed_index( index_base, index ):
-    """Return PackedIndex constructor if the given index base is a signal of packed data type."""
-    base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, (rt.Port, rt.Wire)) and \
-       isinstance(base_rtype.get_dtype(), rdt.PackedArray):
-      return PackedIndex
-    else:
-      return None
-
-  @staticmethod
-  def is_bit_selection( index_base, index ):
-    """Return BitSelection constructor if the given index base is a vector signal."""
-    base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, (rt.Port, rt.Wire)) and \
-       isinstance(base_rtype.get_dtype(), rdt.Vector):
-      return BitSelection
-    else:
-      return None
-
 class _UnpackedIndex( _Index ):
   """Base IR class for all index signal operations on unpacked arrays.
 
@@ -87,56 +67,6 @@ class _UnpackedIndex( _Index ):
     base_rtype = index_base.get_rtype()
     rtype = base_rtype.get_next_dim_type()
     super().__init__( index_base, index, rtype )
-
-  @staticmethod
-  def is_port_index( index_base, index ):
-    """Return PortIndex constructor if the given index base is a port array."""
-    base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, rt.Array) and \
-       isinstance(base_rtype.get_sub_type(), rt.Port):
-      return PortIndex
-    else:
-      return None
-
-  @staticmethod
-  def is_wire_index( index_base, index ):
-    """Return WireIndex constructor if the given index base is a wire array."""
-    base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, rt.Array) and \
-       isinstance(base_rtype.get_sub_type(), rt.Wire):
-      return WireIndex
-    else:
-      return None
-
-  @staticmethod
-  def is_const_index( index_base, index ):
-    """Return ConstIndex constructor if the given index base is a const array."""
-    base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, rt.Array) and \
-       isinstance(base_rtype.get_sub_type(), rt.Const):
-      return ConstIndex
-    else:
-      return None
-
-  @staticmethod
-  def is_ifc_view_index( index_base, index ):
-    """Return InterfaceViewIndex constructor if the given index base is an interface array."""
-    base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, rt.Array) and \
-       isinstance(base_rtype.get_sub_type(), rt.InterfaceView):
-      return InterfaceViewIndex
-    else:
-      return None
-
-  @staticmethod
-  def is_component_index( index_base, index ):
-    """Return ComponentIndex constructor if the given index base is component array."""
-    base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, rt.Array) and \
-       isinstance(base_rtype.get_sub_type(), rt.Component):
-      return ComponentIndex
-    else:
-      return None
 
 class _Slice( BaseSignalExpr ):
   """Base IR class for all slicing signal operations.
@@ -170,17 +100,6 @@ class _Slice( BaseSignalExpr ):
   def get_base( s ):
     return s.base
 
-  @staticmethod
-  def is_part_selection( slice_base, start, stop ):
-    """Return PartSelection constructor if the given index base is a vector signal."""
-    base_rtype = slice_base.get_rtype()
-    if isinstance(base_rtype, (rt.Port, rt.Wire)) and \
-       isinstance(base_rtype.get_dtype(), rdt.Vector) and \
-       isinstance(start, int) and isinstance(stop, int):
-      return PartSelection
-    else:
-      return None
-
 class _Attribute( BaseSignalExpr ):
   """Base IR class for all attribute accessing signal operations.
 
@@ -206,47 +125,6 @@ class _Attribute( BaseSignalExpr ):
 
   def get_attr( s ):
     return s.attr
-
-  @staticmethod
-  def is_cur_comp_attr( attr_base, attr ):
-    """Return CurCompAttr constructor if the given attribute belongs to the current component."""
-    base_rtype = attr_base.get_rtype()
-    if isinstance(attr_base, CurComp) and base_rtype.has_property(attr):
-      return CurCompAttr
-    else:
-      return None
-
-  @staticmethod
-  def is_subcomp_attr( attr_base, attr ):
-    """Return CurCompAttr constructor if the given attribute belongs to a sub-component."""
-    base_rtype = attr_base.get_rtype()
-    if not isinstance(attr_base, CurComp) and \
-       isinstance(base_rtype, rt.Component) and base_rtype.has_property(attr):
-      return SubCompAttr
-    else:
-      return None
-
-  @staticmethod
-  def is_interface_attr( attr_base, attr ):
-    """Return CurCompAttr constructor if the given attribute belongs to an interface."""
-    base_rtype = attr_base.get_rtype()
-    if isinstance(base_rtype, rt.InterfaceView) and base_rtype.has_property(attr):
-      return InterfaceAttr
-    else:
-      return None
-
-  @staticmethod
-  def is_struct_attr( attr_base, attr ):
-    """Return CurCompAttr constructor if the given attribute belongs to struct signal."""
-    base_rtype = attr_base.get_rtype()
-    if isinstance(base_rtype, rt.Signal):
-      dtype = base_rtype.get_dtype()
-      if isinstance(dtype, rdt.Struct) and dtype.has_property(attr):
-        return StructAttr
-      else:
-        return None
-    else:
-      return None
 
 #-------------------------------------------------------------------------
 # Actual IR signal operation classes
@@ -293,14 +171,6 @@ class CurComp( BaseSignalExpr ):
 
   def get_component_id( s ):
     return s.comp_id
-
-  @staticmethod
-  def is_cur_comp( comp, comp_id ):
-    """Return CurComp constructor if comp_id matches the current component's name."""
-    if comp_id == comp._dsl.my_name:
-      return CurComp
-    else:
-      return None
 
 class PortIndex( _UnpackedIndex ):
   """IR class for indexing on a port array ."""
@@ -379,19 +249,65 @@ class StructAttr( _Attribute ):
     super().__init__( attr_base, attr, rtype )
 
 #-------------------------------------------------------------------------
-# Map string signal expression to IR object generation methods
+# IR object generation methods for different types
 #-------------------------------------------------------------------------
 
-signal_expr_classes = {
-    'Attr' :  [ _Attribute.is_cur_comp_attr,   _Attribute.is_subcomp_attr,
-                _Attribute.is_interface_attr,  _Attribute.is_struct_attr ],
-    'Index' : [ _Index.is_packed_index,        _Index.is_bit_selection,
-                _UnpackedIndex.is_port_index,  _UnpackedIndex.is_wire_index,
-                _UnpackedIndex.is_const_index, _UnpackedIndex.is_ifc_view_index,
-                _UnpackedIndex.is_component_index ],
-    'Slice' : [ _Slice.is_part_selection ],
-    'Base'  : [ CurComp.is_cur_comp ]
-}
+def construct_attr( attr_base, attr ):
+  """Return CurCompAttr/SubCompAttr/InterfaceAttr/StructAttr constructor
+     if the given attribute belongs to the current component."""
+  base_rtype = attr_base.get_rtype()
+
+  if isinstance(attr_base, CurComp):
+    if base_rtype.has_property(attr):
+      return CurCompAttr( attr_base, attr )
+  if isinstance(base_rtype, rt.Component):
+    if base_rtype.has_property(attr):
+      return SubCompAttr( attr_base, attr )
+  if isinstance(base_rtype, rt.InterfaceView):
+    if base_rtype.has_property(attr):
+      return InterfaceAttr( attr_base, attr )
+  if isinstance(base_rtype, rt.Signal):
+    dtype = base_rtype.get_dtype()
+    if isinstance(dtype, rdt.Struct) and dtype.has_property(attr):
+      return StructAttr( attr_base, attr )
+  raise AssertionError(f"internal error: no available expression nodes for {attr_base}!")
+
+def construct_index( index_base, index ):
+  """Return PackedIndex/BitSelection constructor if the given index base
+     is a signal of packed data type."""
+  base_rtype = index_base.get_rtype()
+  if isinstance(base_rtype, (rt.Port, rt.Wire)):
+    dtype = base_rtype.get_dtype()
+    if isinstance( dtype, rdt.Vector ):
+      return BitSelection( index_base, index )
+    elif isinstance( dtype, rdt.PackedArray ):
+      return PackedIndex( index_base, index )
+  elif isinstance( base_rtype, rt.Array ):
+    subtype = base_rtype.get_sub_type()
+    if isinstance( subtype, rt.Port ):
+      return PortIndex( index_base, index )
+    elif isinstance( subtype, rt.Wire ):
+      return WireIndex( index_base, index )
+    elif isinstance( subtype, rt.Const ):
+      return ConstIndex( index_base, index )
+    elif isinstance( subtype, rt.InterfaceView ):
+      return InterfaceViewIndex( index_base, index )
+    elif isinstance( subtype, rt.Component ):
+      return ComponentIndex( index_base, index )
+  raise AssertionError(f"internal error: no available expression nodes for {index_base}!")
+
+def construct_slice( slice_base, sl ):
+  """Return PartSelection constructor if the given index base is a vector signal."""
+  base_rtype = slice_base.get_rtype()
+  if isinstance(base_rtype, (rt.Port, rt.Wire)) and \
+     isinstance(base_rtype.get_dtype(), rdt.Vector) and \
+     isinstance(sl.start, int) and isinstance(sl.stop, int):
+    return PartSelection( slice_base, sl.start, sl.stop )
+  raise AssertionError(f"internal error: no available expression nodes for {slice_base}!")
+
+def construct_base( comp, comp_id ):
+  """Return CurComp constructor if comp_id matches the current component's name."""
+  return CurComp( comp, comp_id )
 
 #-------------------------------------------------------------------------
 # gen_signal_expr
@@ -400,77 +316,38 @@ signal_expr_classes = {
 def gen_signal_expr( cur_component, signal ):
   """Return an RTLIR signal expression for the given signal."""
 
-  def get_next_op( expr, cur_pos, my_name, full_name ):
-    """Return the next signal operation in string `expr`.
-
-    Return value: ( op, *data )
-    op is one of [ 'Attr', 'Slice', 'Index', 'Base', 'Done' ].
-    *data is one to two variables that describes the next signal operation.
-    """
-    if not expr[cur_pos:]: return ( 'Done', '' ), 0
-    pos = len( expr )
-    dot_pos = expr.find( '.', cur_pos+1 )
-    lb_pos  = expr.find( '[', cur_pos+1 )
-    pos = dot_pos if dot_pos != -1 and dot_pos < pos else pos
-    pos =  lb_pos if  lb_pos != -1 and  lb_pos < pos else pos
-
-    # Attribute operation
-    if expr[cur_pos] == '.': return ( 'Attr', expr[cur_pos+1:pos] ), pos
-
-    # Index or slice operation
-    elif expr[cur_pos] == '[':
-      rb_pos = expr.find( ']', cur_pos )
-      colon_pos = expr.find( ':', cur_pos )
-      assert rb_pos != -1 and pos == rb_pos+1, \
-        f"unrecognized expression {expr}"
-
-      if cur_pos < colon_pos < rb_pos:
-        start = int( expr[cur_pos+1:colon_pos] )
-        stop  = int( expr[colon_pos+1:rb_pos] )
-        return ( 'Slice', start, stop ), pos
-      else:
-        return ( 'Index', int(expr[cur_pos+1:rb_pos]) ), pos
-
-    # The current component ( base of attribute )
-    else:
-      base_pos = expr.find( full_name )
-      assert base_pos >= 0, \
-        f"cannot find the base of attribute {full_name} in {expr}"
-      return ( 'Base', my_name ), base_pos + len( full_name )
-
-  def get_cls_inst( func_list, cur_node, ops ):
-    """Return an IR instance of the given signal operation."""
-    classes = [ c for c in ( f( cur_node, *ops ) for f in func_list ) if c ]
-    assert len(classes) <= 1, f"internal error: not unique class {classes}!"
-    assert classes, f"internal error: no available expression nodes for {cur_node}!"
-    return classes[0]( cur_node, *ops )
-
   try:
-    if isinstance( signal, dsl.Signal ):
-      expr = repr(signal)
-      base_comp = signal
-    elif isinstance( signal, dsl.Const ):
+    if isinstance( signal, dsl.Const ):
       c = signal._dsl.const
       assert isinstance( c, ( int, Bits )) or is_bitstruct_inst( c ), \
                         f'{c} is not an integer/Bits/BitStruct const!'
       return ConstInstance( signal, c )
-    else:
-      raise AssertionError( f'{signal} is not supported!' )
 
-    # Get the base component
-    base_comp = cur_component
-    full_name = repr(base_comp)
-    my_name = base_comp._dsl.my_name
-    assert expr.find( full_name ) >= 0, \
-      f"cannot find the base of attribute {full_name} in {expr}"
+    assert isinstance( signal, dsl.Signal ), f'{signal} is not supported!'
 
-    # Start from the base component and process one operation per iteration
-    cur_pos, cur_node = 0, base_comp
-    while cur_pos < len( expr ):
-      op, next_pos = get_next_op( expr, cur_pos, my_name, full_name )
-      if op[0] == 'Done': break
-      cur_node = get_cls_inst( signal_expr_classes[ op[0] ], cur_node, op[1:] )
-      cur_pos = next_pos
+    # Strip off all the tokens from the signal to the component
+
+    tmp = signal
+    stack = []
+
+    if tmp.is_sliced_signal():
+      stack.append( (2, tmp._dsl.slice) )
+      tmp = tmp.get_parent_object()
+
+    while tmp is not cur_component:
+      if tmp._dsl._my_indices:
+        for x in reversed(tmp._dsl._my_indices):
+          stack.append( (1, x) )
+      stack.append( (0, tmp._dsl._my_name) )
+      tmp = tmp.get_parent_object()
+
+    cur_node = construct_base( tmp, tmp._dsl.my_name )
+
+    for t, token in reversed(stack):
+      if   t == 0:  cur_node = construct_attr( cur_node, token )
+      elif t == 1:  cur_node = construct_index( cur_node, token )
+      else:         cur_node = construct_slice( cur_node, token )
+
     return cur_node
 
   except AssertionError as e:
