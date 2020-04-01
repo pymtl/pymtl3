@@ -56,7 +56,7 @@ import warnings
 
 import py
 
-from pymtl3.utils import custom_exec
+from pymtl3.third_party.pypy import custom_exec
 
 from .bits_import import *
 from .helpers import concat

@@ -16,7 +16,7 @@ from pymtl3.datatypes.bitstructs import get_bitstruct_inst_all_classes
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import LeftoverPlaceholderError
 from pymtl3.passes.BasePass import BasePass, PassMetadata
-from pymtl3.utils import custom_exec
+from pymtl3.third_party.pypy import custom_exec
 
 
 class GenDAGPass( BasePass ):

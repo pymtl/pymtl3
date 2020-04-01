@@ -41,17 +41,17 @@ def dump_vcd(request):
     return ''
 
 def pytest_configure(config):
-  import sys
-  sys._called_from_test = True
+  from pymtl3.third_party import pytest as pytest_options
+  pytest_options.called_from_pytest = True
+  if config.getoption('test_verilog'):
+    pytest_options.test_verilog = config.getoption('test_verilog')
   if config.getoption('dump_vcd'):
-    sys._pymtl_dump_vcd = True
-  else:
-    sys._pymtl_dump_vcd = False
 
 def pytest_unconfigure(config):
-  import sys
-  del sys._called_from_test
-  del sys._pymtl_dump_vcd
+  from pymtl3.third_party import pytest as pytest_options
+  pytest_options.called_from_pytest = None
+  pytest_options.dump_vcd           = None
+  pytest_options.test_verilog       = None
 
 def pytest_cmdline_preparse(config, args):
   """Don't write *.pyc and __pycache__ files."""

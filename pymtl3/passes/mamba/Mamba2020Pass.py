@@ -17,7 +17,7 @@ from pymtl3.datatypes import Bits, is_bitstruct_class
 from pymtl3.dsl import MethodPort
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
-from pymtl3.utils import custom_exec
+from pymtl3.third_party.pypy import custom_exec
 
 from ..sim.DynamicSchedulePass import kosaraju_scc
 from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag

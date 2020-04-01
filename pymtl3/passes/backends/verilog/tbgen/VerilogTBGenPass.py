@@ -11,7 +11,7 @@ import py
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.utils import custom_exec
+from pymtl3.third_party.pypy import custom_exec
 
 from ..errors import VerilogImportError
 from ..util.utility import get_rtype

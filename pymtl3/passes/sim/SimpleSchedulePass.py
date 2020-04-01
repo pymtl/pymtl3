@@ -14,7 +14,7 @@ from collections import defaultdict
 from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
-from pymtl3.utils import custom_exec
+from pymtl3.third_party.pypy import custom_exec
 
 
 class SimpleSchedulePass( BasePass ):
