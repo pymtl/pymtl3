@@ -41,16 +41,6 @@ def get_long_description():
 # setup
 #-------------------------------------------------------------------------
 
-if 'CI' in os.environ:
-  # Do not install pytest-pymtl3 if we are on CI
-  entry_points = {}
-else:
-  entry_points = {
-    'pytest11' : [
-      'pytest-pymtl3 = pymtl3.extra.pytest.pytest_pymtl3',
-    ]
-  }
-
 setup(
 
   name                          = 'pymtl3',
@@ -101,6 +91,10 @@ setup(
     'greenlet',
   ],
 
-  entry_points = entry_points,
+  entry_points = {
+    'pytest11' : [
+      'pytest-pymtl3 = pymtl3.extra.pytest.pytest_pymtl3',
+    ]
+  }
 
 )
