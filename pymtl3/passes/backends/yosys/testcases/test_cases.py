@@ -26,6 +26,8 @@ from pymtl3.passes.backends.verilog.testcases import (
     CaseBits64PartSelUpblkComp,
     CaseBits64SextInComp,
     CaseBits64ZextInComp,
+    CaseBitSelOverBitSelComp,
+    CaseBitSelOverPartSelComp,
     CaseConnectArrayBits32FooIfcComp,
     CaseConnectArrayNestedIfcComp,
     CaseConnectArrayStructAttrToOutComp,
@@ -57,6 +59,8 @@ from pymtl3.passes.backends.verilog.testcases import (
     CaseLambdaConnectWithListComp,
     CaseNestedIfComp,
     CaseNestedStructPackedArrayUpblkComp,
+    CasePartSelOverBitSelComp,
+    CasePartSelOverPartSelComp,
     CasePassThroughComp,
     CaseReducesInx3OutComp,
     CaseSequentialPassThroughComp,
@@ -1301,6 +1305,62 @@ CaseConnectNestedStructPackedArrayComp = set_attributes( CaseConnectNestedStruct
 
         endmodule
     '''
+)
+
+CaseBitSelOverBitSelComp = set_attributes( CaseBitSelOverBitSelComp,
+    'REF_PORTS_PORT',
+    '''\
+        input logic [0:0] clk,
+        input logic [31:0] in_,
+        output logic [0:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_PORTS_WIRE',
+    '',
+    'REF_PORTS_CONN',
+    '',
+)
+
+CaseBitSelOverPartSelComp = set_attributes( CaseBitSelOverPartSelComp,
+    'REF_PORTS_PORT',
+    '''\
+        input logic [0:0] clk,
+        input logic [31:0] in_,
+        output logic [0:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_PORTS_WIRE',
+    '',
+    'REF_PORTS_CONN',
+    '',
+)
+
+CasePartSelOverBitSelComp = set_attributes( CasePartSelOverBitSelComp,
+    'REF_PORTS_PORT',
+    '''\
+        input logic [0:0] clk,
+        input logic [31:0] in_,
+        output logic [0:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_PORTS_WIRE',
+    '',
+    'REF_PORTS_CONN',
+    '',
+)
+
+CasePartSelOverPartSelComp = set_attributes( CasePartSelOverPartSelComp,
+    'REF_PORTS_PORT',
+    '''\
+        input logic [0:0] clk,
+        input logic [31:0] in_,
+        output logic [0:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_PORTS_WIRE',
+    '',
+    'REF_PORTS_CONN',
+    '',
 )
 
 CaseConnectValRdyIfcComp = set_attributes( CaseConnectValRdyIfcComp,
