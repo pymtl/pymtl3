@@ -8,8 +8,16 @@
 # Author : Peitian Pan
 # Date   : March 30, 2020
 
+import os
 import pytest
 
+
+if 'CI' in os.environ:
+  # Set up the CI hypothesis profile which limits the max number of tries
+  # The 'CI' profile will be specified through the testing command of the
+  # CI script.
+  from hypothesis import settings
+  settings.register_profile("CI", max_examples=10)
 
 def pytest_addoption(parser):
   group = parser.getgroup("pytest-pymtl3")
@@ -46,6 +54,7 @@ def pytest_configure(config):
   if config.getoption('test_verilog'):
     pytest_options.test_verilog = config.getoption('test_verilog')
   if config.getoption('dump_vcd'):
+    pytest_options.test_verilog = config.getoption('dump_vcd')
 
 def pytest_unconfigure(config):
   from pymtl3.extra import pytest as pytest_options
