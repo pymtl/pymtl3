@@ -89,26 +89,57 @@ class MemoryCL( Component ):
           len_ = int(req.len)
           if len_ == 0: len_ = req_classes[i].data_nbits >> 3
 
+          #
+          # READ
+          #
           if   req.type_ == MemMsgType.READ:
             resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
                                     s.mem.read( req.addr, len_ ) )
 
-          elif req.type_ == MemMsgType.WRITE:
+          #
+          # WRITE
+          #
+          elif  req.type_ == MemMsgType.WRITE:
             s.mem.write( req.addr, len_, req.data )
             # FIXME do we really set len=0 in response when doing subword wr?
             # resp = resp_classes[i]( req.type_, req.opaque, 0, req.len, 0 )
             resp = resp_classes[i]( req.type_, req.opaque, 0, 0, 0 )
 
-          else: # AMOS
+          #
+          # AMOs
+          #
+          elif  req.type_ == MemMsgType.AMO_ADD   or \
+                req.type_ == MemMsgType.AMO_AND   or \
+                req.type_ == MemMsgType.AMO_MAX   or \
+                req.type_ == MemMsgType.AMO_MAXU  or \
+                req.type_ == MemMsgType.AMO_MIN   or \
+                req.type_ == MemMsgType.AMO_MINU  or \
+                req.type_ == MemMsgType.AMO_OR    or \
+                req.type_ == MemMsgType.AMO_SWAP  or \
+                req.type_ == MemMsgType.AMO_XOR:
             resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
                s.mem.amo( req.type_, req.addr, len_, req.data ) )
+
+          # INV
+          elif  req.type_ == MemMsgType.INV:
+            resp = resp_classes[i]( req.type_, req.opaque, 0, 0, 0 )
+
+          # FLUSH
+          elif  req.type_ == MemMsgType.FLUSH:
+            resp = resp_classes[i]( req.type_, req.opaque, 0, 0, 0 )
+
+          # Invalid type
+          else:
+            assert( False )
 
           s.resp_qs[i].enq( resp )
 
   #-----------------------------------------------------------------------
   # line_trace
   #-----------------------------------------------------------------------
-  # TODO: better line trace.
 
   def line_trace( s ):
-    return "|".join( [ x[0].line_trace() + x[1].line_trace() for x in zip(s.req_qs, s.resp_qs) ] )
+    msg = ""
+    for i in range( s.nports ):
+      msg += f"[{i}] {str(s.ifc[i].req)} {str(s.ifc[i].resp)} "
+    return msg
