@@ -799,7 +799,7 @@ def test_const_connect_cannot_handle_same_name_nested_struct():
     simple_sim_pass(x)
   except AssertionError as e:
     print(e)
-    assert str(e) == "Cannot handle two subfields with the same struct name but different structs"
+    assert str(e).startswith("Cannot handle two subfields with the same struct name but different structs")
     return
   raise Exception("Should've thrown AssertionError")
 
