@@ -24,7 +24,9 @@ from pymtl3.passes.testcases import (
     CaseBits32BitSelUpblkComp,
     CaseBits32ConnectSubCompAttrComp,
     CaseBits32FooInBits32OutComp,
+    CaseBits32FooToBits32Comp,
     CaseBits32SubCompAttrUpblkComp,
+    CaseBits32ToBits32FooComp,
     CaseBits32x2ConcatComp,
     CaseBits32x2ConcatConstComp,
     CaseBits32x2ConcatFreeVarComp,
@@ -63,6 +65,7 @@ from pymtl3.passes.testcases import (
     CaseIfExpUnaryOpInForStmtComp,
     CaseIfTmpVarInForStmtComp,
     CaseInterfaceArrayNonStaticIndexComp,
+    CaseIntToBits32FooComp,
     CaseLambdaConnectComp,
     CaseLambdaConnectWithListComp,
     CaseNestedIfComp,
@@ -635,6 +638,92 @@ CaseBoolTmpVarComp = set_attributes( CaseBoolTmpVarComp,
             end
             else
               out = 32'd0;
+          end
+
+        endmodule
+    '''
+)
+
+CaseBits32FooToBits32Comp = set_attributes( CaseBits32FooToBits32Comp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = in_;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        typedef struct packed {
+          logic [31:0] foo;
+        } Bits32Foo;
+
+        module DUT_noparam
+        (
+          input logic [0:0] clk,
+          input Bits32Foo in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out = in_;
+          end
+
+        endmodule
+    '''
+)
+
+CaseBits32ToBits32FooComp = set_attributes( CaseBits32ToBits32FooComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = in_;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        typedef struct packed {
+          logic [31:0] foo;
+        } Bits32Foo;
+
+        module DUT_noparam
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output Bits32Foo out,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out = in_;
+          end
+
+        endmodule
+    '''
+)
+
+CaseIntToBits32FooComp = set_attributes( CaseIntToBits32FooComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = 32'd42;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        typedef struct packed {
+          logic [31:0] foo;
+        } Bits32Foo;
+
+        module DUT_noparam
+        (
+          input logic [0:0] clk,
+          output Bits32Foo out,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out = 32'd42;
           end
 
         endmodule

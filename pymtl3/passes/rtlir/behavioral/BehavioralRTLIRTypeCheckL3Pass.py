@@ -52,6 +52,57 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
   def get_enforce_visitor( s ):
     return BehavioralRTLIRTypeEnforcerL3
 
+  def _visit_Assign_single_target( s, node, target, i ):
+    try:
+      rhs_type = node.value.Type.get_dtype()
+      lhs_type = target.Type.get_dtype()
+    except AttributeError:
+      rhs_type = None
+      lhs_type = None
+
+    l_is_struct = isinstance( lhs_type, rdt.Struct )
+    r_is_struct = isinstance( rhs_type, rdt.Struct )
+
+    # At L3 we check if either LHS or RHS is of BitStruct type.
+    if l_is_struct or r_is_struct:
+      if l_is_struct and r_is_struct:
+        # Both sides are of struct type. Type check only if both sides
+        # are of the _same_ struct type.
+        if lhs_type.get_name() != rhs_type.get_name():
+          raise PyMTLTypeError( s.blk, node.ast,
+            f'LHS and RHS of assignment should have the same type (LHS target#{i+1} of {lhs_type} vs {rhs_type})!' )
+      else:
+        # There should be one side of struct type and the other of vector type.
+        struct_type, vector_type = lhs_type, rhs_type
+        if r_is_struct:
+          struct_type, vector_type = rhs_type, lhs_type
+        if not isinstance( vector_type, rdt.Vector ):
+          raise PyMTLTypeError( s.blk, node.ast,
+            f'LHS and RHS of assignment should have agreeable types (LHS target#{i+1} of {lhs_type} vs {rhs_type})!' )
+
+        # Type check only if both sides have the same bitwidth.
+        is_rhs_reinterpretable = not node.value._is_explicit
+        struct_nbits, vector_nbits = struct_type.get_length(), vector_type.get_length()
+
+        # If RHS is an int literal try to enforce the correct bitwidth.
+        if not r_is_struct and is_rhs_reinterpretable and struct_nbits != vector_nbits:
+          s.enforcer.enter( s.blk, rt.NetWire(rdt.Vector(struct_nbits)), node.value )
+
+        if l_is_struct:
+          vector_nbits = node.value.Type.get_dtype().get_length()
+
+        if struct_nbits != vector_nbits:
+          if l_is_struct:
+            lnbits, rnbits = struct_nbits, vector_nbits
+          else:
+            lnbits, rnbits = vector_nbits, struct_nbits
+
+          raise PyMTLTypeError( s.blk, node.ast,
+            f'LHS and RHS of assignment should have the same bitwidth (LHS target#{i+1} of {lhs_type} ({lnbits} bits) vs {rhs_type} ({rnbits} bits))!' )
+
+    else:
+      super()._visit_Assign_single_target( node, target, i )
+
   def visit_Attribute( s, node ):
     if isinstance( node.value.Type, rt.Signal ):
       dtype = node.value.Type.get_dtype()
