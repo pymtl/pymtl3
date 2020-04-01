@@ -18,7 +18,7 @@ import linecache
 from collections import defaultdict
 
 from pymtl3.datatypes import Bits, is_bitstruct_inst
-from pymtl3.third_party.pypy import custom_exec
+from pymtl3.extra.pypy import custom_exec
 
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2, compiled_re

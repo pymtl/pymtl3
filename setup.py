@@ -47,7 +47,7 @@ if 'CI' in os.environ:
 else:
   entry_points = {
     'pytest11' : [
-      'pytest-pymtl3 = pymtl3.third_party.pytest.pytest_pymtl3',
+      'pytest-pymtl3 = pymtl3.extra.pytest.pytest_pymtl3',
     ]
   }
 

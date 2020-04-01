@@ -12,9 +12,9 @@ from copy import deepcopy
 import py
 
 from pymtl3.datatypes import Bits, is_bitstruct_class
+from pymtl3.extra.pypy import custom_exec
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
-from pymtl3.third_party.pypy import custom_exec
 
 from .SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from .SimpleTickPass import SimpleTickPass

@@ -41,14 +41,14 @@ def dump_vcd(request):
     return ''
 
 def pytest_configure(config):
-  from pymtl3.third_party import pytest as pytest_options
+  from pymtl3.extra import pytest as pytest_options
   pytest_options.called_from_pytest = True
   if config.getoption('test_verilog'):
     pytest_options.test_verilog = config.getoption('test_verilog')
   if config.getoption('dump_vcd'):
 
 def pytest_unconfigure(config):
-  from pymtl3.third_party import pytest as pytest_options
+  from pymtl3.extra import pytest as pytest_options
   pytest_options.called_from_pytest = None
   pytest_options.dump_vcd           = None
   pytest_options.test_verilog       = None
