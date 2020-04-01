@@ -94,9 +94,6 @@ class Bits:
   def __deepcopy__( self, memo ):
     return _new_valid_bits( self._nbits, self._uint )
 
-  def __matmul__( self, other ):
-    raise NotImplementedError
-
   def __imatmul__( self, v ):
     nbits = self._nbits
     try:

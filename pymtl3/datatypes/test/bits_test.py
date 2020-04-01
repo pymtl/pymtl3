@@ -723,7 +723,6 @@ def test_ilshift():
     a <<= 256
   a <<= 2
   a <<= Bits(8,1)
-  assert a._next == 1
   with pytest.raises( ValueError ):
     a <<= Bits(7,1)
   with pytest.raises( ValueError ):
@@ -735,7 +734,7 @@ def test_imatmul():
 
   a = Bits(8,12)
 
-  with pytest.raises( NotImplementedError ):
+  with pytest.raises( TypeError ):
     a @ 1
 
   with pytest.raises( ValueError ):
