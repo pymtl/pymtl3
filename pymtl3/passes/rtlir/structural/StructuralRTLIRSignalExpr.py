@@ -300,8 +300,7 @@ def construct_slice( slice_base, sl ):
   """Return PartSelection constructor if the given index base is a vector signal."""
   base_rtype = slice_base.get_rtype()
   if isinstance(base_rtype, (rt.Port, rt.Wire)) and \
-     isinstance(base_rtype.get_dtype(), rdt.Vector) and \
-     isinstance(sl.start, int) and isinstance(sl.stop, int):
+     isinstance(base_rtype.get_dtype(), rdt.Vector):
     return PartSelection( slice_base, sl.start, sl.stop )
   raise AssertionError(f"internal error: no available expression nodes for {slice_base}!")
 
@@ -331,22 +330,20 @@ def gen_signal_expr( cur_component, signal ):
     stack = []
 
     if tmp.is_sliced_signal():
-      stack.append( (2, tmp._dsl.slice) )
+      stack.append( (construct_slice, tmp._dsl.slice) )
       tmp = tmp.get_parent_object()
 
     while tmp is not cur_component:
       if tmp._dsl._my_indices:
         for x in reversed(tmp._dsl._my_indices):
-          stack.append( (1, x) )
-      stack.append( (0, tmp._dsl._my_name) )
+          stack.append( (construct_index, x) )
+      stack.append( (construct_attr, tmp._dsl._my_name) )
       tmp = tmp.get_parent_object()
 
     cur_node = construct_base( tmp, tmp._dsl.my_name )
 
-    for t, token in reversed(stack):
-      if   t == 0:  cur_node = construct_attr( cur_node, token )
-      elif t == 1:  cur_node = construct_index( cur_node, token )
-      else:         cur_node = construct_slice( cur_node, token )
+    for f, token in reversed(stack):
+      cur_node = f( cur_node, token )
 
     return cur_node
 
