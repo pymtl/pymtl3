@@ -1062,3 +1062,13 @@ def test_s_connect_deprecated():
     print(e)
     return
   raise Exception("Should've thrown InvalidConnectionError")
+
+def test_slice_over_slice():
+  class A( ComponentLevel3 ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits8 )
+      connect( s.out, s.in_[16:32][3:12][1:9] )
+  a = A()
+  a.elaborate()
+  assert str(a._dsl.connect_order) == "[(s.out, s.in_[20:28])]"
