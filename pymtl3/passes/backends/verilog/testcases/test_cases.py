@@ -34,6 +34,8 @@ from pymtl3.passes.testcases import (
     CaseBits64SextInComp,
     CaseBits64TruncInComp,
     CaseBits64ZextInComp,
+    CaseBitSelOverBitSelComp,
+    CaseBitSelOverPartSelComp,
     CaseBoolTmpVarComp,
     CaseConnectArrayBits32FooIfcComp,
     CaseConnectArrayNestedIfcComp,
@@ -67,6 +69,8 @@ from pymtl3.passes.testcases import (
     CaseLambdaConnectWithListComp,
     CaseNestedIfComp,
     CaseNestedStructPackedArrayUpblkComp,
+    CasePartSelOverBitSelComp,
+    CasePartSelOverPartSelComp,
     CasePassThroughComp,
     CasePythonClassAttr,
     CaseReducesInx3OutComp,
@@ -1568,6 +1572,134 @@ CaseConnectSliceToOutComp = set_attributes( CaseConnectSliceToOutComp,
         );
 
           assign out = in_[7:4];
+
+        endmodule
+    '''
+)
+
+CaseBitSelOverBitSelComp = set_attributes( CaseBitSelOverBitSelComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        input logic [31:0] in_,
+        output logic [0:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '',
+    'REF_CONST',
+    '',
+    'REF_CONN',
+    '''\
+        assign out = in_[1:1];
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [0:0] out,
+          input logic [0:0] reset
+        );
+
+          assign out = in_[1:1];
+
+        endmodule
+    '''
+)
+
+CaseBitSelOverPartSelComp = set_attributes( CaseBitSelOverPartSelComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        input logic [31:0] in_,
+        output logic [0:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '',
+    'REF_CONST',
+    '',
+    'REF_CONN',
+    '''\
+        assign out = in_[0:0];
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [0:0] out,
+          input logic [0:0] reset
+        );
+
+          assign out = in_[0:0];
+
+        endmodule
+    '''
+)
+
+CasePartSelOverBitSelComp = set_attributes( CasePartSelOverBitSelComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        input logic [31:0] in_,
+        output logic [0:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '',
+    'REF_CONST',
+    '',
+    'REF_CONN',
+    '''\
+        assign out = in_[1:1];
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [0:0] out,
+          input logic [0:0] reset
+        );
+
+          assign out = in_[1:1];
+
+        endmodule
+    '''
+)
+
+CasePartSelOverPartSelComp = set_attributes( CasePartSelOverPartSelComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        input logic [31:0] in_,
+        output logic [0:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '',
+    'REF_CONST',
+    '',
+    'REF_CONN',
+    '''\
+        assign out = in_[0:0];
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [0:0] out,
+          input logic [0:0] reset
+        );
+
+          assign out = in_[0:0];
 
         endmodule
     '''

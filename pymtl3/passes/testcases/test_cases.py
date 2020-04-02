@@ -2220,16 +2220,22 @@ class CaseGenericConditionalDriveComp:
                                 "s.out0 = " + str( s.out[0] ) +\
                                 "s.out1 = " + str( s.out[1] )
 
-#-------------------------------------------------------------------------
-# Test cases that contain generic translator errors
-#-------------------------------------------------------------------------
-
 class CaseBitSelOverBitSelComp:
   class DUT( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits1 )
       connect( s.out, s.in_[1][0] )
+  TV_IN  = _set( 'in_', Bits32, 0 )
+  TV_OUT = _check( 'out', Bits1, 1 )
+  TEST_VECTOR = \
+  [
+      [ 1, 0 ],
+      [ 2, 1 ],
+      [ 3, 1 ],
+      [ 4, 0 ],
+      [ 5, 0 ],
+  ]
 
 class CaseBitSelOverPartSelComp:
   class DUT( Component ):
@@ -2237,6 +2243,16 @@ class CaseBitSelOverPartSelComp:
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits1 )
       connect( s.out, s.in_[0:4][0] )
+  TV_IN  = _set( 'in_', Bits32, 0 )
+  TV_OUT = _check( 'out', Bits1, 1 )
+  TEST_VECTOR = \
+  [
+      [ 1, 1 ],
+      [ 2, 0 ],
+      [ 3, 1 ],
+      [ 4, 0 ],
+      [ 5, 1 ],
+  ]
 
 class CasePartSelOverBitSelComp:
   class DUT( Component ):
@@ -2244,6 +2260,16 @@ class CasePartSelOverBitSelComp:
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits1 )
       connect( s.out, s.in_[1][0:1] )
+  TV_IN  = _set( 'in_', Bits32, 0 )
+  TV_OUT = _check( 'out', Bits1, 1 )
+  TEST_VECTOR = \
+  [
+      [ 1, 0 ],
+      [ 2, 1 ],
+      [ 3, 1 ],
+      [ 4, 0 ],
+      [ 5, 0 ],
+  ]
 
 class CasePartSelOverPartSelComp:
   class DUT( Component ):
@@ -2251,6 +2277,16 @@ class CasePartSelOverPartSelComp:
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits1 )
       connect( s.out, s.in_[0:4][0:1] )
+  TV_IN  = _set( 'in_', Bits32, 0 )
+  TV_OUT = _check( 'out', Bits1, 1 )
+  TEST_VECTOR = \
+  [
+      [ 1, 1 ],
+      [ 2, 0 ],
+      [ 3, 1 ],
+      [ 4, 0 ],
+      [ 5, 1 ],
+  ]
 
 #-------------------------------------------------------------------------
 # Test cases that contain SystemVerilog translator errors

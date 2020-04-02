@@ -61,7 +61,7 @@ class VerilogPlaceholderConfigs( PlaceholderConfigs ):
                          "expects a path to a file" ),
 
     "v_libs": Checker( lambda v: isinstance(v, list) and all(os.path.exists(expand(p)) for p in v),
-                            "expects a list of paths to file"),
+                            "expects a list of paths to files"),
 
     "v_include": Checker( lambda v: isinstance(v, list) and all(os.path.isdir(expand(p)) for p in v),
                             "expects a list of paths to directory"),

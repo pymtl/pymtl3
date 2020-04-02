@@ -88,6 +88,10 @@ class MemMsgType:
   AMO_MAX    = 9
   AMO_MAXU   = 10
   AMO_XOR    = 11
+  LR         = 12 # Load-Reserved
+  SC         = 13 # Store-Conditional
+  INV        = 14 # Cache invalidation
+  FLUSH      = 15 # Cache flush
 
   str = {
     READ       : "rd",
@@ -102,4 +106,8 @@ class MemMsgType:
     AMO_MAX    : "mx",
     AMO_MAXU   : "xu",
     AMO_XOR    : "xo",
+    LR         : "lr",
+    SC         : "sc",
+    INV        : "iv",
+    FLUSH      : "fl"
   }
