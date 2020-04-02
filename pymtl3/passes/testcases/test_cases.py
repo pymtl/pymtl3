@@ -2228,7 +2228,7 @@ class CaseBitSelOverBitSelComp:
       connect( s.out, s.in_[1][0] )
   TV_IN  = _set( 'in_', Bits32, 0 )
   TV_OUT = _check( 'out', Bits1, 1 )
-  TEST_VECTOR = \
+  TV = \
   [
       [ 1, 0 ],
       [ 2, 1 ],
@@ -2245,7 +2245,7 @@ class CaseBitSelOverPartSelComp:
       connect( s.out, s.in_[0:4][0] )
   TV_IN  = _set( 'in_', Bits32, 0 )
   TV_OUT = _check( 'out', Bits1, 1 )
-  TEST_VECTOR = \
+  TV = \
   [
       [ 1, 1 ],
       [ 2, 0 ],
@@ -2262,7 +2262,7 @@ class CasePartSelOverBitSelComp:
       connect( s.out, s.in_[1][0:1] )
   TV_IN  = _set( 'in_', Bits32, 0 )
   TV_OUT = _check( 'out', Bits1, 1 )
-  TEST_VECTOR = \
+  TV = \
   [
       [ 1, 0 ],
       [ 2, 1 ],
@@ -2279,7 +2279,7 @@ class CasePartSelOverPartSelComp:
       connect( s.out, s.in_[0:4][0:1] )
   TV_IN  = _set( 'in_', Bits32, 0 )
   TV_OUT = _check( 'out', Bits1, 1 )
-  TEST_VECTOR = \
+  TV = \
   [
       [ 1, 1 ],
       [ 2, 0 ],
