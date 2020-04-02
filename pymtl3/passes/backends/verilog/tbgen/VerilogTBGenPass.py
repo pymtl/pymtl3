@@ -33,14 +33,14 @@ class VerilogTBGenPass( BasePass ):
 
     def traverse_hierarchy( m ):
       if hasattr(m, 'verilog_tbgen') and hasattr(m, '_ports'):
-        tbgen_components.append(m)
+        tbgen_components.append( (m, m.verilog_tbgen) )
       else:
         for child in m.get_child_components():
           traverse_hierarchy( child )
 
     traverse_hierarchy( top )
 
-    for x in tbgen_components:
+    for x, case_name in tbgen_components:
 
       signal_decls = []
       task_signal_decls = []
@@ -92,7 +92,7 @@ class VerilogTBGenPass( BasePass ):
 
       dut_name = x._ip_cfg.translated_top_module
 
-      with open( dut_name + "_tb.v", 'w' ) as output:
+      with open( f"{dut_name}_{case_name}_tb.v", 'w' ) as output:
         output.write( tb_template.format(
           args_strs         = ",".join([f"a{i}" for i in range(len(task_signal_decls))]),
           harness_name      = dut_name + "_tb",
@@ -104,10 +104,10 @@ class VerilogTBGenPass( BasePass ):
           dut_clk_decl      = '.clk(clk)' if x._ph_cfg.has_clk else '',
           dut_reset_decl    = '.reset(reset)' if x._ph_cfg.has_reset else '',
           dut_signal_decls  = ",\n    ".join(dut_signal_decls), # logic [31:0] xxx, -- packed array, # .x(x), -- packed array
-          cases_file_name   = dut_name+"_tb.v.cases",
+          cases_file_name   = f"{dut_name}_{case_name}_tb.v.cases",
         ))
 
-      case_file = open( dut_name + "_tb.v.cases", "w" )
+      case_file = open( f"{dut_name}_{case_name}_tb.v.cases", "w" )
       top._tbgen.tbgen_hooks.append( self.gen_hook_func( top, x, py_signal_order, case_file ) )
 
   @staticmethod

@@ -27,9 +27,10 @@ if os.getenv("PYMTL_BITS") == "1":
   # print "[env: PYMTL_BITS=1] Use Python Bits"
   bits_template = """
 class Bits{0}(Bits):
+  __slots__ = ( "_nbits", "_uint", "_next" )
   nbits = {0}
-  def __init__( s, value=0, *, trunc_int=False ):
-    return super().__init__( {0}, value, trunc_int )
+  def __init__( s, v=0, *, trunc_int=False ):
+    return super().__init__( {0}, v, trunc_int )
 _bits_types[{0}] = b{0} = Bits{0}
 """
 else:
@@ -39,18 +40,21 @@ else:
     bits_template = """
 class Bits{0}(Bits):
   nbits = {0}
-  def __new__( cls, value=0, *, trunc_int=False ):
-    return Bits.__new__( cls, {0}, value, trunc_int )
+  def __new__( cls, v=0, *, trunc_int=False ):
+    return Bits.__new__( cls, {0}, v, trunc_int )
 _bits_types[{0}] = b{0} = Bits{0}
 """
   except ImportError:
     from .PythonBits import Bits
     # print "[default w/o Mamba] Use Python Bits"
+    # The action of a __slots__ declaration is limited to the class where it is defined.
+    # As a result, subclasses will have a __dict__ unless they also define __slots__.
     bits_template = """
 class Bits{0}(Bits):
+  __slots__ = ( "_nbits", "_uint", "_next" )
   nbits = {0}
-  def __init__( s, value=0, *, trunc_int=False ):
-    return super().__init__( {0}, value, trunc_int )
+  def __init__( s, v=0, *, trunc_int=False ):
+    return super().__init__( {0}, v, trunc_int )
 _bits_types[{0}] = b{0} = Bits{0}
 """
 

@@ -8,7 +8,7 @@ Date   : Nov 3, 2018
 """
 from collections import deque
 
-from pymtl3.datatypes import Bits1, Bits16, Bits32, bitstruct, mk_bits
+from pymtl3.datatypes import Bits1, Bits16, Bits32, bitstruct, mk_bits, zext
 from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2, update_ff
 from pymtl3.dsl.Connectable import InPort, Interface, OutPort, Wire
@@ -566,7 +566,7 @@ def test_simple_func_impl():
 
       @s.func
       def assignb( b ):
-        s.b @= b + (s.counter_assign < 0) # never -1
+        s.b @= b + zext(s.counter_assign < 0, 32) # never -1
 
       @update
       def up_write():
@@ -588,7 +588,7 @@ def test_simple_func_impl():
       # after construction time
       @s.func
       def assign( a, b ):
-        s.a = a + (s.counter_assign < 0)
+        s.a = a + zext( s.counter_assign < 0, 32)
         assignb( b )
 
     def done( s ):

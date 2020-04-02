@@ -126,8 +126,8 @@ class AluRTL( Component ):
       if   s.fn == 0: s.out @= s.in0               # COPY OP0
       elif s.fn == 1: s.out @= s.in1               # COPY OP1
       elif s.fn == 2: s.out @= s.in0 + s.in1       # ADD
-      elif s.fn == 3: s.out @= s.in0 << s.in1[0:5] # SLL
-      elif s.fn == 4: s.out @= s.in0 >> s.in1[0:5] # SRL
+      elif s.fn == 3: s.out @= s.in0 << zext(s.in1[0:5], 32) # SLL
+      elif s.fn == 4: s.out @= s.in0 >> zext(s.in1[0:5], 32) # SRL
 
       # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''
       # Implement AND in the ALU
