@@ -9,6 +9,7 @@
 # Date   : March 30, 2020
 
 import os
+
 import pytest
 
 if 'CI' in os.environ:
@@ -17,6 +18,10 @@ if 'CI' in os.environ:
   # CI script.
   from hypothesis import settings
   settings.register_profile("CI", max_examples=10)
+
+#-------------------------------------------------------------------------
+# pytest hooks and fixtures
+#-------------------------------------------------------------------------
 
 def pytest_addoption(parser):
   group = parser.getgroup("pytest-pymtl3")
@@ -27,48 +32,30 @@ def pytest_addoption(parser):
                     default=False, help="dump vcd for each test" )
 
 @pytest.fixture
-def test_verilog(request):
-  """Test Verilog translation rather than python."""
-  flag = request.config.getoption("test_verilog")
-  try:
-    return int(flag)
-  except ValueError:
-    assert flag in ['', 'zeros', 'ones', 'rand'], \
-        f"--test-verilog should be an int or one of '', 'zeros', 'ones', 'rand'!"
-    return flag
+def cmdline_opts( request ):
+  """PyMTL options parsed from pytest commandline options."""
+  opts = _parse_opts_from_request( request )
+
+  # If a fixture is used by a test class, this seems to be the only
+  # way to retrieve the fixture value.
+  # https://stackoverflow.com/a/37761165/13190001
+  if request.cls is not None:
+    request.cls.cmdline_opts = opts
+
+  return opts
 
 @pytest.fixture
-def dump_vcd(request):
-  """Dump VCD for each test."""
-  if request.config.getoption("dump_vcd"):
-    test_module = request.module.__name__
-    test_name   = request.node.name
-    return '{}.{}.vcd'.format( test_module, test_name )
-  else:
-    return ''
+def no_translation( request ):
+  """Mark a test case as not to be translated."""
+  opts = _parse_opts_from_request( request )
+  if opts['test_verilog'] != '':
+    pytest.skip("skipping untranslatable test cases with --test-verilog")
 
 def pytest_configure(config):
-  import sys
-  sys._called_from_test = True
-  if config.option.dump_vcd:
-    sys._pymtl_dump_vcd = True
-  else:
-    sys._pymtl_dump_vcd = False
-  # from pymtl3.extra import pytest as pytest_options
-  # pytest_options.called_from_pytest = True
-  # if config.getoption('test_verilog'):
-  #   pytest_options.test_verilog = config.getoption('test_verilog')
-  # if config.getoption('dump_vcd'):
-  #   pytest_options.test_verilog = config.getoption('dump_vcd')
+  pass
 
 def pytest_unconfigure(config):
-  import sys
-  del sys._called_from_test
-  del sys._pymtl_dump_vcd
-  # from pymtl3.extra import pytest as pytest_options
-  # pytest_options.called_from_pytest = None
-  # pytest_options.dump_vcd           = None
-  # pytest_options.test_verilog       = None
+  pass
 
 def pytest_cmdline_preparse(config, args):
   """Don't write *.pyc and __pycache__ files."""
@@ -76,6 +63,38 @@ def pytest_cmdline_preparse(config, args):
   sys.dont_write_bytecode = True
 
 def pytest_runtest_setup(item):
-  test_verilog = item.config.getoption("test_verilog")
-  if test_verilog and 'test_verilog' not in item.funcargnames:
-    pytest.skip("ignoring non-Verilog tests")
+  if _any_opts_present(item.config) and 'cmdline_opts' not in item.fixturenames:
+    pytest.skip("'cmdline_opts' is required by pytest commandline but not used")
+
+#-------------------------------------------------------------------------
+# helper functions
+#-------------------------------------------------------------------------
+
+def _any_opts_present( config ):
+  opt_default_pairs = [
+      ('test_verilog', ''),
+      ('dump_vcd', False),
+  ]
+  return any([config.getoption(opt) != val for opt, val in opt_default_pairs])
+
+def _parse_opts_from_request( request ):
+  opts = {}
+
+  # test_verilog
+  test_verilog = request.config.getoption("test_verilog")
+  try:
+    test_verilog = int(test_verilog)
+  except ValueError:
+    assert test_verilog in ['', 'zeros', 'ones', 'rand'], \
+        f"--test-verilog should be an int or one of '', 'zeros', 'ones', 'rand'!"
+  opts['test_verilog'] = test_verilog
+
+  # dump_vcd
+  dump_vcd = request.config.getoption("dump_vcd")
+  if dump_vcd:
+    test_module = request.module.__name__
+    test_name   = request.node.name
+    dump_vcd = f'{test_module}.{test_name}.vcd'
+  opts['dump_vcd'] = dump_vcd
+
+  return opts

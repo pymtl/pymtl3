@@ -7,6 +7,8 @@ Test cases for RTL checksum unit.
 Author : Yanghui Ou
   Date : June 6, 2019
 """
+import pytest
+
 from pymtl3 import *
 from pymtl3.passes import TracingConfigs
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
@@ -91,6 +93,7 @@ class ChecksumRTL_Tests( BaseTests ):
 
 from .ChecksumCL_test import ChecksumCLSrcSink_Tests as BaseSrcSinkTests
 
+@pytest.mark.usefixtures("cmdline_opts")
 class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
 
   # [setup_class] will be called by pytest before running all the tests in
@@ -106,19 +109,19 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
   # [setup_method] will be called by pytest before executing each class method.
   # See pytest documetnation for more details.
   def setup_method( s, method ):
-    s.vcd_file_name = ""
-
-    import sys
-    if hasattr( sys, '_pymtl_dump_vcd' ):
-      if sys._pymtl_dump_vcd:
-        s.vcd_file_name = "{}.{}".format( s.DutType.__name__, method.__name__ )
+    s.current_test_method_name = method.__name__
 
   # [teardown_method] will be called by pytest after executing each class method.
   # See pytest documetnation for more details.
   def teardown_method( s, method ):
-    s.vcd_file_name = ""
+    s.current_test_method_name = ""
 
   def run_sim( s, th, max_cycles=1000 ):
+
+    s.vcd_file_name = ""
+
+    if s.__class__.cmdline_opts["dump_vcd"]:
+      s.vcd_file_name = "{}.{}".format( s.DutType.__name__, s.current_test_method_name )
 
     # Check for vcd dumping
     if s.vcd_file_name:

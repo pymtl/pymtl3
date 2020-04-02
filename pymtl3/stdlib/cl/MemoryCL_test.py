@@ -244,7 +244,7 @@ test_case_table = mk_test_case_table([
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( **test_case_table )
-def test_1port( test_params, dump_vcd ):
+def test_1port( test_params, cmdline_opts ):
   msgs = test_params.msg_func(0x1000)
   run_sim( TestHarness( MemoryCL, 1, [(req_cls, resp_cls)],
                         [ msgs[::2] ],
@@ -258,7 +258,7 @@ def test_1port( test_params, dump_vcd ):
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( **test_case_table )
-def test_2port( test_params, dump_vcd ):
+def test_2port( test_params, cmdline_opts ):
   msgs0 = test_params.msg_func(0x1000)
   msgs1 = test_params.msg_func(0x2000)
   run_sim( TestHarness( MemoryCL, 2, [(req_cls, resp_cls)]*2,
@@ -269,7 +269,7 @@ def test_2port( test_params, dump_vcd ):
                         test_params.sink_init, test_params.sink_intv ) )
 
 @pytest.mark.parametrize( **test_case_table )
-def test_20port( test_params, dump_vcd ):
+def test_20port( test_params, cmdline_opts ):
   msgs = [ test_params.msg_func(0x1000*i) for i in range(20) ]
   run_sim( TestHarness( MemoryCL, 20, [(req_cls, resp_cls)]*20,
                         [ x[::2]  for x in msgs ],
@@ -282,7 +282,7 @@ def test_20port( test_params, dump_vcd ):
 # Test Read/Write Mem
 #-------------------------------------------------------------------------
 
-def test_read_write_mem( dump_vcd ):
+def test_read_write_mem( cmdline_opts ):
 
   rgen = random.Random()
   rgen.seed(0x05a3e95b)
