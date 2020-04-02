@@ -1684,7 +1684,7 @@ CaseBitSelOverBitSelComp = set_attributes( CaseBitSelOverBitSelComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT
+        module DUT_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in_,
@@ -1716,7 +1716,7 @@ CaseBitSelOverPartSelComp = set_attributes( CaseBitSelOverPartSelComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT
+        module DUT_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in_,
@@ -1748,7 +1748,7 @@ CasePartSelOverBitSelComp = set_attributes( CasePartSelOverBitSelComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT
+        module DUT_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in_,
@@ -1780,7 +1780,7 @@ CasePartSelOverPartSelComp = set_attributes( CasePartSelOverPartSelComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT
+        module DUT_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in_,
