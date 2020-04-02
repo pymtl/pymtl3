@@ -92,7 +92,7 @@ setup(
 
   entry_points = {
     'pytest11' : [
-      'pytest-pymtl3 = plugins.pytest_pymtl3',
+      'pytest-pymtl3 = pytest_plugin.pytest_pymtl3',
     ]
   }
 
