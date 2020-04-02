@@ -6,6 +6,7 @@ NamedObject_test.py
 Author : Shunning Jiang
 Date   : Dec 23, 2017
 """
+from pymtl3.dsl.errors import FieldReassignError
 from pymtl3.dsl.NamedObject import NamedObject
 
 
@@ -85,6 +86,7 @@ def test_NamedObject_list2():
   assert repr(x.dinner.chicken.protein) == "s.dinner.chicken.protein"
   print(repr(x.lunch[3].rooster.protein))
 
+# FIXME
 def test_use_init_error():
 
   class Crocodile(NamedObject):
@@ -99,6 +101,38 @@ def test_use_init_error():
   # y.elaborate()
   # z = Chicken()
   # z.elaborate()
+
+def test_invalid_reassignment_attr():
+
+  class Donkey( NamedObject ):
+    def construct( s ):
+      s.x = Dog()
+      s.x = Dog()
+
+  x = Donkey()
+  try:
+    x.elaborate()
+  except FieldReassignError as e:
+    print(e)
+    assert str(e).startswith("The attempt to assign hardware construct to field")
+    return
+  raise Exception("Should've thrown FieldReassignError")
+
+def test_invalid_reassignment_list():
+
+  class Donkey( NamedObject ):
+    def construct( s ):
+      s.x = Dog()
+      s.x = [ Dog() for _ in range(4) ]
+
+  x = Donkey()
+  try:
+    x.elaborate()
+  except FieldReassignError as e:
+    print(e)
+    assert str(e).startswith("The attempt to assign hardware construct to field")
+    return
+  raise Exception("Should've thrown FieldReassignError")
 
 def test_set_param():
 

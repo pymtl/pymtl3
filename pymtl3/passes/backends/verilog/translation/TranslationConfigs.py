@@ -43,4 +43,4 @@ class TranslationConfigs( BasePassConfigs ):
     Checker( lambda v: isinstance(v, str), "expects a string" )
   }
 
-  Pass = TranslationPass 
+  Pass = TranslationPass

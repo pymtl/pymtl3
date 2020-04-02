@@ -32,8 +32,6 @@ from .passes.backends.verilog import (
 )
 from .passes.PassGroups import SimulationPass
 
-__version__ = "0.5.8"
-
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',

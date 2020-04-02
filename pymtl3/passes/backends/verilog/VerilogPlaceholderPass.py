@@ -31,13 +31,61 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
   # Placeholder pass public pass data
 
+  #: A dict that maps the module parameters to their values.
+  #:
+  #: Type: ``{ str : int }``; input
+  #:
+  #: Default value: ``{}``
   params     = MetadataKey()
+
+  #: A dict that maps the PyMTL port name to the external source port name.
+  #:
+  #: Type: ``{ port : str }``; input
+  #:
+  #: Default value: ``{}``
   port_map   = MetadataKey()
+
+  #: Top level module name in the external source file.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: PyMTL component class name
   top_module = MetadataKey()
+
+  #: Path to the external source file.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: <top_module>.v
   src_file   = MetadataKey()
+
+  #: List of Verilog source file paths.
+  #:
+  #: Type: ``[str]``; input
+  #:
+  #: Default value: []
   v_flist    = MetadataKey()
+
+  #: List of Verilog library file paths.
+  #:
+  #: Type: ``[str]``; input
+  #:
+  #: Default value: []
   v_libs     = MetadataKey()
+
+  #: List of Verilog include directory paths.
+  #:
+  #: Type: ``[str]``; input
+  #:
+  #: Default value: []
   v_include  = MetadataKey()
+
+  #: Separator string used by name-mangling of interfaces and arrays.
+  #: For example, with the default value, ``s.ifc.msg`` will be mangled to ``ifc_msg``.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ``'_'``
   separator  = MetadataKey()
 
   @staticmethod
@@ -380,9 +428,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     return code
 
   def _import_sources( s, cfg, source_list ):
-    """Import Verilog source from all Verilog files source_list, as well
-    as any source files specified by `include within those files.
-    """
+    # Import Verilog source from all Verilog files source_list. This includes
+    # any source files specified by `include within those files.
 
     code = ""
 
