@@ -184,8 +184,6 @@ class RecvCL2GiveFL( Component ):
 
     # Interface
 
-    s.give = GiveIfcFL( method=s.give )
-
     s.entry = None
 
     s.add_constraints( M( s.recv ) > M( s.give ) ) # pipe behavior

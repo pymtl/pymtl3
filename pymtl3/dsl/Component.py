@@ -166,8 +166,9 @@ class Component( ComponentLevel7 ):
       obj._dsl._my_indices  = indices
 
       obj._dsl.elaborate_top = top
-      top._dsl.elaborate_stack.append( obj )
+      obj._dsl.NamedObject_fields = set()
 
+      top._dsl.elaborate_stack.append( obj )
       NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
       obj._construct()
       del NamedObject.__setattr__
@@ -269,6 +270,7 @@ class Component( ComponentLevel7 ):
       else:
         # Simply delete the attribute if it's merely a field
         delattr( parent, foo._dsl.my_name )
+        parent._dsl.NamedObject_fields.remove( foo._dsl.my_name )
 
       # Remove all components, signals, and method ports
       removed_components, removed_signals, removed_method_ports = \

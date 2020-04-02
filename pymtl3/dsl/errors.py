@@ -10,6 +10,9 @@ Date   : Dec 27, 2018
 import inspect
 
 
+class FieldReassignError( Exception ):
+  """ Raise when a deprecated API is called"""
+
 class PyMTLDeprecationError( Exception ):
   """ Raise when a deprecated API is called"""
 
