@@ -338,9 +338,9 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     pymtl_config = configparser.ConfigParser()
     pymtl_config.read(f"{cwd}{os.path.sep}pymtl.ini")
 
-    if 'PLACEHOLDER' in pymtl_config and \
-       'AutoPrefix' in pymtl_config['PLACEHOLDER'] and \
-       pymtl_config.getboolean( 'PLACEHOLDER', 'AutoPrefix' ):
+    if 'placeholder' in pymtl_config and \
+       'auto_prefix' in pymtl_config['placeholder'] and \
+       pymtl_config.getboolean( 'placeholder', 'auto_prefix' ):
       return f"{os.path.basename(parent_dir)}_"
     else:
       return ''
