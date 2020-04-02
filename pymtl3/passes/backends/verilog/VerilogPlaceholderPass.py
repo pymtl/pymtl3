@@ -66,6 +66,13 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   #: Default value: []
   v_flist    = MetadataKey()
 
+  #: List of Verilog library file paths.
+  #:
+  #: Type: ``[str]``; input
+  #:
+  #: Default value: []
+  v_libs     = MetadataKey()
+
   #: List of Verilog include directory paths.
   #:
   #: Type: ``[str]``; input

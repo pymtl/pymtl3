@@ -8,7 +8,6 @@
 from pymtl3.passes.BasePass import PassMetadata
 
 from .StructuralRTLIRGenL3Pass import StructuralRTLIRGenL3Pass
-from .StructuralRTLIRSignalExpr import gen_signal_expr
 
 
 class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):

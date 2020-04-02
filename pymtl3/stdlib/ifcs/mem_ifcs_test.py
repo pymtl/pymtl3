@@ -67,7 +67,7 @@ def test_mem_fl_cl_adapter():
       end  = addr + nbytes
       for j in range( addr, end ):
         ret += Bits( nbits, s.memory[j] ) << shamt
-        shamt += Bits4(8)
+        shamt += 8
       return ret
 
     def write( s, addr, nbytes, data ):

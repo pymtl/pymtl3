@@ -26,7 +26,7 @@ def local_do_test( _m ):
   _m.elaborate()
   _m.apply( VerilogPlaceholderPass() )
   m = TranslationImportPass()( _m )
-  m.verilog_tbgen = True
+  m.verilog_tbgen = '1234'
   m.apply( VerilogTBGenPass() )
   sim = TestVectorSimulator( m, _m._tv, _m._tv_in, _m._tv_out )
   sim.run_test()

@@ -126,12 +126,12 @@ def test_adder( do_test ):
   def tv_in( m, tv ):
     m.in0 @= Bits32( tv[0] )
     m.in1 @= Bits32( tv[1] )
-    m.cin @= Bits1( tv[2] )
+    m.cin @= Bits1(  tv[2] )
   def tv_out( m, tv ):
     if tv[3] != '*':
       assert m.out == Bits32( tv[3] )
     if tv[4] != '*':
-      assert m.cout == Bits32( tv[4] )
+      assert m.cout == Bits1( tv[4] )
   class VAdder( Component, Placeholder ):
     def construct( s ):
       s.in0 = InPort( Bits32 )

@@ -213,8 +213,10 @@ class Signal( NamedObject, Connectable ):
           xd.top_level_signal = sd.top_level_signal
           xd.elaborate_top = sd.elaborate_top
 
-          xd.my_name   = name + "".join([ f"[{y}]" for y in indices ])
-          xd.full_name = f"{sd.full_name}.{xd.my_name}"
+          xd.my_name     = name + "".join([ f"[{y}]" for y in indices ])
+          xd.full_name   = f"{sd.full_name}.{name}"
+          xd._my_name    = name
+          xd._my_indices = indices
 
         if parent_is_list:
           parent.append( x )
@@ -227,34 +229,48 @@ class Signal( NamedObject, Connectable ):
     pass # I have to override this to support a[0:1] |= b
 
   def __getitem__( s, idx ):
-    assert issubclass( s._dsl.Type, Bits )
+    if not issubclass( s._dsl.Type, Bits ):
+      raise InvalidConnectionError( "We don't allow slicing on non-Bits signals." )
+
     # Turn index into a slice
     if isinstance( idx, int ):
-      sl = slice( idx, idx+1 )
+      start, stop = idx, idx + 1
     elif isinstance( idx, slice ):
-      sl = idx
-    else: assert False, "What the hell?"
+      start, stop = idx.start, idx.stop
+    else: assert False, f"The slice {idx} is invalid"
 
-    sl_tuple = (sl.start, sl.stop)
+    if s._dsl.slice is None:
+      assert 0 <= start < stop <= s._dsl.Type.nbits, f"[{start}:{stop}] slice, check "\
+                                                     f"0 <= {start} < {stop} <= {s._dsl.Type.nbits}"
+      top_signal = s
+    else:
+      outer_start, outer_stop = s._dsl.slice.start, s._dsl.slice.stop
+      # slicing over sliced signals
+      assert 0 <= start < stop <= (outer_stop - outer_start), f"[{start}:{stop}] slice, check "\
+                                                              f"0 <= {start} < {stop} <= {outer_stop - outer_start}"
+      start += outer_start
+      stop  += outer_start
+      top_signal = s._dsl.parent_obj
 
-    if sl_tuple not in s.__dict__:
-      assert 0 <= sl.start < sl.stop <= s._dsl.Type.nbits
-      x = s.__class__( mk_bits( sl.stop - sl.start) )
-      sd = s._dsl
+    sl_tuple = (start, stop)
+    if sl_tuple not in top_signal.__dict__:
+      x = top_signal.__class__( mk_bits( stop - start ) )
+
+      sd = top_signal._dsl
       xd = x._dsl
-      xd.parent_obj = s
+      xd.parent_obj = top_signal
       xd.top_level_signal = sd.top_level_signal
-      xd.elaborate_top = sd.elaborate_top
+      xd.elaborate_top    = sd.elaborate_top
 
-      sl_str = f"[{sl.start}:{sl.stop}]"
+      sl_str = f"[{start}:{stop}]"
 
       xd.my_name   = f"{sd.my_name}{sl_str}"
       xd.full_name = f"{sd.full_name}{sl_str}"
 
-      xd.slice       = sl
-      s.__dict__[ sl_tuple ] = sd.slices[ sl_tuple ] = x
+      xd.slice       = slice( start, stop )
+      top_signal.__dict__[ sl_tuple ] = sd.slices[ sl_tuple ] = x
 
-    return s.__dict__[ sl_tuple ]
+    return top_signal.__dict__[ sl_tuple ]
 
   def default_value( s ):
     return s._dsl.Type()
