@@ -418,6 +418,7 @@ class VerilatorImportPass( BasePass ):
     # that can be later called through CFFI.
 
     component_name = ip_cfg.translated_top_module
+    vl_component_name = s._verilator_name(component_name)
     dump_vcd = int(ip_cfg.vl_trace)
     vcd_timescale = ip_cfg.vl_trace_timescale
     half_cycle_time = ip_cfg.vl_trace_cycle_time // 2
