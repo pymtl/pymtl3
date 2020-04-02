@@ -238,7 +238,7 @@ void trace( V{component_name}_t * m, char* str ) {{
   // module, the scope we are trying to set is actually the _wrapped_ module
   // which is called `v`.
 
-  svSetScope( &model->__VlSymsp->__Vscope_{component_name}__v );
+  svSetScope( &model->__VlSymsp->__Vscope_{vl_component_name}__v );
   model->line_trace( words );
 
   // Note that the way the line tracing works, the line tracing function
