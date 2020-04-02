@@ -62,6 +62,9 @@ module {harness_name};
 
     `include "{cases_file_name}"
 
+    $display("");
+    $display("  [ passed ]");
+    $display("");
     $finish;
   end
 endmodule
