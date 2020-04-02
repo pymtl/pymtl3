@@ -47,6 +47,7 @@ from pymtl3.passes.backends.verilog.testcases import (
     CaseConnectValRdyIfcComp,
     CaseConnectValRdyIfcUpblkComp,
     CaseConstStructInstComp,
+    CaseDefaultBitsComp,
     CaseElifBranchComp,
     CaseFixedSizeSliceComp,
     CaseForRangeLowerUpperStepPassThroughComp,

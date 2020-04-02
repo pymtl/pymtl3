@@ -22,6 +22,7 @@ from ....testcases import (
     CaseBits64PartSelUpblkComp,
     CaseBits64SextInComp,
     CaseBits64ZextInComp,
+    CaseDefaultBitsComp,
     CasePassThroughComp,
     CasePythonClassAttr,
     CaseSequentialPassThroughComp,
@@ -59,6 +60,7 @@ def run_test( case, m ):
       CaseBits32BitSelUpblkComp,
       CaseBits64PartSelUpblkComp,
       CasePythonClassAttr,
+      CaseDefaultBitsComp,
     ]
 )
 def test_yosys_behavioral_L1( case ):

@@ -2353,6 +2353,21 @@ class CasePartSelOverPartSelComp:
       [ 5, 1 ],
   ]
 
+class CaseDefaultBitsComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32 )
+      @update
+      def upblk():
+        s.out @= Bits32()
+  TV_IN  = _set()
+  TV_OUT = _check( 'out', Bits32, 0 )
+  TV = \
+  [
+      [ 0 ],
+      [ 0 ],
+  ]
+
 #-------------------------------------------------------------------------
 # Test cases that contain SystemVerilog translator errors
 #-------------------------------------------------------------------------

@@ -55,6 +55,7 @@ from pymtl3.passes.testcases import (
     CaseConnectValRdyIfcComp,
     CaseConnectValRdyIfcUpblkComp,
     CaseConstStructInstComp,
+    CaseDefaultBitsComp,
     CaseElifBranchComp,
     CaseFixedSizeSliceComp,
     CaseForRangeLowerUpperStepPassThroughComp,
@@ -647,6 +648,31 @@ CaseBoolTmpVarComp = set_attributes( CaseBoolTmpVarComp,
         endmodule
     '''
 )
+
+CaseDefaultBitsComp = set_attributes( CaseDefaultBitsComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = 32'd0;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT_noparam
+        (
+          input logic [0:0] clk,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out = 32'd0;
+          end
+
+        endmodule
+    '''
+)
+
 
 CaseBits32FooToBits32Comp = set_attributes( CaseBits32FooToBits32Comp,
     'REF_UPBLK',
