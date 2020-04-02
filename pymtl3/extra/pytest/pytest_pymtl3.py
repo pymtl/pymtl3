@@ -26,59 +26,49 @@ def pytest_addoption(parser):
   group.addoption( "--dump-vcd", dest="dump_vcd", action="store_true",
                     default=False, help="dump vcd for each test" )
 
-def _any_option_present( config ):
-  option_default_pair = [
-      ( 'dump_vcd',     False ),
-      ( 'test_verilog', ''    ),
-  ]
-  return any(config.getoption(opt) != val for opt, val in option_default_pair)
-
-def _parse_config_from_request( request ):
-  cfg = {}
-
-  # test_verilog
-  test_verilog = request.config.getoption("test_verilog")
+@pytest.fixture
+def test_verilog(request):
+  """Test Verilog translation rather than python."""
+  flag = request.config.getoption("test_verilog")
   try:
-    test_verilog = int(test_verilog)
+    return int(flag)
   except ValueError:
-    assert test_verilog in ['', 'zeros', 'ones', 'rand'], \
+    assert flag in ['', 'zeros', 'ones', 'rand'], \
         f"--test-verilog should be an int or one of '', 'zeros', 'ones', 'rand'!"
-  cfg['test_verilog'] = test_verilog
+    return flag
 
-  # dump_vcd
-  dump_vcd = request.config.getoption("dump_vcd")
-  if dump_vcd:
+@pytest.fixture
+def dump_vcd(request):
+  """Dump VCD for each test."""
+  if request.config.getoption("dump_vcd"):
     test_module = request.module.__name__
     test_name   = request.node.name
-    dump_vcd    = f"{test_module}.{test_name}.vcd"
-  cfg['dump_vcd'] = dump_vcd
+    return '{}.{}.vcd'.format( test_module, test_name )
+  else:
+    return ''
 
-  return cfg
+def pytest_configure(config):
+  import sys
+  sys._called_from_test = True
+  if config.option.dump_vcd:
+    sys._pymtl_dump_vcd = True
+  else:
+    sys._pymtl_dump_vcd = False
+  # from pymtl3.extra import pytest as pytest_options
+  # pytest_options.called_from_pytest = True
+  # if config.getoption('test_verilog'):
+  #   pytest_options.test_verilog = config.getoption('test_verilog')
+  # if config.getoption('dump_vcd'):
+  #   pytest_options.test_verilog = config.getoption('dump_vcd')
 
-@pytest.fixture
-def pymtl_config( request ):
-  """PyMTL configuration parsed from pytest commandline options."""
-  return _parse_config_from_request( request )
-
-@pytest.fixture
-def pymtl_no_translation( request ):
-  cfg = _parse_config_from_request( request )
-  if cfg['test_verilog']:
-    pytest.skip("non-translatable test skipped when --test-verilog is enabled")
-
-# def pytest_configure(config):
-#   from pymtl3.extra import pytest as pytest_options
-#   pytest_options.called_from_pytest = True
-#   if config.getoption('test_verilog'):
-#     pytest_options.test_verilog = config.getoption('test_verilog')
-#   if config.getoption('dump_vcd'):
-#     pytest_options.test_verilog = config.getoption('dump_vcd')
-
-# def pytest_unconfigure(config):
-#   from pymtl3.extra import pytest as pytest_options
-#   pytest_options.called_from_pytest = None
-#   pytest_options.dump_vcd           = None
-#   pytest_options.test_verilog       = None
+def pytest_unconfigure(config):
+  import sys
+  del sys._called_from_test
+  del sys._pymtl_dump_vcd
+  # from pymtl3.extra import pytest as pytest_options
+  # pytest_options.called_from_pytest = None
+  # pytest_options.dump_vcd           = None
+  # pytest_options.test_verilog       = None
 
 def pytest_cmdline_preparse(config, args):
   """Don't write *.pyc and __pycache__ files."""
@@ -86,5 +76,6 @@ def pytest_cmdline_preparse(config, args):
   sys.dont_write_bytecode = True
 
 def pytest_runtest_setup(item):
-  if _any_option_present( item.config ) and 'pymtl_config' not in item.funcargnames:
-    pytest.skip("'pymtl_config' is required by pytest command but not used by test")
+  test_verilog = item.config.getoption("test_verilog")
+  if test_verilog and 'test_verilog' not in item.funcargnames:
+    pytest.skip("ignoring non-Verilog tests")
