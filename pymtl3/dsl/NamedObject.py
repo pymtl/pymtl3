@@ -185,10 +185,10 @@ class NamedObject:
                     ud.param_tree = ParamTreeNode()
                   ud.param_tree.merge( node )
 
-        # Point u's top to my top
-        top = sd.elaborate_top
-        ud.elaborate_top = top
         ud.NamedObject_fields = set()
+
+        # Point u's top to my top
+        top = ud.elaborate_top = sd.elaborate_top
 
         top._dsl.elaborate_stack.append( obj )
         obj._construct()
@@ -200,8 +200,6 @@ class NamedObject:
       # casing Wire will be a mess around everywhere.
 
       elif isinstance( obj, list ) and obj and isinstance( obj[0], (NamedObject, list) ):
-        sd = s._dsl
-
         fields = sd.NamedObject_fields
         if name in fields:
           if getattr( s, name ) is obj:
@@ -244,10 +242,10 @@ class NamedObject:
                         ud.param_tree = ParamTreeNode()
                       ud.param_tree.merge( node )
 
-            # Point u's top to my top
-            top = sd.elaborate_top
-            ud.elaborate_top = top
             ud.NamedObject_fields = set()
+
+            # Point u's top to my top
+            top = ud.elaborate_top = sd.elaborate_top
 
             top._dsl.elaborate_stack.append( u )
             u._construct()
