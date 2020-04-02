@@ -80,7 +80,7 @@ def test_arbiter_rr_arb_en_4( do_test ):
   _run_test = test_func.__globals__['run_en_test']
   test_func.__globals__['run_en_test'] = run_test
   try:
-    test_func( None, None )
+    test_func( None )
   finally:
     test_func.__globals__['run_en_test'] = _run_test
 
