@@ -7,7 +7,6 @@
 # still have it appear clean to git.
 
 build*/
-_build/
 autom4te.cache/
 .pytest_cache/
 *__pycache__
