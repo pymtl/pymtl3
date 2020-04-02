@@ -20,12 +20,10 @@ def get_version():
   import sys
   assert sys.version_info[0] > 2, "Python 2 is no longer supported!"
 
-  result = "?"
-  with open("pymtl3/__init__.py") as f:
-    for line in f:
-      if line.startswith("__version__"):
-        _, result, _ = line.split('"')
-  return result
+  _d = {}
+  with open(path.join(path.dirname(__file__), "pymtl3/version.py")) as f:
+    exec(f.read(), _d)
+  return _d['__version__']
 
 #-------------------------------------------------------------------------
 # get_long_descrption

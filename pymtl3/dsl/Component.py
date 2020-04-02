@@ -441,14 +441,50 @@ class Component( ComponentLevel7 ):
   """ Metadata APIs """
 
   def set_metadata( s, key, value ):
+    """Set the metadata ``key`` of the given component to be ``value``.
+
+    Can be called before, during, or after elaboration.
+
+    Args:
+        key (MetadataKey): Key of the metadata.
+        value (object): The metadata. Can be any object.
+    """
     s._metadata[ key ] = value
 
   def has_metadata( s, key ):
-    assert isinstance( key, MetadataKey ), \
-        f'the given object {key} is not a MetadataKey!'
+    """Check if the component has metadata for ``key``.
+
+    Can be called before, during, or after elaboration.
+
+    Args:
+        key (MetadataKey): Key of the metadata.
+
+    Returns:
+        bool: Whether or not the component has the metadata for ``key``.
+
+    Raises:
+        TypeError: Raised if ``key`` is not an instance of :class:`MetadataKey`.
+    """
+    if not isinstance( key, MetadataKey ):
+      raise TypeError(f'the given object {key} is not a MetadataKey!')
     return key in s._metadata
 
   def get_metadata( s, key ):
+    """Get the metadata ``key`` of the given component.
+
+    Can be called before, during, or after elaboration.
+
+    Args:
+        key (MetadataKey): Key of the metadata.
+
+    Returns:
+        object: The metadata of the given ``key``.
+
+    Raises:
+        TypeError: Raised if ``key`` is not an instance of :class:`MetadataKey`.
+        UnsetMetadataError: Raised if the component does not have metadata for
+            the given ``key``.
+    """
     if not s.has_metadata( key ):
       raise UnsetMetadataError( key, s )
     return s._metadata[ key ]

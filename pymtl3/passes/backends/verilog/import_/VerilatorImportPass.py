@@ -41,41 +41,194 @@ from .verilator_wrapper_py_template import template as py_template
 
 
 class VerilatorImportPass( BasePass ):
-  """ Import an arbitrary SystemVerilog module as a PyMTL component. """
+  """Import an arbitrary SystemVerilog module as a PyMTL component."""
 
   # Import pass input pass data
 
+  #: Enable import on a component.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   enable              = MetadataKey()
+
+  #: Print out extra debug information during import.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   verbose             = MetadataKey()
+
+  #: Use Verilog ``line_trace`` output as the Python line_trace return value.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_line_trace       = MetadataKey()
+
+  #: Enable Verilator coverage.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_coverage         = MetadataKey()
+
+  #: Enable Verilator line coverage.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_line_coverage    = MetadataKey()
+
+  #: Enable Verilator toggle coverage.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_toggle_coverage  = MetadataKey()
+
+  #: Specify the Verilator make directory.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: obj_<top-component-name>
   vl_mk_dir           = MetadataKey()
+
+  #: Enable Verilog assert.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_enable_assert    = MetadataKey()
+
+  #: Verilator optimization level.
+  #:
+  #: Type: ``int``; input
+  #:
+  #: Default value: ``3``
   vl_opt_level        = MetadataKey()
+
+  #: Verilator unroll count.
+  #:
+  #: Type: ``int``; input
+  #:
+  #: Default value: ``1000000``
   vl_unroll_count     = MetadataKey()
+
+  #: Verilator unroll statement count.
+  #:
+  #: Type: ``int``; input
+  #:
+  #: Default value: ``1000000``
   vl_unroll_stmts     = MetadataKey()
+
+  #: Enable Verilator lint warnings.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``True``
   vl_W_lint           = MetadataKey()
+
+  #: Enable Verilator style warnings.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``True``
   vl_W_style          = MetadataKey()
+
+  #: Enable Verilator fatal warnings.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``True``
   vl_W_fatal          = MetadataKey()
+
+  #: A list of suppressed Verilator warnings.
+  #:
+  #: Type: ``[str]``; input
+  #:
+  #: Default value: ``['UNSIGNED', 'UNOPTFLAT', 'WIDTH']``
   vl_Wno_list         = MetadataKey()
+
+  #: Verilator initialization options.
+  #:
+  #: Possible values: ``'ones'``, ``'zeros'``, ``'rand'``, and non-zero integers; input
+  #:
+  #: Default value: ``'zeros'``
   vl_xinit            = MetadataKey()
+
+  #: Enable Verilator VCD tracing.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_trace            = MetadataKey()
+
+  #: Filename of Verilator VCD tracing.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: translated-component-name.verilator1
   vl_trace_filename   = MetadataKey()
+
+  #: Time scale of generated Verilator VCD.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ``'10ps'``
   vl_trace_timescale  = MetadataKey()
+
+  #: Cycle time of PyMTL clk pin in the generated Verilator VCD in unit of ``vl_trace_timescale``.
+  #:
+  #: Type: ``int``; input
+  #:
+  #: Default value: ``100``
   vl_trace_cycle_time = MetadataKey()
+
+  #: Optional flags to be passed to the C compiler.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ``''``
   c_flags             = MetadataKey()
+
+  #: Optional include paths to be passed to the C compiler.
+  #:
+  #: Type: ``[str]``; input
+  #:
+  #: Default value: ``[]``
   c_include_path      = MetadataKey()
+
+  #: Optional source file paths to be passed to the C compiler.
+  #:
+  #: Type: ``[str]``; input
+  #:
+  #: Default value: ``[]``
   c_srcs              = MetadataKey()
+
+  #: Optional flags to be passed to LD.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ``''``
   ld_flags            = MetadataKey()
+
+  #: Optional libraries to be passed to LD (e.g., ``'-lfoo'``).
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ``''``
   ld_libs             = MetadataKey()
 
   # Import pass output pass data
 
+  #: An instnace of :class:`VerilatorImportConfigs` containing the parsed options.
+  #:
+  #: Type: :class:`VerilatorImportConfigs`; output
   import_config       = MetadataKey()
 
   def __call__( s, top ):
+    """Import the PyMTL component hierarhcy rooted at ``top``."""
     s.top = top
     if not top._dsl.constructed:
       raise VerilogImportError( top,
@@ -216,7 +369,8 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def create_verilator_model( s, m, ph_cfg, ip_cfg, cached ):
-    """Verilate module `m`."""
+    # Verilate module `m`.
+
     ip_cfg.vprint("\n=====Verilate model=====")
 
     if not cached:
@@ -258,13 +412,11 @@ class VerilatorImportPass( BasePass ):
   # create_verilator_c_wrapper
   #-----------------------------------------------------------------------
 
-  def create_verilator_c_wrapper(
-      s, m, ph_cfg, ip_cfg, ports, cached ):
-    """Return the file name of generated C component wrapper.
+  def create_verilator_c_wrapper( s, m, ph_cfg, ip_cfg, ports, cached ):
+    # Return the file name of generated C component wrapper.
+    # Create a C wrapper that calls verilator C API and provides interfaces
+    # that can be later called through CFFI.
 
-    Create a C wrapper that calls verilator C API and provides interfaces
-    that can be later called through CFFI.
-    """
     component_name = ip_cfg.translated_top_module
     dump_vcd = int(ip_cfg.vl_trace)
     vcd_timescale = ip_cfg.vl_trace_timescale
@@ -304,7 +456,8 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def create_shared_lib( s, m, ph_cfg, ip_cfg, cached ):
-    """Return the name of compiled shared lib."""
+    # Return the name of compiled shared lib.
+
     full_name = ip_cfg.translated_top_module
     dump_vcd = ip_cfg.vl_trace
     ip_cfg.vprint("\n=====Compile shared library=====")
@@ -345,10 +498,9 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
   # create_py_wrapper
   #-----------------------------------------------------------------------
+  # Return the file name of the generated PyMTL component wrapper.
 
-  def create_py_wrapper(
-      s, m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, cached ):
-    """Return the file name of the generated PyMTL component wrapper."""
+  def create_py_wrapper( s, m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, cached ):
     ip_cfg.vprint("\n=====Generate PyMTL wrapper=====")
 
     wrapper_name = ip_cfg.get_py_wrapper_path()
@@ -410,9 +562,9 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
   # import_component
   #-----------------------------------------------------------------------
+  # Return the PyMTL component imported from `wrapper_name`.v.
 
   def import_component( s, m, ph_cfg, ip_cfg, symbols ):
-    """Return the PyMTL component imported from `wrapper_name`.v."""
     ip_cfg.vprint("=====Create python object=====")
 
     component_name = ip_cfg.translated_top_module
@@ -484,9 +636,10 @@ class VerilatorImportPass( BasePass ):
   #-------------------------------------------------------------------------
   # gen_signal_decl_c
   #-------------------------------------------------------------------------
+  # Return C variable declaration of `port`.
 
   def gen_signal_decl_c( s, name, port ):
-    """Return C variable declaration of `port`."""
+
     c_dim = s._get_c_dim( port )
     nbits = s._get_c_nbits( port )
     UNSIGNED_8  = 'unsigned char'
@@ -507,9 +660,10 @@ class VerilatorImportPass( BasePass ):
   #-------------------------------------------------------------------------
   # gen_signal_init_c
   #-------------------------------------------------------------------------
+  # Return C port variable initialization.
 
   def gen_signal_init_c( s, name, port ):
-    """Return C port variable initialization."""
+
     ret       = []
     c_dim     = s._get_c_dim( port )
     nbits     = s._get_c_nbits( port )
@@ -547,9 +701,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
   #-------------------------------------------------------------------------
   # gen_signal_decl_py
   #-------------------------------------------------------------------------
+  # Return the PyMTL definition of all interface ports of `rtype`.
 
   def gen_signal_decl_py( s, rtype ):
-    """Return the PyMTL definition of all interface ports of `rtype`."""
 
     #-----------------------------------------------------------------------
     # Methods that generate signal declarations
@@ -914,9 +1068,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
   #-------------------------------------------------------------------------
   # gen_line_trace_py
   #-------------------------------------------------------------------------
+  # Return the line trace method body that shows all interface ports.
 
   def gen_line_trace_py( s, packed_ports ):
-    """Return the line trace method body that shows all interface ports."""
     template = '{0}={{s.{0}}},'
     trace_string = ''
     for pnames, _, _, _ in packed_ports:
@@ -927,12 +1081,12 @@ m->{name}{sub} = {deference}model->{name}{sub};
   #-------------------------------------------------------------------------
   # gen_internal_line_trace_py
   #-------------------------------------------------------------------------
+  # Return the line trace method body that shows all CFFI ports.
+  # Now that there could be multiple pnames that correspond to one vname,
+  # I'm not sure how to generate internal line trace... maybe we should
+  # deprecate internal_line_trace since it's not used by many anyways?
 
   def gen_internal_line_trace_py( s, packed_ports ):
-    """Return the line trace method body that shows all CFFI ports."""
-    # Now that there could be multiple pnames that correspond to one vname,
-    # I'm not sure how to generate internal line trace... maybe we should
-    # deprecate internal_line_trace since it's not used by many anyways?
     # ret = [ '_ffi_m = s._ffi_m', 'lt = ""' ]
     # template = \
     #   "lt += '{vname} = {{}}, '.format(full_vector(s.{pname}, _ffi_m.{vname}))"
