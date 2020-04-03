@@ -13,7 +13,10 @@ from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheck
 
 from ....testcases import (
     CaseBits32FooInBits32OutComp,
+    CaseBits32FooToBits32Comp,
+    CaseBits32ToBits32FooComp,
     CaseConstStructInstComp,
+    CaseIntToBits32FooComp,
     CaseNestedStructPackedArrayUpblkComp,
     CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
@@ -45,6 +48,9 @@ def run_test( case, m ):
       CaseNestedStructPackedArrayUpblkComp,
       CaseSizeCastPaddingStructPort,
       CaseTypeBundle,
+      CaseBits32FooToBits32Comp,
+      CaseBits32ToBits32FooComp,
+      CaseIntToBits32FooComp,
     ]
 )
 def test_yosys_behavioral_L3( case ):

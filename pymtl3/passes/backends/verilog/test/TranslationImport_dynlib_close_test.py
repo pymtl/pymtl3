@@ -62,7 +62,7 @@ def test_dynlib_close():
   ]
   comb_a._tv_in, comb_a._tv_out = tv_in, tv_out
   run_test( comb_a )
-  comb_hash = get_file_hash('A.verilator1.vcd')
+  comb_hash = get_file_hash('A_noparam.verilator1.vcd')
 
   seq_a = Seq.A()
   def tv_in( m, tv ):
@@ -79,6 +79,6 @@ def test_dynlib_close():
   ]
   seq_a._tv_in, seq_a._tv_out = tv_in, tv_out
   run_test( seq_a )
-  seq_hash = get_file_hash('A.verilator1.vcd')
+  seq_hash = get_file_hash('A_noparam.verilator1.vcd')
 
   assert comb_hash != seq_hash

@@ -202,10 +202,13 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # Deal with Bits type cast
     if isinstance(obj, type) and issubclass( obj, Bits ):
       nbits = obj.nbits
-      if len( node.args ) != 1:
+      if len( node.args ) > 1:
         raise PyMTLSyntaxError( s.blk, node,
-          'exactly one argument should be given to Bits!' )
-      ret = bir.SizeCast( nbits, s.visit( node.args[0] ) )
+          'exactly one or zero argument should be given to Bits!' )
+      if len( node.args ) == 0:
+        ret = bir.SizeCast( nbits, bir.Number( 0 ) )
+      else:
+        ret = bir.SizeCast( nbits, s.visit( node.args[0] ) )
 
     # concat method
     elif obj is concat:

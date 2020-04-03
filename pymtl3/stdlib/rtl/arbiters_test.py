@@ -86,7 +86,7 @@ def run_en_test( model, tvs ):
 # test_rr_arb_en_4
 #------------------------------------------------------------------------------
 # RoundRobinArbiterEn with four requesters
-def test_rr_arb_en_4( dump_vcd, test_verilog ):
+def test_rr_arb_en_4( cmdline_opts ):
 
   run_en_test( RoundRobinArbiterEn(4), [
 

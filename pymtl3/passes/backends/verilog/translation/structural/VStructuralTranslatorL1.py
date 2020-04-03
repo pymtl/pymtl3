@@ -102,6 +102,8 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
   def rtlir_tr_port_decl( s, id_, Type, array_type, dtype ):
     _dtype = Type.get_dtype()
     direction = Type.get_direction()
+    if direction == 'input':
+      direction += ' '
     if array_type:
       template = "Note: port {id_} has data type {_dtype}"
     else:

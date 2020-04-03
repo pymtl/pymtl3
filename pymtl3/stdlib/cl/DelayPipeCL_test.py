@@ -82,7 +82,7 @@ def basic_msgs():
   [ "basic_lat4_3_14",   basic_msgs,      4,    3,      14         ],
   [ "basic_lat10_3_14",  basic_msgs,      10,   3,      14         ],
 ]) )
-def test_delay_pipe_deq( test_params, dump_vcd ):
+def test_delay_pipe_deq( test_params, cmdline_opts ):
   msgs = test_params.msg_func()
   run_sim( TestHarness( DelayPipeDeqCL, msgs[::2], msgs[1::2],
                            test_params.lat,
@@ -101,7 +101,7 @@ def test_delay_pipe_deq( test_params, dump_vcd ):
   [ "basic_lat4_3_14",   basic_msgs,      4,    3,      14         ],
   [ "basic_lat10_3_14",  basic_msgs,      10,   3,      14         ],
 ]) )
-def test_delay_pipe_send( test_params, dump_vcd ):
+def test_delay_pipe_send( test_params, cmdline_opts ):
   msgs = test_params.msg_func()
   run_sim( TestHarness( DelayPipeSendCL, msgs[::2], msgs[1::2],
                            test_params.lat,

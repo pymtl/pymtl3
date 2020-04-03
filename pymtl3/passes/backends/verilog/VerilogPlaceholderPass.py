@@ -117,12 +117,12 @@ class VerilogPlaceholderPass( PlaceholderPass ):
         cfg.top_module = irepr.get_name()
 
       # If the placeholder has parameters, use the mangled unique component
-      # name. Otherwise use {class_name}_wrapper to avoid duplicated defs.
+      # name. Otherwise use {class_name}_noparam to avoid duplicated defs.
       has_params = bool( irepr.get_params() ) or bool( cfg.params )
       if has_params:
         cfg.pickled_top_module = get_component_unique_name( irepr )
       else:
-        cfg.pickled_top_module = f"{irepr.get_name()}_wrapper"
+        cfg.pickled_top_module = f"{irepr.get_name()}_noparam"
 
       # Only try to infer the name of Verilog source file if both
       # flist and the source file are not specified.
@@ -132,7 +132,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
       # Pickled file name should always be the same as the top level
       # module name.
-      cfg.pickled_source_file = f"{cfg.pickled_top_module}.v"
+      cfg.pickled_source_file = f"{cfg.pickled_top_module}__pickled.v"
 
       # What is the original file/flist of the pickled source file?
       if cfg.src_file:
@@ -171,6 +171,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   def check_valid( s, m, cfg, irepr ):
     pmap, src, flist, include = \
         cfg.port_map, cfg.src_file, cfg.v_flist, cfg.v_include
+    pmap = {p._dsl._my_name:n for p, n in pmap.items()}
 
     # Check params
     for param_name, value in cfg.params.items():
@@ -385,9 +386,9 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     pymtl_config = configparser.ConfigParser()
     pymtl_config.read(f"{cwd}{os.path.sep}pymtl.ini")
 
-    if 'PLACEHOLDER' in pymtl_config and \
-       'AutoPrefix' in pymtl_config['PLACEHOLDER'] and \
-       pymtl_config.getboolean( 'PLACEHOLDER', 'AutoPrefix' ):
+    if 'placeholder' in pymtl_config and \
+       'auto_prefix' in pymtl_config['placeholder'] and \
+       pymtl_config.getboolean( 'placeholder', 'auto_prefix' ):
       return f"{os.path.basename(parent_dir)}_"
     else:
       return ''

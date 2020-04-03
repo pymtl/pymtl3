@@ -23,6 +23,7 @@ from ....testcases import (
     CaseBits64SextInComp,
     CaseBits64TruncInComp,
     CaseBits64ZextInComp,
+    CaseDefaultBitsComp,
     CasePassThroughComp,
     CasePythonClassAttr,
     CaseSequentialPassThroughComp,
@@ -61,6 +62,7 @@ def run_test( case, m ):
       CaseBits32BitSelUpblkComp,
       CaseBits64PartSelUpblkComp,
       CasePythonClassAttr,
+      CaseDefaultBitsComp,
     ]
 )
 def test_verilog_behavioral_L1( case ):

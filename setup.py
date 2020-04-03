@@ -88,4 +88,10 @@ setup(
     'greenlet',
   ],
 
+  entry_points = {
+    'pytest11' : [
+      'pytest-pymtl3 = pytest_plugin.pytest_pymtl3',
+    ]
+  }
+
 )

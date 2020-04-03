@@ -34,8 +34,11 @@ class VStructuralTranslatorL4(
       pmap = obj.get_metadata(s._placeholder_pass.placeholder_config).get_port_map()
     else:
       pmap= lambda x: x
+    direction = port_rtype.get_direction()
+    if direction == 'input':
+      direction += ' '
     return {
-        'direction' : port_rtype.get_direction(),
+        'direction' : direction,
         'data_type' : port_dtype['data_type'],
         'packed_type' : port_dtype['packed_type'],
         'id' : port_id,
@@ -58,8 +61,11 @@ class VStructuralTranslatorL4(
       pyname = vname.replace('__', '.')
       ph_id = vname if pmap(pyname) == pyname else pmap(pyname)
       port_dtype = s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
+      direction = port_rtype.get_direction()
+      if direction == 'input':
+        direction += ' '
       return [{
-          'direction' : port_rtype.get_direction(),
+          'direction' : direction,
           'data_type' : port_dtype['data_type'],
           'packed_type' : port_dtype['packed_type'],
           'id' : vname,

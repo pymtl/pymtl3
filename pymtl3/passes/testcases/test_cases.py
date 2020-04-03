@@ -430,6 +430,71 @@ class CaseBoolTmpVarComp:
       [  0,   1,  ],
   ]
 
+class CaseBits32FooToBits32Comp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32Foo )
+      s.out = OutPort( Bits32 )
+      @update
+      def upblk():
+        s.out @= s.in_
+  TV_IN = _set(
+      'in_', Bits32Foo, 0
+  )
+  TV_OUT = \
+  _check(
+      'out', Bits32, 1,
+  )
+  TV =\
+  [
+      [    0,    0,  ],
+      [   -1,   -1,  ],
+      [   42,   42,  ],
+      [  -42,  -42,  ],
+  ]
+
+class CaseBits32ToBits32FooComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32Foo )
+      @update
+      def upblk():
+        s.out @= s.in_
+  TV_IN = _set(
+      'in_', Bits32, 0
+  )
+  TV_OUT = \
+  _check(
+      'out', Bits32Foo, 1,
+  )
+  TV =\
+  [
+      [    0,    0,  ],
+      [   -1,   -1,  ],
+      [   42,   42,  ],
+      [  -42,  -42,  ],
+  ]
+
+class CaseIntToBits32FooComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32Foo )
+      @update
+      def upblk():
+        s.out @= 42
+  TV_IN = _set()
+  TV_OUT = \
+  _check(
+      'out', Bits32Foo, 0,
+  )
+  TV =\
+  [
+      [ 42 ],
+      [ 42 ],
+      [ 42 ],
+  ]
+
 class CaseReducesInx3OutComp:
   class DUT( Component ):
     def construct( s ):
@@ -2286,6 +2351,21 @@ class CasePartSelOverPartSelComp:
       [ 3, 1 ],
       [ 4, 0 ],
       [ 5, 1 ],
+  ]
+
+class CaseDefaultBitsComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32 )
+      @update
+      def upblk():
+        s.out @= Bits32()
+  TV_IN  = _set()
+  TV_OUT = _check( 'out', Bits32, 0 )
+  TV = \
+  [
+      [ 0 ],
+      [ 0 ],
   ]
 
 #-------------------------------------------------------------------------

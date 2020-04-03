@@ -160,7 +160,7 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
 
   # Reset model
 
-  model.sim_reset( print_line_trace=line_trace )
+  model.sim_reset()
 
   # Run the simulation
 
