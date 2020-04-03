@@ -118,10 +118,10 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
 
   def run_sim( s, th, max_cycles=1000 ):
 
-    s.vcd_file_name = ""
-
     if s.__class__.cmdline_opts["dump_vcd"]:
-      s.vcd_file_name = "{}.{}".format( s.DutType.__name__, s.current_test_method_name )
+      s.vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
+    else:
+      s.vcd_file_name = ""
 
     # Check for vcd dumping
     if s.vcd_file_name:
