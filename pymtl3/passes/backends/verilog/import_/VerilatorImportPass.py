@@ -946,10 +946,10 @@ m->{name}{sub} = {deference}model->{name}{sub};
         _lhs = f"{lhs}[{idx}]"
         if index == 0:
           _rhs = f"{rhs}[{idx}]"
-          _index = index-1
+          _index = index
         else:
           _rhs = f"{rhs}"
-          _index = index
+          _index = index-1
         _set_comb, _structs = s.gen_port_array_input( _lhs, _rhs, pnames, dtype, _index, n_dim[1:], symbols )
         set_comb += _set_comb
         structs  += _structs
@@ -1041,10 +1041,10 @@ m->{name}{sub} = {deference}model->{name}{sub};
       for idx in range( n_dim[0] ):
         if index == 0:
           _lhs = f"{lhs}[{idx}]"
-          _index = index-1
+          _index = index
         else:
           _lhs = f"{lhs}"
-          _index = index
+          _index = index-1
         _rhs = f"{rhs}[{idx}]"
         _set_comb, _structs = s.gen_port_array_output( _lhs, pnames, _rhs, dtype, _index, n_dim[1:], symbols )
         set_comb += _set_comb
