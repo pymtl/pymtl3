@@ -95,6 +95,8 @@ def _parse_opts_from_request( request ):
     test_module = request.module.__name__
     test_name   = request.node.name
     dump_vcd = f'{test_module}.{test_name}.vcd'
+  else:
+    dump_vcd = ''
   opts['dump_vcd'] = dump_vcd
 
   return opts

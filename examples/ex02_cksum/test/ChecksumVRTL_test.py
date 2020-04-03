@@ -90,10 +90,7 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
 
   def run_sim( s, th, max_cycles=1000 ):
 
-    if s.__class__.cmdline_opts["dump_vcd"]:
-      s.vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
-    else:
-      s.vcd_file_name = ""
+    s.vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
 
     # Check command line arguments for vcd dumping
     if s.vcd_file_name:
