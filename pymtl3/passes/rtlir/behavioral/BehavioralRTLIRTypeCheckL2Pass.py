@@ -207,8 +207,49 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     if not node.body.Type.get_dtype()( node.orelse.Type.get_dtype() ):
       raise PyMTLTypeError( s.blk, node.ast,
         'the body and orelse of "if-exp" must have the same type!' )
+
+    lhs_dtype, rhs_dtype = node.body.Type.get_dtype(), node.orelse.Type.get_dtype()
+    lhs_is_vector = isinstance(lhs_dtype, rdt.Vector)
+    rhs_is_vector = isinstance(rhs_dtype, rdt.Vector)
+    lhs_nbits, rhs_nbits = lhs_dtype.get_length(), rhs_dtype.get_length()
+
+    # Unify body and orelse if both are rdt.Vector
+    if lhs_is_vector and rhs_is_vector and lhs_nbits != rhs_nbits:
+      is_lhs_inferred = not node.body._is_explicit
+      is_rhs_inferred = not node.orelse._is_explicit
+
+      # Both sides are explicit
+      if not is_lhs_inferred and not is_rhs_inferred:
+        raise PyMTLTypeError( s.blk, node.ast,
+          f'the body and orelse of "if-exp" have different bitwidth {lhs_nbits} vs {rhs_nbits}!' )
+
+      # Both sides are implicit
+      elif is_lhs_inferred and is_rhs_inferred:
+        if lhs_nbits >= rhs_nbits:
+          target_nbits = lhs_nbits
+          op = node.body
+        else:
+          target_nbits = rhs_nbits
+          op = node.orelse
+        context = rt.NetWire(rdt.Vector(target_nbits))
+        s.enforcer.enter( s.blk, context, op )
+
+      else:
+        # One side is explicit and the other implicit
+        if is_lhs_inferred:
+          exp_str, imp_str = "or-else", "body"
+          context, op, explicit, implicit = node.orelse.Type, node.body, rhs_nbits, lhs_nbits
+        else:
+          exp_str, imp_str = "body", "or-else"
+          context, op, explicit, implicit = node.body.Type, node.orelse, lhs_nbits, rhs_nbits
+        if explicit < implicit:
+          raise PyMTLTypeError( s.blk, node.ast,
+              f"The {exp_str} side of if-exp has {explicit} bits but "
+              f"the {imp_str} side requires more bits ({implicit})!" )
+        s.enforcer.enter( s.blk, context, op )
+
     node.Type = node.body.Type
-    node._is_explicit = True
+    node._is_explicit = node.body._is_explicit or node.orelse._is_explicit
 
   def visit_UnaryOp( s, node ):
     # if isinstance( node.op, bir.Not ):
@@ -273,7 +314,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
         if explicit < implicit:
           raise PyMTLTypeError( s.blk, node.ast,
               f"The explicitly sized side of operation has {explicit} bits but "
-              f"the integer literal requires more bits ({implicit}) to hold!" )
+              f"the integer literal requires more bits ({implicit})!" )
         s.enforcer.enter( s.blk, context, op )
 
       elif not l_explicit and not r_explicit:
