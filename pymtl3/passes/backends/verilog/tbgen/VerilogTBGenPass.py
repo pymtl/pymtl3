@@ -43,10 +43,13 @@ class VerilogTBGenPass( BasePass ):
     for x, case_name in tbgen_components:
 
       signal_decls = []
+      packed_decls = []
+      packed_assigns  = []
       task_signal_decls = []
       task_assign_strs = []
       task_check_strs = []
       dut_signal_decls = []
+      dut_packed_decls = []
 
       py_signal_order = []
 
@@ -72,6 +75,16 @@ class VerilogTBGenPass( BasePass ):
         # dut_signal_decls
         dut_signal_decls.append( f".{vname}({vname})" )
 
+        if p_n_dim:
+          packed_decls.append( f"logic {signal_decl_indices} [{nbits-1}:0] {vname}_packed")
+          if direction == 'input':
+            packed_assigns.append( f"assign {vname}_packed = {{ << {{ {vname} }} }}" )
+          else:
+            packed_assigns.append( f"assign {vname} = {{ << {{ {vname}_packed }} }}" )
+          dut_packed_decls.append( f".{vname}({vname}_packed)" )
+        else:
+          dut_packed_decls.append( f".{vname}({vname})" )
+
         Q = deque( [ (vname, vname, p_n_dim) ] )
         tot = 0 # This is to keep the same order as pname list
         while Q:
@@ -96,7 +109,9 @@ class VerilogTBGenPass( BasePass ):
         output.write( tb_template.format(
           args_strs         = ",".join([f"a{i}" for i in range(len(task_signal_decls))]),
           harness_name      = dut_name + "_tb",
-          signal_decls      = ";\n  ".join(signal_decls), # logic [31:0] xxx, -- packed array
+          signal_decls      = ";\n  ".join(signal_decls), # logic [31:0] xxx [0:3]; -- unpacked array
+          packed_decls      = ";\n  ".join(packed_decls), # logic [0:3] [31:0] xxx_packed; -- packed array
+          packed_assigns    = ";\n  ".join(packed_assigns), # assign xxx_packed = { << { xxx } } stream operator
           task_signal_decls = ",\n    ".join(task_signal_decls), # input logic [31:0] in__x;input logic [31:0] ref_y; -- unpacked ports
           task_assign_strs  = ";\n    ".join(task_assign_strs), # x = in__x; -- unpacked
           task_check_strs   = ";\n    ".join(task_check_strs), # ERR( lineno, 'x', x, ref_x ) -- unpacked
@@ -104,6 +119,7 @@ class VerilogTBGenPass( BasePass ):
           dut_clk_decl      = '.clk(clk)' if x._ph_cfg.has_clk else '',
           dut_reset_decl    = '.reset(reset)' if x._ph_cfg.has_reset else '',
           dut_signal_decls  = ",\n    ".join(dut_signal_decls), # logic [31:0] xxx, -- packed array, # .x(x), -- packed array
+          dut_packed_decls  = ",\n    ".join(dut_packed_decls), # logic [31:0] xxx, -- packed array, # .x(x), -- packed array
           cases_file_name   = f"{dut_name}_{case_name}_tb.v.cases",
         ))
 

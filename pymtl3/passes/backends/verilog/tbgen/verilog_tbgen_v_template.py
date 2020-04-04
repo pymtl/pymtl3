@@ -10,7 +10,6 @@ template = \
 `define T({args_strs}) \\
         t({args_strs},`__LINE__)
 
-
 `define CHECK(lineno, out, ref, port_name) \\
   if (out != ref) begin \\
     $display(""); \\
@@ -29,6 +28,11 @@ module {harness_name};
   logic reset;
 
   {signal_decls};
+
+  `ifdef UNPACKED_TO_PACKED_ARRAY_IO
+  {packed_decls};
+  {packed_assigns};
+  `endif
 
   task t(
     {task_signal_decls},
@@ -49,7 +53,11 @@ module {harness_name};
   (
     {dut_clk_decl},
     {dut_reset_decl},
+    `ifdef UNPACKED_TO_PACKED_ARRAY_IO
+    {dut_packed_decls}
+    `else
     {dut_signal_decls}
+    `endif
   );
 
   initial begin
