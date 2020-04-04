@@ -13,6 +13,7 @@ import os
 import shutil
 import subprocess
 import sys
+from functools import reduce
 from importlib import reload
 from itertools import cycle
 from textwrap import indent
@@ -962,7 +963,13 @@ m->{name}{sub} = {deference}model->{name}{sub};
     # the verilated model because only the sequential update block of
     # the imported component should manipulate it.
 
-    for pnames, vname, rtype, port_idx in packed_ports:
+    for _pnames, vname, rtype, port_idx in packed_ports:
+      if isinstance( rtype, rt.Array ):
+        n_dim = rtype.get_dim_sizes()
+      else:
+        n_dim = []
+      repeats = reduce(lambda a, b: a*b, n_dim[port_idx:], 1)
+      pnames = [name for name in _pnames for _ in range(repeats)]
       pnames_iter = cycle(pnames)
       p_n_dim, p_rtype = get_rtype( rtype )
       if s._get_direction( p_rtype ) == 'InPort' and pnames[0] != 'clk' and vname:
@@ -1053,7 +1060,13 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_comb_output( s, packed_ports, symbols ):
     set_comb, structs = [], []
-    for pnames, vname, rtype, port_idx in packed_ports:
+    for _pnames, vname, rtype, port_idx in packed_ports:
+      if isinstance( rtype, rt.Array ):
+        n_dim = rtype.get_dim_sizes()
+      else:
+        n_dim = []
+      repeats = reduce(lambda a, b: a*b, n_dim[port_idx:], 1)
+      pnames = [name for name in _pnames for _ in range(repeats)]
       pnames_iter = cycle(pnames)
       p_n_dim, p_rtype = get_rtype( rtype )
       if s._get_direction( rtype ) == 'OutPort':
