@@ -1,3 +1,5 @@
+template = \
+'''
 `define HOLD_TIME 1
 `define INTRA_CYCLE_TIME 2
 `define SETUP_TIME 1
@@ -5,19 +7,19 @@
 
 `timescale 1ns/1ns
 
-`define T({args_strs}) \
+`define T({args_strs}) \\
         t({args_strs},`__LINE__)
 
-`define CHECK(lineno, out, ref, port_name) \
-  if (out != ref) begin \
-    $display(""); \
-    $display("The test bench received an incorrect value!"); \
-    $display("- row number     : %0d", lineno); \
-    $display("- port name      : %s", port_name); \
-    $display("- expected value : 0x%x", ref); \
-    $display("- actual value   : 0x%x", out); \
-    $display(""); \
-    $fatal; \
+`define CHECK(lineno, out, ref, port_name) \\
+  if (out != ref) begin \\
+    $display(""); \\
+    $display("The test bench received an incorrect value!"); \\
+    $display("- row number     : %0d", lineno); \\
+    $display("- port name      : %s", port_name); \\
+    $display("- expected value : 0x%x", ref); \\
+    $display("- actual value   : 0x%x", out); \\
+    $display(""); \\
+    $fatal; \\
   end
 
 module {harness_name};
@@ -26,6 +28,11 @@ module {harness_name};
   logic reset;
 
   {signal_decls};
+
+  `ifdef UNPACKED_TO_PACKED_ARRAY_IO
+  {packed_decls};
+  {packed_assigns};
+  `endif
 
   task t(
     {task_signal_decls},
@@ -42,12 +49,22 @@ module {harness_name};
   // use 25% clock cycle, so #1 for setup #2 for sim #1 for hold
   always #(`CYCLE_TIME/2) clk = ~clk;
 
+  `ifdef UNPACKED_TO_PACKED_ARRAY_IO
+  {dut_name} DUT
+  (
+    {dut_clk_decl},
+    {dut_reset_decl},
+    {dut_packed_decls}
+  );
+  `else
   {dut_name} DUT
   (
     {dut_clk_decl},
     {dut_reset_decl},
     {dut_signal_decls}
   );
+  `endif
+
 
   initial begin
     clk   = 1'b1; // NEED TO DO THIS TO HAVE RISING EDGE AT TIME 0
@@ -68,3 +85,4 @@ module {harness_name};
     $finish;
   end
 endmodule
+'''
