@@ -4,7 +4,6 @@
 # Author : Shunning Jiang
 # Date   : Mar 18, 2020
 
-import os
 from collections import deque
 
 import py
@@ -79,9 +78,13 @@ class VerilogTBGenPass( BasePass ):
 
         if p_n_dim:
           packed_decls.append( f"logic {signal_decl_indices} [{nbits-1}:0] {vname}_packed")
-          packed_assigns.append( f"assign {vname}_packed = {{ << {{ {vname} }} }}" )
+          if direction == 'input':
+            packed_assigns.append( f"assign {vname}_packed = {{ << {{ {vname} }} }}" )
+          else:
+            packed_assigns.append( f"assign {vname} = {{ << {{ {vname}_packed }} }}" )
           dut_packed_decls.append( f".{vname}({vname}_packed)" )
-
+        else:
+          dut_packed_decls.append( f".{vname}({vname})" )
 
         Q = deque( [ (vname, vname, p_n_dim) ] )
         tot = 0 # This is to keep the same order as pname list

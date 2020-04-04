@@ -49,22 +49,16 @@ module {harness_name};
   // use 25% clock cycle, so #1 for setup #2 for sim #1 for hold
   always #(`CYCLE_TIME/2) clk = ~clk;
 
-  `ifdef UNPACKED_TO_PACKED_ARRAY_IO
   {dut_name} DUT
   (
     {dut_clk_decl},
     {dut_reset_decl},
+    `ifdef UNPACKED_TO_PACKED_ARRAY_IO
     {dut_packed_decls}
-  );
-  `else
-  {dut_name} DUT
-  (
-    {dut_clk_decl},
-    {dut_reset_decl},
+    `else
     {dut_signal_decls}
+    `endif
   );
-  `endif
-
 
   initial begin
     clk   = 1'b1; // NEED TO DO THIS TO HAVE RISING EDGE AT TIME 0
