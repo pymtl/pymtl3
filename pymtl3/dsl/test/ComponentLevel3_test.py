@@ -919,6 +919,31 @@ def test_lambda_name_conflict():
     return
   raise Exception("Should've thrown UpblkFuncSameNameError.")
 
+def test_loop_with_temp_name_lambda():
+
+  class A( ComponentLevel3 ):
+    def construct( s ):
+      s.in_ = InPort(32)
+      s.out = OutPort(32)
+      s.out //= s.in_
+
+  class Top( ComponentLevel3 ):
+    def construct( s, x ):
+      s.in_ = InPort(Bits32)
+      s.out = [ OutPort(Bits32) for _ in range(5) ]
+
+      s.xs = [ A() for _ in range(5) ]
+      for i, m in enumerate(s.xs):
+        m.in_ //= lambda: s.in_ + i
+        m.out //= s.out[i]
+
+  x = Top(3)
+  x.elaborate()
+  simple_sim_pass(x)
+  x.in_ = 10
+  x.tick()
+  assert x.out == [ 10, 11, 12, 13, 14 ]
+
 def test_invalid_in_out_loopback_at_self():
 
   class Comp( ComponentLevel3 ):

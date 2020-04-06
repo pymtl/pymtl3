@@ -34,7 +34,7 @@ from .sim_utils import simple_sim_pass
 def test_placeholder_no_upblk():
 
   class Wrong( Placeholder, Component ):
-    def construct( s, nbits=0 ):
+    def construct( s, nbits=1 ):
       s.in_ = InPort ( nbits )
       s.out = OutPort( nbits )
       @update
@@ -51,7 +51,7 @@ def test_placeholder_no_upblk():
 def test_placeholder_no_constraints():
 
   class Wrong( Placeholder, Component ):
-    def construct( s, nbits=0 ):
+    def construct( s, nbits=1 ):
       s.in_ = InPort ( nbits )
       s.out = OutPort( nbits )
       s.add_constraints( U(s.out) < WR(s.out) ) # this is obvious wrong
@@ -65,7 +65,7 @@ def test_placeholder_no_constraints():
   raise Exception("Should've thrown InvalidPlaceholderError.")
 
 class Foo( Placeholder, Component ):
-  def construct( s, nbits=0 ):
+  def construct( s, nbits=1 ):
     s.in_ = InPort ( nbits )
     s.out = OutPort( nbits )
 
@@ -80,7 +80,7 @@ class SomeMsg:
   b: Bits32
 
 class FooStruct( Placeholder, Component ):
-  def construct( s, nbits=0 ):
+  def construct( s, nbits=1 ):
     s.in_ = InPort ( nbits )
     s.out = OutPort( SomeMsg )
 
@@ -90,7 +90,7 @@ class FooStruct( Placeholder, Component ):
     return "{}>{}".format( s.in_, s.out )
 
 class Real( Component ):
-  def construct( s, nbits=0 ):
+  def construct( s, nbits=1 ):
     s.in_ = InPort ( nbits )
     s.out = OutPort( nbits )
     @update
@@ -101,7 +101,7 @@ class Real( Component ):
     return "{}>{}".format( s.in_, s.out )
 
 class Foo_wrap( Component ):
-  def construct( s, nbits=0 ):
+  def construct( s, nbits=1 ):
     s.in_ = InPort ( nbits )
     s.out = OutPort( nbits )
     s.w   = Wire( nbits )

@@ -27,7 +27,7 @@ from .sim_utils import simple_sim_pass
 def test_api_not_elaborated():
 
   class X( Component ):
-    def construct( s, nbits=0 ):
+    def construct( s, nbits=1 ):
       s.in_ = InPort ( nbits )
       s.out = OutPort( nbits )
       @update
@@ -35,7 +35,7 @@ def test_api_not_elaborated():
         s.out @= s.in_ + 1
 
   class Y( Component ):
-    def construct( s, nbits=0 ):
+    def construct( s, nbits=1 ):
       s.in_ = InPort ( nbits )
       s.out = OutPort( nbits )
       s.x = X()
@@ -86,7 +86,7 @@ class Real_shamt2( Component ):
     return "{}>{}".format( s.in_, s.out )
 
 class Foo_shamt_list_wrap( Component ):
-  def construct( s, nbits=0 ):
+  def construct( s, nbits=1 ):
     s.in_ = InPort ( nbits )
     s.out = [ OutPort( nbits ) for _ in range(5) ]
 
@@ -101,7 +101,7 @@ class Foo_shamt_list_wrap( Component ):
 def test_real_replaced_by_real2():
 
   class Real_wrap( Component ):
-    def construct( s, nbits=0 ):
+    def construct( s, nbits=1 ):
       s.in_ = InPort ( nbits )
       s.out = OutPort( nbits )
       s.w   = Wire( nbits )
