@@ -65,6 +65,7 @@ class VStructuralTranslatorL2(
         {field_decl}
         }} {dtype_name};
         """).format(**locals()),
+      'nbits' : dtype.get_length(),
       'data_type' : dtype_name,
       'packed_type' : '',
       'unpacked_type' : '',

@@ -94,7 +94,7 @@ class VBehavioralTranslatorL1( VBehavioralTranslatorL0, BehavioralTranslatorL1 )
     assert isinstance( rtype, rt.Const ), \
       f'{id_} freevar should be a constant!'
     assert isinstance( rtype.get_dtype(), rdt.Vector ), \
-      f'{id_} freevar should be a (list of) integer/BitStruct!'
+      f'{id_} freevar should be a (list of) integer/BitStruct at L1!'
     return s.rtlir_tr_const_decl( '__const__'+id_, rtype, array_type, dtype, obj )
 
 #-------------------------------------------------------------------------

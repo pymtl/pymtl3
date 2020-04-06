@@ -97,24 +97,34 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
     # Generate free variable declarations
     freevars = []
     for name, fvar in s.behavioral.freevars[m].items():
-      rtype = rt.get_rtlir( fvar )
-      if isinstance( rtype, rt.Array ):
-        fvar_rtype = rtype.get_sub_type()
-        array_rtype = rtype
-      else:
-        fvar_rtype = rtype
-        array_rtype = None
-      dtype = fvar_rtype.get_dtype()
-      assert isinstance( dtype, rdt.Vector ), \
-        f'{name} freevar should be an integer or a list of integers!'
-      freevars.append( s.rtlir_tr_behavioral_freevar(
-        name,
-        fvar_rtype,
-        s.rtlir_tr_unpacked_array_type( array_rtype ),
-        s.rtlir_tr_vector_dtype( dtype ),
-        fvar
-      ) )
+      freevars.append( s.translate_freevar( name, fvar ) )
     s.behavioral.decl_freevars[m] = s.rtlir_tr_behavioral_freevars(freevars)
+
+  #-----------------------------------------------------------------------
+  # translate_freevar
+  #-----------------------------------------------------------------------
+
+  def translate_freevar( s, name, fvar ):
+    rtype = rt.get_rtlir( fvar )
+    if isinstance( rtype, rt.Array ):
+      fvar_rtype = rtype.get_sub_type()
+      array_rtype = rtype
+    else:
+      fvar_rtype = rtype
+      array_rtype = None
+    dtype = fvar_rtype.get_dtype()
+    return s.rtlir_tr_behavioral_freevar(
+      name,
+      fvar_rtype,
+      s.rtlir_tr_unpacked_array_type( array_rtype ),
+      s.dispatch_freevar_datatype( dtype ),
+      fvar
+    )
+
+  def dispatch_freevar_datatype( s, dtype ):
+    assert isinstance( dtype, rdt.Vector ), \
+      f'{name} freevar should be an integer or a list of integers at L1!'
+    return s.rtlir_tr_vector_dtype( dtype )
 
   #-----------------------------------------------------------------------
   # Methods to be implemented by the backend translator
