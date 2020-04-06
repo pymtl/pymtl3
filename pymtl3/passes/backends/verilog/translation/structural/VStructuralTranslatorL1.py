@@ -68,7 +68,7 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
         return pickle_template.format( **locals() )
       else:
         # Otherwise always use the pickled source file
-        with open(m.config_placeholder.pickled_source_file, 'r') as fd:
+        with open(m.config_placeholder.pickled_source_file, 'r', encoding='utf-8') as fd:
           return fd.read()
     except AttributeError as e:
       # Forgot to apply VerilogPlaceholderPass?
