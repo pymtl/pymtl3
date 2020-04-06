@@ -38,7 +38,7 @@ class RegRst( Component ):
 
     @update_ff
     def up_regrst():
-      if s.reset: s.out <<= Type( reset_value )
+      if s.reset: s.out <<= reset_value
       else:       s.out <<= s.in_
 
   def line_trace( s ):
@@ -54,7 +54,7 @@ class RegEnRst( Component ):
 
     @update_ff
     def up_regenrst():
-      if s.reset: s.out <<= Type( reset_value )
+      if s.reset: s.out <<= reset_value
       elif s.en:  s.out <<= s.in_
 
   def line_trace( s ):

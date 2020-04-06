@@ -5,9 +5,10 @@ from pymtl3 import *
 class Mux( Component ):
 
   def construct( s, Type, ninputs ):
+    assert ninputs > 0
     s.in_ = [ InPort( Type ) for _ in range(ninputs) ]
     s.out = OutPort( Type )
-    s.sel = InPort( clog2(ninputs) )
+    s.sel = InPort( max(1, clog2(ninputs)) ) # allow 1-input
 
     @update
     def up_mux():
@@ -34,6 +35,7 @@ class LeftLogicalShifter( Component ):
     s.in_   = InPort( Type )
     s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )
+    assert shamt_nbits == Type.nbits
 
     @update
     def up_lshifter():

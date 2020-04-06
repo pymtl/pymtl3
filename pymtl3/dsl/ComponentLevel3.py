@@ -111,7 +111,12 @@ class ComponentLevel3( ComponentLevel2 ):
     root = root.body[0]
     assert isinstance( root, ast.AugAssign ) and isinstance( root.op, ast.FloorDiv )
 
-    lhs, rhs = root.target, root.value
+    # lhs, rhs = root.target, root.value
+    # Shunning: here we need to use ast from repr(o), because root.target
+    # can be "m.in_" in some cases where we actually know what m is but the
+    # source code still captures "m"
+    lhs, rhs = ast.parse( f"s{repr(o)[len(repr(s)):]}" ).body[0].value, root.value
+    lhs.ctx = ast.Store()
     # We expect the lambda to have no argument:
     # {'args': [], 'vararg': None, 'kwonlyargs': [], 'kw_defaults': [], 'kwarg': None, 'defaults': []}
     assert isinstance( rhs, ast.Lambda ) and not rhs.args.args and rhs.args.vararg is None, \

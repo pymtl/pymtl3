@@ -127,7 +127,8 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
 class RunTestVectorSimError( Exception ):
   pass
 
-def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False, line_trace=True ):
+def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True ):
+  cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False}
 
   # First row in test vectors contains port names
 
@@ -144,11 +145,11 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
 
   model.elaborate()
 
-  if dump_vcd:
+  if cmdline_opts['dump_vcd']:
     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
 
-  if test_verilog:
-    model.set_metadata( VerilatorImportPass.vl_xinit, test_verilog )
+  if cmdline_opts['test_verilog']:
+    model.set_metadata( VerilatorImportPass.vl_xinit, cmdline_opts['test_verilog'] )
     model.set_metadata( TranslationImportPass.enable, True )
 
   model.apply( VerilogPlaceholderPass() )

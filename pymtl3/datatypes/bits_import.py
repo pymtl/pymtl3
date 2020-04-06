@@ -65,6 +65,7 @@ custom_exec(compile( "".join([ bits_template.format(nbits) for nbits in _bitwidt
                      filename="bits_import.py", mode="exec"), globals(), locals() )
 
 def mk_bits( nbits ):
+  assert nbits > 0, "We don't allow Bits0"
   # assert nbits < 512, "We don't allow bitwidth to exceed 512."
   if nbits not in _bits_types:
     custom_exec(compile( bits_template.format(nbits), filename=f"Bits{nbits}", mode="exec" ),
