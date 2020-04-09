@@ -1897,6 +1897,22 @@ class CaseArrayBits32IfcInComp:
       s.out = OutPort( Bits32 )
       connect( s.in_[1].foo, s.out )
 
+class CaseBits32FooNoArgBehavioralComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32Foo )
+      @update
+      def upblk():
+        s.out @= Bits32Foo()
+  TV_IN = _set()
+  TV_OUT = \
+  _check( 'out', Bits32Foo, 0 )
+  TV =\
+  [
+      [    0, ],
+      [    0, ],
+  ]
+
 class CaseArrayBits32IfcInUpblkComp:
   class DUT( Component ):
     def construct( s ):

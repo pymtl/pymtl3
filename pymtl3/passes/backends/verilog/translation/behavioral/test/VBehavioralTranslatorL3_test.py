@@ -12,6 +12,7 @@ from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheck
 
 from ....testcases import (
     CaseBits32FooInBits32OutComp,
+    CaseBits32FooNoArgBehavioralComp,
     CaseBits32FooToBits32Comp,
     CaseBits32ToBits32FooComp,
     CaseConstStructInstComp,
@@ -50,6 +51,7 @@ def run_test( case, m ):
       CaseBits32FooToBits32Comp,
       CaseBits32ToBits32FooComp,
       CaseIntToBits32FooComp,
+      CaseBits32FooNoArgBehavioralComp,
     ]
 )
 def test_verilog_behavioral_L3( case ):

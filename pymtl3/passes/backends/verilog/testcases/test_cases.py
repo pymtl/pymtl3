@@ -24,6 +24,7 @@ from pymtl3.passes.testcases import (
     CaseBits32BitSelUpblkComp,
     CaseBits32ConnectSubCompAttrComp,
     CaseBits32FooInBits32OutComp,
+    CaseBits32FooNoArgBehavioralComp,
     CaseBits32FooToBits32Comp,
     CaseBits32SubCompAttrUpblkComp,
     CaseBits32ToBits32FooComp,
@@ -2643,6 +2644,34 @@ CaseBehavioralArraySubCompArrayStructIfcComp = set_attributes( CaseBehavioralArr
           assign b__reset[0] = reset;
           assign b__clk[1] = clk;
           assign b__reset[1] = reset;
+
+        endmodule
+    '''
+)
+
+CaseBits32FooNoArgBehavioralComp = set_attributes( CaseBits32FooNoArgBehavioralComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = 32'd0;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        typedef struct packed {
+          logic [31:0] foo ;
+        } Bits32Foo;
+
+        module DUT_noparam
+        (
+          input logic [0:0] clk,
+          output logic Bits32Foo out,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out = 32'd0;
+          end
 
         endmodule
     '''
