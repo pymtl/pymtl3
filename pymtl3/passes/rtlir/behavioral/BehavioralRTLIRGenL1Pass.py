@@ -152,11 +152,20 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     value = s.visit( node.value )
     targets = [ s.visit( target ) for target in node.targets ]
-    ret = bir.Assign( targets, value, blocking = blocking[s._upblk_type] )
+    ret = bir.Assign( targets, value, blocking = False )
+
+    # Determine if this is a blocking/non-blocking assignment
+    ret.blocking = s.get_blocking(node, ret)
+
     ret.ast = node
     return ret
-    # raise PyMTLSyntaxError( s.blk, node,
-    #     'plain assignment = is not a translatable construct. Please use @= or <<= instead!')
+
+  def get_blocking( s, node, bir_node ):
+    blocking = {
+      'CombUpblk' : True,
+      'SeqUpblk'  : False,
+    }
+    return blocking[s._upblk_type]
 
   def visit_AugAssign( s, node ):
     """Return the behavioral RTLIR of a non-blocking assignment

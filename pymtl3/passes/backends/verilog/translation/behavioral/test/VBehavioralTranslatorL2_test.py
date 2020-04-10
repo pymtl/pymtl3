@@ -26,6 +26,7 @@ from ....testcases import (
     CaseLambdaConnectWithListComp,
     CaseNestedIfComp,
     CaseReducesInx3OutComp,
+    CaseTmpVarInUpdateffComp,
 )
 from ..VBehavioralTranslatorL2 import BehavioralRTLIRToVVisitorL2
 
@@ -61,6 +62,7 @@ def run_test( case, m ):
       CaseLambdaConnectComp,
       CaseLambdaConnectWithListComp,
       CaseBoolTmpVarComp,
+      CaseTmpVarInUpdateffComp,
     ]
 )
 def test_verilog_behavioral_L2( case ):

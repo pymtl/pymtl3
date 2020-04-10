@@ -74,6 +74,17 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       ast.Gt     : bir.Gt(),        ast.GtE    : bir.GtE()
     }
 
+  def get_blocking( s, node, bir_node ):
+    has_tmpvar = any(isinstance(n, bir.TmpVar) for n in bir_node.targets)
+    all_tmpvar = all(isinstance(n, bir.TmpVar) for n in bir_node.targets)
+    if has_tmpvar and not all_tmpvar:
+      raise PyMTLSyntaxError( s.blk, node,
+        'all targets have to be tmpvars if any target on LHS is a tmpvar!' )
+    if has_tmpvar:
+      return True
+    else:
+      return super().get_blocking(node, bir_node)
+
   def visit_Call( s, node ):
     obj = s.get_call_obj( node )
     # At L2 we add bool type but we do not support instantiating a bool

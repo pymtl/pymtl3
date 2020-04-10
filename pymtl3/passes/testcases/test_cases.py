@@ -430,6 +430,26 @@ class CaseBoolTmpVarComp:
       [  0,   1,  ],
   ]
 
+class CaseTmpVarInUpdateffComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32 )
+      @update_ff
+      def upblk():
+        val_next = Bits32(42)
+        s.out <<= val_next
+  TV_IN = _set()
+  TV_OUT = \
+  _check(
+      'out', Bits32, 0,
+  )
+  TV =\
+  [
+      [   0, ],
+      [  42, ],
+      [  42, ],
+  ]
+
 class CaseBits32FooToBits32Comp:
   class DUT( Component ):
     def construct( s ):
@@ -2396,6 +2416,14 @@ class CaseVerilogReservedComp:
       @update
       def upblk():
         s.out @= s.buf
+
+class CaseUpdateffMixAssignComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32 )
+      @update
+      def upblk():
+        tmpvar = s.out = Bits32(42)
 
 class CaseInterfaceArrayNonStaticIndexComp:
   class DUT( Component ):

@@ -54,6 +54,7 @@ from pymtl3.passes.testcases import (
     CaseTwoUpblksFreevarsComp,
     CaseTwoUpblksSliceComp,
     CaseTwoUpblksStructTmpWireComp,
+    CaseUpdateffMixAssignComp,
     CaseWiresDrivenComp,
     set_attributes,
 )

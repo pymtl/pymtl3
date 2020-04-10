@@ -82,6 +82,7 @@ from pymtl3.passes.testcases import (
     CaseSequentialPassThroughComp,
     CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
+    CaseTmpVarInUpdateffComp,
     CaseTypeBundle,
     CaseVerilogReservedComp,
     NestedStructPackedPlusScalar,
@@ -608,6 +609,34 @@ CaseTypeBundle = set_attributes( CaseTypeBundle,
             out1 = 32'd42;
             out2 = 32'd1;
             out3 = 32'd1;
+          end
+
+        endmodule
+    '''
+)
+
+CaseTmpVarInUpdateffComp = set_attributes( CaseTmpVarInUpdateffComp,
+    'REF_UPBLK',
+    '''\
+        always_ff @(posedge clk) begin : upblk
+          __tmpvar__upblk_val_next = 32'd42;
+          out <= __tmpvar__upblk_val_next;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT_noparam
+        (
+          input logic [0:0] clk,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+
+          logic [31:0] __tmpvar__upblk_val_next;
+
+          always_ff @(posedge clk) begin : upblk
+            __tmpvar__upblk_val_next = 32'd42;
+            out <= __tmpvar__upblk_val_next;
           end
 
         endmodule
