@@ -2665,7 +2665,7 @@ CaseBits32FooNoArgBehavioralComp = set_attributes( CaseBits32FooNoArgBehavioralC
         module DUT_noparam
         (
           input logic [0:0] clk,
-          output logic Bits32Foo out,
+          output Bits32Foo out,
           input logic [0:0] reset
         );
 
