@@ -436,8 +436,9 @@ class CaseTmpVarInUpdateffComp:
       s.out = OutPort( Bits32 )
       @update_ff
       def upblk():
-        val_next = Bits32(42)
-        s.out <<= val_next
+        if ~s.reset:
+          val_next = Bits32(42)
+          s.out <<= val_next
   TV_IN = _set()
   TV_OUT = \
   _check(

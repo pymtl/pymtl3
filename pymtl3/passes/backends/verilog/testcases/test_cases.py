@@ -619,8 +619,10 @@ CaseTmpVarInUpdateffComp = set_attributes( CaseTmpVarInUpdateffComp,
     'REF_UPBLK',
     '''\
         always_ff @(posedge clk) begin : upblk
-          __tmpvar__upblk_val_next = 32'd42;
-          out <= __tmpvar__upblk_val_next;
+          if ( ~reset ) begin
+            __tmpvar__upblk_val_next = 32'd42;
+            out <= __tmpvar__upblk_val_next;
+          end
         end
     ''',
     'REF_SRC',
@@ -635,8 +637,10 @@ CaseTmpVarInUpdateffComp = set_attributes( CaseTmpVarInUpdateffComp,
           logic [31:0] __tmpvar__upblk_val_next;
 
           always_ff @(posedge clk) begin : upblk
-            __tmpvar__upblk_val_next = 32'd42;
-            out <= __tmpvar__upblk_val_next;
+            if ( ~reset ) begin
+              __tmpvar__upblk_val_next = 32'd42;
+              out <= __tmpvar__upblk_val_next;
+            end
           end
 
         endmodule
