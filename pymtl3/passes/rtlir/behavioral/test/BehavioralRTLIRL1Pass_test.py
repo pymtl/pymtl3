@@ -308,7 +308,7 @@ def test_L1_call_not_found( do_test ):
     do_test( CaseFuncNotFoundComp )
 
 def test_L1_call_Bits_args( do_test ):
-  with expected_failure( PyMTLSyntaxError, "exactly one argument" ):
+  with expected_failure( PyMTLSyntaxError, "exactly one or zero argument" ):
     do_test( CaseBitsArgsComp )
 
 def test_L1_call_concat_args( do_test ):
