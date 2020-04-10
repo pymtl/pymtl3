@@ -82,7 +82,7 @@ class ComponentLevel1( NamedObject ):
 
   def add_constraints( s, *args ):
     if isinstance( s, Placeholder ):
-      raise InvalidPlaceholderError( "Cannot define constraints "
+      raise InvalidPlaceholderError( "Cannot define constraints {}"
               "in a placeholder component.".format( blk.__name__ ) )
     for (x0, x1, is_equal) in args:
       assert is_equal == False

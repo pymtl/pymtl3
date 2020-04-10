@@ -150,7 +150,7 @@ def test_very_deep_dag():
       return True
 
     def line_trace( s ):
-      return "{} > {}".format( s.a, s.b, s.c, s.d )
+      return "{} > {}".format( s.a, s.b )
 
   class Top(Component):
     def construct( s, N=2000 ):

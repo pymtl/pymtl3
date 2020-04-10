@@ -215,7 +215,7 @@ class VerilatorImportPass( BasePass ):
       if not succeeds:
         raise VerilogImportError(m, import_err_msg)
 
-      ip_cfg.vprint(f"Successfully verilated the given model!", 2)
+      ip_cfg.vprint("Successfully verilated the given model!", 2)
 
     else:
       ip_cfg.vprint(f"{ip_cfg.translated_top_module} not verilated because it's cached!", 2)
@@ -314,7 +314,7 @@ class VerilatorImportPass( BasePass ):
                     f"{ip_cfg.get_shared_lib_path()}!", 2)
 
     else:
-      ip_cfg.vprint(f"Didn't compile shared library because it's cached!", 2)
+      ip_cfg.vprint("Didn't compile shared library because it's cached!", 2)
 
   #-----------------------------------------------------------------------
   # create_py_wrapper
@@ -717,7 +717,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
   def gen_port_vector_input( s, lhs, rhs, mangled_rhs, dtype, symbols ):
     dtype_nbits = dtype.get_length()
     blocks   = [ f's.{mangled_rhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
-                 f'@s.update',
+                 '@s.update',
                  f'def isignal_{mangled_rhs}():',
                  f'  s.{mangled_rhs} = {rhs}' ]
     set_comb = ( s._gen_ref_write( lhs, 's.'+mangled_rhs, dtype_nbits ) )
@@ -731,7 +731,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       symbols[dtype_name] = dtype.get_class()
 
     blocks   = [ f's.{mangled_rhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
-                 f'@s.update',
+                 '@s.update',
                  f'def istruct_{mangled_rhs}():' ]
 
     # We write each struct field to tmp
@@ -808,7 +808,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
   def gen_port_vector_output( s, lhs, mangled_lhs, rhs, dtype, symbols ):
     dtype_nbits = dtype.get_length()
     blocks   = [ f's.{mangled_lhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
-                 f'@s.update',
+                 '@s.update',
                  f'def osignal_{mangled_lhs}():',
                  f'  {lhs} = s.{mangled_lhs}' ]
 
@@ -823,7 +823,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       symbols[dtype_name] = dtype.get_class()
 
     blocks   = [ f's.{mangled_lhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
-                 f'@s.update',
+                 '@s.update',
                  f'def ostruct_{mangled_lhs}():' ]
 
     # We create a long Bits object to accept CFFI value for struct

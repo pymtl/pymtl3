@@ -383,7 +383,7 @@ def _check_field_annotation( cls, name, type_ ):
   if isinstance( type_, list ):
     if _check_valid_array_of_types( type_ ) is None:
       raise TypeError( "The provided list spec should be a strict multidimensional ARRAY "
-                       f"with no varying sizes or types. All non-list elements should be VALID types." )
+                       "with no varying sizes or types. All non-list elements should be VALID types." )
   else:
     # Now we work with types
     if not isinstance( type_, type ):

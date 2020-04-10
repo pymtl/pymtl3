@@ -463,7 +463,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
   def func( s, func ): # @s.func is for those functions
     if isinstance( s, Placeholder ):
-      raise InvalidPlaceholderError( "Cannot define function "
+      raise InvalidPlaceholderError( "Cannot define function {}"
               "in a placeholder component.".format( func.__name__ ) )
     name = func.__name__
     if name in s._dsl.name_func or name in s._dsl.name_upblk:
