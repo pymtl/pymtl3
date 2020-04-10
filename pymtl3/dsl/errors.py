@@ -134,7 +134,7 @@ In file {}:{} in {}
       filepath, error_lineno, blk.__name__,
       error_lineno, blk_src[ lineno ].lstrip(''),
       repr(hostobj), hostobj.__class__.__name__,
-      error_lineno )
+      )
     )
 
 class VarNotDeclaredError( Exception ):

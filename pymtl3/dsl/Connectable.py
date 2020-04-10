@@ -91,7 +91,7 @@ def _connect_check( o1, o2, internal ):
                                  "- Please use top.add_connection(...) API.")
 
   if isinstance( host, Placeholder ):
-    raise InvalidPlaceholderError( "Cannot call connect "
+    raise InvalidPlaceholderError( "Cannot call connect {}"
           "in a placeholder component.".format( blk.__name__ ) )
 
   # Not sure if there is any case where we cannot get the top plus it's
@@ -476,11 +476,11 @@ class CallIfcRTL( Interface ):
 
       if s.MsgType is not None:
         trace_len += len( f'{s.MsgType()}' ) + 2
-        trace_fmt += f"({{s.msg}})"
+        trace_fmt += "({{s.msg}})"
 
       if s.RetType is not None:
         trace_len += 1 + len( f'{s.RetType()}' )
-        trace_fmt += f"={{s.ret}}"
+        trace_fmt += "={{s.ret}}"
 
       if trace_len == 0:
         trace_len = 1

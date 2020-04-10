@@ -515,8 +515,8 @@ def _mk_from_bits_fns( fields, total_nbits ):
 
   # TODO add assertion in bits
   return _create_fn( 'from_bits', [ 'cls', 'other' ],
-                     [ f"assert cls.nbits == other.nbits, f'LHS bitstruct {{cls.nbits}}-bit <> RHS other {{other.nbits}}-bit'",
-                        "other = other.to_bits()",
+                     [ "assert cls.nbits == other.nbits, f'LHS bitstruct {{cls.nbits}}-bit <> RHS other {{other.nbits}}-bit'",
+                       "other = other.to_bits()",
                        f"return cls({','.join(from_bits_strs)})" ], _globals )
 #-------------------------------------------------------------------------
 # _check_valid_array
@@ -561,7 +561,7 @@ def _check_field_annotation( cls, name, type_ ):
   if isinstance( type_, list ):
     if _check_valid_array_of_types( type_ ) is None:
       raise TypeError( "The provided list spec should be a strict multidimensional ARRAY "
-                       f"with no varying sizes or types. All non-list elements should be VALID types." )
+                       "with no varying sizes or types. All non-list elements should be VALID types." )
   else:
     # Now we work with types
     if not isinstance( type_, type ):

@@ -86,7 +86,7 @@ def _parse_opts_from_request( request ):
     test_verilog = int(test_verilog)
   except ValueError:
     assert test_verilog in ['', 'zeros', 'ones', 'rand'], \
-        f"--test-verilog should be an int or one of '', 'zeros', 'ones', 'rand'!"
+        "--test-verilog should be an int or one of '', 'zeros', 'ones', 'rand'!"
   opts['test_verilog'] = test_verilog
 
   # dump_vcd
