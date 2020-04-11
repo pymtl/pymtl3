@@ -5,8 +5,6 @@
 # Date   : March 29, 2019
 """Provide L2 behavioral RTLIR type check pass."""
 
-from collections import OrderedDict
-
 from pymtl3 import Bits32
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
@@ -18,15 +16,18 @@ from .BehavioralRTLIRTypeCheckL1Pass import BehavioralRTLIRTypeCheckVisitorL1
 
 
 class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
+  def get_visitor_class( s ):
+    return BehavioralRTLIRTypeCheckVisitorL2
+
   def __call__( s, m ):
     """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
-    m._pass_behavioral_rtlir_type_check.rtlir_freevars = OrderedDict()
-    m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = OrderedDict()
+    m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
 
-    visitor = BehavioralRTLIRTypeCheckVisitorL2(
+    visitor = s.get_visitor_class()(
       m,
       m._pass_behavioral_rtlir_type_check.rtlir_freevars,
       m._pass_behavioral_rtlir_type_check.rtlir_accessed,
@@ -70,6 +71,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       'body' : ( rt.Signal, 'the body of if-exp must be a signal!' ),
       'orelse' : ( rt.Signal, 'the else branch of if-exp must be a signal!' )
     }
+    s.rtlir_getter = rt.RTLIRGetter(cache=True)
 
   def eval_const_binop( s, l, op, r ):
     """Evaluate ( l op r ) and return the result as an integer."""

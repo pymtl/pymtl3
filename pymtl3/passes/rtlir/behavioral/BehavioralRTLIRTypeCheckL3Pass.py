@@ -5,34 +5,19 @@
 # Date   : March 30, 2019
 """Provide L3 behavioral RTLIR type check pass."""
 
-from collections import OrderedDict
-
-from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
-from .BehavioralRTLIRTypeCheckL2Pass import BehavioralRTLIRTypeCheckVisitorL2
+from .BehavioralRTLIRTypeCheckL2Pass import (
+    BehavioralRTLIRTypeCheckL2Pass,
+    BehavioralRTLIRTypeCheckVisitorL2,
+)
 
 
-class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
-  def __call__( s, m ):
-    """Perform type checking on all RTLIR in rtlir_upblks."""
-    if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
-      m._pass_behavioral_rtlir_type_check = PassMetadata()
-    m._pass_behavioral_rtlir_type_check.rtlir_freevars = OrderedDict()
-    m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = OrderedDict()
-    m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
-
-    visitor = BehavioralRTLIRTypeCheckVisitorL3(
-      m,
-      m._pass_behavioral_rtlir_type_check.rtlir_freevars,
-      m._pass_behavioral_rtlir_type_check.rtlir_accessed,
-      m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
-    )
-
-    for blk in m.get_update_block_order():
-      visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
+class BehavioralRTLIRTypeCheckL3Pass( BehavioralRTLIRTypeCheckL2Pass ):
+  def get_visitor_class( s ):
+    return BehavioralRTLIRTypeCheckVisitorL3
 
 class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
   def __init__( s, component, freevars, accessed, tmpvars ):

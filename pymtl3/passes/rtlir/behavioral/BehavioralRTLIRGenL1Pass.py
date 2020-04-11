@@ -34,7 +34,7 @@ class BehavioralRTLIRGenL1Pass( BasePass ):
       m._pass_behavioral_rtlir_gen = PassMetadata()
 
     m._pass_behavioral_rtlir_gen.rtlir_upblks = {}
-    visitor = BehavioralRTLIRGeneratorL1( m )
+    visitor = s.get_rtlir_generator_class()( m )
     upblks = {
       'CombUpblk' : get_ordered_upblks(m),
       'SeqUpblk'  : get_ordered_update_ff(m),
@@ -53,6 +53,9 @@ class BehavioralRTLIRGenL1Pass( BasePass ):
         upblk.lino      = upblk_info[2]
         upblk.filename  = upblk_info[3]
         m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] = upblk
+
+  def get_rtlir_generator_class( s ):
+    return BehavioralRTLIRGeneratorL1
 
 class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
   def __init__( s, component ):
@@ -333,7 +336,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         # A closure variable could be a loop index. We need to
         # generate per-function closure variable instead of assuming
         # they will have the same value.
-        ret =  bir.FreeVar( f"{node.id}_at_{s.blk.__name__}", obj )
+        ret = bir.FreeVar( f"{node.id}_at_{s.blk.__name__}", obj )
       ret.ast = node
       return ret
     elif node.id in s.globals:

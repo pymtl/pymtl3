@@ -6,7 +6,6 @@
 """Provide L1 behavioral RTLIR type check pass."""
 
 import copy
-from collections import OrderedDict
 
 from pymtl3.datatypes import Bits32, mk_bits
 from pymtl3.passes.BasePass import BasePass, PassMetadata
@@ -22,16 +21,21 @@ class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
     """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
-    m._pass_behavioral_rtlir_type_check.rtlir_freevars = OrderedDict()
+    m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
     visitor = BehavioralRTLIRTypeCheckVisitorL1(
-      m, m._pass_behavioral_rtlir_type_check.rtlir_freevars,
-      m._pass_behavioral_rtlir_type_check.rtlir_accessed )
+      m,
+      m._pass_behavioral_rtlir_type_check.rtlir_freevars,
+      m._pass_behavioral_rtlir_type_check.rtlir_accessed
+    )
     for blk in m.get_update_block_order():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def __init__( s, component, freevars, accessed ):
+    # Freevars of the same component is probably capture in the same
+    # closure/global variable, so we set up RTLIR getter for each apply
+    s.rtlir_getter = rt.RTLIRGetter(cache=True)
     s.component = component
     s.freevars = freevars
     s.accessed = accessed
@@ -157,11 +161,8 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     node.Type = None
 
   def visit_FreeVar( s, node ):
-    if node.name not in s.freevars:
-      s.freevars[ node.name ] = node.obj
-
     try:
-      t = rt.get_rtlir( node.obj )
+      t = s.rtlir_getter.get_rtlir( node.obj )
     except RTLIRConversionError as e:
       raise PyMTLTypeError(s.blk, node.ast,
         f'{node.name} cannot be converted into a valid RTLIR object!' )
@@ -170,17 +171,20 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       node._value = mk_bits( t.get_dtype().get_length() )( node.obj )
     node.Type = t
 
+    if node.name not in s.freevars:
+      s.freevars[ node.name ] = ( node.obj, t )
+
   def visit_Base( s, node ):
     # Mark this node as having type rt.Component
     # In L1 the `s` top component is the only possible base
-    node.Type = rt.get_rtlir( node.base )
+    node.Type = s.rtlir_getter.get_rtlir( node.base )
     if not isinstance( node.Type, rt.Component ):
       raise PyMTLTypeError( s.blk, node.ast,
         f'{node} is not a rt.Component!' )
 
   def visit_Number( s, node ):
     # By default, number literals have bitwidth of 32
-    node.Type = rt.get_rtlir( node.value )
+    node.Type = s.rtlir_getter.get_rtlir( node.value )
     node._value = Bits32( node.value )
 
   def visit_Concat( s, node ):
