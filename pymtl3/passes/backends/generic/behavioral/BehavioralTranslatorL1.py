@@ -96,7 +96,6 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
     # Generate free variable declarations
     freevars = []
     for name, (fvar, rtype) in s.behavioral.freevars[m].items():
-      print(name, type(fvar))
       if isinstance( rtype, rt.Array ):
         fvar_rtype = rtype.get_sub_type()
         array_rtype = rtype
