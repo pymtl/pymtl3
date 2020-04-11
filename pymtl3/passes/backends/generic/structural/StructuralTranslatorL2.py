@@ -22,7 +22,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
   def clear( s, tr_top ):
     super().clear( tr_top )
     # Declarations
-    s.structural.decl_type_struct = []
+    s.structural.decl_type_struct = {}
 
   #-----------------------------------------------------------------------
   # _get_structural_rtlir_gen_pass
@@ -73,14 +73,12 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
 
     if isinstance( dtype, rdt.Struct ):
       ret = s.rtlir_tr_struct_dtype( dtype )
-      ns_struct = s.structural.decl_type_struct
-      if all( dtype != x[0] for x in ns_struct ):
+      if dtype not in s.structural.decl_type_struct:
         recurse_struct_dtype_translation( dtype )
-        s.structural.decl_type_struct.append( ( dtype, ret ) )
+        s.structural.decl_type_struct[ dtype ] = ret
       return ret
     else:
-      return super(). \
-          rtlir_data_type_translation( m, dtype )
+      return super().rtlir_data_type_translation( m, dtype )
 
   #-----------------------------------------------------------------------
   # rtlir_signal_expr_translation
