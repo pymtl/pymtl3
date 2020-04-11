@@ -24,14 +24,14 @@ from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PlaceholderConfigs import expand
 from pymtl3.passes.PlaceholderPass import PlaceholderPass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRGetter
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.rtlir import get_component_ifc_rtlir
 
 
 class VerilogPlaceholderPass( PlaceholderPass ):
 
   def visit_placeholder( s, m ):
-    irepr = get_component_ifc_rtlir( m )
+    irepr = RTLIRGetter(cache=False).get_component_ifc_rtlir( m )
 
     s.setup_default_configs( m, irepr )
 

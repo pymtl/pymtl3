@@ -16,11 +16,6 @@ from .BehavioralTranslatorL2 import BehavioralTranslatorL2
 
 
 class BehavioralTranslatorL3( BehavioralTranslatorL2 ):
-  def __init__( s, top ):
-    super().__init__( top )
-
-  def clear( s, tr_top ):
-    super().clear( tr_top )
 
   #-----------------------------------------------------------------------
   # _gen_behavioral_trans_metadata

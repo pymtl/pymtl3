@@ -83,8 +83,7 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       full_name = structural.component_full_name
 
       if structural.component_explicit_module_name:
-        module_name = \
-            structural.component_explicit_module_name
+        module_name = structural.component_explicit_module_name
       else:
         module_name = structural.component_unique_name
 

@@ -22,10 +22,6 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
     """
 
     # Override
-    def __init__( s, top ):
-      super().__init__( top )
-
-    # Override
     def clear( s, tr_top, tr_cfgs ):
       s.tr_cfgs = tr_cfgs
       s.hierarchy = TranslatorMetadata()

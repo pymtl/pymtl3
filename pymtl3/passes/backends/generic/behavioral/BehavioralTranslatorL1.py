@@ -20,8 +20,6 @@ from .BehavioralTranslatorL0 import BehavioralTranslatorL0
 
 
 class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
-  def __init__( s, top ):
-    super().__init__( top )
 
   def clear( s, tr_top ):
     super().clear( tr_top )
@@ -32,6 +30,7 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   #-----------------------------------------------------------------------
 
   def gen_behavioral_trans_metadata( s, tr_top ):
+    s.rtlir_getter = rt.RTLIRGetter()
     s.behavioral.rtlir = {}
     s.behavioral.freevars = {}
     s.behavioral.accessed = {}
@@ -96,8 +95,8 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
 
     # Generate free variable declarations
     freevars = []
-    for name, fvar in s.behavioral.freevars[m].items():
-      rtype = rt.get_rtlir( fvar )
+    for name, (fvar, rtype) in s.behavioral.freevars[m].items():
+      print(name, type(fvar))
       if isinstance( rtype, rt.Array ):
         fvar_rtype = rtype.get_sub_type()
         array_rtype = rtype

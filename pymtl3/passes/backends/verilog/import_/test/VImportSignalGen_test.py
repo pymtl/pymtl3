@@ -16,7 +16,7 @@ from ..VerilatorImportPass import VerilatorImportPass
 
 def local_do_test( m ):
   m.elaborate()
-  rtype = rt.get_component_ifc_rtlir( m )
+  rtype = rt.RTLIRGetter(cache=False).get_component_ifc_rtlir( m )
   ipass = VerilatorImportPass()
   symbols, decls = ipass.gen_signal_decl_py( rtype )
   assert symbols == m._ref_symbols
