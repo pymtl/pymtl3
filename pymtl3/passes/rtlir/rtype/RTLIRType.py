@@ -515,8 +515,8 @@ class RTLIRGetter:
     if cache:
       self._rtlir_cache = {}
       self.get_rtlir = self._get_rtlir_cached
-      self.cache_hit = 0
-      self.cache_miss = 0
+      # self.cache_hit = 0
+      # self.cache_miss = 0
     else:
       self.get_rtlir = self._get_rtlir_uncached
 
@@ -626,14 +626,14 @@ class RTLIRGetter:
     """Return an RTLIR instance corresponding to `obj`."""
     obj = _freeze( _obj )
     if obj in self._rtlir_cache:
-      self.cache_hit += 1
-      if self.cache_hit % 100 == 0:
-        print("hit", self.cache_hit, repr(_obj))
+      # self.cache_hit += 1
+      # if self.cache_hit % 100 == 0:
+        # print("hit", self.cache_hit, repr(_obj))
       return self._rtlir_cache[ obj ]
     else:
-      self.cache_miss += 1
-      if self.cache_miss % 100 == 0:
-        print("miss", self.cache_miss, repr(_obj))
+      # self.cache_miss += 1
+      # if self.cache_miss % 100 == 0:
+        # print("miss", self.cache_miss, repr(_obj))
       try:
         for Type, handler in self._RTLIR_handlers:
           if isinstance( _obj, Type ):

@@ -14,6 +14,7 @@ from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
+from .BehavioralRTLIR import BaseBehavioralRTLIR
 
 
 class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
@@ -52,34 +53,34 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     lhs_types = ( rt.Port, rt.Wire, rt.NetWire )
     index_types = ( rt.Port, rt.Wire, rt.Array )
     slice_types = ( rt.Port, rt.Wire )
-    s.type_expect[ 'Assign' ] = {
-      'targets' : ( lhs_types, 'lhs of assignment must be a signal!' ),
-      'value'   : ( rt.Signal, 'rhs of assignment should be signal or const!' )
-    }
-    s.type_expect[ 'ZeroExt' ] = {
-      'value':( rt.Signal, 'extension only applies to signals!' )
-    }
-    s.type_expect[ 'SignExt' ] = {
-      'value':( rt.Signal, 'extension only applies to signals!' )
-    }
-    s.type_expect[ 'Reduce' ] = {
-      'value':( rt.Signal, 'reduce only applies on a signal!' )
-    }
-    s.type_expect[ 'SizeCast' ] = {
-      'value':( rt.Signal, 'size casting only applies to signals/consts!' )
-    }
-    s.type_expect[ 'Attribute' ] = {
-      'value':( rt.Component, 'the base of an attribute must be a component!' )
-    }
-    s.type_expect[ 'Index' ] = {
-      'idx':( rt.Signal, 'index must be a signal or constant expression!' ),
-      'value':( index_types, 'the base of an index must be an array or signal!' )
-    }
-    s.type_expect[ 'Slice' ] = {
-      'value':( slice_types, 'the base of a slice must be a signal!' ),
-      'lower':( rt.Signal, 'upper of slice must be a constant expression!' ),
-      'upper':( rt.Signal, 'lower of slice must be a constant expression!' )
-    }
+    s.type_expect[ 'Assign' ] = (
+      ( 'targets', lhs_types, 'lhs of assignment must be a signal!' ),
+      ( 'value',   rt.Signal, 'rhs of assignment should be signal or const!' ),
+    )
+    s.type_expect[ 'ZeroExt' ] = (
+      ( 'value',   rt.Signal, 'extension only applies to signals!' ),
+    )
+    s.type_expect[ 'SignExt' ] = (
+      ( 'value',   rt.Signal, 'extension only applies to signals!' ),
+    )
+    s.type_expect[ 'Reduce' ] = (
+      ( 'value',   rt.Signal, 'reduce only applies on a signal!' ),
+    )
+    s.type_expect[ 'SizeCast' ] = (
+      ( 'value',   rt.Signal, 'size casting only applies to signals/consts!' ),
+    )
+    s.type_expect[ 'Attribute' ] = (
+      ( 'value',   rt.Component, 'the base of an attribute must be a component!' ),
+    )
+    s.type_expect[ 'Index' ] = (
+      ( 'idx',     rt.Signal, 'index must be a signal or constant expression!' ),
+      ( 'value',   index_types, 'the base of an index must be an array or signal!' ),
+    )
+    s.type_expect[ 'Slice' ] = (
+      ( 'value',   slice_types, 'the base of a slice must be a signal!' ),
+      ( 'lower',   rt.Signal, 'upper of slice must be a constant expression!' ),
+      ( 'upper',   rt.Signal, 'lower of slice must be a constant expression!' ),
+    )
 
   def enter( s, blk, rtlir ):
     """ entry point for RTLIR type checking """
@@ -110,25 +111,25 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     for field, value in vars(node).items():
       if isinstance( value, list ):
         for item in value:
-          if isinstance( item, bir.BaseBehavioralRTLIR ):
+          if isinstance( item, BaseBehavioralRTLIR ):
             s.visit( item )
-      elif isinstance( value, bir.BaseBehavioralRTLIR ):
+      elif isinstance( value, BaseBehavioralRTLIR ):
         s.visit( value )
 
     # Then verify that all child nodes have desired types
     try:
+      node_vars = vars(node)
       # Check the expected types of child nodes
-      for field, type_rule in s.type_expect[node_name].items():
-        value = vars(node)[field]
-        target_type = type_rule[ 0 ]
-        exception_msg = type_rule[ 1 ]
+      for field, target_type, error_msg in s.type_expect[node_name]:
+        value = node_vars[ field ]
+
         if isinstance( value, list ):
           for v in value:
-            if eval( 'not isinstance( v.Type, target_type )' ):
-              raise PyMTLTypeError( s.blk, node.ast, exception_msg )
+            if not isinstance( v.Type, target_type ):
+              raise PyMTLTypeError( s.blk, node.ast, error_msg )
         else:
-          if eval( 'not isinstance( value.Type, target_type )' ):
-            raise PyMTLTypeError( s.blk, node.ast, exception_msg )
+          if not isinstance( value.Type, target_type ):
+            raise PyMTLTypeError( s.blk, node.ast, error_msg )
     except PyMTLTypeError:
       raise
     except Exception:

@@ -51,29 +51,29 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     s.type_expect = {}
     lhs_types = ( rt.Port, rt.Wire, rt.NetWire, rt.NoneType )
 
-    s.type_expect[ 'Assign' ] = {
-      'targets' : ( lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
-      'value'   : ( rt.Signal, 'rhs of assignment should be signal/const!' )
-    }
-    s.type_expect[ 'BinOp' ] = {
-      'left' : ( rt.Signal, 'lhs of binop should be signal/const!' ),
-      'right' : ( rt.Signal, 'rhs of binop should be signal/const!' ),
-    }
-    s.type_expect[ 'UnaryOp' ] = {
-      'operand' : ( rt.Signal, 'unary op only applies to signals and consts!' )
-    }
-    s.type_expect[ 'For' ] = {
-      'start' : ( rt.Const, 'the start of a for-loop must be a constant expression!' ),
-      'end':( rt.Const, 'the end of a for-loop must be a constant expression!' ),
-      'step':( rt.Const, 'the step of a for-loop must be a constant expression!' )
-    }
-    s.type_expect[ 'If' ] = {
-      'cond' : ( rt.Signal, 'the condition of if must be a signal!' )
-    }
+    s.type_expect[ 'Assign' ] = (
+      ( 'targets', lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
+      ( 'value',   rt.Signal, 'rhs of assignment should be signal/const!' ),
+    )
+    s.type_expect[ 'BinOp' ] = (
+      ( 'left',    rt.Signal, 'lhs of binop should be signal/const!' ),
+      ( 'right',   rt.Signal, 'rhs of binop should be signal/const!' ),
+    )
+    s.type_expect[ 'UnaryOp' ] = (
+      ( 'operand', rt.Signal, 'unary op only applies to signals and consts!' ),
+    )
+    s.type_expect[ 'For' ] = (
+      ( 'start',   rt.Const, 'the start of a for-loop must be a constant expression!' ),
+      ( 'end',     rt.Const, 'the end of a for-loop must be a constant expression!' ),
+      ( 'step',    rt.Const, 'the step of a for-loop must be a constant expression!' ),
+    )
+    s.type_expect[ 'If' ] = (
+      ( 'cond',    rt.Signal, 'the condition of if must be a signal!' ),
+    )
     s.type_expect[ 'IfExp' ] = {
-      'cond' : ( rt.Signal, 'the condition of if-exp must be a signal!' ),
-      'body' : ( rt.Signal, 'the body of if-exp must be a signal!' ),
-      'orelse' : ( rt.Signal, 'the else branch of if-exp must be a signal!' )
+      ( 'cond',    rt.Signal, 'the condition of if-exp must be a signal!' ),
+      ( 'body',    rt.Signal, 'the body of if-exp must be a signal!' ),
+      ( 'orelse',  rt.Signal, 'the else branch of if-exp must be a signal!' ),
     }
 
   def eval_const_binop( s, l, op, r ):
