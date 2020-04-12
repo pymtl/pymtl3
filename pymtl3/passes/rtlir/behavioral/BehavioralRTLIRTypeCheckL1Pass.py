@@ -15,7 +15,6 @@ from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
 
-tot=0
 
 class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
   def __init__( s, translation_top ):
@@ -188,10 +187,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # Mark this node as having type rt.Component
     # In L1 the `s` top component is the only possible base
     node.Type = s.rtlir_getter.get_rtlir( node.base )
-    global tot
-    tot += 1
-    if tot % 100 == 0:
-      print('base', tot)
     if not isinstance( node.Type, rt.Component ):
       raise PyMTLTypeError( s.blk, node.ast,
         f'{node} is not a rt.Component!' )
