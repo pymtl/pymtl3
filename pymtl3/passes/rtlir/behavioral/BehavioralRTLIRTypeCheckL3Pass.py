@@ -20,8 +20,8 @@ class BehavioralRTLIRTypeCheckL3Pass( BehavioralRTLIRTypeCheckL2Pass ):
     return BehavioralRTLIRTypeCheckVisitorL3
 
 class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
-  def __init__( s, component, freevars, accessed, tmpvars ):
-    super().__init__( component, freevars, accessed, tmpvars )
+  def __init__( s, component, freevars, accessed, tmpvars, rtlir_getter ):
+    super().__init__( component, freevars, accessed, tmpvars, rtlir_getter )
     s.type_expect[ 'Attribute' ] = {
       'value':( (rt.Component, rt.Signal),
         'the base of an attribute must be one of: component, signal!' )

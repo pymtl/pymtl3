@@ -23,11 +23,17 @@ from pymtl3.datatypes import (
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
+from pymtl3.passes.rtlir.rtype.RTLIRType import RTLIRGetter
 
 from . import BehavioralRTLIR as bir
 
 
 class BehavioralRTLIRGenL1Pass( BasePass ):
+  def __init__( s, translation_top ):
+    s.tr_top = translation_top
+    if not hasattr( translation_top, "_rtlir_getter" ):
+      translation_top._rtlir_getter = RTLIRGetter(cache=True)
+
   def __call__( s, m ):
     """Generate RTLIR for all upblks of m."""
     if not hasattr( m, '_pass_behavioral_rtlir_gen' ):

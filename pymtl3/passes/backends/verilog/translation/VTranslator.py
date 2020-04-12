@@ -62,11 +62,9 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
         template = \
 """\
 // PyMTL BitStruct {dtype_name} Definition
-// At {file_info}
 {struct_def}\
 """
         dtype_name = struct_dtype.get_name()
-        file_info = struct_dtype.get_file_info()
         struct_def = tplt['def'] + '\n'
         ret += template.format( **locals() )
 

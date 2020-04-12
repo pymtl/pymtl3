@@ -15,27 +15,37 @@ from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
 
+tot=0
 
 class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
+  def __init__( s, translation_top ):
+    s.tr_top = translation_top
+    if not hasattr( translation_top, "_rtlir_getter" ):
+      translation_top._rtlir_getter = rt.RTLIRGetter(cache=True)
+
   def __call__( s, m ):
     """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
-    visitor = BehavioralRTLIRTypeCheckVisitorL1(
+    visitor = s.get_visitor_class()(
       m,
       m._pass_behavioral_rtlir_type_check.rtlir_freevars,
-      m._pass_behavioral_rtlir_type_check.rtlir_accessed
+      m._pass_behavioral_rtlir_type_check.rtlir_accessed,
+      s.tr_top._rtlir_getter,
     )
     for blk in m.get_update_block_order():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
+  def get_visitor_class( s ):
+    return BehavioralRTLIRTypeCheckVisitorL1
+
 class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
-  def __init__( s, component, freevars, accessed ):
+  def __init__( s, component, freevars, accessed, rtlir_getter ):
     # Freevars of the same component is probably capture in the same
     # closure/global variable, so we set up RTLIR getter for each apply
-    s.rtlir_getter = rt.RTLIRGetter(cache=True)
+    s.rtlir_getter = rtlir_getter
     s.component = component
     s.freevars = freevars
     s.accessed = accessed
@@ -178,6 +188,10 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # Mark this node as having type rt.Component
     # In L1 the `s` top component is the only possible base
     node.Type = s.rtlir_getter.get_rtlir( node.base )
+    global tot
+    tot += 1
+    if tot % 100 == 0:
+      print('base', tot)
     if not isinstance( node.Type, rt.Component ):
       raise PyMTLTypeError( s.blk, node.ast,
         f'{node} is not a rt.Component!' )

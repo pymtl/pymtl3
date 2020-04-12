@@ -24,8 +24,8 @@ from pymtl3.passes.testcases import (
 
 def local_do_test( m ):
   """Check if generated behavioral RTLIR is the same as reference."""
-  m.apply( BehavioralRTLIRGenPass() )
-  m.apply( BehavioralRTLIRTypeCheckPass() )
+  m.apply( BehavioralRTLIRGenPass( m ) )
+  m.apply( BehavioralRTLIRTypeCheckPass( m ) )
   ref = m._rtlir_freevar_ref
   ns = m._pass_behavioral_rtlir_type_check
 

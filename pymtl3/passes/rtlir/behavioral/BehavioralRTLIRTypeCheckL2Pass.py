@@ -6,16 +6,16 @@
 """Provide L2 behavioral RTLIR type check pass."""
 
 from pymtl3 import Bits32
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.BasePass import PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
-from .BehavioralRTLIRTypeCheckL1Pass import BehavioralRTLIRTypeCheckVisitorL1
+from .BehavioralRTLIRTypeCheckL1Pass import BehavioralRTLIRTypeCheckL1Pass, BehavioralRTLIRTypeCheckVisitorL1
 
 
-class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
+class BehavioralRTLIRTypeCheckL2Pass( BehavioralRTLIRTypeCheckL1Pass ):
   def get_visitor_class( s ):
     return BehavioralRTLIRTypeCheckVisitorL2
 
@@ -31,15 +31,16 @@ class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
       m,
       m._pass_behavioral_rtlir_type_check.rtlir_freevars,
       m._pass_behavioral_rtlir_type_check.rtlir_accessed,
-      m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
+      m._pass_behavioral_rtlir_type_check.rtlir_tmpvars,
+      s.tr_top._rtlir_getter,
     )
 
     for blk in m.get_update_block_order():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
-  def __init__( s, component, freevars, accessed, tmpvars ):
-    super().__init__(component, freevars, accessed)
+  def __init__( s, component, freevars, accessed, tmpvars, rtlir_getter ):
+    super().__init__(component, freevars, accessed, rtlir_getter)
     s.tmpvars = tmpvars
     s.BinOp_max_nbits = (bir.Add, bir.Sub, bir.Mult, bir.Div, bir.Mod, bir.Pow,
                          bir.BitAnd, bir.BitOr, bir.BitXor)
@@ -71,7 +72,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       'body' : ( rt.Signal, 'the body of if-exp must be a signal!' ),
       'orelse' : ( rt.Signal, 'the else branch of if-exp must be a signal!' )
     }
-    s.rtlir_getter = rt.RTLIRGetter(cache=True)
 
   def eval_const_binop( s, l, op, r ):
     """Evaluate ( l op r ) and return the result as an integer."""

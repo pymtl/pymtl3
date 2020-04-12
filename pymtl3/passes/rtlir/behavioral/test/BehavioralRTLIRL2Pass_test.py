@@ -64,8 +64,8 @@ def local_do_test( m ):
   if isinstance(m, type):
     m = m.DUT()
   m.elaborate()
-  m.apply( BehavioralRTLIRGenL2Pass() )
-  m.apply( BehavioralRTLIRTypeCheckL2Pass() )
+  m.apply( BehavioralRTLIRGenL2Pass( m ) )
+  m.apply( BehavioralRTLIRTypeCheckL2Pass( m ) )
 
   try:
     ref = m._rtlir_test_ref

@@ -34,8 +34,8 @@ class BehavioralTranslatorL2( BehavioralTranslatorL1 ):
 
   # Override
   def _gen_behavioral_trans_metadata( s, m ):
-    m.apply( BehavioralRTLIRGenL2Pass() )
-    m.apply( BehavioralRTLIRTypeCheckL2Pass() )
+    m.apply( BehavioralRTLIRGenL2Pass( s.tr_top ) )
+    m.apply( BehavioralRTLIRTypeCheckL2Pass( s.tr_top ) )
     s.behavioral.rtlir[m] = m._pass_behavioral_rtlir_gen.rtlir_upblks
     s.behavioral.freevars[m] = \
         m._pass_behavioral_rtlir_type_check.rtlir_freevars

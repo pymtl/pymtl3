@@ -129,7 +129,7 @@ class VStructuralTranslatorL4(
         attr = c_id + ''.join(f'[{dim}]' for dim in _n_dim)
         obj = eval(f'm.{attr}')
         # Get the translated component name
-        obj_c_rtype = RTLIRGetter(cache=False).get_component_ifc_rtlir(obj)
+        obj_c_rtype = s.tr_top._rtlir_getter.get_rtlir(obj)
         _c_name = s.rtlir_tr_component_unique_name(obj_c_rtype)
 
         if isinstance(obj, Placeholder):

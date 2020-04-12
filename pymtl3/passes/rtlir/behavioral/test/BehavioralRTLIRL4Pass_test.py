@@ -34,8 +34,8 @@ def local_do_test( m ):
   if isinstance(m, type):
     m = m.DUT()
   m.elaborate()
-  m.apply( BehavioralRTLIRGenL4Pass() )
-  m.apply( BehavioralRTLIRTypeCheckL4Pass() )
+  m.apply( BehavioralRTLIRGenL4Pass( m ) )
+  m.apply( BehavioralRTLIRTypeCheckL4Pass( m ) )
   m.apply( BehavioralRTLIRVisualizationPass() )
 
   try:

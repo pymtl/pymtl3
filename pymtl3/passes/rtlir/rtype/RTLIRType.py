@@ -507,6 +507,7 @@ def is_rtlir_convertible( obj ):
 # a global cache that invalidates garbage collection
 
 NA = "<N/A>"
+uncached=0
 class RTLIRGetter:
   ifc_primitive_types = ( dsl.InPort, dsl.OutPort, dsl.Interface )
 
@@ -514,8 +515,8 @@ class RTLIRGetter:
     if cache:
       self._rtlir_cache = {}
       self.get_rtlir = self._get_rtlir_cached
-      # self.cache_hit = 0
-      # self.cache_miss = 0
+      self.cache_hit = 0
+      self.cache_miss = 0
     else:
       self.get_rtlir = self._get_rtlir_uncached
 
@@ -577,12 +578,40 @@ class RTLIRGetter:
       msg = '' if e.args[0] is None else e.args[0]
       raise RTLIRConversionError( obj, msg )
 
+  def _handle_Component( self, c_id, obj ):
+    properties = {}
+    collected_objs = collect_objs( obj, object )
+    for _id, _obj in collected_objs:
+      # Untranslatable attributes will be ignored
+      if is_rtlir_convertible( _obj ):
+        _obj_type = self.get_rtlir( _obj )
+        if _obj_type is not None:
+          properties[ _id ] = _obj_type
+          if isinstance( _obj_type, Array ):
+            _add_packed_instances( _id, _obj_type, properties )
+      # TODO: Figure out a way to inform user of dropped attributes without
+      # flooding STDOUT
+      # else:
+        # err_msg = \
+  # """\
+   # - Note: {} attribute {} of {} was dropped during conversion to RTLIR because it is
+           # not a port, a, wire, an interface, a component, a constantor, or a
+           # list of them. \
+  # """
+        # print( err_msg.format( _id, _obj, c_id ) )
+    return Component( obj, properties )
+
   def _get_rtlir_uncached( self, _obj ):
+    global uncached
     """Return an RTLIR instance corresponding to `obj`."""
     obj = _freeze( _obj )
+
     try:
       for Type, handler in self._RTLIR_handlers:
         if isinstance( _obj, Type ):
+          uncached +=1
+          if uncached % 100 == 0:
+            print('uncached', uncached, repr(_obj), handler)
           return handler( "<NA>", _obj )
       if is_bitstruct_inst( _obj ):
         return self._handle_Const( "<NA>", _obj )
@@ -597,14 +626,14 @@ class RTLIRGetter:
     """Return an RTLIR instance corresponding to `obj`."""
     obj = _freeze( _obj )
     if obj in self._rtlir_cache:
-      # self.cache_hit += 1
-      # if self.cache_hit % 1 == 0:
-        # print("hit", self.cache_hit, _obj)
+      self.cache_hit += 1
+      if self.cache_hit % 100 == 0:
+        print("hit", self.cache_hit, repr(_obj))
       return self._rtlir_cache[ obj ]
     else:
-      # self.cache_miss += 1
-      # if self.cache_miss % 1 == 0:
-        # print("miss", self.cache_miss, _obj)
+      self.cache_miss += 1
+      if self.cache_miss % 100 == 0:
+        print("miss", self.cache_miss, repr(_obj))
       try:
         for Type, handler in self._RTLIR_handlers:
           if isinstance( _obj, Type ):
@@ -621,12 +650,13 @@ class RTLIRGetter:
         raise RTLIRConversionError( _obj, msg )
 
   def _handle_Array( self, _id, _obj ):
+    if not _obj: return None
+
     obj = _obj
-    if len( obj ) == 0:
-      return None
     ref_type = self.get_rtlir( obj[0] )
-    assert all( self.get_rtlir(i) == ref_type for i in obj ), \
-      f'all elements of array {obj} must have the same type {repr(ref_type)}!'
+    for x in obj[1:]:
+      assert self.get_rtlir(x) == ref_type, \
+             f'all elements of array {obj} must have the same type {repr(ref_type)}!'
 
     dim_sizes = []
     while isinstance( obj, list ):

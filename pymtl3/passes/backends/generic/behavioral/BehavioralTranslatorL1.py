@@ -30,7 +30,6 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   #-----------------------------------------------------------------------
 
   def gen_behavioral_trans_metadata( s, tr_top ):
-    s.rtlir_getter = rt.RTLIRGetter()
     s.behavioral.rtlir = {}
     s.behavioral.freevars = {}
     s.behavioral.accessed = {}
@@ -45,8 +44,8 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   #-----------------------------------------------------------------------
 
   def _gen_behavioral_trans_metadata( s, m ):
-    m.apply( BehavioralRTLIRGenL1Pass() )
-    m.apply( BehavioralRTLIRTypeCheckL1Pass() )
+    m.apply( BehavioralRTLIRGenL1Pass( s.tr_top ) )
+    m.apply( BehavioralRTLIRTypeCheckL1Pass( s.tr_top ) )
     s.behavioral.rtlir[m] = \
         m._pass_behavioral_rtlir_gen.rtlir_upblks
     s.behavioral.freevars[m] = \
