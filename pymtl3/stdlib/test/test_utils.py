@@ -97,11 +97,17 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
 
   if test_verilog:
-    model.config_verilog_import = VerilatorImportConfigs(
-      vl_xinit = test_verilog,
-    )
+    if not hasattr( model, 'config_verilog_import' ):
+      model.config_verilog_import = VerilatorImportConfigs(
+        vl_xinit = test_verilog,
+      )
+    else:
+      model.config_verilog_import = VerilatorImportConfigs(
+        vl_xinit = test_verilog,
+      )
     model.verilog_translate_import = True
 
+  model.apply( VerilogPlaceholderPass() )
   model = TranslationImportPass()( model )
 
   # Create a simulator
