@@ -507,7 +507,7 @@ def is_rtlir_convertible( obj ):
 # a global cache that invalidates garbage collection
 
 NA = "<N/A>"
-uncached=0
+# uncached=0
 class RTLIRGetter:
   ifc_primitive_types = ( dsl.InPort, dsl.OutPort, dsl.Interface )
 
@@ -602,16 +602,16 @@ class RTLIRGetter:
     return Component( obj, properties )
 
   def _get_rtlir_uncached( self, _obj ):
-    global uncached
+    # global uncached
     """Return an RTLIR instance corresponding to `obj`."""
     obj = _freeze( _obj )
 
     try:
       for Type, handler in self._RTLIR_handlers:
         if isinstance( _obj, Type ):
-          uncached +=1
-          if uncached % 100 == 0:
-            print('uncached', uncached, repr(_obj), handler)
+          # uncached +=1
+          # if uncached % 100 == 0:
+            # print('uncached', uncached, repr(_obj), handler)
           return handler( "<NA>", _obj )
       if is_bitstruct_inst( _obj ):
         return self._handle_Const( "<NA>", _obj )
