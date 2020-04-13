@@ -22,21 +22,18 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
     """
 
     # Override
-    def __init__( s, top ):
-      super().__init__( top )
-
-    # Override
     def clear( s, tr_top, tr_cfgs ):
       s.tr_cfgs = tr_cfgs
       s.hierarchy = TranslatorMetadata()
       super().clear( tr_top )
 
     def _gen_hierarchy_metadata( s, structural_ns, hierarchy_ns ):
-      metadata = getattr( s.structural, structural_ns, [] )
-      List = getattr( s.hierarchy, hierarchy_ns )
-      for Type, data in metadata:
-        if not any( x[0] == Type for x in List ):
-          List.append( ( Type, data ) )
+      metadata = getattr( s.structural, structural_ns, {} )
+      result = getattr( s.hierarchy, hierarchy_ns )
+
+      for Type, data in metadata.items():
+        if Type not in result:
+          result[ Type ] = data
 
     # Override
     def translate( s, tr_top, tr_cfgs = None ):
@@ -49,16 +46,16 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
             setattr( ns, name, metadata_d[m] )
         return ns
 
-      def translate_component( m, components, translated ):
+      def translate_component( m, components ):
         for child in m.get_child_components(repr):
-          translate_component( child, components, translated )
-        if not s.structural.component_unique_name[m] in translated:
-          components.append(
-            s.rtlir_tr_component(
+          translate_component( child, components )
+
+        name = s.structural.component_unique_name[m]
+        if name not in components:
+          components[name] = s.rtlir_tr_component(
               get_component_nspace( s.behavioral, m ),
               get_component_nspace( s.structural, m ),
-          ) )
-          translated.append( s.structural.component_unique_name[m] )
+          )
         s._gen_hierarchy_metadata( 'decl_type_vector', 'decl_type_vector' )
         s._gen_hierarchy_metadata( 'decl_type_array', 'decl_type_array'   )
         s._gen_hierarchy_metadata( 'decl_type_struct', 'decl_type_struct' )
@@ -68,16 +65,16 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
 
       s.component = {}
       # Generate backend representation for each component
-      s.hierarchy.components = []
-      s.hierarchy.decl_type_vector = []
-      s.hierarchy.decl_type_array = []
-      s.hierarchy.decl_type_struct = []
+      s.hierarchy.components = {}
+      s.hierarchy.decl_type_vector = {}
+      s.hierarchy.decl_type_array = {}
+      s.hierarchy.decl_type_struct = {}
 
       try:
         s.rtlir_tr_initialize()
         s.translate_behavioral( s.tr_top )
         s.translate_structural( s.tr_top )
-        translate_component( s.tr_top, s.hierarchy.components, [] )
+        translate_component( s.tr_top, s.hierarchy.components )
       except AssertionError as e:
         msg = '' if e.args[0] is None else e.args[0]
         raise RTLIRTranslationError( s.tr_top, msg )

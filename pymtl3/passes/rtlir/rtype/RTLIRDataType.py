@@ -58,7 +58,7 @@ class Struct( BaseRTLIRDataType ):
     s.name = name
     s.properties = properties
     s.cls = cls
-    if cls is not None:
+    # if cls is not None:
       # try:
       #   file_name = inspect.getsourcefile( cls )
       #   s.file_info = f"{file_name}"
@@ -67,9 +67,9 @@ class Struct( BaseRTLIRDataType ):
       # except OSError:
       # With the current way of generating BitStructs it is no
       # longer possible to report the file in which it was generated.
-      s.file_info = f"BitStruct {cls.__name__}"
-    else:
-      s.file_info = "Not available"
+      # s.file_info = f"BitStruct {cls.__name__}"
+    # else:
+      # s.file_info = "Not available"
 
   def __eq__( s, u ):
     return isinstance(u, Struct) and s.name == u.name
@@ -80,8 +80,8 @@ class Struct( BaseRTLIRDataType ):
   def get_name( s ):
     return s.name
 
-  def get_file_info( s ):
-    return s.file_info
+  # def get_file_info( s ):
+    # return s.file_info
 
   def get_class( s ):
     return s.cls

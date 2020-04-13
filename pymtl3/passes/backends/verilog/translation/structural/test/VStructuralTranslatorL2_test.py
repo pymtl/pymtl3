@@ -37,8 +37,9 @@ def run_test( case, m ):
   check_eq( ports, case.REF_PORT )
   check_eq( wires, case.REF_WIRE )
   check_eq( conns, case.REF_CONN )
-  assert structs[-1][0] == case.REF_STRUCT[0]
-  check_eq( structs[-1][1]['def'], case.REF_STRUCT[1] )
+
+  assert list(structs.keys())[-1] == case.REF_STRUCT[0]
+  check_eq( list(structs.values())[-1]['def'], case.REF_STRUCT[1] )
 
 @pytest.mark.parametrize(
   'case', [

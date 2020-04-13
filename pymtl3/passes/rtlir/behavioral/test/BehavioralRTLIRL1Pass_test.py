@@ -109,8 +109,8 @@ def local_do_test( m ):
   """Check if generated behavioral RTLIR is the same as reference."""
   m = m.DUT()
   m.elaborate()
-  m.apply( BehavioralRTLIRGenL1Pass() )
-  m.apply( BehavioralRTLIRTypeCheckL1Pass() )
+  m.apply( BehavioralRTLIRGenL1Pass( m ) )
+  m.apply( BehavioralRTLIRTypeCheckL1Pass( m ) )
 
   try:
     ref = m._rtlir_test_ref

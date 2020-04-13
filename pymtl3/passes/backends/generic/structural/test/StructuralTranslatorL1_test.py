@@ -50,7 +50,8 @@ def run_test( case, m ):
     connections = tr.structural.connections[m]
     assert connections == case.REF_CONN
     vector_types = tr.structural.decl_type_vector
-    assert sorted(vector_types, key=lambda x: str(x[0])) == case.REF_VECTOR
+
+    assert list(vector_types.items()) == case.REF_VECTOR
   except AttributeError:
     pass
 

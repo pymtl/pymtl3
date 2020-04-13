@@ -5,40 +5,45 @@
 # Date   : March 29, 2019
 """Provide L2 behavioral RTLIR type check pass."""
 
-from collections import OrderedDict
-
 from pymtl3 import Bits32
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.BasePass import PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
-from .BehavioralRTLIRTypeCheckL1Pass import BehavioralRTLIRTypeCheckVisitorL1
+from .BehavioralRTLIRTypeCheckL1Pass import (
+    BehavioralRTLIRTypeCheckL1Pass,
+    BehavioralRTLIRTypeCheckVisitorL1,
+)
 
 
-class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
+class BehavioralRTLIRTypeCheckL2Pass( BehavioralRTLIRTypeCheckL1Pass ):
+  def get_visitor_class( s ):
+    return BehavioralRTLIRTypeCheckVisitorL2
+
   def __call__( s, m ):
     """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
-    m._pass_behavioral_rtlir_type_check.rtlir_freevars = OrderedDict()
-    m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = OrderedDict()
+    m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
 
-    visitor = BehavioralRTLIRTypeCheckVisitorL2(
+    visitor = s.get_visitor_class()(
       m,
       m._pass_behavioral_rtlir_type_check.rtlir_freevars,
       m._pass_behavioral_rtlir_type_check.rtlir_accessed,
-      m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
+      m._pass_behavioral_rtlir_type_check.rtlir_tmpvars,
+      s.tr_top._rtlir_getter,
     )
 
     for blk in m.get_update_block_order():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
-  def __init__( s, component, freevars, accessed, tmpvars ):
-    super().__init__(component, freevars, accessed)
+  def __init__( s, component, freevars, accessed, tmpvars, rtlir_getter ):
+    super().__init__(component, freevars, accessed, rtlir_getter)
     s.tmpvars = tmpvars
     s.BinOp_max_nbits = (bir.Add, bir.Sub, bir.Mult, bir.Div, bir.Mod, bir.Pow,
                          bir.BitAnd, bir.BitOr, bir.BitXor)
@@ -46,29 +51,29 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     s.type_expect = {}
     lhs_types = ( rt.Port, rt.Wire, rt.NetWire, rt.NoneType )
 
-    s.type_expect[ 'Assign' ] = {
-      'targets' : ( lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
-      'value'   : ( rt.Signal, 'rhs of assignment should be signal/const!' )
-    }
-    s.type_expect[ 'BinOp' ] = {
-      'left' : ( rt.Signal, 'lhs of binop should be signal/const!' ),
-      'right' : ( rt.Signal, 'rhs of binop should be signal/const!' ),
-    }
-    s.type_expect[ 'UnaryOp' ] = {
-      'operand' : ( rt.Signal, 'unary op only applies to signals and consts!' )
-    }
-    s.type_expect[ 'For' ] = {
-      'start' : ( rt.Const, 'the start of a for-loop must be a constant expression!' ),
-      'end':( rt.Const, 'the end of a for-loop must be a constant expression!' ),
-      'step':( rt.Const, 'the step of a for-loop must be a constant expression!' )
-    }
-    s.type_expect[ 'If' ] = {
-      'cond' : ( rt.Signal, 'the condition of if must be a signal!' )
-    }
+    s.type_expect[ 'Assign' ] = (
+      ( 'targets', lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
+      ( 'value',   rt.Signal, 'rhs of assignment should be signal/const!' ),
+    )
+    s.type_expect[ 'BinOp' ] = (
+      ( 'left',    rt.Signal, 'lhs of binop should be signal/const!' ),
+      ( 'right',   rt.Signal, 'rhs of binop should be signal/const!' ),
+    )
+    s.type_expect[ 'UnaryOp' ] = (
+      ( 'operand', rt.Signal, 'unary op only applies to signals and consts!' ),
+    )
+    s.type_expect[ 'For' ] = (
+      ( 'start',   rt.Const, 'the start of a for-loop must be a constant expression!' ),
+      ( 'end',     rt.Const, 'the end of a for-loop must be a constant expression!' ),
+      ( 'step',    rt.Const, 'the step of a for-loop must be a constant expression!' ),
+    )
+    s.type_expect[ 'If' ] = (
+      ( 'cond',    rt.Signal, 'the condition of if must be a signal!' ),
+    )
     s.type_expect[ 'IfExp' ] = {
-      'cond' : ( rt.Signal, 'the condition of if-exp must be a signal!' ),
-      'body' : ( rt.Signal, 'the body of if-exp must be a signal!' ),
-      'orelse' : ( rt.Signal, 'the else branch of if-exp must be a signal!' )
+      ( 'cond',    rt.Signal, 'the condition of if-exp must be a signal!' ),
+      ( 'body',    rt.Signal, 'the body of if-exp must be a signal!' ),
+      ( 'orelse',  rt.Signal, 'the else branch of if-exp must be a signal!' ),
     }
 
   def eval_const_binop( s, l, op, r ):

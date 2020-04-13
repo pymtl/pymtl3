@@ -6,8 +6,8 @@
 """Provide helper methods that might be useful to verilog passes."""
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRGetter
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.rtlir import get_component_ifc_rtlir
 
 #-----------------------------------------------------------------------
 # gen_packed_ports
@@ -40,7 +40,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
   """
 
   def _mangle_vector( pname, vname, port, dtype, port_idx ):
-    return [([pname], port_map[pname] if pname in port_map else vname, 
+    return [([pname], port_map[pname] if pname in port_map else vname,
              rt.Port(port.direction, dtype), port_idx)]
 
   def _mangle_struct( pname, vname, port, dtype, port_idx ):
@@ -103,7 +103,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
 
   # We start from all packed ports/interfaces, and unpack arrays if
   # it is found in a port.
-  rtype = get_component_ifc_rtlir(m)
+  rtype = RTLIRGetter(cache=False).get_component_ifc_rtlir(m)
   ret = []
 
   for name, port in rtype.get_ports_packed():
