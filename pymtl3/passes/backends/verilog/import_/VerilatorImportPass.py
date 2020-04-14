@@ -24,8 +24,8 @@ from pymtl3.dsl import Component
 from pymtl3.dsl.errors import UnsetMetadataError
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRGetter
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.rtlir import get_component_ifc_rtlir
 
 from ..errors import VerilogImportError
 from ..util.utility import (
@@ -335,7 +335,7 @@ class VerilatorImportPass( BasePass ):
     ip_cfg = m.get_metadata( c.import_config )
     ip_cfg.setup_configs( m, c.get_translation_pass(), c.get_placeholder_pass() )
 
-    rtype = get_component_ifc_rtlir( m )
+    rtype = RTLIRGetter(cache=False).get_component_ifc_rtlir( m )
 
     # Now we selectively unpack array of ports if they are referred to in
     # port_map

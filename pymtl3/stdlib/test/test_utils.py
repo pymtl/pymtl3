@@ -99,6 +99,7 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
     model.set_metadata( VerilatorImportPass.vl_xinit, test_verilog )
     model.set_metadata( TranslationImportPass.enable, True )
 
+  model.apply( VerilogPlaceholderPass() )
   model = TranslationImportPass()( model )
 
   # Create a simulator

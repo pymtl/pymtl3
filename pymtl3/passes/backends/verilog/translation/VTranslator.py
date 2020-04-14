@@ -48,9 +48,9 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
 
     def rtlir_tr_src_layout( s, hierarchy ):
       # Sanity check on BitStructs
-      all_structs = list(map(lambda x: x[0], hierarchy.decl_type_struct))
-      all_struct_names = list(map(lambda x: x.cls.__name__, all_structs))
-      for struct in all_structs:
+      all_struct_names = { x.cls.__name__ for x in hierarchy.decl_type_struct }
+
+      for struct in hierarchy.decl_type_struct.keys():
         for field_name in struct.get_all_properties().keys():
           if field_name in all_struct_names:
             raise VerilogStructuralTranslationError(struct,
@@ -61,15 +61,13 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       ret = s.header.format( **locals() )
 
       # Add struct definitions
-      for struct_dtype, tplt in hierarchy.decl_type_struct:
+      for struct_dtype, tplt in hierarchy.decl_type_struct.items():
         template = \
 """\
 // PyMTL BitStruct {dtype_name} Definition
-// At {file_info}
 {struct_def}\
 """
         dtype_name = struct_dtype.get_name()
-        file_info = struct_dtype.get_file_info()
         struct_def = tplt['def'] + '\n'
         ret += template.format( **locals() )
 
@@ -78,7 +76,7 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       return ret
 
     def rtlir_tr_components( s, components ):
-      return "\n\n".join( components )
+      return "\n\n".join( components.values() )
 
     def rtlir_tr_component( s, behavioral, structural ):
       component_name = structural.component_name
@@ -86,8 +84,7 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       full_name = structural.component_full_name
 
       if structural.component_explicit_module_name:
-        module_name = \
-            structural.component_explicit_module_name
+        module_name = structural.component_explicit_module_name
       elif structural.component_is_top and s._mangled_placeholder_top_module_name:
         module_name = s._mangled_placeholder_top_module_name
       else:

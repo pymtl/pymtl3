@@ -34,8 +34,8 @@ from ..VBehavioralTranslatorL1 import BehavioralRTLIRToVVisitorL1
 
 def run_test( case, m ):
   m.elaborate()
-  m.apply( BehavioralRTLIRGenPass() )
-  m.apply( BehavioralRTLIRTypeCheckPass() )
+  m.apply( BehavioralRTLIRGenPass( m ) )
+  m.apply( BehavioralRTLIRTypeCheckPass( m ) )
 
   visitor = BehavioralRTLIRToVVisitorL1(lambda x: x in verilog_reserved)
   upblks = m._pass_behavioral_rtlir_gen.rtlir_upblks

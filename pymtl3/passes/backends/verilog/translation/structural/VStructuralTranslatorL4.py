@@ -10,8 +10,8 @@ from pymtl3.passes.backends.generic.structural.StructuralTranslatorL4 import (
     StructuralTranslatorL4,
 )
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRGetter
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.rtlir import get_component_ifc_rtlir
 
 from ...util.utility import make_indent, pretty_concat
 from .VStructuralTranslatorL3 import VStructuralTranslatorL3
@@ -135,7 +135,7 @@ class VStructuralTranslatorL4(
         attr = c_id + ''.join(f'[{dim}]' for dim in _n_dim)
         obj = eval(f'm.{attr}')
         # Get the translated component name
-        obj_c_rtype = get_component_ifc_rtlir(obj)
+        obj_c_rtype = s.tr_top._rtlir_getter.get_rtlir(obj)
         _c_name = s.rtlir_tr_component_unique_name(obj_c_rtype)
 
         if isinstance(obj, Placeholder):

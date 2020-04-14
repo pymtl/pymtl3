@@ -20,8 +20,6 @@ from .BehavioralTranslatorL0 import BehavioralTranslatorL0
 
 
 class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
-  def __init__( s, top ):
-    super().__init__( top )
 
   def clear( s, tr_top ):
     super().clear( tr_top )
@@ -46,8 +44,8 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   #-----------------------------------------------------------------------
 
   def _gen_behavioral_trans_metadata( s, m ):
-    m.apply( BehavioralRTLIRGenL1Pass() )
-    m.apply( BehavioralRTLIRTypeCheckL1Pass() )
+    m.apply( BehavioralRTLIRGenL1Pass( s.tr_top ) )
+    m.apply( BehavioralRTLIRTypeCheckL1Pass( s.tr_top ) )
     s.behavioral.rtlir[m] = \
         m._pass_behavioral_rtlir_gen.rtlir_upblks
     s.behavioral.freevars[m] = \
@@ -96,16 +94,15 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
 
     # Generate free variable declarations
     freevars = []
-    for name, fvar in s.behavioral.freevars[m].items():
-      freevars.append( s.translate_freevar( name, fvar ) )
+    for name, (fvar, rtype) in s.behavioral.freevars[m].items():
+      freevars.append( s.translate_freevar( name, fvar, rtype ) )
     s.behavioral.decl_freevars[m] = s.rtlir_tr_behavioral_freevars(freevars)
 
   #-----------------------------------------------------------------------
   # translate_freevar
   #-----------------------------------------------------------------------
 
-  def translate_freevar( s, name, fvar ):
-    rtype = rt.get_rtlir( fvar )
+  def translate_freevar( s, name, fvar, rtype ):
     if isinstance( rtype, rt.Array ):
       fvar_rtype = rtype.get_sub_type()
       array_rtype = rtype

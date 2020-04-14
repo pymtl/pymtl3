@@ -7,7 +7,7 @@
 
 import copy
 import math
-from collections import OrderedDict, deque
+from collections import deque
 from contextlib import contextmanager
 
 from pymtl3.datatypes import Bits32, mk_bits
@@ -17,27 +17,42 @@ from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
+from .BehavioralRTLIR import BaseBehavioralRTLIR
 
 
 class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
+  def __init__( s, translation_top ):
+    s.tr_top = translation_top
+    if not hasattr( translation_top, "_rtlir_getter" ):
+      translation_top._rtlir_getter = rt.RTLIRGetter(cache=True)
+
   def __call__( s, m ):
     """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
-    m._pass_behavioral_rtlir_type_check.rtlir_freevars = OrderedDict()
+    m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
-    type_checker = BehavioralRTLIRTypeCheckVisitorL1(
-      m, m._pass_behavioral_rtlir_type_check.rtlir_freevars,
-      m._pass_behavioral_rtlir_type_check.rtlir_accessed )
+    type_checker = s.get_visitor_class()(
+      m,
+      m._pass_behavioral_rtlir_type_check.rtlir_freevars,
+      m._pass_behavioral_rtlir_type_check.rtlir_accessed,
+      s.tr_top._rtlir_getter,
+    )
     for blk in m.get_update_block_order():
       type_checker.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
-#-------------------------------------------------------------------------
-# Type checker
-#-------------------------------------------------------------------------
+  #-------------------------------------------------------------------------
+  # Type checker
+  #-------------------------------------------------------------------------
+
+  def get_visitor_class( s ):
+    return BehavioralRTLIRTypeCheckVisitorL1
 
 class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
-  def __init__( s, component, freevars, accessed ):
+  def __init__( s, component, freevars, accessed, rtlir_getter ):
+    # Freevars of the same component is probably capture in the same
+    # closure/global variable, so we set up RTLIR getter for each apply
+    s.rtlir_getter = rtlir_getter
     s.component = component
     s.freevars = freevars
     s.accessed = accessed
@@ -55,34 +70,34 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     lhs_types = ( rt.Port, rt.Wire, rt.NetWire )
     index_types = ( rt.Port, rt.Wire, rt.Array )
     slice_types = ( rt.Port, rt.Wire )
-    s.type_expect[ 'Assign' ] = {
-      'targets' : ( lhs_types, 'lhs of assignment must be a signal!' ),
-      'value'   : ( rt.Signal, 'rhs of assignment should be signal or const!' )
-    }
-    s.type_expect[ 'ZeroExt' ] = {
-      'value':( rt.Signal, 'extension only applies to signals!' )
-    }
-    s.type_expect[ 'SignExt' ] = {
-      'value':( rt.Signal, 'extension only applies to signals!' )
-    }
-    s.type_expect[ 'Reduce' ] = {
-      'value':( rt.Signal, 'reduce only applies on a signal!' )
-    }
-    s.type_expect[ 'SizeCast' ] = {
-      'value':( rt.Signal, 'size casting only applies to signals/consts!' )
-    }
-    s.type_expect[ 'Attribute' ] = {
-      'value':( rt.Component, 'the base of an attribute must be a component!' )
-    }
-    s.type_expect[ 'Index' ] = {
-      'idx':( rt.Signal, 'index must be a signal or constant expression!' ),
-      'value':( index_types, 'the base of an index must be an array or signal!' )
-    }
-    s.type_expect[ 'Slice' ] = {
-      'value':( slice_types, 'the base of a slice must be a signal!' ),
-      'lower':( rt.Signal, 'upper of slice must be a constant expression!' ),
-      'upper':( rt.Signal, 'lower of slice must be a constant expression!' )
-    }
+    s.type_expect[ 'Assign' ] = (
+      ( 'targets', lhs_types, 'lhs of assignment must be a signal!' ),
+      ( 'value',   rt.Signal, 'rhs of assignment should be signal or const!' ),
+    )
+    s.type_expect[ 'ZeroExt' ] = (
+      ( 'value',   rt.Signal, 'extension only applies to signals!' ),
+    )
+    s.type_expect[ 'SignExt' ] = (
+      ( 'value',   rt.Signal, 'extension only applies to signals!' ),
+    )
+    s.type_expect[ 'Reduce' ] = (
+      ( 'value',   rt.Signal, 'reduce only applies on a signal!' ),
+    )
+    s.type_expect[ 'SizeCast' ] = (
+      ( 'value',   rt.Signal, 'size casting only applies to signals/consts!' ),
+    )
+    s.type_expect[ 'Attribute' ] = (
+      ( 'value',   rt.Component, 'the base of an attribute must be a component!' ),
+    )
+    s.type_expect[ 'Index' ] = (
+      ( 'idx',     rt.Signal, 'index must be a signal or constant expression!' ),
+      ( 'value',   index_types, 'the base of an index must be an array or signal!' ),
+    )
+    s.type_expect[ 'Slice' ] = (
+      ( 'value',   slice_types, 'the base of a slice must be a signal!' ),
+      ( 'lower',   rt.Signal, 'upper of slice must be a constant expression!' ),
+      ( 'upper',   rt.Signal, 'lower of slice must be a constant expression!' ),
+    )
 
   def enter( s, blk, rtlir ):
     """ entry point for RTLIR type checking """
@@ -121,25 +136,25 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       if node_name == 'For' and field == 'body': continue
       if isinstance( value, list ):
         for item in value:
-          if isinstance( item, bir.BaseBehavioralRTLIR ):
+          if isinstance( item, BaseBehavioralRTLIR ):
             s.visit( item )
-      elif isinstance( value, bir.BaseBehavioralRTLIR ):
+      elif isinstance( value, BaseBehavioralRTLIR ):
         s.visit( value )
 
     # Then verify that all child nodes have desired types
     try:
+      node_vars = vars(node)
       # Check the expected types of child nodes
-      for field, type_rule in s.type_expect[node_name].items():
-        value = vars(node)[field]
-        target_type = type_rule[ 0 ]
-        exception_msg = type_rule[ 1 ]
+      for field, target_type, error_msg in s.type_expect[node_name]:
+        value = node_vars[ field ]
+
         if isinstance( value, list ):
           for v in value:
-            if eval( 'not isinstance( v.Type, target_type )' ):
-              raise PyMTLTypeError( s.blk, node.ast, exception_msg )
+            if not isinstance( v.Type, target_type ):
+              raise PyMTLTypeError( s.blk, node.ast, error_msg )
         else:
-          if eval( 'not isinstance( value.Type, target_type )' ):
-            raise PyMTLTypeError( s.blk, node.ast, exception_msg )
+          if not isinstance( value.Type, target_type ):
+            raise PyMTLTypeError( s.blk, node.ast, error_msg )
     except PyMTLTypeError:
       raise
     except Exception:
@@ -193,11 +208,8 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     node._is_explicit = True
 
   def visit_FreeVar( s, node ):
-    if node.name not in s.freevars:
-      s.freevars[ node.name ] = node.obj
-
     try:
-      t = rt.get_rtlir( node.obj )
+      t = s.rtlir_getter.get_rtlir( node.obj )
     except RTLIRConversionError as e:
       raise PyMTLTypeError(s.blk, node.ast,
         f'{node.name} cannot be converted into a valid RTLIR object!' )
@@ -207,10 +219,13 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     node.Type = t
     node._is_explicit = False if isinstance(node.obj, int) else True
 
+    if node.name not in s.freevars:
+      s.freevars[ node.name ] = ( node.obj, t )
+
   def visit_Base( s, node ):
     # Mark this node as having type rt.Component
     # In L1 the `s` top component is the only possible base
-    node.Type = rt.get_rtlir( node.base )
+    node.Type = s.rtlir_getter.get_rtlir( node.base )
     node._is_explicit = True
     if not isinstance( node.Type, rt.Component ):
       raise PyMTLTypeError( s.blk, node.ast,
@@ -219,7 +234,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_Number( s, node ):
     # By default, number literals have the minimal bitwidth that can
     # hold its value without truncation.
-    node.Type = rt.get_rtlir( node.value )
+    node.Type = s.rtlir_getter.get_rtlir( node.value )
     node._value = int(node.value)
     node._is_explicit = False
 

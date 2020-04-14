@@ -204,7 +204,7 @@ def DataStrategy( draw, dut ):
 
   ret = []
   dut.elaborate()
-  rifc = rt.get_component_ifc_rtlir( dut )
+  rifc = rt.RTLIRGetter(cache=False).get_component_ifc_rtlir( dut )
   ports = rifc.get_ports_packed()
   ifcs = rifc.get_ifc_views_packed()
 

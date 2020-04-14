@@ -36,7 +36,8 @@ def run_test( case, m ):
     connections = tr.structural.connections[m]
     assert connections == case.REF_CONN
     struct_types = tr.structural.decl_type_struct
-    assert sorted(struct_types, key=lambda x: str(x[1])) == case.REF_STRUCT
+
+    assert sorted(struct_types.items(), key=lambda x: str(x[1])) == case.REF_STRUCT
   except AttributeError:
     pass
 

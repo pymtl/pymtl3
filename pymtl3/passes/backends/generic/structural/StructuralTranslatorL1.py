@@ -86,8 +86,8 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     s.gen_structural_trans_metadata( tr_top )
 
     # Data type declaration
-    s.structural.decl_type_vector = []
-    s.structural.decl_type_array  = []
+    s.structural.decl_type_vector = {}
+    s.structural.decl_type_array  = {}
 
   #-----------------------------------------------------------------------
   # gen_structural_trans_metadata
@@ -280,8 +280,8 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
       if isinstance( dtype, rdt.Bool ):
         dtype = rdt.Vector( 1 )
       ret = s.rtlir_tr_vector_dtype( dtype )
-      if all( dtype != x[0] for x in s.structural.decl_type_vector ):
-        s.structural.decl_type_vector.append( ( dtype, ret ) )
+      if dtype not in s.structural.decl_type_vector:
+        s.structural.decl_type_vector[ dtype ] = ret
       return ret
 
     else:

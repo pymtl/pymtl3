@@ -12,8 +12,8 @@ from collections import deque
 from hashlib import blake2b
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRGetter
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.rtlir import get_component_ifc_rtlir
 from pymtl3.passes.rtlir.util.utility import get_component_full_name
 
 
@@ -256,7 +256,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True, sep='__' ):
 
   # We start from all packed ports/interfaces, and unpack arrays if
   # it is found in a port.
-  rtype = get_component_ifc_rtlir(m)
+  rtype = RTLIRGetter(cache=False).get_component_ifc_rtlir(m)
   ret = []
 
   for name, port in rtype.get_ports_packed():

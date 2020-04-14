@@ -29,11 +29,6 @@ module {harness_name};
 
   {signal_decls};
 
-  `ifdef UNPACKED_TO_PACKED_ARRAY_IO
-  {packed_decls};
-  {packed_assigns};
-  `endif
-
   task t(
     {task_signal_decls},
     integer lineno
@@ -53,11 +48,7 @@ module {harness_name};
   (
     {dut_clk_decl},
     {dut_reset_decl},
-    `ifdef UNPACKED_TO_PACKED_ARRAY_IO
-    {dut_packed_decls}
-    `else
     {dut_signal_decls}
-    `endif
   );
 
   initial begin

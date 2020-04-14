@@ -41,8 +41,8 @@ def local_do_test( m ):
 
   ref = m._rtlir_test_ref
   m.elaborate()
-  m.apply( BehavioralRTLIRGenPass() )
-  m.apply( BehavioralRTLIRTypeCheckPass() )
+  m.apply( BehavioralRTLIRGenPass( m ) )
+  m.apply( BehavioralRTLIRTypeCheckPass( m ) )
   m.apply( BehavioralRTLIRVisualizationPass() )
 
   for blk in m.get_update_blocks():

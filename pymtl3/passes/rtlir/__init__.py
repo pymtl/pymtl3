@@ -11,5 +11,5 @@ from .behavioral import (
 )
 from .rtype import RTLIRDataType, RTLIRType
 from .rtype.RTLIRDataType import get_rtlir_dtype
-from .rtype.RTLIRType import get_component_ifc_rtlir, get_rtlir, is_rtlir_convertible
+from .rtype.RTLIRType import RTLIRGetter
 from .structural import StructuralRTLIRGenPass, StructuralRTLIRSignalExpr
