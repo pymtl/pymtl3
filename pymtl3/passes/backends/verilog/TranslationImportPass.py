@@ -103,13 +103,16 @@ class TranslationImportPass( BasePass ):
   def get_placeholder_config():
     return VerilogPlaceholderConfigs
 
-  @staticmethod
-  def get_hierarchy_v_include( m ):
+  # This recursive method needs to be a class method
+  @classmethod
+  def get_hierarchy_v_include( c, m ):
     all_v_includes = set()
-    if isinstance( m, Placeholder ) and hasattr( m, 'config_placeholder' ):
-      for v_include in m.config_placeholder.v_include:
+    ph_config_key = c.get_placeholder_pass().placeholder_config
+    if isinstance( m, Placeholder ) and m.has_metadata( ph_config_key ):
+      ph_config = m.get_metadata( ph_config_key )
+      for v_include in ph_config.v_include:
         all_v_includes.add( v_include )
     else:
       for child in m.get_child_components(repr):
-        all_v_includes |= s.get_hierarchy_v_include( child )
+        all_v_includes |= c.get_hierarchy_v_include( child )
     return all_v_includes

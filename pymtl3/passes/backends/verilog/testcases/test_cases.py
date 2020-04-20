@@ -100,6 +100,14 @@ class Bits32VRegComp( Placeholder, Component ):
     s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VReg.v' )
     s.set_metadata( VerilogPlaceholderPass.top_module, 'VReg' )
 
+class Bits32VRegPassThroughComp( Placeholder, Component ):
+  def construct( s ):
+    s.d = InPort( Bits32 )
+    s.q = OutPort( Bits32 )
+    s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VRegPassThrough.v' )
+    s.set_metadata( VerilogPlaceholderPass.top_module, 'VRegPassThrough' )
+    s.set_metadata( VerilogPlaceholderPass.v_include, [dirname(__file__)] )
+
 class CasePlaceholderTranslationVReg:
   DUT = Bits32VRegComp
   TV_IN = \
@@ -134,6 +142,27 @@ class CasePlaceholderTranslationRegIncr:
       [ 42,  3 ],
       [ -1, 43 ],
       [  0,  0 ],
+  ]
+
+class CaseVIncludePopulation:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.reg_ = Bits32VRegPassThroughComp()
+      s.reg_.d //= s.in_
+      s.reg_.q //= s.out
+  TV_IN = \
+  _set( 'in_', Bits32, 0 )
+  TV_OUT = \
+  _check( 'out', Bits32, 1 )
+  TV = \
+  [
+      [  1,  0 ],
+      [  2,  1 ],
+      [ 42,  2 ],
+      [ -1, 42 ],
+      [  0, -1 ],
   ]
 
 CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
