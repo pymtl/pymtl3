@@ -13,10 +13,11 @@ from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
 from .BehavioralRTLIRTypeCheckL1Pass import (
+    BehavioralRTLIRTypeCheckL1Pass,
     BehavioralRTLIRTypeCheckVisitorL1,
     BehavioralRTLIRTypeEnforcerL1,
-    BehavioralRTLIRTypeCheckL1Pass,
 )
+
 
 class BehavioralRTLIRTypeCheckL2Pass( BehavioralRTLIRTypeCheckL1Pass ):
   def get_visitor_class( s ):

@@ -10,8 +10,8 @@ from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from .BehavioralRTLIRTypeCheckL4Pass import (
-    BehavioralRTLIRTypeCheckVisitorL4,
     BehavioralRTLIRTypeCheckL4Pass,
+    BehavioralRTLIRTypeCheckVisitorL4,
     BehavioralRTLIRTypeEnforcerL4,
 )
 
