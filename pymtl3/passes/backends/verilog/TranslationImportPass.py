@@ -72,6 +72,11 @@ class TranslationImportPass( BasePass ):
       else:
         placeholder_config = c.get_placeholder_config()( m )
 
+        if not isinstance( m, Placeholder ):
+          # If m is not a placeholder, we need to populate the v_include
+          # placeholder config from all submodules into m.
+          placeholder_config.v_include = list(c.get_hierarchy_v_include(m))
+
       placeholder_config.pickled_source_file = \
           m.get_metadata( translation_pass.translated_filename )
       placeholder_config.pickled_top_module = \
@@ -97,3 +102,14 @@ class TranslationImportPass( BasePass ):
   @staticmethod
   def get_placeholder_config():
     return VerilogPlaceholderConfigs
+
+  @staticmethod
+  def get_hierarchy_v_include( m ):
+    all_v_includes = set()
+    if isinstance( m, Placeholder ) and hasattr( m, 'config_placeholder' ):
+      for v_include in m.config_placeholder.v_include:
+        all_v_includes.add( v_include )
+    else:
+      for child in m.get_child_components(repr):
+        all_v_includes |= s.get_hierarchy_v_include( child )
+    return all_v_includes

@@ -476,11 +476,11 @@ class CallIfcRTL( Interface ):
 
       if s.MsgType is not None:
         trace_len += len( f'{s.MsgType()}' ) + 2
-        trace_fmt += "({{s.msg}})"
+        trace_fmt += "({s.msg})"
 
       if s.RetType is not None:
         trace_len += 1 + len( f'{s.RetType()}' )
-        trace_fmt += "={{s.ret}}"
+        trace_fmt += "={s.ret}"
 
       if trace_len == 0:
         trace_len = 1
