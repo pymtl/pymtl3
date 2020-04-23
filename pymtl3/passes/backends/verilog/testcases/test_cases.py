@@ -165,6 +165,27 @@ class CaseVIncludePopulation:
       [  0, -1 ],
   ]
 
+class CaseVLibsTranslation:
+  class DUT( Placeholder, Component ):
+    def construct( s ):
+      s.d = InPort( Bits32 )
+      s.q = OutPort( Bits32 )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VRegPassThrough.v' )
+      s.set_metadata( VerilogPlaceholderPass.top_module, 'VRegPassThrough' )
+      s.set_metadata( VerilogPlaceholderPass.v_libs, [dirname(__file__)+'/VReg.v'] )
+  TV_IN = \
+  _set( 'd', Bits32, 0 )
+  TV_OUT = \
+  _check( 'q', Bits32, 1 )
+  TV = \
+  [
+      [  1,  0 ],
+      [  2,  1 ],
+      [ 42,  2 ],
+      [ -1, 42 ],
+      [  0, -1 ],
+  ]
+
 CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
     'REF_UPBLK',
     '''\

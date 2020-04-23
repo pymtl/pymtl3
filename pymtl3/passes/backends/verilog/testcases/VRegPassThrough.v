@@ -1,5 +1,5 @@
 // We do not explicitly include VReg here. Instead we assume the include
-// directory is correctly passed to Verilator.
+// directory or the v_lib is correctly passed to Verilator.
 
 module VRegPassThrough(
   input  logic          clk,

@@ -16,6 +16,7 @@ from ..testcases import (
     CasePlaceholderTranslationRegIncr,
     CasePlaceholderTranslationVReg,
     CaseVIncludePopulation,
+    CaseVLibsTranslation,
 )
 from ..translation.behavioral.test.VBehavioralTranslatorL1_test import (
     test_verilog_behavioral_L1,
@@ -75,6 +76,7 @@ def run_test( case ):
             CasePlaceholderTranslationVReg,
             CasePlaceholderTranslationRegIncr,
             CaseVIncludePopulation,
+            CaseVLibsTranslation,
           ]
 )
 def test_verilog_translation_import_adhoc( case ):
