@@ -13,6 +13,7 @@ import inspect
 import os
 import re
 import sys
+from textwrap import dedent
 
 from pymtl3 import MetadataKey, Placeholder
 from pymtl3.passes.backends.verilog.util.utility import (
@@ -66,7 +67,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   #: Default value: []
   v_flist    = MetadataKey()
 
-  #: List of Verilog library file paths.
+  #: List of Verilog library file paths. These files will be added to the
+  #: beginning of the pikcling result.
   #:
   #: Type: ``[str]``; input
   #:
@@ -225,7 +227,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
             f'the VerilogPlaceholderPass.top_module pass data name!')
 
   def pickle( s, m, cfg, irepr ):
-    pickled_dependency    = s._get_dependent_verilog_modules( m, cfg, irepr )
+    pickled_dependency    = s._get_v_lib_files( m, cfg, irepr )
+    pickled_dependency   += s._get_dependent_verilog_modules( m, cfg, irepr )
     pickled_wrapper, tplt = s._gen_verilog_wrapper( m, cfg, irepr )
 
     pickled_dependency_source = (
@@ -267,6 +270,39 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     with open( cfg.pickled_source_file, 'w' ) as fd:
       fd.write( pickled_source )
+
+  def _get_v_lib_files( s, m, cfg, irepr ):
+    orig_comp_name = cfg.orig_comp_name
+    tplt = dedent(
+        """\
+            // The source code below are included because they are specified
+            // as the v_libs Verilog placeholder option of component {orig_comp_name}.
+
+            // If you get a duplicated def error from files included below, please
+            // make sure they are included either through the v_libs option or the
+            // explicit `include statement in the Verilog source code -- if they
+            // appear in both then they will be included twice!
+
+            {v_libs}
+            // End of all v_libs files for component {orig_comp_name}
+
+        """
+    )
+    per_file_tplt = dedent(
+        """\
+            // File {filename} from v_libs option of component {orig_comp_name}
+            {file_content}
+        """
+    )
+    v_libs = []
+
+    for filename in cfg.v_libs:
+      with open(filename) as fd:
+        file_content = fd.read()
+        v_libs.append(per_file_tplt.format(**locals()))
+
+    v_libs = ''.join(v_libs)
+    return tplt.format(**locals())
 
   def _get_dependent_verilog_modules( s, m, cfg, irepr ):
     return s._import_sources( cfg, [cfg.src_file] )

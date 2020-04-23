@@ -400,7 +400,11 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     nbits = node.nbits
     value = s.visit( node.value )
     if hasattr( node, "_value" ):
-      return f"{nbits}'d{node._value}"
+      # value could be larger than what nbits can hold because it might
+      # be a negative number. Since verilator errors when that happens, we
+      # need to manually truncate the integer.
+      value = int(Bits(nbits, node._value))
+      return f"{nbits}'d{value}"
 
     return f"{nbits}'( {value} )"
 
