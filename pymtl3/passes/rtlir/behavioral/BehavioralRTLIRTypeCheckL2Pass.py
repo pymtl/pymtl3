@@ -416,3 +416,14 @@ class BehavioralRTLIRTypeEnforcerL2( BehavioralRTLIRTypeEnforcerL1 ):
 
   def visit_LoopVar( s, node ):
     s.mutate_datatype( node, f'loop variable {node.name}' )
+
+  def visit_IfExp( s, node ):
+    # The fact that we are here means both body and orelse should be
+    # implicit. We need to perform two separate mutations on expressions
+    # located at body and orelse.
+    s.visit( node.body )
+    s.visit( node.orelse )
+
+    # After both child have been successfully updated, we need to update the
+    # IfExp node itself.
+    s.mutate_datatype( node, 'if-expression' )

@@ -822,6 +822,24 @@ class CaseForRangeLowerUpperStepPassThroughComp:
       [   -1,    -2,  -1,  -2,  -1,   -1,    -2,  -1,  -2,  -1, ],
   ]
 
+class CaseIfExpBothImplicitComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      @update
+      def upblk():
+        s.out @= 1 if s.in_ else 0
+  TV_IN = _set( 'in_', Bits32, 0 )
+  TV_OUT = _check( 'out', Bits32, 1 )
+  TV =\
+  [
+      [    0,    0, ],
+      [    1,    1, ],
+      [    1,    1, ],
+      [    0,    0, ],
+  ]
+
 class CaseIfExpInForStmtComp:
   class DUT( Component ):
     def construct( s ):

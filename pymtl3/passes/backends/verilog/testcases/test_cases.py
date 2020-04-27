@@ -65,6 +65,7 @@ from pymtl3.passes.testcases import (
     CaseIfBoolOpInForStmtComp,
     CaseIfDanglingElseInnerComp,
     CaseIfDanglingElseOutterComp,
+    CaseIfExpBothImplicitComp,
     CaseIfExpInForStmtComp,
     CaseIfExpUnaryOpInForStmtComp,
     CaseIfTmpVarInForStmtComp,
@@ -1109,6 +1110,31 @@ CaseForRangeLowerUpperStepPassThroughComp = set_attributes( CaseForRangeLowerUpp
               out[3'(i)] = in_[3'(i)];
             for ( int i = 1'd1; i < 3'd5; i += 2'd2 )
               out[3'(i)] = in_[3'(i)];
+          end
+
+        endmodule
+    '''
+)
+
+CaseIfExpBothImplicitComp = set_attributes( CaseIfExpBothImplicitComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = in_ ? 32'd1 : 32'd0;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT_noparam
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out = in_ ? 32'd1 : 32'd0;
           end
 
         endmodule

@@ -55,6 +55,7 @@ from pymtl3.passes.backends.verilog.testcases import (
     CaseIfBoolOpInForStmtComp,
     CaseIfDanglingElseInnerComp,
     CaseIfDanglingElseOutterComp,
+    CaseIfExpBothImplicitComp,
     CaseIfExpInForStmtComp,
     CaseIfExpUnaryOpInForStmtComp,
     CaseIfTmpVarInForStmtComp,
