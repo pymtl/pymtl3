@@ -71,32 +71,6 @@ class ComponentLevel3( ComponentLevel2 ):
       for k, v in m._dsl.adjacency.items():
         all_ajd[k] |= v
 
-  # Override
-  def _construct( s ):
-    """ We override _construct here to finish the saved __call__
-    connections right after constructing the model. The reason why we
-    take this detour instead of connecting in __call__ directly, is that
-    __call__ is done before setattr, and hence the child components don't
-    know their name yet. _dsl.constructed is called in setattr after name
-    tagging, so this is valid. (see NamedObject.py). """
-
-    if not s._dsl.constructed:
-
-      # Merge the actual keyword args and those args set by set_parameter
-      if s._dsl.param_tree is None:
-        kwargs = s._dsl.kwargs
-      elif s._dsl.param_tree.leaf is None:
-        kwargs = s._dsl.kwargs
-      else:
-        kwargs = s._dsl.kwargs.copy()
-        if "construct" in s._dsl.param_tree.leaf:
-          more_args = s._dsl.param_tree.leaf[ "construct" ]
-          kwargs.update( more_args )
-
-      s.construct( *s._dsl.args, **kwargs )
-
-      s._dsl.constructed = True
-
   # The following three methods should only be called when types are
   # already checked
   def _create_assign_lambda( s, o, lamb ):
