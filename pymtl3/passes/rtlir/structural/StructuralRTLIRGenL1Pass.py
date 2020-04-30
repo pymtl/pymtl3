@@ -53,7 +53,12 @@ class StructuralRTLIRGenL1Pass( BasePass ):
     # Sort connections
     m_conns_set   = s.inst_conns[m]
     ordered_conns = [ *m.get_connect_order() ]
-    assert len(ordered_conns) == len(m_conns_set)
+
+    # NOTE: this assertion can fail due to connections that
+    # are made outside the component that has them. so i'm removing
+    # this for now until we can figure out a better way to do sanity
+    # check here.
+    # assert len(ordered_conns) == len(m_conns_set)
 
     for i, x in enumerate(ordered_conns):
       if x not in m_conns_set:
