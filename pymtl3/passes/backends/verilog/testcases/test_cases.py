@@ -187,6 +187,49 @@ class CaseVLibsTranslation:
       [  0, -1 ],
   ]
 
+class CaseMultiPlaceholderImport:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.a_reg = Bits32VRegComp()
+      s.b_reg = Bits32VRegComp()
+      s.a_reg.d //= s.in_
+      s.a_reg.q //= s.b_reg.d
+      s.b_reg.q //= s.out
+  TV_IN  = _set( 'in_', Bits32, 0 )
+  TV_OUT = _check( 'out', Bits32, 1 )
+  TV = \
+  [
+      [  1,  0 ],
+      [  2,  0 ],
+      [ 42,  1 ],
+      [ -1,  2 ],
+      [  0, 42 ],
+      [  0, -1 ],
+  ]
+
+class CasePlaceholderTranslationRegIncr:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.reg_ = Bits32VRegComp()
+      s.reg_.d //= s.in_
+      s.out //= lambda: s.reg_.q + Bits32(1)
+  TV_IN = \
+  _set( 'in_', Bits32, 0 )
+  TV_OUT = \
+  _check( 'out', Bits32, 1 )
+  TV = \
+  [
+      [  1,  1 ],
+      [  2,  2 ],
+      [ 42,  3 ],
+      [ -1, 43 ],
+      [  0,  0 ],
+  ]
+
 CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
     'REF_UPBLK',
     '''\

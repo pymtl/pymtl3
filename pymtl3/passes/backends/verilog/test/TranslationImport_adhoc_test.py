@@ -13,6 +13,7 @@ from pymtl3.stdlib.test import TestVectorSimulator
 
 from .. import TranslationImportPass
 from ..testcases import (
+    CaseMultiPlaceholderImport,
     CasePlaceholderTranslationRegIncr,
     CasePlaceholderTranslationVReg,
     CaseVIncludePopulation,
@@ -81,3 +82,12 @@ def run_test( case ):
 )
 def test_verilog_translation_import_adhoc( case ):
   run_test( case )
+
+def test_pymtl_top_multi_placeholder():
+  case = CaseMultiPlaceholderImport
+  m = case.DUT()
+  m.elaborate()
+  m.apply( VerilogPlaceholderPass() )
+  m = TranslationImportPass()( m )
+  sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
+  sim.run_test()
