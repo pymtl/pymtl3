@@ -248,7 +248,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
         f"`endif /* {cfg.dependency_guard_symbol} */\n"
     )
 
-    pickled_wrapper_source = (
+    pickled_wrapper_source_tplt = (
         f"\n"
         f"//-----------------------------------------------------------\n"
         f"// Wrapper of placeholder {cfg.orig_comp_name}\n"
@@ -262,14 +262,17 @@ class VerilogPlaceholderPass( PlaceholderPass ):
         f"`endif /* {cfg.wrapper_guard_symbol} */\n"
     )
 
-    pickled_source = pickled_dependency_source + \
-                     pickled_wrapper_source.format(pickled_wrapper=pickled_wrapper)
+    pickled_wrapper_source = pickled_wrapper_source_tplt.format(pickled_wrapper=pickled_wrapper)
+    pickled_source = pickled_dependency_source + pickled_wrapper_source
 
-    cfg.pickled_wrapper_template = pickled_wrapper_source.format(pickled_wrapper=tplt)
-    cfg.pickled_wrapper_lineno   = len(pickled_dependency_source.split('\n'))-1
+    cfg.pickled_wrapper_template = pickled_wrapper_source_tplt.format(pickled_wrapper=tplt)
+    cfg.pickled_wrapper_nlines   = len(pickled_wrapper_source.split('\n'))-1
 
     with open( cfg.pickled_source_file, 'w' ) as fd:
       fd.write( pickled_source )
+      fd.flush()
+      os.fsync( fd )
+      fd.close()
 
   def _get_v_lib_files( s, m, cfg, irepr ):
     orig_comp_name = cfg.orig_comp_name

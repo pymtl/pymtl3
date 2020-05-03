@@ -45,10 +45,10 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
               f"`explicit_module_name` option of TranslationConfigs.")
 
         # Read the dependency of the placeholder
-        dependency, lineno = '', ph_cfg.pickled_wrapper_lineno
+        dependency, nlines = [], ph_cfg.pickled_wrapper_nlines
         with open(ph_cfg.pickled_source_file) as fd:
-          for i in range(lineno):
-            dependency += fd.readline()
+          dependency = fd.readlines()
+        dependency = ''.join( dependency[:-nlines] )
 
         # Create the placeholder wrapper from the ph_cfg metadata
         wrapper = ph_cfg.pickled_wrapper_template.format(top_module_name=module_name)
