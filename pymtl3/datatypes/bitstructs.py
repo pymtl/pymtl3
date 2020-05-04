@@ -515,7 +515,7 @@ def _mk_from_bits_fns( fields, total_nbits ):
 
   # TODO add assertion in bits
   return _create_fn( 'from_bits', [ 'cls', 'other' ],
-                     [ "assert cls.nbits == other.nbits, f'LHS bitstruct {{cls.nbits}}-bit <> RHS other {{other.nbits}}-bit'",
+                     [ "assert cls.nbits == other.nbits, f'LHS bitstruct {cls.nbits}-bit <> RHS other {other.nbits}-bit'",
                        "other = other.to_bits()",
                        f"return cls({','.join(from_bits_strs)})" ], _globals )
 #-------------------------------------------------------------------------
