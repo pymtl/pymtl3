@@ -30,6 +30,8 @@ def pytest_addoption(parser):
                     help="run verilog translation" )
   group.addoption( "--dump-vcd", dest="dump_vcd", action="store_true",
                     default=False, help="dump vcd for each test" )
+  group.addoption( "--dump-vtb", dest="dump_vtb", action="store_true",
+                    default=False, help="dump verilog test bench for each test" )
 
 @pytest.fixture
 def cmdline_opts( request ):
@@ -98,5 +100,16 @@ def _parse_opts_from_request( request ):
   else:
     dump_vcd = ''
   opts['dump_vcd'] = dump_vcd
+
+  # dump_vtb
+  dump_vtb = request.config.getoption("dump_vtb")
+  if dump_vtb:
+    assert request.config.getoption("test_verilog"), "--dump-vtb requires --test-verilog"
+    test_module = request.module.__name__
+    test_name   = request.node.name
+    dump_vtb    = test_name.replace('-', '_').replace( '[', '_' ).replace( ']', '' )
+  else:
+    dump_vtb = ''
+  opts['dump_vtb'] = dump_vtb
 
   return opts
