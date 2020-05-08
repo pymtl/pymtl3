@@ -93,7 +93,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     assert type( l ) == int or isinstance( l, pymtl3_datatype.Bits )
     assert type( r ) == int or isinstance( r, pymtl3_datatype.Bits )
     op_dict = {
-      bir.And       : 'and', bir.Or    : 'or',
+      # bir.And       : 'and', bir.Or    : 'or',
       bir.Add       : '+',   bir.Sub   : '-',  bir.Mult : '*',  bir.Div  : '/',
       bir.Mod       : '%',   bir.Pow   : '**',
       bir.ShiftLeft : '<<',  bir.ShiftRightLogic : '>>',
@@ -350,8 +350,8 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     try:
       # Both sides are constant expressions
       l_val = node.left._value
-      r_val = node.rigth._value
-      node._value = s.eval_const_binop( l_val, op, r_val )
+      r_val = node.right._value
+      node._value = s.eval_const_binop( l_val, node.op, r_val )
       node.Type = rt.Const( rdt.Vector( res_nbits ) )
     except AttributeError:
       # Both sides are constant but the value cannot be determined statically
