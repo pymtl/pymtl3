@@ -35,6 +35,8 @@ class VerilogPlaceholderConfigs( PlaceholderConfigs ):
     # Expects the path to the flist file; "" to disable this option
     "v_flist" : "",
 
+    "v_libs" : [],
+
     # -I ( alias of -y and +incdir+ )
     # Expects a list of include paths; [] to disable this option
     "v_include" : [],
@@ -50,6 +52,9 @@ class VerilogPlaceholderConfigs( PlaceholderConfigs ):
 
     "v_flist": Checker( lambda v: isinstance(v, str) and os.path.isfile(expand(v)) or v == "",
                          "expects a path to a file" ),
+
+    "v_libs": Checker( lambda v: isinstance(v, list) and all(os.path.exists(expand(p)) for p in v),
+                         "expects a list of paths to files"),
 
     "v_include": Checker( lambda v: isinstance(v, list) and all(os.path.isdir(expand(p)) for p in v),
                             "expects a list of paths to directory"),

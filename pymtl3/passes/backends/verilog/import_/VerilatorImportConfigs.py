@@ -193,6 +193,7 @@ class VerilatorImportConfigs( BasePassConfigs ):
     s.translated_top_module = m._pass_verilog_translation.translated_top_module
     s.translated_source_file = m._pass_verilog_translation.translated_filename
     s.v_include = m.config_placeholder.v_include
+    s.v_libs = m.config_placeholder.v_libs
     # s.src_file = m.config_placeholder.src_file
     s.port_map = m.config_placeholder.port_map
     s.params = m.config_placeholder.params
@@ -229,6 +230,8 @@ class VerilatorImportConfigs( BasePassConfigs ):
     mk_dir      = f"--Mdir {s.vl_mk_dir}"
     # flist       = "" if s.is_default("v_flist") else \
     #               f"-f {s.v_flist}"
+    vlibs       = "" if not s.v_libs else \
+                  " ".join([f"-v {lib}" for lib in s.v_libs])
     include     = "" if not s.v_include else \
                   " ".join("-I" + path for path in s.v_include)
     en_assert   = "--assert" if s.vl_enable_assert else ""
@@ -246,7 +249,7 @@ class VerilatorImportConfigs( BasePassConfigs ):
     all_opts = [
       top_module, mk_dir, include, en_assert, opt_level, loop_unroll,
       # stmt_unroll, trace, warnings, flist, src, coverage,
-      stmt_unroll, trace, warnings, src, coverage,
+      stmt_unroll, trace, warnings, src, vlibs, coverage,
       line_cov, toggle_cov,
     ]
 
