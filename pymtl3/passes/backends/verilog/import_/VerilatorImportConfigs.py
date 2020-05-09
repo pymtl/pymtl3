@@ -230,8 +230,9 @@ class VerilatorImportConfigs( BasePassConfigs ):
     mk_dir      = f"--Mdir {s.vl_mk_dir}"
     # flist       = "" if s.is_default("v_flist") else \
     #               f"-f {s.v_flist}"
-    vlibs       = "" if not s.v_libs else \
-                  " ".join([f"-v {lib}" for lib in s.v_libs])
+    # vlibs       = "" if not s.v_libs else \
+    #               " ".join([f"-v {lib}" for lib in s.v_libs])
+    vlibs       = ""
     include     = "" if not s.v_include else \
                   " ".join("-I" + path for path in s.v_include)
     en_assert   = "--assert" if s.vl_enable_assert else ""

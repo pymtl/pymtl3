@@ -127,7 +127,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     pickled_top_module = f'{cfg.top_module}_wrapper'
 
     orig_comp_name       = get_component_unique_name( irepr )
-    pickle_dependency    = s._get_dependent_verilog_modules( m, cfg, irepr )
+    pickle_dependency    = s._get_v_lib_files( m, cfg, irepr )
+    pickle_dependency   += s._get_dependent_verilog_modules( m, cfg, irepr )
     pickle_wrapper, tplt = s._gen_verilog_wrapper( m, cfg, irepr, pickled_top_module )
     def_symbol           = pickled_top_module.upper()
 
@@ -155,6 +156,39 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     with open( pickled_source_file, 'w', encoding='utf-8' ) as fd:
       fd.write( pickle_template.format( **locals() ) )
+
+  def _get_v_lib_files( s, m, cfg, irepr ):
+    orig_comp_name = get_component_unique_name( irepr )
+    tplt = dedent(
+        """\
+            // The source code below are included because they are specified
+            // as the v_lib Verilog placeholder option of component {orig_comp_name}.
+
+            // If you get a duplicated def error from files included below, please
+            // make sure they are included either through the v_lib option or the
+            // explicit `include statement in the Verilog source code -- if they
+            // appear in both then they will be included twice!
+
+            {v_libs}
+            // End of all v_lib files for component {orig_comp_name}
+
+        """
+    )
+    per_file_tplt = dedent(
+        """\
+            // File {filename} from v_lib option of component {orig_comp_name}
+            {file_content}
+        """
+    )
+    v_libs = []
+
+    for filename in cfg.v_libs:
+      with open(filename) as fd:
+        file_content = fd.read()
+        v_libs.append(per_file_tplt.format(**locals()))
+
+    v_libs = ''.join(v_libs)
+    return tplt.format(**locals())
 
   def _get_dependent_verilog_modules( s, m, cfg, irepr ):
     return s._import_sources( cfg, [cfg.src_file] )

@@ -102,6 +102,7 @@ class TranslationImportPass( BasePass ):
       for v_include in m.config_placeholder.v_include:
         all_v_includes.add( v_include )
     else:
-      for child in m.get_child_components(repr):
+      # for child in m.get_child_components(repr):
+      for child in m.get_child_components():
         all_v_includes |= s.get_hierarchy_v_include( child )
     return all_v_includes
