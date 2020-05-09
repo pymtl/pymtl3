@@ -7,6 +7,7 @@
 # Author : Peitian Pan
 # Date   : Aug 6, 2019
 
+from pymtl3 import Placeholder
 from pymtl3.passes.BasePass import BasePass
 
 from .import_.VerilatorImportConfigs import VerilatorImportConfigs
@@ -54,7 +55,11 @@ class TranslationImportPass( BasePass ):
     if hasattr( m, s.get_flag_name() ) and getattr( m, s.get_flag_name() ):
 
       if not hasattr( m, 'config_placeholder' ):
-        m.config_placeholder = VerilogPlaceholderConfigs()
+         # If m is not a placeholder, we need to populate the v_include
+         # placeholder config from all submodules into m.
+         vi = list(s.get_hierarchy_v_include(m))
+         m.config_placeholder = VerilogPlaceholderConfigs(v_include=vi)
+
       if not hasattr( m, s.get_import_flag_name() ):
         m.config_verilog_import = VerilatorImportConfigs()
 
@@ -90,3 +95,13 @@ class TranslationImportPass( BasePass ):
 
   def get_import_configs( s ):
     return VerilatorImportConfigs(vl_Wno_list=['UNOPTFLAT', 'UNSIGNED', 'WIDTH'])
+
+  def get_hierarchy_v_include( s, m ):
+    all_v_includes = set()
+    if isinstance( m, Placeholder ) and hasattr( m, 'config_placeholder' ):
+      for v_include in m.config_placeholder.v_include:
+        all_v_includes.add( v_include )
+    else:
+      for child in m.get_child_components(repr):
+        all_v_includes |= s.get_hierarchy_v_include( child )
+    return all_v_includes
