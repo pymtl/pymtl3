@@ -352,7 +352,8 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       l_val = node.left._value
       r_val = node.right._value
       node._value = s.eval_const_binop( l_val, node.op, r_val )
-      node.Type = rt.Const( rdt.Vector( res_nbits ) )
+      node.Type = s.rtlir_getter.get_rtlir( node._value )
+      assert isinstance( node.Type, rt.Const )
     except AttributeError:
       # Both sides are constant but the value cannot be determined statically
       if isinstance(node.left.Type, rt.Const) and isinstance(node.right.Type, rt.Const):
