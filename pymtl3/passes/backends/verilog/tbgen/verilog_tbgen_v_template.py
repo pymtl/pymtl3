@@ -6,7 +6,7 @@ template = \
 
 // CYCLE_TIME and INTRA_CYCLE_TIME are duration of time.
 `define CYCLE_TIME 4
-`define INTRA_CYCLE_TIME `VTB_OUTPUT_ASSERT_DELAY-`VTB_INPUT_DELAY
+`define INTRA_CYCLE_TIME (`VTB_OUTPUT_ASSERT_DELAY-`VTB_INPUT_DELAY)
 
 `timescale 1ns/1ns
 
@@ -17,9 +17,8 @@ template = \
 `define CHECK(lineno, out, ref, port_name) \\
   if (out != ref) begin \\
     $display(""); \\
-    $display("The test bench received an incorrect value!"); \\
-    $display("- line %0d in {cases_file_name}", lineno); \\
-    $display("- cycle number   : %0d", lineno+2); \\
+    $display("At time %0dns (cycle %0d), the test bench received an incorrect value!", $time, lineno+2); \\
+    $display("- line number    : line %0d in {cases_file_name}", lineno); \\
     $display("- port name      : %s", port_name); \\
     $display("- expected value : 0x%x", ref); \\
     $display("- actual value   : 0x%x", out); \\
@@ -44,7 +43,7 @@ module {harness_name};
     {task_assign_strs};
     #`INTRA_CYCLE_TIME;
     {task_check_strs};
-    #(`CYCLE_TIME-INTRA_CYCLE_TIME);
+    #(`CYCLE_TIME-`INTRA_CYCLE_TIME);
   end
   endtask
 
@@ -59,9 +58,14 @@ module {harness_name};
   );
 
   initial begin
-    assert(0 <= VTB_INPUT_DELAY);
-    assert(VTB_INPUT_DELAY < VTB_OUTPUT_ASSERT_DELAY);
-    assert(VTB_OUTPUT_ASSERT_DELAY <= CYCLE_TIME);
+    assert(0 <= `VTB_INPUT_DELAY)
+      else $fatal("\\n=====\\n\\nVTB_INPUT_DELAY should >= 0\\n\\n=====\\n");
+
+    assert(`VTB_INPUT_DELAY < `VTB_OUTPUT_ASSERT_DELAY)
+      else $fatal("\\n=====\\n\\nVTB_OUTPUT_ASSERT_DELAY should be larger than VTB_INPUT_DELAY\\n\\n=====\\n");
+
+    assert(`VTB_OUTPUT_ASSERT_DELAY <= `CYCLE_TIME)
+      else $fatal("\\n=====\\n\\nVTB_OUTPUT_ASSERT_DELAY should be smaller than or equal to CYCLE_TIME\\n\\n=====\\n");
 
     clk   = 1'b1; // NEED TO DO THIS TO HAVE RISING EDGE AT TIME 0
     reset = 1'b0; // TODO reset active low/high
