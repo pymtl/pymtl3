@@ -150,7 +150,7 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
     make_indent( body, 1 )
 
     for_begin = \
-      'for ( int {v} = {s}; {v} {comp} {t}; {v} {inc}= {stp} ){begin}'.format(
+      'for ( int unsigned {v} = {s}; {v} {comp} {t}; {v} {inc}= {stp} ){begin}'.format(
       v = loop_var, s = start, t = end, stp = step_abs,
       comp = cmp_op, inc = inc_op, begin = begin
     )
