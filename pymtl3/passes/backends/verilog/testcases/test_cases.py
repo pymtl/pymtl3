@@ -1132,9 +1132,9 @@ CaseForRangeLowerUpperStepPassThroughComp = set_attributes( CaseForRangeLowerUpp
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 1'd0; i < 3'd5; i += 2'd2 )
+          for ( int unsigned i = 1'd0; i < 3'd5; i += 2'd2 )
             out[3'(i)] = in_[3'(i)];
-          for ( int i = 1'd1; i < 3'd5; i += 2'd2 )
+          for ( int unsigned i = 1'd1; i < 3'd5; i += 2'd2 )
             out[3'(i)] = in_[3'(i)];
         end
     ''',
@@ -1149,9 +1149,9 @@ CaseForRangeLowerUpperStepPassThroughComp = set_attributes( CaseForRangeLowerUpp
         );
 
           always_comb begin : upblk
-            for ( int i = 1'd0; i < 3'd5; i += 2'd2 )
+            for ( int unsigned i = 1'd0; i < 3'd5; i += 2'd2 )
               out[3'(i)] = in_[3'(i)];
-            for ( int i = 1'd1; i < 3'd5; i += 2'd2 )
+            for ( int unsigned i = 1'd1; i < 3'd5; i += 2'd2 )
               out[3'(i)] = in_[3'(i)];
           end
 
@@ -1188,7 +1188,7 @@ CaseIfExpInForStmtComp = set_attributes( CaseIfExpInForStmtComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 1'd0; i < 3'd5; i += 1'd1 )
+          for ( int unsigned i = 1'd0; i < 3'd5; i += 1'd1 )
             out[3'(i)] = ( 3'(i) == 3'd1 ) ? in_[3'(i)] : in_[3'd0];
         end
     ''',
@@ -1203,7 +1203,7 @@ CaseIfExpInForStmtComp = set_attributes( CaseIfExpInForStmtComp,
         );
 
           always_comb begin : upblk
-            for ( int i = 1'd0; i < 3'd5; i += 1'd1 )
+            for ( int unsigned i = 1'd0; i < 3'd5; i += 1'd1 )
               out[3'(i)] = ( 3'(i) == 3'd1 ) ? in_[3'(i)] : in_[3'd0];
           end
 
@@ -1215,7 +1215,7 @@ CaseIfExpUnaryOpInForStmtComp = set_attributes( CaseIfExpUnaryOpInForStmtComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 0; i < 5; i += 1 )
+          for ( int unsigned i = 0; i < 5; i += 1 )
             out[i] = ( i == 1 ) ? ~in_[i] : in_[0];
         end
     ''',
@@ -1230,7 +1230,7 @@ CaseIfExpUnaryOpInForStmtComp = set_attributes( CaseIfExpUnaryOpInForStmtComp,
         );
 
           always_comb begin : upblk
-            for ( int i = 0; i < 5; i += 1 )
+            for ( int unsigned i = 0; i < 5; i += 1 )
               out[i] = ( i == 1 ) ? ~in_[i] : in_[0];
           end
 
@@ -1242,7 +1242,7 @@ CaseIfBoolOpInForStmtComp = set_attributes( CaseIfBoolOpInForStmtComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 1'd0; i < 3'd5; i += 1'd1 )
+          for ( int unsigned i = 1'd0; i < 3'd5; i += 1'd1 )
             if ( ( in_[3'(i)] != 32'd0 ) & ( ( 3'(i) < 3'd4 ) ? in_[3'(i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
               out[3'(i)] = in_[3'(i)];
             end
@@ -1261,7 +1261,7 @@ CaseIfBoolOpInForStmtComp = set_attributes( CaseIfBoolOpInForStmtComp,
         );
 
           always_comb begin : upblk
-            for ( int i = 1'd0; i < 3'd5; i += 1'd1 )
+            for ( int unsigned i = 1'd0; i < 3'd5; i += 1'd1 )
               if ( ( in_[3'(i)] != 32'd0 ) & ( ( 3'(i) < 3'd4 ) ? in_[3'(i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
                 out[3'(i)] = in_[3'(i)];
               end
@@ -1277,7 +1277,7 @@ CaseIfTmpVarInForStmtComp = set_attributes( CaseIfTmpVarInForStmtComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 1'd0; i < 3'd5; i += 1'd1 ) begin
+          for ( int unsigned i = 1'd0; i < 3'd5; i += 1'd1 ) begin
             if ( ( in_[3'(i)] != 32'd0 ) & ( ( 3'(i) < 3'd4 ) ? in_[3'(i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
               __tmpvar__upblk_tmpvar = in_[3'(i)];
             end
@@ -1299,7 +1299,7 @@ CaseIfTmpVarInForStmtComp = set_attributes( CaseIfTmpVarInForStmtComp,
           logic [31:0] __tmpvar__upblk_tmpvar;
 
           always_comb begin : upblk
-            for ( int i = 1'd0; i < 3'd5; i += 1'd1 ) begin
+            for ( int unsigned i = 1'd0; i < 3'd5; i += 1'd1 ) begin
               if ( ( in_[3'(i)] != 32'd0 ) & ( ( 3'(i) < 3'd4 ) ? in_[3'(i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
                 __tmpvar__upblk_tmpvar = in_[3'(i)];
               end
@@ -1342,7 +1342,7 @@ CaseFixedSizeSliceComp = set_attributes( CaseFixedSizeSliceComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 1'd0; i < 2'd2; i += 1'd1 )
+          for ( int unsigned i = 1'd0; i < 2'd2; i += 1'd1 )
             out[1'(i)] = in_[4'(i) * 4'd8 +: 8];
         end
     ''',
@@ -1357,7 +1357,7 @@ CaseFixedSizeSliceComp = set_attributes( CaseFixedSizeSliceComp,
         );
 
           always_comb begin : upblk
-            for ( int i = 1'd0; i < 2'd2; i += 1'd1 )
+            for ( int unsigned i = 1'd0; i < 2'd2; i += 1'd1 )
               out[1'(i)] = in_[4'(i) * 4'd8 +: 8];
           end
 
@@ -2733,8 +2733,8 @@ CaseBehavioralArraySubCompArrayStructIfcComp = set_attributes( CaseBehavioralArr
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 1'd0; i < 2'd2; i += 1'd1 )
-            for ( int j = 1'd0; j < 1'd1; j += 1'd1 )
+          for ( int unsigned i = 1'd0; i < 2'd2; i += 1'd1 )
+            for ( int unsigned j = 1'd0; j < 1'd1; j += 1'd1 )
               b__ifc__foo[1'(i)][1'(j)][1'd0].foo = in_;
           out = b__out[1'd1];
         end
@@ -2786,8 +2786,8 @@ CaseBehavioralArraySubCompArrayStructIfcComp = set_attributes( CaseBehavioralArr
           );
 
           always_comb begin : upblk
-            for ( int i = 1'd0; i < 2'd2; i += 1'd1 )
-              for ( int j = 1'd0; j < 1'd1; j += 1'd1 )
+            for ( int unsigned i = 1'd0; i < 2'd2; i += 1'd1 )
+              for ( int unsigned j = 1'd0; j < 1'd1; j += 1'd1 )
                 b__ifc__foo[1'(i)][1'(j)][1'd0].foo = in_;
             out = b__out[1'd1];
           end
