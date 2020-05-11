@@ -291,20 +291,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
         """
     )
-    per_file_tplt = dedent(
-        """\
-            // File {filename} from v_libs option of component {orig_comp_name}
-            {file_content}
-        """
-    )
-    v_libs = []
+    v_libs = s._import_sources( cfg, cfg.v_libs )
 
-    for filename in cfg.v_libs:
-      with open(filename) as fd:
-        file_content = fd.read()
-        v_libs.append(per_file_tplt.format(**locals()))
-
-    v_libs = ''.join(v_libs)
     return tplt.format(**locals())
 
   def _get_dependent_verilog_modules( s, m, cfg, irepr ):
