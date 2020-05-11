@@ -123,7 +123,7 @@ class VerilogTBGenPass( BasePass ):
     src =  """
 def dump_case():
   if top.simulated_cycles >= 2: # skip reset
-    print(f"`T({});", file=case_file)
+    print(f"`T({});", file=case_file, flush=True)
 """.format( ",".join(port_srcs) )
     _locals = {}
     custom_exec( py.code.Source(src).compile(), {'top': top, 'x': x, 'case_file': case_file}, _locals)
