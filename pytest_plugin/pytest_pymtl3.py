@@ -95,8 +95,8 @@ def _parse_opts_from_request( request ):
   dump_vcd = request.config.getoption("dump_vcd")
   if dump_vcd:
     test_module = request.module.__name__
-    test_name   = request.node.name
-    dump_vcd = f'{test_module}.{test_name}.vcd'
+    test_name   = request.node.name.replace('-', '_').replace( '[', '_' ).replace( ']', '' )
+    dump_vcd = f'{test_module}_{test_name}'
   else:
     dump_vcd = ''
   opts['dump_vcd'] = dump_vcd
