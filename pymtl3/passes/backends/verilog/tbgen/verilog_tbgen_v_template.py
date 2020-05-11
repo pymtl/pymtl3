@@ -13,18 +13,22 @@ template = \
 `define T({args_strs}) \\
         t({args_strs},`__LINE__)
 
-// Tick two extra cycles upon an error.
+// Tick one extra cycle upon an error.
 `define CHECK(lineno, out, ref, port_name) \\
   if (out != ref) begin \\
     $display(""); \\
-    $display("At time %0dns (cycle %0d), the test bench received an incorrect value!", $time, lineno+2); \\
+    $display("The test bench received an incorrect value!"); \\
+    $display("- Timestamp      : %0d (default unit: ns)", $time); \\
+    $display("- Cycle number   : %0d (variable: cycle_count)", cycle_count); \\
     $display("- line number    : line %0d in {cases_file_name}", lineno); \\
     $display("- port name      : %s", port_name); \\
     $display("- expected value : 0x%x", ref); \\
     $display("- actual value   : 0x%x", out); \\
     $display(""); \\
+    #(`CYCLE_TIME-`INTRA_CYCLE_TIME); \\
+    cycle_count += 1; \\
     #`CYCLE_TIME; \\
-    #`CYCLE_TIME; \\
+    cycle_count += 1; \\
     $fatal; \\
   end
 
@@ -32,6 +36,7 @@ module {harness_name};
   // convention
   logic clk;
   logic reset;
+  integer cycle_count;
 
   {signal_decls};
 
@@ -44,6 +49,7 @@ module {harness_name};
     #`INTRA_CYCLE_TIME;
     {task_check_strs};
     #(`CYCLE_TIME-`INTRA_CYCLE_TIME);
+    cycle_count += 1;
   end
   endtask
 
@@ -67,13 +73,16 @@ module {harness_name};
     assert(`VTB_OUTPUT_ASSERT_DELAY <= `CYCLE_TIME)
       else $fatal("\\n=====\\n\\nVTB_OUTPUT_ASSERT_DELAY should be smaller than or equal to CYCLE_TIME\\n\\n=====\\n");
 
+    cycle_count = 0;
     clk   = 1'b1; // NEED TO DO THIS TO HAVE RISING EDGE AT TIME 0
     reset = 1'b0; // TODO reset active low/high
 
     #`VTB_INPUT_DELAY;
     reset = 1'b1;
     #`CYCLE_TIME;
+    cycle_count = 1;
     #`CYCLE_TIME;
+    cycle_count = 2;
     // 2 cycles plus input delay
     reset = 1'b0;
 
@@ -83,9 +92,9 @@ module {harness_name};
     $display("  [ passed ]");
     $display("");
 
-    // Tick two extra cycles for better waveform
+    // Tick one extra cycle for better waveform
     #`CYCLE_TIME;
-    #`CYCLE_TIME;
+    cycle_count += 1;
     $finish;
   end
 endmodule
