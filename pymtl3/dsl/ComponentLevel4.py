@@ -11,7 +11,9 @@ Date   : Dec 29, 2018
 from .ComponentLevel3 import ComponentLevel3
 from .Connectable import CalleePort, Signal
 from .ConstraintTypes import M, U
+from .errors import UnmarkedUpdateOnceError
 from .NamedObject import NamedObject
+
 
 def update_once( blk ):
   NamedObject._elaborate_stack[-1]._update_once( blk )
@@ -59,11 +61,20 @@ class ComponentLevel4( ComponentLevel3 ):
       s._dsl.all_update_once   |= m._dsl.update_once
       s._dsl.all_M_constraints |= m._dsl.M_constraints
 
+  def _check_upblk_calls( s ):
+    all_update_once = s._dsl.all_update_once
+
+    for blk, calls in s._dsl.all_upblk_calls.items():
+      # if there is method call in normal update block we throw an error
+      if blk not in all_update_once and calls:
+        raise UnmarkedUpdateOnceError( s._dsl.all_upblk_hostobj[ blk ], blk, calls )
+
   # Override
   def _check_valid_dsl_code( s ):
     s._check_upblk_writes()
     s._check_port_in_upblk()
     s._check_port_in_nets()
+    s._check_upblk_calls()
 
   #-----------------------------------------------------------------------
   # Construction-time APIs
