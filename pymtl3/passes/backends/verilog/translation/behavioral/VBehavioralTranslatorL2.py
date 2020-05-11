@@ -253,7 +253,7 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
 
   def visit_TmpVar( s, node ):
     tmpvar = f"__tmpvar__{node.upblk_name}_{node.name}"
-    if not node._is_explicit:
+    if not node._is_explicit and not s.is_assign_LHS:
       nbits = node.Type.get_dtype().get_length()
       return f"{nbits}'({tmpvar})"
     else:

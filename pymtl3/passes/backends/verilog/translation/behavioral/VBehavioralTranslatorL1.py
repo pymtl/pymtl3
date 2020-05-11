@@ -6,6 +6,7 @@
 """Provide the level 1 SystemVerilog translator implementation."""
 
 from collections import deque
+from contextlib import contextmanager
 
 from pymtl3.datatypes import Bits, Bits32
 from pymtl3.passes.backends.generic.behavioral.BehavioralTranslatorL1 import (
@@ -163,6 +164,10 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       except ValueError:
         pass
 
+    # Are we inside the LHS of an assignemnt?
+
+    s.is_assign_LHS = False
+
     return s.visit( rtlir )
 
   def check_res( s, node, name ):
@@ -234,20 +239,26 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       target._top_expr = True
     node.value._top_expr = True
 
-    targets       = [ s.visit( target ) for target in node.targets ]
+    with s.register_assign_LHS():
+      targets     = [ s.visit( target ) for target in node.targets ]
+
     value         = s.visit( node.value )
     assignment_op = '<=' if not node.blocking else '='
     tplt = '{target} {assignment_op} {value};'
+
     return [ tplt.format(
       target = target, assignment_op = assignment_op, value = value
     ) for target in reversed(targets) ]
 
-  #-----------------------------------------------------------------------
-  # visit_If
-  #-----------------------------------------------------------------------
+  # register_assign_LHS
 
-  def visit_If( s, node ):
-    raise VerilogTranslationError( s.blk, node, "If not supported at L1" )
+  @contextmanager
+  def register_assign_LHS( s ):
+    assert not s.is_assign_LHS
+    s.is_assign_LHS = True
+    yield
+    assert s.is_assign_LHS
+    s.is_assign_LHS = False
 
   #-----------------------------------------------------------------------
   # visit_For
