@@ -83,6 +83,7 @@ from pymtl3.passes.testcases import (
     CaseSequentialPassThroughComp,
     CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
+    CaseStructUnique,
     CaseTmpVarInUpdateffComp,
     CaseTypeBundle,
     CaseVerilogReservedComp,
@@ -241,12 +242,12 @@ CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
     '''\
         typedef struct packed {
           logic [31:0] foo;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
-          input Bits32Foo in_,
+          input Bits32Foo__foo_32 in_,
           output logic [63:0] out,
           input logic [0:0] reset
         );
@@ -648,6 +649,47 @@ CaseBits64PartSelUpblkComp = set_attributes( CaseBits64PartSelUpblkComp,
     '''
 )
 
+CaseStructUnique = set_attributes( CaseStructUnique,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          ST_A_wire = { 16'd1, 32'd2 };
+          ST_B_wire = { 16'd3, 32'd4 };
+          out = ST_A_wire.a_bar + ST_B_wire.b_bar;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        typedef struct packed {
+          logic [15:0] a_foo;
+          logic [31:0] a_bar;
+        } ST__a_foo_16__a_bar_32;
+
+        typedef struct packed {
+          logic [15:0] b_foo;
+          logic [31:0] b_bar;
+        } ST__b_foo_16__b_bar_32;
+
+        module DUT_noparam
+        (
+          input logic [0:0] clk,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+
+          ST__a_foo_16__a_bar_32 ST_A_wire;
+          ST__b_foo_16__b_bar_32 ST_B_wire;
+
+          always_comb begin : upblk
+            ST_A_wire = { 16'd1, 32'd2 };
+            ST_B_wire = { 16'd3, 32'd4 };
+            out = ST_A_wire.a_bar + ST_B_wire.b_bar;
+          end
+
+        endmodule
+    '''
+)
+
 CasePythonClassAttr = set_attributes( CasePythonClassAttr,
     'REF_UPBLK',
     '''\
@@ -688,14 +730,14 @@ CaseTypeBundle = set_attributes( CaseTypeBundle,
     '''\
         typedef struct packed {
           logic [31:0] foo;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
           output logic [31:0] out1,
-          output Bits32Foo out2,
-          output Bits32Foo out3,
+          output Bits32Foo__foo_32 out2,
+          output Bits32Foo__foo_32 out3,
           input logic [0:0] reset
         );
 
@@ -813,12 +855,12 @@ CaseBits32FooToBits32Comp = set_attributes( CaseBits32FooToBits32Comp,
     '''\
         typedef struct packed {
           logic [31:0] foo;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
-          input Bits32Foo in_,
+          input Bits32Foo__foo_32 in_,
           output logic [31:0] out,
           input logic [0:0] reset
         );
@@ -842,13 +884,13 @@ CaseBits32ToBits32FooComp = set_attributes( CaseBits32ToBits32FooComp,
     '''\
         typedef struct packed {
           logic [31:0] foo;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in_,
-          output Bits32Foo out,
+          output Bits32Foo__foo_32 out,
           input logic [0:0] reset
         );
 
@@ -871,12 +913,12 @@ CaseIntToBits32FooComp = set_attributes( CaseIntToBits32FooComp,
     '''\
         typedef struct packed {
           logic [31:0] foo;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
-          output Bits32Foo out,
+          output Bits32Foo__foo_32 out,
           input logic [0:0] reset
         );
 
@@ -1376,12 +1418,12 @@ CaseBits32FooInBits32OutComp = set_attributes( CaseBits32FooInBits32OutComp,
     '''\
         typedef struct packed {
           logic [31:0] foo;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
-          input Bits32Foo in_,
+          input Bits32Foo__foo_32 in_,
           output logic [31:0] out,
           input logic [0:0] reset
         );
@@ -1429,12 +1471,12 @@ CaseStructPackedArrayUpblkComp = set_attributes( CaseStructPackedArrayUpblkComp,
     '''\
         typedef struct packed {
           logic [4:0][31:0] foo;
-        } Bits32x5Foo;
+        } Bits32x5Foo__foo_32x5;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
-          input Bits32x5Foo in_,
+          input Bits32x5Foo__foo_32x5 in_,
           output logic [95:0] out,
           input logic [0:0] reset
         );
@@ -1458,18 +1500,18 @@ CaseNestedStructPackedArrayUpblkComp = set_attributes( CaseNestedStructPackedArr
     '''\
         typedef struct packed {
           logic [31:0] foo;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         typedef struct packed {
           logic [31:0] foo;
           logic [1:0][31:0] bar;
-          Bits32Foo woo;
-        } NestedStructPackedPlusScalar;
+          Bits32Foo__foo_32 woo;
+        } NestedStructPackedPlusScalar__c467caf2a4dfbfb2;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
-          input NestedStructPackedPlusScalar in_,
+          input NestedStructPackedPlusScalar__c467caf2a4dfbfb2 in_,
           output logic [95:0] out,
           input logic [0:0] reset
         );
@@ -1992,7 +2034,7 @@ CaseConnectConstStructAttrToOutComp = set_attributes( CaseConnectConstStructAttr
         dedent('''\
                   typedef struct packed {
                     logic [31:0] foo;
-                  } Bits32Foo;
+                  } Bits32Foo__foo_32;
                ''')
     ),
     'REF_SRC',
@@ -2016,7 +2058,7 @@ CaseConnectLiteralStructComp = set_attributes( CaseConnectLiteralStructComp,
     'REF_PORT',
     '''\
         input logic [0:0] clk,
-        output NestedStructPackedPlusScalar out,
+        output NestedStructPackedPlusScalar__c467caf2a4dfbfb2 out,
         input logic [0:0] reset
     ''',
     'REF_WIRE',
@@ -2036,26 +2078,26 @@ CaseConnectLiteralStructComp = set_attributes( CaseConnectLiteralStructComp,
                   typedef struct packed {
                     logic [31:0] foo;
                     logic [1:0][31:0] bar;
-                    Bits32Foo woo;
-                  } NestedStructPackedPlusScalar;
+                    Bits32Foo__foo_32 woo;
+                  } NestedStructPackedPlusScalar__c467caf2a4dfbfb2;
                ''')
     ),
     'REF_SRC',
     '''\
         typedef struct packed {
           logic [31:0] foo;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         typedef struct packed {
           logic [31:0] foo;
           logic [1:0][31:0] bar;
-          Bits32Foo woo;
-        } NestedStructPackedPlusScalar;
+          Bits32Foo__foo_32 woo;
+        } NestedStructPackedPlusScalar__c467caf2a4dfbfb2;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
-          output NestedStructPackedPlusScalar out,
+          output NestedStructPackedPlusScalar__c467caf2a4dfbfb2 out,
           input logic [0:0] reset
         );
 
@@ -2069,7 +2111,7 @@ CaseConnectArrayStructAttrToOutComp = set_attributes( CaseConnectArrayStructAttr
     'REF_PORT',
     '''\
         input logic [0:0] clk,
-        input Bits32x5Foo in_,
+        input Bits32x5Foo__foo_32x5 in_,
         output logic [31:0] out,
         input logic [0:0] reset
     ''',
@@ -2085,19 +2127,19 @@ CaseConnectArrayStructAttrToOutComp = set_attributes( CaseConnectArrayStructAttr
         dedent('''\
                   typedef struct packed {
                     logic [4:0][31:0] foo;
-                  } Bits32x5Foo;
+                  } Bits32x5Foo__foo_32x5;
                ''')
     ),
     'REF_SRC',
     '''\
         typedef struct packed {
           logic [4:0][31:0] foo;
-        } Bits32x5Foo;
+        } Bits32x5Foo__foo_32x5;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
-          input Bits32x5Foo in_,
+          input Bits32x5Foo__foo_32x5 in_,
           output logic [31:0] out,
           input logic [0:0] reset
         );
@@ -2112,7 +2154,7 @@ CaseConnectNestedStructPackedArrayComp = set_attributes( CaseConnectNestedStruct
     'REF_PORT',
     '''\
         input logic [0:0] clk,
-        input NestedStructPackedPlusScalar in_,
+        input NestedStructPackedPlusScalar__c467caf2a4dfbfb2 in_,
         output logic [95:0] out,
         input logic [0:0] reset
     ''',
@@ -2135,26 +2177,26 @@ CaseConnectNestedStructPackedArrayComp = set_attributes( CaseConnectNestedStruct
                   typedef struct packed {
                     logic [31:0] foo;
                     logic [1:0][31:0] bar;
-                    Bits32Foo woo;
-                  } NestedStructPackedPlusScalar;
+                    Bits32Foo__foo_32 woo;
+                  } NestedStructPackedPlusScalar__c467caf2a4dfbfb2;
                ''')
     ),
     'REF_SRC',
     '''\
         typedef struct packed {
           logic [31:0] foo;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         typedef struct packed {
           logic [31:0] foo;
           logic [1:0][31:0] bar;
-          Bits32Foo woo;
-        } NestedStructPackedPlusScalar;
+          Bits32Foo__foo_32 woo;
+        } NestedStructPackedPlusScalar__c467caf2a4dfbfb2;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
-          input NestedStructPackedPlusScalar in_,
+          input NestedStructPackedPlusScalar__c467caf2a4dfbfb2 in_,
           output logic [95:0] out,
           input logic [0:0] reset
         );
@@ -2208,8 +2250,8 @@ CaseConnectValRdyIfcComp = set_attributes( CaseConnectValRdyIfcComp,
 CaseConnectArrayBits32FooIfcComp = set_attributes( CaseConnectArrayBits32FooIfcComp,
     'REF_IFC',
     '''\
-        input Bits32Foo  in___foo [0:1],
-        output Bits32Foo  out__foo [0:1]
+        input Bits32Foo__foo_32  in___foo [0:1],
+        output Bits32Foo__foo_32  out__foo [0:1]
     ''',
     'REF_CONN',
     '''\
@@ -2220,14 +2262,14 @@ CaseConnectArrayBits32FooIfcComp = set_attributes( CaseConnectArrayBits32FooIfcC
     '''\
         typedef struct packed {
           logic [31:0] foo;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
           input logic [0:0] reset,
-          input Bits32Foo in___foo [0:1],
-          output Bits32Foo out__foo [0:1]
+          input Bits32Foo__foo_32 in___foo [0:1],
+          output Bits32Foo__foo_32 out__foo [0:1]
         );
 
           assign out__foo[0] = in___foo[0];
@@ -2348,7 +2390,7 @@ CaseConnectArraySubCompArrayStructIfcComp = set_attributes( CaseConnectArraySubC
       logic [0:0] b__clk [0:0] ;
       logic [31:0] b__out [0:0] ;
       logic [0:0] b__reset [0:0] ;
-      Bits32Foo b__ifc__foo [0:0][0:0][0:0] ;
+      Bits32Foo__foo_32 b__ifc__foo [0:0][0:0][0:0] ;
 
       Bits32ArrayStructIfcComp_noparam b__0
       (
@@ -2362,14 +2404,14 @@ CaseConnectArraySubCompArrayStructIfcComp = set_attributes( CaseConnectArraySubC
     '''\
         typedef struct packed {
           logic [31:0] foo ;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         module Bits32ArrayStructIfcComp_noparam
         (
           input logic [0:0] clk,
           output logic [31:0] out,
           input logic [0:0] reset,
-          input Bits32Foo ifc__foo [0:0][0:0]
+          input Bits32Foo__foo_32 ifc__foo [0:0][0:0]
         );
 
           assign out = ifc__foo[0][0].foo;
@@ -2387,7 +2429,7 @@ CaseConnectArraySubCompArrayStructIfcComp = set_attributes( CaseConnectArraySubC
           logic [0:0] b__clk [0:0] ;
           logic [31:0] b__out [0:0] ;
           logic [0:0] b__reset [0:0] ;
-          Bits32Foo b__ifc__foo [0:0][0:0][0:0] ;
+          Bits32Foo__foo_32 b__ifc__foo [0:0][0:0][0:0] ;
 
           Bits32ArrayStructIfcComp_noparam b__0
           (
@@ -2743,14 +2785,14 @@ CaseBehavioralArraySubCompArrayStructIfcComp = set_attributes( CaseBehavioralArr
     '''\
         typedef struct packed {
           logic [31:0] foo ;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         module Bits32ArrayStructIfcComp_noparam
         (
           input logic [0:0] clk,
           output logic [31:0] out,
           input logic [0:0] reset,
-          input Bits32Foo ifc__foo [0:0][0:0]
+          input Bits32Foo__foo_32 ifc__foo [0:0][0:0]
         );
 
           assign out = ifc__foo[0][0].foo;
@@ -2767,7 +2809,7 @@ CaseBehavioralArraySubCompArrayStructIfcComp = set_attributes( CaseBehavioralArr
           logic [0:0] b__clk [0:1] ;
           logic [31:0] b__out [0:1] ;
           logic [0:0] b__reset [0:1] ;
-          Bits32Foo b__ifc__foo [0:1][0:0][0:0] ;
+          Bits32Foo__foo_32 b__ifc__foo [0:1][0:0][0:0] ;
 
           Bits32ArrayStructIfcComp_noparam b__0
           (
@@ -2812,12 +2854,12 @@ CaseBits32FooNoArgBehavioralComp = set_attributes( CaseBits32FooNoArgBehavioralC
     '''\
         typedef struct packed {
           logic [31:0] foo ;
-        } Bits32Foo;
+        } Bits32Foo__foo_32;
 
         module DUT_noparam
         (
           input logic [0:0] clk,
-          output Bits32Foo out,
+          output Bits32Foo__foo_32 out,
           input logic [0:0] reset
         );
 

@@ -17,7 +17,7 @@ import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst
 
 from ..errors import RTLIRConversionError
-from ..util.utility import collect_objs
+from ..util.utility import collect_objs, get_hashed_name
 
 
 class BaseRTLIRDataType:
@@ -34,6 +34,12 @@ class Vector( BaseRTLIRDataType ):
     assert nbits > 0, 'vector bitwidth should be a positive integer!'
     s.nbits = nbits
     s._is_explicit = is_explicit
+
+  def get_name( s ):
+    return s.get_full_name()
+
+  def get_full_name( s ):
+    return str(int(s.nbits))
 
   def get_length( s ):
     return int(s.nbits)
@@ -83,13 +89,23 @@ class Struct( BaseRTLIRDataType ):
       # s.file_info = "Not available"
 
   def __eq__( s, u ):
-    return isinstance(u, Struct) and s.name == u.name
+    return isinstance(u, Struct) and s.get_full_name() == u.get_full_name()
 
   def __hash__( s ):
     return hash((type(s), s.name))
 
   def get_name( s ):
-    return s.name
+    class_name = s.name
+    field_str  = '__'.join(f'{field_name}_{field_type.get_full_name()}' \
+                           for field_name, field_type in s.properties.items())
+    return get_hashed_name( class_name, field_str )
+
+  def get_full_name( s ):
+    # Derive the name of BitStruct from both the class name and its fields
+    class_name = s.name
+    field_str  = '__'.join(f'{field_name}_{field_type.get_full_name()}' \
+                           for field_name, field_type in s.properties.items())
+    return f'{class_name}__{field_str}'
 
   # def get_file_info( s ):
     # return s.file_info
@@ -117,7 +133,7 @@ class Struct( BaseRTLIRDataType ):
     return s == obj
 
   def __str__( s ):
-    return f'Struct {s.name}'
+    return f'Struct {s.get_name()}'
 
 class Bool( BaseRTLIRDataType ):
   """RTLIR data type class for struct type.
@@ -167,6 +183,13 @@ class PackedArray( BaseRTLIRDataType ):
 
   def __hash__( s ):
     return hash((type(s), tuple(s.dim_sizes), s.sub_dtype))
+
+  def get_name( s ):
+    return s.get_full_name()
+
+  def get_full_name( s ):
+    dimension_str = 'x'.join(str(d) for d in s.dim_sizes)
+    return f'{s.sub_dtype.get_full_name()}x{dimension_str}'
 
   def get_length( s ):
     return int(s.sub_dtype.get_length()*reduce( lambda p,x: p*x, s.dim_sizes, 1 ))

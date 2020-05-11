@@ -20,6 +20,7 @@ from ....testcases import (
     CaseNestedStructPackedArrayUpblkComp,
     CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
+    CaseStructUnique,
     CaseTypeBundle,
 )
 from ..VBehavioralTranslatorL3 import BehavioralRTLIRToVVisitorL3
@@ -52,6 +53,7 @@ def run_test( case, m ):
       CaseBits32ToBits32FooComp,
       CaseIntToBits32FooComp,
       CaseBits32FooNoArgBehavioralComp,
+    CaseStructUnique,
     ]
 )
 def test_verilog_behavioral_L3( case ):

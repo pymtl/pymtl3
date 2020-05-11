@@ -101,6 +101,23 @@ class MultiDimPackedArrayStruct:
 class StructTypeNameAsFieldName:
   StructTypeNameAsFieldName: Bits32
 
+class StructUniqueA:
+  @bitstruct
+  class ST:
+    a_foo: Bits16
+    a_bar: Bits32
+
+class StructUniqueB:
+  @bitstruct
+  class ST:
+    b_foo: Bits16
+    b_bar: Bits32
+
+@bitstruct
+class StructUnique:
+  fst: StructUniqueA.ST
+  snd: StructUniqueB.ST
+
 #-------------------------------------------------------------------------
 # Commonly used Interfaces
 #-------------------------------------------------------------------------
@@ -351,6 +368,26 @@ class CaseStructClosureGlobal:
       @update
       def upblk():
         s.out @= foo.foo
+
+class CaseStructUnique:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32 )
+      s.ST_A_wire = Wire( StructUniqueA.ST )
+      s.ST_B_wire = Wire( StructUniqueB.ST )
+      @update
+      def upblk():
+        s.ST_A_wire @= StructUniqueA.ST(1, 2)
+        s.ST_B_wire @= StructUniqueB.ST(3, 4)
+        s.out @= s.ST_A_wire.a_bar + s.ST_B_wire.b_bar
+  TV_IN = _set()
+  TV_OUT = \
+  _check( 'out', Bits32, 0 )
+  TV =\
+  [
+      [ 6 ],
+      [ 6 ],
+  ]
 
 class CasePythonClassAttr:
   class DUT( Component ):
