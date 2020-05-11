@@ -59,6 +59,12 @@ class ComponentLevel4( ComponentLevel3 ):
       s._dsl.all_update_once   |= m._dsl.update_once
       s._dsl.all_M_constraints |= m._dsl.M_constraints
 
+  # Override
+  def _check_valid_dsl_code( s ):
+    s._check_upblk_writes()
+    s._check_port_in_upblk()
+    s._check_port_in_nets()
+
   #-----------------------------------------------------------------------
   # Construction-time APIs
   #-----------------------------------------------------------------------

@@ -38,7 +38,7 @@ class SomeMasterNonBlockingFL( Component ):
     s.nregs = nregs
     s.trace = ""
 
-    @update
+    @update_once
     def up_master_while():
       while s.addr < s.nregs:
         s.trace = "#            "
@@ -67,7 +67,7 @@ class SomeMasterBlockingFL( Component ):
     s.nregs = nregs
     s.trace = ""
 
-    @update
+    @update_once
     def up_master_noloop():
       if s.addr < s.nregs:
         s.trace = "#            "
@@ -127,7 +127,7 @@ class SomeMasterCL( Component ):
     assert DataType is RespType.get_field_type( 'data' )
     AddrType = ReqType.get_field_type( 'addr' )
 
-    @update
+    @update_once
     def up_master_req():
       if s.xcel.req.rdy():
         if s.flag:
@@ -168,7 +168,7 @@ class SomeMinionCL( Component ):
     s.entry = None
     s.reg_file = [ 0 for _ in range( nregs ) ]
 
-    @update
+    @update_once
     def up_process():
 
       if s.entry is not None and s.xcel.resp.rdy():

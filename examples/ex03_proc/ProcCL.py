@@ -74,7 +74,7 @@ class ProcCL( Component ):
     s.DXM_status = PipelineStatus.idle
     s.W_status   = PipelineStatus.idle
 
-    @update
+    @update_once
     def F():
       s.F_status = PipelineStatus.idle
 
@@ -99,7 +99,7 @@ class ProcCL( Component ):
 
     s.raw_inst = b32(0)
 
-    @update
+    @update_once
     def DXM():
       s.redirected_pc_DXM = -1
       s.DXM_status = PipelineStatus.idle
@@ -195,7 +195,7 @@ class ProcCL( Component ):
 
     s.rd = b5(0)
 
-    @update
+    @update_once
     def W():
       s.commit_inst @= 0
       s.W_status = PipelineStatus.idle

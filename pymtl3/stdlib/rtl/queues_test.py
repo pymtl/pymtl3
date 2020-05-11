@@ -78,7 +78,7 @@ class TestHarness( Component ):
 
     connect( s.src.send, s.dut.enq )
 
-    @update
+    @update_once
     def dut2sink():
       s.dut.deq.en @= 0
 

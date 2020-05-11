@@ -25,7 +25,7 @@ def test_mem_fl_cl_adapter():
       s.trace = "                   "
 
       if has_loop == 1:
-        @update
+        @update_once
         def up_master_while():
           s.trace = "                  "
           while s.addr < s.end:
@@ -35,7 +35,7 @@ def test_mem_fl_cl_adapter():
             s.trace = "rd 0x{:x} {}".format( s.addr, x )
             s.addr += 4
       else:
-        @update
+        @update_once
         def up_master_noloop():
           s.trace = "#                 "
           s.mem.write( s.addr, 4, 0xdead0000 | s.addr )
@@ -84,7 +84,7 @@ def test_mem_fl_cl_adapter():
 
       s.memory = bytearray( 2**20 )
 
-      @update
+      @update_once
       def up_process():
 
         if s.entry is not None and s.mem.resp.rdy():
