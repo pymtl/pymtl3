@@ -291,7 +291,10 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
         """
     )
-    v_libs = s._import_sources( cfg, cfg.v_libs )
+    if cfg.v_libs:
+      v_libs = s._import_sources( cfg, cfg.v_libs )
+    else:
+      v_libs = ""
 
     return tplt.format(**locals())
 
