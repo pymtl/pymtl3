@@ -446,7 +446,12 @@ class VerilogPlaceholderPass( PlaceholderPass ):
       for line in fp:
         line_num += 1
         if '`include' in line:
-          filename = s._include_re.search( line ).group( 'filename' )
+          re_result = s._include_re.search( line )
+        else:
+          re_result = None
+
+        if re_result:
+          filename = re_result.group( 'filename' )
           fullname = os.path.join( include_path, filename )
           code += s._output_verilog_file( include_path, fullname )
           code += '\n'
