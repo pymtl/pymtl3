@@ -205,7 +205,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     ports = []
     # Port definitions of wrapper
-    for idx, (_, name, p) in enumerate(rtlir_ports):
+    for idx, (_, name, p, _) in enumerate(rtlir_ports):
       if name:
         if isinstance(p, rt.Array):
           n_dim = p.get_dim_sizes()
@@ -235,7 +235,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     # Connections between top module and inner module
     connect_ports = [
       f"    .{name}( {name} ){'' if idx == len(rtlir_ports)-1 else ','}"\
-      for idx, (_, name, p) in enumerate(rtlir_ports) if name
+      for idx, (_, name, p, _) in enumerate(rtlir_ports) if name
     ]
 
     lines = [
