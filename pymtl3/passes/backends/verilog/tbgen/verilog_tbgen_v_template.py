@@ -74,11 +74,12 @@ module {harness_name};
       else $fatal("\\n=====\\n\\nVTB_OUTPUT_ASSERT_DELAY should be smaller than or equal to CYCLE_TIME\\n\\n=====\\n");
 
     cycle_count = 0;
-    clk   = 1'b1; // NEED TO DO THIS TO HAVE RISING EDGE AT TIME 0
-    reset = 1'b0; // TODO reset active low/high
+    clk   = 1'b0; // NEED TO DO THIS TO HAVE FALLING EDGE AT TIME 0
+    reset = 1'b1; // TODO reset active low/high
+    #(`CYCLE_TIME/2);
 
+    // Now we are talking
     #`VTB_INPUT_DELAY;
-    reset = 1'b1;
     #`CYCLE_TIME;
     cycle_count = 1;
     #`CYCLE_TIME;

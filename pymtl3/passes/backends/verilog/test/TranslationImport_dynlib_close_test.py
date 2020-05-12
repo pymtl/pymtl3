@@ -54,7 +54,7 @@ def test_dynlib_close():
   def tv_out( m, tv ):
     assert m.out == Bits32(tv[1])
   comb_a._tvs = [
-    [    0,   0  ],
+    [    1,   1  ],
     [   42,   42 ],
     [   24,   24 ],
     [   -2,   -2 ],
@@ -71,8 +71,8 @@ def test_dynlib_close():
     if tv[1] != '*':
       assert m.out == Bits32(tv[1])
   seq_a._tvs = [
-    [    0,   '*' ],
-    [   42,    0  ],
+    [    1,   '*' ],
+    [   42,    1  ],
     [   24,    42 ],
     [   -2,    24 ],
     [   -1,    -2 ],
