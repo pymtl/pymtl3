@@ -48,7 +48,7 @@ class ChecksumCL( Component ):
     s.in_q = PipeQueueCL( num_entries=2 )
     s.in_q.enq //= s.recv
 
-    @update
+    @update_once
     def up_checksum_cl():
       if s.in_q.deq.rdy() and s.send.rdy():
         bits = s.in_q.deq()
