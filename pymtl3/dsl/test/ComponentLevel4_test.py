@@ -124,18 +124,18 @@ def test_2regs():
 
       s.reg0 = SimpleReg()
 
-      @update
+      @update_once
       def up_plus_one_to_reg0():
         s.reg0.write( s.in_ + 1 )
 
       s.reg1 = SimpleReg()
 
-      @update
+      @update_once
       def up_reg0_to_reg1():
         s.reg1.write( s.reg0.read() + 1)
 
       s.out = 0
-      @update
+      @update_once
       def up_sink():
         s.out = s.reg1.read()
 
@@ -169,7 +169,7 @@ def test_bypass_queue():
           s.q.enq( s.in_ + 1 )
 
       s.out = 0
-      @update
+      @update_once
       def up_sink():
         s.out = 'X'
         #  if s.in_ % 3 == 0:
@@ -199,13 +199,13 @@ def test_pipe_queue():
 
       s.q = PipeQueue( 1 )
 
-      @update
+      @update_once
       def up_plus_one_to_q():
         if s.q.enq_rdy():
           s.q.enq( s.in_ + 1 )
 
       s.out = 0
-      @update
+      @update_once
       def up_sink():
         s.out = 'X'
         #  if s.in_ % 3 == 0:

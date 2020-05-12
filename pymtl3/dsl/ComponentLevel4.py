@@ -9,7 +9,7 @@ Author : Shunning Jiang
 Date   : Dec 29, 2018
 """
 from .ComponentLevel3 import ComponentLevel3
-from .Connectable import CalleePort, Signal
+from .Connectable import MethodPort, NonBlockingIfc, BlockingIfc
 from .ConstraintTypes import M, U
 from .errors import UnmarkedUpdateOnceError
 from .NamedObject import NamedObject
@@ -66,8 +66,11 @@ class ComponentLevel4( ComponentLevel3 ):
 
     for blk, calls in s._dsl.all_upblk_calls.items():
       # if there is method call in normal update block we throw an error
-      if blk not in all_update_once and calls:
-        raise UnmarkedUpdateOnceError( s._dsl.all_upblk_hostobj[ blk ], blk, calls )
+      if blk not in all_update_once:
+        method_calls = [ x for x in calls \
+          if isinstance( x, (MethodPort, NonBlockingIfc, BlockingIfc)) ]
+        if method_calls:
+          raise UnmarkedUpdateOnceError( s._dsl.all_upblk_hostobj[ blk ], blk, method_calls )
 
   # Override
   def _check_valid_dsl_code( s ):

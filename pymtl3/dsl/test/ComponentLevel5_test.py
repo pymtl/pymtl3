@@ -10,6 +10,7 @@ from collections import deque
 
 from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel3 import connect
+from pymtl3.dsl.ComponentLevel4 import update_once
 from pymtl3.dsl.ComponentLevel5 import ComponentLevel5, method_port
 from pymtl3.dsl.Connectable import CalleePort, CallerPort, Interface
 from pymtl3.dsl.ConstraintTypes import M, U
@@ -39,7 +40,7 @@ class SimpleTestSource( ComponentLevel5 ):
     s.req_rdy = CallerPort()
 
     s.v = 0
-    @update
+    @update_once
     def up_src():
       s.v = None
       if s.req_rdy() and s.msgs:
@@ -125,7 +126,7 @@ class TestSinkUp( ComponentLevel5 ):
 
     s.v = None
 
-    @update
+    @update_once
     def up_sink():
       s.v = None
 
@@ -293,7 +294,7 @@ def test_method_interface():
       s.req = SendIfcCL()
 
       s.v = 0
-      @update
+      @update_once
       def up_src():
         s.v = None
         if s.req.rdy() and s.msgs:

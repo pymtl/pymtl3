@@ -25,6 +25,7 @@ from pymtl3.dsl import (
     method_port,
     non_blocking,
     update,
+    update_once,
 )
 from pymtl3.dsl.errors import InvalidPlaceholderError, LeftoverPlaceholderError
 
@@ -204,12 +205,13 @@ def test_cl_methodport_placeholder():
       s.x = FooCL_wrap()
 
       s.counter = 0
-      @update
+
+      @update_once
       def up_enq():
         s.x.enq(s.counter + 1)
         s.counter += 1
 
-      @update
+      @update_once
       def up_recv():
         print(s.x.deq())
 
@@ -256,7 +258,7 @@ def test_cl_interface_placeholder():
 
       s.received = None
       s.counter = 0
-      @update
+      @update_once
       def up_enq():
         if s.x.enq.rdy():
           s.x.enq(s.counter + 1)
@@ -264,7 +266,7 @@ def test_cl_interface_placeholder():
         else:
           print("enq not rdy")
 
-      @update
+      @update_once
       def up_recv():
         if s.x.deq.rdy():
           s.received = s.x.deq()
