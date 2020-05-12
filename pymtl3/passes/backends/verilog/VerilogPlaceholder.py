@@ -8,5 +8,6 @@
 
 from pymtl3 import Placeholder
 
+
 class VerilogPlaceholder( Placeholder ):
   pass

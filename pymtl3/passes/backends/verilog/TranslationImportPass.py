@@ -13,9 +13,9 @@ from .import_.VerilatorImportConfigs import VerilatorImportConfigs
 from .import_.VerilatorImportPass import VerilatorImportPass
 from .translation.TranslationConfigs import TranslationConfigs
 from .translation.TranslationPass import TranslationPass
+from .VerilogPlaceholder import VerilogPlaceholder
 from .VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
 from .VerilogPlaceholderPass import VerilogPlaceholderPass
-from .VerilogPlaceholder import VerilogPlaceholder
 
 
 class TranslationImportPass( BasePass ):

@@ -2,5 +2,5 @@ from .import_.VerilatorImportPass import VerilatorImportPass
 from .tbgen.VerilogTBGenPass import VerilogTBGenPass
 from .translation.TranslationPass import TranslationPass
 from .TranslationImportPass import TranslationImportPass
-from .VerilogPlaceholderPass import VerilogPlaceholderPass
 from .VerilogPlaceholder import VerilogPlaceholder
+from .VerilogPlaceholderPass import VerilogPlaceholderPass

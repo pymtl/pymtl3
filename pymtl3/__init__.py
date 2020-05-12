@@ -28,9 +28,9 @@ from .passes import TracingConfigs
 from .passes.backends.verilog import (
     TranslationImportPass,
     VerilatorImportPass,
-    VerilogTBGenPass,
     VerilogPlaceholder,
     VerilogPlaceholderPass,
+    VerilogTBGenPass,
 )
 from .passes.PassGroups import SimulationPass
 
