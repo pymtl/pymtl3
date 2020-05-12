@@ -18,7 +18,7 @@ from importlib import reload
 from itertools import cycle
 from textwrap import indent
 
-from pymtl3 import MetadataKey, Placeholder
+from pymtl3 import MetadataKey
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst, mk_bits
 from pymtl3.dsl import Component
 from pymtl3.dsl.errors import UnsetMetadataError

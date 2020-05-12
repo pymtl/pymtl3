@@ -82,7 +82,7 @@ endmodule
       placeholder_src = structural.placeholder_src
       template = \
 """\
-// PyMTL Placeholder {component_name} Definition
+// PyMTL VerilogPlaceholder {component_name} Definition
 // {optional_full_name}At {file_info}
 
 {no_synth_begin}{placeholder_src}

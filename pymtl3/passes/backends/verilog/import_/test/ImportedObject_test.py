@@ -12,10 +12,11 @@ import pytest
 
 from pymtl3 import Interface, SimulationPass
 from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
-from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
+from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.backends.verilog import (
     TranslationImportPass,
     VerilatorImportPass,
+    VerilogPlaceholder,
     VerilogPlaceholderPass,
 )
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -47,7 +48,7 @@ def test_reg( do_test ):
   def tv_out( m, tv ):
     if tv[1] != '*':
       assert m.out == Bits32( tv[1] )
-  class VReg( Component, Placeholder ):
+  class VReg( Component, VerilogPlaceholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
@@ -75,7 +76,7 @@ def test_vl_uninit( do_test ):
     m.in_ @= Bits32( tv[0] )
   def tv_out( m, tv ):
     assert m.out == Bits32( tv[1] )
-  class VUninit( Component, Placeholder ):
+  class VUninit( Component, VerilogPlaceholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
@@ -100,7 +101,7 @@ def test_reg_incomplete_portmap( do_test ):
   def tv_out( m, tv ):
     if tv[1] != '*':
       assert m.out == Bits32( tv[1] )
-  class VReg( Component, Placeholder ):
+  class VReg( Component, VerilogPlaceholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
@@ -132,7 +133,7 @@ def test_adder( do_test ):
       assert m.out == Bits32( tv[3] )
     if tv[4] != '*':
       assert m.cout == Bits1( tv[4] )
-  class VAdder( Component, Placeholder ):
+  class VAdder( Component, VerilogPlaceholder ):
     def construct( s ):
       s.in0 = InPort( Bits32 )
       s.in1 = InPort( Bits32 )
@@ -163,7 +164,7 @@ def test_normal_queue_implicit_top_module( do_test ):
       assert m.deq_rdy == Bits1( tv[5] )
     if tv[5] != '*':
       assert m.deq_msg == Bits32( tv[4] )
-  class VQueue( Component, Placeholder ):
+  class VQueue( Component, VerilogPlaceholder ):
     def construct( s, data_width, num_entries, count_width ):
       s.count   =  OutPort( mk_bits( count_width )  )
       s.deq_en  =  InPort( Bits1  )
@@ -206,7 +207,7 @@ def test_normal_queue_params( do_test ):
       assert m.deq_rdy == Bits1( tv[5] )
     if tv[5] != '*':
       assert m.deq_msg == Bits32( tv[4] )
-  class Queue( Component, Placeholder ):
+  class Queue( Component, VerilogPlaceholder ):
     def construct( s, nbits, nelems, nbits_cnt ):
       s.count   =  OutPort( mk_bits( nbits_cnt )  )
       s.deq_en  =  InPort( Bits1  )
@@ -266,7 +267,7 @@ def test_normal_queue_interface( do_test ):
       s.en  = InPort( Bits1 )
       s.rdy = OutPort( Bits1 )
       s.msg = InPort( Type )
-  class VQueue( Component, Placeholder ):
+  class VQueue( Component, VerilogPlaceholder ):
     def construct( s, data_width, num_entries, count_width ):
       s.count = OutPort( mk_bits( count_width )  )
       s.deq   = DequeueIfc( mk_bits( data_width ) )
@@ -300,7 +301,7 @@ def test_unpacked_port_array( do_test ):
   def tv_out( m, tv ):
     assert m.out[0] == Bits32(tv[2])
     assert m.out[1] == Bits32(tv[3])
-  class VPassThrough( Component, Placeholder ):
+  class VPassThrough( Component, VerilogPlaceholder ):
     def construct( s, nports, nbits ):
       s.in_ = [ InPort( mk_bits(nbits) ) for _ in range(nports) ]
       s.out = [ OutPort( mk_bits(nbits) ) for _ in range(nports) ]
@@ -331,7 +332,7 @@ def test_unpacked_port_array_infer_clk_reset( do_test ):
   def tv_out( m, tv ):
     assert m.out[0] == Bits32(tv[2])
     assert m.out[1] == Bits32(tv[3])
-  class VPassThrough( Component, Placeholder ):
+  class VPassThrough( Component, VerilogPlaceholder ):
     def construct( s, nports, nbits ):
       s.in_ = [ InPort( mk_bits(nbits) ) for _ in range(nports) ]
       s.out = [ OutPort( mk_bits(nbits) ) for _ in range(nports) ]
@@ -356,7 +357,7 @@ def test_unpacked_port_array_infer_clk_reset( do_test ):
   "translate", [ True, False ]
 )
 def test_param_pass_through( do_test, translate ):
-  class VPassThrough( Component, Placeholder ):
+  class VPassThrough( Component, VerilogPlaceholder ):
     def construct( s, nports, nbits ):
       s.in_ = [ InPort( mk_bits(nbits) ) for _ in range(nports) ]
       s.out = [ OutPort( mk_bits(nbits) ) for _ in range(nports) ]
@@ -403,7 +404,7 @@ def test_non_top_portmap( do_test ):
   def tv_out( m, tv ):
     if tv[1] != '*':
       assert m.out == Bits32(tv[1])
-  class VReg( Component, Placeholder ):
+  class VReg( Component, VerilogPlaceholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
@@ -436,7 +437,7 @@ def test_non_top_portmap( do_test ):
 
 def test_reg_external_trace( do_test ):
   # Test Verilog line trace
-  class VRegTrace( Component, Placeholder ):
+  class VRegTrace( Component, VerilogPlaceholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
@@ -467,7 +468,7 @@ def test_reg_external_trace( do_test ):
 
 def test_reg_infer_external_trace( do_test ):
   # Test Verilog line trace
-  class VRegTrace( Component, Placeholder ):
+  class VRegTrace( Component, VerilogPlaceholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )

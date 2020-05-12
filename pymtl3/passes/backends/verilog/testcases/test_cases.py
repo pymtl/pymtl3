@@ -95,14 +95,14 @@ from pymtl3.passes.testcases.test_cases import _check, _set
 
 # Verilog test cases
 
-class Bits32VRegComp( Placeholder, Component ):
+class Bits32VRegComp( VerilogPlaceholder, Component ):
   def construct( s ):
     s.d = InPort( Bits32 )
     s.q = OutPort( Bits32 )
     s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VReg.v' )
     s.set_metadata( VerilogPlaceholderPass.top_module, 'VReg' )
 
-class Bits32VRegPassThroughComp( Placeholder, Component ):
+class Bits32VRegPassThroughComp( VerilogPlaceholder, Component ):
   def construct( s ):
     s.d = InPort( Bits32 )
     s.q = OutPort( Bits32 )
@@ -168,7 +168,7 @@ class CaseVIncludePopulation:
   ]
 
 class CaseVLibsTranslation:
-  class DUT( Placeholder, Component ):
+  class DUT( VerilogPlaceholder, Component ):
     def construct( s ):
       s.d = InPort( Bits32 )
       s.q = OutPort( Bits32 )

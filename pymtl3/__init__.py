@@ -29,6 +29,8 @@ from .passes.backends.verilog import (
     TranslationImportPass,
     VerilatorImportPass,
     VerilogTBGenPass,
+    VerilogPlaceholder,
+    VerilogPlaceholderPass,
 )
 from .passes.PassGroups import SimulationPass
 
@@ -41,6 +43,7 @@ __all__ = [
   'blocking', 'CalleeIfcFL', 'CallerIfcFL',
 
   'SimulationPass', 'TracingConfigs', 'TranslationImportPass', 'VerilatorImportPass', 'VerilogTBGenPass',
+  'VerilogPlaceholder', 'VerilogPlaceholderPass',
   'Component', 'Placeholder',
 
   'trunc', 'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',

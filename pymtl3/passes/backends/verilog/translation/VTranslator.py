@@ -115,10 +115,10 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
         # This is a placeholder
         placeholder_src = structural.placeholder_src
 
-        if '// PyMTL Placeholder' not in structural.placeholder_src:
+        if '// PyMTL VerilogPlaceholder' not in structural.placeholder_src:
           template = \
 """\
-// PyMTL Placeholder {component_name} Definition
+// PyMTL VerilogPlaceholder {component_name} Definition
 // {optional_full_name}At {file_info}
 
 {no_synth_begin}{placeholder_src}

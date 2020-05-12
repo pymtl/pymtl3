@@ -5,7 +5,6 @@
 
 from textwrap import dedent
 
-from pymtl3 import Placeholder
 from pymtl3.passes.backends.generic.structural.StructuralTranslatorL4 import (
     StructuralTranslatorL4,
 )
@@ -14,6 +13,7 @@ from pymtl3.passes.rtlir import RTLIRGetter
 from pymtl3.passes.rtlir import RTLIRType as rt
 
 from ...util.utility import make_indent, pretty_concat
+from ...VerilogPlaceholder import VerilogPlaceholder
 from .VStructuralTranslatorL3 import VStructuralTranslatorL3
 
 
@@ -138,7 +138,7 @@ class VStructuralTranslatorL4(
         obj_c_rtype = s.tr_top._rtlir_getter.get_rtlir(obj)
         _c_name = s.rtlir_tr_component_unique_name(obj_c_rtype)
 
-        if isinstance(obj, Placeholder):
+        if isinstance(obj, VerilogPlaceholder):
           c_name = obj.get_metadata( s._placeholder_pass.placeholder_config ).pickled_top_module
         else:
           c_name = _c_name

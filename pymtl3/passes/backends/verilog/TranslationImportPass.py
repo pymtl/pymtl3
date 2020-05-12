@@ -6,7 +6,7 @@
 # Author : Peitian Pan
 # Date   : Aug 6, 2019
 
-from pymtl3 import MetadataKey, Placeholder
+from pymtl3 import MetadataKey
 from pymtl3.passes.BasePass import BasePass
 
 from .import_.VerilatorImportConfigs import VerilatorImportConfigs
@@ -15,6 +15,7 @@ from .translation.TranslationConfigs import TranslationConfigs
 from .translation.TranslationPass import TranslationPass
 from .VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
 from .VerilogPlaceholderPass import VerilogPlaceholderPass
+from .VerilogPlaceholder import VerilogPlaceholder
 
 
 class TranslationImportPass( BasePass ):
@@ -40,7 +41,7 @@ class TranslationImportPass( BasePass ):
 
     # Found a subtree that is marked as to be translated and imported
     if ( m.has_metadata( c.enable ) and m.get_metadata( c.enable ) ) or \
-      isinstance( m, Placeholder ):
+      isinstance( m, VerilogPlaceholder ):
 
       # Make sure the translation pass is enabled
       m.set_metadata( c.get_translation_pass().enable, True )
@@ -58,7 +59,7 @@ class TranslationImportPass( BasePass ):
     # TODO: what we really want is to generate placeholders for components
     # to be translated and imported.
     if ( m.has_metadata( c.enable ) and m.get_metadata( c.enable ) ) or \
-      isinstance( m, Placeholder ):
+      isinstance( m, VerilogPlaceholder ):
 
       # Component m will look as if it has applied the Placeholder pass.
       # It will have the output pass data placeholder_config
@@ -72,7 +73,7 @@ class TranslationImportPass( BasePass ):
       else:
         placeholder_config = c.get_placeholder_config()( m )
 
-        if not isinstance( m, Placeholder ):
+        if not isinstance( m, VerilogPlaceholder ):
           # If m is not a placeholder, we need to populate the v_include
           # placeholder config from all submodules into m.
           placeholder_config.v_include = list(c.get_hierarchy_v_include(m))
@@ -108,7 +109,7 @@ class TranslationImportPass( BasePass ):
   def get_hierarchy_v_include( c, m ):
     all_v_includes = set()
     ph_config_key = c.get_placeholder_pass().placeholder_config
-    if isinstance( m, Placeholder ) and m.has_metadata( ph_config_key ):
+    if isinstance( m, VerilogPlaceholder ) and m.has_metadata( ph_config_key ):
       ph_config = m.get_metadata( ph_config_key )
       for v_include in ph_config.v_include:
         all_v_includes.add( v_include )
