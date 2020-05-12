@@ -67,13 +67,13 @@ def test_toy():
 
   testlist = [
   #in0
-  [0,0,1,-1,42,1,42], #dut's reset is on for the first two cycles".
+  [0,0,0,1,-1,42,1,42], #dut's reset is on for the first two cycles".
 
   #in1
-  [0,0,2,2,2,-2,-42],
+  [0,0,0,2,2,2,-2,-42],
 
   #out
-  [0,0,3,1,44,-1,0]
+  [0,0,0,3,1,44,-1,0]
   ]
   # Begin simulation
   for in0, in1, out in zip(vector[0::3], vector[1::3], vector[2::3]):

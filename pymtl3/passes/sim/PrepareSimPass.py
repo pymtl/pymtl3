@@ -113,18 +113,27 @@ class PrepareSimPass( BasePass ):
     def sim_reset():
       if print_line_trace:
         print()
-      top._sim.simulated_cycles += 1
+      # cycle 0
       top.reset @= b1( active_high )
       up()
-      if print_line_trace:
-        print( f"{top._sim.simulated_cycles:3}r {top.line_trace()}" )
+
       ff()
+      # cycle 1
       up()
       if print_line_trace:
         print( f"{top._sim.simulated_cycles:3}r {top.line_trace()}" )
+
       ff()
+      # cycle 2
+      up()
+      if print_line_trace:
+        print( f"{top._sim.simulated_cycles:3}r {top.line_trace()}" )
+
+      ff()
+      # cycle 3
       top.reset @= b1( not active_high )
       up()
+
     top.sim_reset = sim_reset
 
   def create_print_line_trace( self, top ):
