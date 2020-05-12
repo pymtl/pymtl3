@@ -241,7 +241,7 @@ class VerilatorImportPass( BasePass ):
 
     # Generate port declarations for the verilated model in C
     port_defs = []
-    for _, v_name, port in ports:
+    for _, v_name, port, _ in ports:
       if v_name:
         port_defs.append( s.gen_signal_decl_c( v_name, port ) )
     port_cdefs = copy.copy( port_defs )
@@ -250,7 +250,7 @@ class VerilatorImportPass( BasePass ):
 
     # Generate initialization statements for in/out ports
     port_inits = []
-    for _, v_name, port in ports:
+    for _, v_name, port, _ in ports:
       if v_name:
         port_inits.extend( s.gen_signal_init_c( v_name, port ) )
     make_indent( port_inits, 1 )
@@ -777,14 +777,15 @@ m->{name}{sub} = {deference}model->{name}{sub};
     # the verilated model because only the sequential update block of
     # the imported component should manipulate it.
 
-    for pnames, vname, rtype in packed_ports:
+    for pnames, vname, rtype, port_idx in packed_ports:
       pnames_iter = cycle(pnames)
       p_n_dim, p_rtype = get_rtype( rtype )
       if s._get_direction( p_rtype ) == 'InPort' and pnames[0] != 'clk' and vname:
         dtype = p_rtype.get_dtype()
         lhs = "_ffi_m."+s._verilator_name(vname)
         rhs = "s.{}"
-        idx = s._get_port_array_index( pnames, p_n_dim )
+        # idx = s._get_port_array_index( pnames, p_n_dim )
+        idx = port_idx
         _set_comb, _structs = s.gen_port_array_input( lhs, rhs, pnames_iter, dtype, idx, p_n_dim, symbols )
         set_comb += _set_comb
         structs  += _structs
@@ -860,14 +861,15 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_comb_output( s, packed_ports, symbols ):
     set_comb, structs = [], []
-    for pnames, vname, rtype in packed_ports:
+    for pnames, vname, rtype, port_idx in packed_ports:
       pnames_iter = cycle(pnames)
       p_n_dim, p_rtype = get_rtype( rtype )
       if s._get_direction( rtype ) == 'OutPort':
         dtype = p_rtype.get_dtype()
         lhs = "s.{}"
         rhs = "_ffi_m." + s._verilator_name(vname)
-        idx = s._get_port_array_index( pnames, p_n_dim )
+        # idx = s._get_port_array_index( pnames, p_n_dim )
+        idx = port_idx
         _set_comb, _structs = s.gen_port_array_output( lhs, pnames_iter, rhs, dtype, idx, p_n_dim, symbols )
         set_comb += _set_comb
         structs  += _structs
@@ -881,7 +883,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     """Return the line trace method body that shows all interface ports."""
     template = '{0}={{s.{0}}},'
     trace_string = ''
-    for pnames, _, _ in packed_ports:
+    for pnames, _, _, _ in packed_ports:
       for pname in pnames:
         trace_string += ' ' + template.format( pname )
     return f"      return f'{trace_string}'"
