@@ -9,7 +9,7 @@ Author : Shunning Jiang
 Date   : Dec 29, 2018
 """
 from .ComponentLevel3 import ComponentLevel3
-from .Connectable import MethodPort, NonBlockingIfc, BlockingIfc
+from .Connectable import BlockingIfc, MethodPort, NonBlockingIfc
 from .ConstraintTypes import M, U
 from .errors import UnmarkedUpdateOnceError
 from .NamedObject import NamedObject

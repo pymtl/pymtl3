@@ -12,6 +12,7 @@ from copy import deepcopy
 import py
 
 from pymtl3.datatypes import Bits, is_bitstruct_class
+from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.extra.pypy import custom_exec
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
@@ -90,6 +91,7 @@ class DynamicSchedulePass( BasePass ):
     #---------------------------------------------------------------------
 
     constraint_objs = top._dag.constraint_objs
+    onces = top.get_all_update_once()
 
     # Put the graph schedule to _sched
     top._sched.update_schedule = schedule = []
@@ -111,10 +113,9 @@ class DynamicSchedulePass( BasePass ):
         # footprint until all nodes are visited.
 
         # check update_once first
-        onces = top.get_all_update_once()
         for x in scc:
           if x in onces:
-            raise Exception("update_once blocks are not allowed to appear in a cycle. \n - " + \
+            raise UpblkCyclicError("update_once blocks are not allowed to appear in a cycle. \n - " + \
                             "\n - ".join( [
                               f"{y.__name__} ({'@update_once' if y in onces else '@update'} " \
                               f"in 'top.{repr(top.get_update_block_host_component(y))[2:]}')"
@@ -160,19 +161,20 @@ class DynamicSchedulePass( BasePass ):
             variables.update( constraint_objs[ (u, v) ] )
 
         if len(variables) == 0:
-          raise Exception("There is a cyclic dependency without involving variables."
-                          "Probably a loop that involves update_once:\n{}".format(", ".join( [ x.__name__ for x in scc] )))
+          raise UpblkCyclicError("There is a cyclic dependency without involving variables."
+                          "Probably a loop that involves blocks that should be update_once:\n{}"\
+                          .format(", ".join( [ x.__name__ for x in scc] )))
 
         # generate a loop for scc
         # Shunning: we just simply loop over the whole SCC block
         # TODO performance optimizations using Mamba techniques within a SCC block
 
         def gen_wrapped_SCCblk( s, scc, src ):
-          from pymtl3.dsl.errors import UpblkCyclicError
 
           # TODO mamba?
           scc_tick_func = SimpleTickPass.gen_tick_function( scc )
-          _globals = { 's': s, 'scc_tick_func': scc_tick_func, 'deepcopy': deepcopy }
+          _globals = { 's': s, 'scc_tick_func': scc_tick_func, 'deepcopy': deepcopy,
+                       'UpblkCyclicError': UpblkCyclicError }
           _locals  = {}
 
           custom_exec(py.code.Source( src ).compile(), _globals, _locals)
@@ -184,7 +186,7 @@ def wrapped_SCC_{0}():
   while True:
     N += 1
     if N > 100:
-      raise Exception("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
+      raise UpblkCyclicError("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
     {1}
     scc_tick_func()
     {2}

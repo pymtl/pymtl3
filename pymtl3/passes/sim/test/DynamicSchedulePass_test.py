@@ -115,10 +115,10 @@ def test_combinational_loop():
 
   try:
     _test_model( Top )
-  except Exception as e:
+  except UpblkCyclicError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown Exception.")
+  raise Exception("Should've thrown UpblkCyclicError.")
 
 def test_very_deep_dag():
 
@@ -279,6 +279,7 @@ def test_equal_top_level():
     print(e)
     assert str(e).startswith("Please use @= to assign top level InPort")
     return
+  raise Exception("Should've thrown AssertionError")
 
 def test_update_once():
 
@@ -308,4 +309,9 @@ def test_update_once():
   t = Top()
   t.elaborate()
   t.apply( GenDAGPass() )
-  t.apply( DynamicSchedulePass() )
+  try:
+    t.apply( DynamicSchedulePass() )
+  except UpblkCyclicError as e:
+    print(e)
+    return
+  raise Exception("Should've thrown UpblkCyclicError")
