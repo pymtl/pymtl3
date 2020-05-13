@@ -20,4 +20,4 @@ class RegIncr( Component ):
 
     @update
     def upblk_comb():
-      s.out = s.reg_out + 1
+      s.out @= s.reg_out + 1

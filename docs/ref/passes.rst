@@ -1,6 +1,13 @@
 Passes
 ======
 
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   passes-translation
+   passes-import
+
 Simulation passes
 -----------------
 
@@ -24,6 +31,8 @@ Simulation passes
 
 Translation passes
 ------------------
+
+See :doc:`here <passes-translation>` for an introduction to translation passes.
 
 Verilog translation pass
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -51,6 +60,8 @@ as those of the :ref:`Verilog translation pass <Verilog translation pass>`.
 
 Import passes
 -------------
+
+See :doc:`here <passes-import>` for an introduction to import passes.
 
 Verilog import pass
 ^^^^^^^^^^^^^^^^^^^
