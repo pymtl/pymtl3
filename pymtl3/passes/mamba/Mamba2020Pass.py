@@ -15,6 +15,7 @@ import py
 
 from pymtl3.datatypes import Bits, is_bitstruct_class
 from pymtl3.dsl import MethodPort
+from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.extra.pypy import custom_exec
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
@@ -197,6 +198,7 @@ class Mamba2020Pass( UnrollSimPass ):
 
     SCCs, G_new = kosaraju_scc( G, G_T )
 
+    onces = top.get_all_update_once()
     # This function compiles a SCC block
     scc_id = 0 # global id across all sccs
     def compile_scc( i ):
@@ -206,6 +208,14 @@ class Mamba2020Pass( UnrollSimPass ):
 
       if len(scc) == 1:
         return list(scc)[0]
+
+      for x in scc:
+        if x in onces:
+          raise UpblkCyclicError("update_once blocks are not allowed to appear in a cycle. \n - " + \
+                          "\n - ".join( [
+                            f"{y.__name__} ({'@update_once' if y in onces else '@update'} " \
+                            f"in 'top.{repr(top.get_update_block_host_component(y))[2:]}')"
+                            for y in scc] ))
 
       scc_id += 1
       if _DEBUG: print( f"{'='*100}\n SCC{scc_id}\n{'='*100}" )
@@ -258,8 +268,9 @@ class Mamba2020Pass( UnrollSimPass ):
           variables.update( constraint_objs[ (u, v) ] )
 
       if len(variables) == 0:
-        raise Exception("There is a cyclic dependency without involving variables."
-                        "Probably a loop that involves update_once:\n{}".format(", ".join( [ x.__name__ for x in scc] )))
+        raise UpblkCyclicError("There is a cyclic dependency without involving variables."
+                        "Probably a loop that involves blocks that should be update_once:\n{}"\
+                        .format(", ".join( [ x.__name__ for x in scc] )))
 
       # generate a loop for scc
       # Shunning: we just simply loop over the whole SCC block
@@ -272,7 +283,7 @@ def wrapped_SCC_{0}():
   while True:
     N += 1
     if N > 100:
-      raise Exception("Combinational loop detected at runtime in {{{4}}} after 100 iters!")
+      raise UpblkCyclicError("Combinational loop detected at runtime in {{{4}}} after 100 iters!")
     {1}
     {3}
     {2}
@@ -345,7 +356,7 @@ generated_block = wrapped_SCC_{0}
       cur_meta, cur_br, cur_count = [], 0, 0
       scc_schedule = []
 
-      _globals = { 's': top }
+      _globals = { 's': top, 'UpblkCyclicError': UpblkCyclicError }
       blk_srcs = []
 
       # If there is only 10 blocks, we directly unroll it

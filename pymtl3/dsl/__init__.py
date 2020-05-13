@@ -6,6 +6,7 @@ from .Component import Component
 from .ComponentLevel1 import update
 from .ComponentLevel2 import update_ff
 from .ComponentLevel3 import connect
+from .ComponentLevel4 import update_once
 from .ComponentLevel5 import method_port
 from .ComponentLevel6 import non_blocking
 from .ComponentLevel7 import blocking

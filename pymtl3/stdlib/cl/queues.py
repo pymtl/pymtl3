@@ -83,8 +83,8 @@ class NormalQueueCL( Component ):
 
     @update
     def up_pulse():
-      s.enq_rdy    = len( s.queue ) < s.queue.maxlen
-      s.deq_rdy    = len( s.queue ) > 0
+      s.enq_rdy = len( s.queue ) < s.queue.maxlen
+      s.deq_rdy = len( s.queue ) > 0
 
     s.add_constraints(
       U( up_pulse ) < M( s.enq.rdy ),

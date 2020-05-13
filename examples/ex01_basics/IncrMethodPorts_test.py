@@ -68,19 +68,19 @@ class IncrMethodPorts( Component ):
     s.buf2 = Buffer()
 
     # UpA writes data to buf1
-    @update
+    @update_once
     def upA():
       s.buf1.write( s.incr_in )
       s.incr_in += b8(10)
 
     # UpB reads data from buf1, increments it by 1, and writes to buf2
-    @update
+    @update_once
     def upB():
       tmp = s.buf1.read()
       s.buf2.write( tmp + b8(1) )
 
     # UpC reads data from buf2
-    @update
+    @update_once
     def upC():
       s.incr_out = s.buf2.read()
 

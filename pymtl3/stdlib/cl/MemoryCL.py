@@ -84,7 +84,7 @@ class MemoryCL( Component ):
 
       s.req_qs[i].enq      //= s.req_stalls[i].send
 
-    @update
+    @update_once
     def up_mem():
 
       for i in range(s.nports):

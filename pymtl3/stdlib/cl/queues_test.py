@@ -27,7 +27,7 @@ class TestHarness( Component ):
 
     connect( s.src.send, s.dut.enq )
 
-    @update
+    @update_once
     def up_deq_send():
       if s.dut.deq.rdy() and s.sink.recv.rdy():
         s.sink.recv( s.dut.deq() )

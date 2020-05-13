@@ -54,7 +54,7 @@ class ChecksumXcelCL( Component ):
     connect( s.checksum_unit.send, s.out_q.enq )
     connect( s.xcel.req, s.in_q.enq )
 
-    @update
+    @update_once
     def up_tick():
       if s.state == s.XCFG:
         # Dequeue a request message from input queue and send response.

@@ -207,6 +207,24 @@ Suggestion: fix incorrect field access at line {}, or fix the declaration somewh
       repr(blk_hostobj), blk_hostobj.__class__.__name__,
       error_lineno ) )
 
+class UnmarkedUpdateOnceError( Exception ):
+  """ In update, raise when signal is not @= -ed """
+  def __init__( self, hostobj, blk, objs ):
+
+    filepath = inspect.getfile( hostobj.__class__ )
+    blk_src, base_lineno  = inspect.getsourcelines( blk )
+    return super().__init__( \
+"""
+In file {}:{} (component {}):
+Since update block {} calls the CL/FL method ports/interfaces below, it should be marked as @update_once
+- {}
+
+Suggestion: Mark update block {} as @update_once""".format( \
+      filepath, base_lineno, repr(hostobj), blk.__name__,
+      "\n- ".join( sorted( [repr(x) for x in objs] ) ),
+      blk.__name__ )
+    )
+
 class UpblkFuncSameNameError( Exception ):
   """ Raise when two update block/function are declared with the same name """
   def __init__( self, name ):

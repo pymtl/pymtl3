@@ -593,6 +593,13 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
+  def get_all_update_once( s ):
+    try:
+      s._check_called_at_elaborate_top( "get_all_update_once" )
+      return s._dsl.all_update_once
+    except AttributeError:
+      raise NotElaboratedError()
+
   def get_all_upblk_metadata( s ):
     try:
       s._check_called_at_elaborate_top( "get_all_upblk_metadata" )

@@ -25,7 +25,7 @@ class MemoryFL( Component ):
     s.ifc = MemMinionIfcFL( s.read, s.write, s.amo )
 
     s.trace = "     "
-    @update
+    @update_once
     def up_clear_trace():
       s.trace = "     "
 

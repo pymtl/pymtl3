@@ -47,7 +47,7 @@ class DelayPipeDeqCL( Component ):
     else: # delay >= 1, pipe behavior
       s.pipeline = deque( [None]*(delay+1), maxlen=(delay+1) )
 
-      @update
+      @update_once
       def up_delay():
         if s.pipeline[-1] is None:
           s.pipeline.rotate()
@@ -93,7 +93,7 @@ class DelayPipeSendCL( Component ):
       s.enq = CalleeIfcCL( Type=None, method=s.enq_pipe, rdy=s.enq_rdy_pipe )
       s.pipeline = deque( [None]*delay, maxlen=delay )
 
-      @update
+      @update_once
       def up_delay():
         if s.pipeline[-1] is not None:
           if s.send.rdy():
