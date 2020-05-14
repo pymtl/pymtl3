@@ -50,18 +50,15 @@ Tutorials for register-transfer-level and gate-level modeling.
 Reference
 ---------
 
-PyMTL3 user reference manual.
-
 .. toctree::
    :maxdepth: 2
    :hidden:
    :caption: Reference
 
-   ref/overview
    ref/datatypes
+   ref/dsl
    ref/primitives
    ref/passes
-   ref/dsl
    ref/stdlib
 
 
@@ -70,21 +67,11 @@ Developer Manual
 
 To be added...
 
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-   :caption: Developer Manual
-
 
 About PyMTL3
 ------------
 
 Visit the PyMTL `website <https://cornell-brg.github.io/pymtl3/>`_.
-
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-   :caption: About PyMTL3
 
 
 Indices and tables

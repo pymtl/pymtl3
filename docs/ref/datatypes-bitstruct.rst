@@ -1,2 +1,0 @@
-BitStruct Hardware Data Type
-============================

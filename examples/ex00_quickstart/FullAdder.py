@@ -6,11 +6,11 @@ from pymtl3 import *
 
 class FullAdder( Component ):
   def construct( s ):
-    s.a    = InPort( 1 )
-    s.b    = InPort( 1 )
-    s.cin  = InPort( 1 )
-    s.sum  = OutPort( 1 )
-    s.cout = OutPort( 1 )
+    s.a    = InPort()
+    s.b    = InPort()
+    s.cin  = InPort()
+    s.sum  = OutPort()
+    s.cout = OutPort()
 
     @update
     def upblk():

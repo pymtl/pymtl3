@@ -71,22 +71,20 @@ full adder logic is implemented inside an update block ``upblk``.
     >>> print(inspect.getsource(FullAdder))
     class FullAdder( Component ):
       def construct( s ):
-        s.a    = InPort( Bits1 )
-        s.b    = InPort( Bits1 )
-        s.cin  = InPort( Bits1 )
-        s.sum  = OutPort( Bits1 )
-        s.cout = OutPort( Bits1 )
+        s.a    = InPort()
+        s.b    = InPort()
+        s.cin  = InPort()
+        s.sum  = OutPort()
+        s.cout = OutPort()
 
         @update
         def upblk():
-          s.sum = s.cin ^ s.a ^ s.b
-          s.cout = ( ( s.a ^ s.b ) & s.cin ) | ( s.a & s.b )
+          s.sum  @= s.cin ^ s.a ^ s.b
+          s.cout @= ( ( s.a ^ s.b ) & s.cin ) | ( s.a & s.b )
 
 To simulate the full adder, we need to apply the ``SimulationPass``
 PyMTL pass. Then we can set the value of input ports and simulate
 the full adder by calling ``fa.sim_tick``:
-
-TODO: add tracing here
 
 .. highlight:: python
 
@@ -95,9 +93,9 @@ TODO: add tracing here
     >>> fa = FullAdder()
     >>> fa.apply( SimulationPass() )
     >>> fa.sim_reset()
-    >>> fa.a = Bits1(0)
-    >>> fa.b = Bits1(1)
-    >>> fa.cin = Bits1(0)
+    >>> fa.a @= 0
+    >>> fa.b @= 1
+    >>> fa.cin @= 0
     >>> fa.sim_tick()
 
 Now let's verify that the full adder produces the correct result:
@@ -106,8 +104,8 @@ Now let's verify that the full adder produces the correct result:
 
 ::
 
-    >>> assert fa.sum == Bits1(1)
-    >>> assert fa.cout == Bits1(0)
+    >>> assert fa.sum == 1
+    >>> assert fa.cout == 0
 
 Register incrementer example
 ----------------------------
@@ -131,7 +129,7 @@ And to simulate an 8-bit register incrementer:
     >>> regincr = RegIncr( 8 )
     >>> regincr.apply( SimulationPass() )
     >>> regincr.sim_reset()
-    >>> regincr.in_ = Bits8( 42 )
+    >>> regincr.in_ @= 42
     >>> regincr.sim_tick()
 
 Now verify the registered output is indeed incremented:
@@ -140,4 +138,4 @@ Now verify the registered output is indeed incremented:
 
 ::
 
-    >>> assert regincr.out == Bits8(43)
+    >>> assert regincr.out == 43

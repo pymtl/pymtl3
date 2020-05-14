@@ -1,131 +1,91 @@
 Passes
 ======
 
-.. toctree::
-   :maxdepth: 1
-   :hidden:
+PyMTL Passes are modular Python programs that can be applied on PyMTL components to analyze,
+instrument, or transform the given component hierarchy.
 
-   passes-translation
-   passes-import
+Communicate with passes using metadata
+--------------------------------------
+
+Metadata are per-component data that can be used to customize the behavior of various passes.
+PyMTL components provide two APIs to set and retrieve metadata: `Component.set_metadata(key, value)`
+and `Component.get_metadata(key)`, where `key` must be an instance of `MetadataKey` and `value`
+can be an arbitrary Python object.
+
+PyMTL passes whose behavior can be customized are required to declare their customizable options
+as a `MetadataKey` class attributes of the pass. For example, you can see the list of supported
+options of `VerilatorImportPass` :ref:`here <Verilog import pass>`. To enable the import pass on
+a component `m`, you can set the metadata like this
+
+.. highlight:: python
+
+::
+
+    m.set_metadata( VerilatorImportPass.enable, True )
+
+and the import pass will be able to pick up this metadata when it is applied.
+
+If the pass you are interested in does not support customizable options or the default options
+can achieve what you want, you are not required to set any metadata.
 
 Simulation passes
 -----------------
 
-.. autoclass:: pymtl3.passes.PassGroups.SimulationPass
-   :members:
-   :special-members:
-   :private-members:
-   :undoc-members:
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Simulation passes
 
-.. autoclass:: pymtl3.passes.PassGroups.SimpleSimPass
-   :members:
-   :special-members:
-   :private-members:
-   :undoc-members:
+   passes-sim-api
 
-.. autoclass:: pymtl3.passes.PassGroups.AutoTickSimPass
-   :members:
-   :special-members:
-   :private-members:
-   :undoc-members:
+:doc:`API reference <passes-sim-api>`
 
 Translation passes
 ------------------
 
-See :doc:`here <passes-translation>` for an introduction to translation passes.
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Translation passes
 
-Verilog translation pass
-^^^^^^^^^^^^^^^^^^^^^^^^
+   passes-translation-intro
+   passes-translation-meta
 
-.. autoclass:: pymtl3.passes.backends.verilog.translation.TranslationPass.TranslationPass
-
-   .. automethod:: __init__
-   .. automethod:: __call__
-
-Here are the available input and output metadata of the Verilog translation pass:
-
-.. autoclass:: pymtl3.passes.backends.verilog.translation.TranslationPass.TranslationPass
-   :members:
-
-Yosys translation pass
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: pymtl3.passes.backends.yosys.translation.TranslationPass.TranslationPass
-
-   .. automethod:: __init__
-   .. automethod:: __call__
-
-The available input and output metadata of the Yosys translation pass are the same
-as those of the :ref:`Verilog translation pass <Verilog translation pass>`.
+:doc:`Introduction <passes-translation-intro>` | :doc:`Metadata reference <passes-translation-meta>`
 
 Import passes
 -------------
 
-See :doc:`here <passes-import>` for an introduction to import passes.
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Import passes
 
-Verilog import pass
-^^^^^^^^^^^^^^^^^^^
+   passes-import-intro
+   passes-import-meta
 
-.. autoclass:: pymtl3.passes.backends.verilog.import_.VerilatorImportPass.VerilatorImportPass
-
-   .. automethod:: __init__
-   .. automethod:: __call__
-
-Here are the available input and output metadata of the Verilog import pass:
-
-.. autoclass:: pymtl3.passes.backends.verilog.import_.VerilatorImportPass.VerilatorImportPass
-   :members:
-
-Yosys import pass
-^^^^^^^^^^^^^^^^^
-
-.. autoclass:: pymtl3.passes.backends.yosys.import_.VerilatorImportPass.VerilatorImportPass
-
-   .. automethod:: __init__
-   .. automethod:: __call__
-
-The available input and output metadata of the Yosys import pass are the same
-as those of the :ref:`Verilog import pass <Verilog import pass>`.
+:doc:`Introduction <passes-import-intro>` | :doc:`Metadata reference <passes-import-meta>`
 
 Translation-import passes
 -------------------------
 
-Verilog translation-import pass
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Translation-import passes
 
-.. autoclass:: pymtl3.passes.backends.verilog.TranslationImportPass.TranslationImportPass
+   passes-trans-import-meta
 
-   .. automethod:: __init__
-   .. automethod:: __call__
-
-Here are the available input metadata of the Verilog translation-import pass:
-
-.. autoclass:: pymtl3.passes.backends.verilog.TranslationImportPass.TranslationImportPass
-   :members:
-
-Yosys translation-import pass
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: pymtl3.passes.backends.yosys.TranslationImportPass.TranslationImportPass
-
-   .. automethod:: __init__
-   .. automethod:: __call__
-
-The available input metadata of the Yosys translation-import pass are the same
-as those of the :ref:`Verilog translation-import pass <Verilog translation-import pass>`.
+:doc:`Metadata reference <passes-trans-import-meta>`
 
 Placeholder passes
 ------------------
 
-Verilog placeholder pass
-^^^^^^^^^^^^^^^^^^^^^^^^
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Placeholder passes
 
-.. autoclass:: pymtl3.passes.backends.verilog.VerilogPlaceholderPass.VerilogPlaceholderPass
+   passes-placeholder-meta
 
-   .. automethod:: __init__
-   .. automethod:: __call__
-
-Here are the available input metadata of the Verilog translation-import pass:
-
-.. autoclass:: pymtl3.passes.backends.verilog.VerilogPlaceholderPass.VerilogPlaceholderPass
-   :members:
+:doc:`Metadata reference <passes-placeholder-meta>`
