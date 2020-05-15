@@ -122,7 +122,7 @@ def _parse_opts_from_request( request ):
     try:
       max_cycles = int(max_cycles)
     except ValueError:
-      raise Exception(f"command line option `--max-cycles` should have integer value or 'inf'!")
+      raise Exception("command line option `--max-cycles` should have integer value or 'inf'!")
   opts['max_cycles'] = max_cycles
 
   return opts

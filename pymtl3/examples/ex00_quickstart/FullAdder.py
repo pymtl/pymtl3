@@ -4,6 +4,7 @@
 
 from pymtl3 import *
 
+
 class FullAdder( Component ):
   def construct( s ):
     s.a    = InPort()

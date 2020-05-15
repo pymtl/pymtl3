@@ -4,6 +4,7 @@
 
 from pymtl3 import *
 
+
 class RegIncr( Component ):
   def construct( s, nbits ):
     s.in_ = InPort( nbits )
