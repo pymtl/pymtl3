@@ -13,7 +13,7 @@ from hypothesis import strategies as st
 
 from pymtl3 import *
 from pymtl3.datatypes import strategies as pm_st
-from pymtl3.stdlib.cl.queues import BypassQueueCL
+from pymtl3.stdlib.queues import BypassQueueCL
 from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 

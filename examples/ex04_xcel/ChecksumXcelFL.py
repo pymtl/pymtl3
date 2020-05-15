@@ -9,8 +9,7 @@ Author : Yanghui Ou
 """
 from examples.ex02_cksum.ChecksumFL import checksum
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import mk_xcel_msg
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMinionIfcFL
+from pymtl3.stdlib.ifcs import mk_xcel_msg, XcelMinionIfcFL
 
 
 # Address space: 0~3: checksum input, 4: go bit, 5: result

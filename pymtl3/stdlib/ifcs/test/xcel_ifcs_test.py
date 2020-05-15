@@ -8,8 +8,8 @@ Author : Yanghui Ou
 """
 
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
 from pymtl3.stdlib.basic_rtl import RegisterFile
+from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
 from pymtl3.stdlib.queues import NormalQueueRTL
 from pymtl3.stdlib.test import run_sim
 

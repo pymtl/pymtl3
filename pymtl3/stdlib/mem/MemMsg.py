@@ -95,4 +95,3 @@ def mk_mem_resp_msg( o, d ):
         self.data if self.type_ != MemMsgType.WRITE else " " * ( d//4 ),
       )
   return MemRespMsg
-

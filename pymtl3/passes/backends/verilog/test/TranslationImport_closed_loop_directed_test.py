@@ -8,11 +8,15 @@
 from pymtl3.datatypes import Bits1, mk_bits
 from pymtl3.passes.PassGroups import SimulationPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.stdlib.queues.test.enrdy_queues_test import test_bypass_queue as _bypass_queue
+from pymtl3.stdlib.queues.test.enrdy_queues_test import (
+    test_bypass_queue as _bypass_queue,
+)
 from pymtl3.stdlib.queues.test.enrdy_queues_test import (
     test_bypass_queue_stall as _bypass_queue_stall,
 )
-from pymtl3.stdlib.queues.test.enrdy_queues_test import test_normal_queue as _normal_queue
+from pymtl3.stdlib.queues.test.enrdy_queues_test import (
+    test_normal_queue as _normal_queue,
+)
 from pymtl3.stdlib.queues.test.enrdy_queues_test import (
     test_normal_queue_stall as _normal_queue_stall,
 )

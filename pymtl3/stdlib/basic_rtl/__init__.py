@@ -11,7 +11,7 @@ from .arithmetics import (
     Subtractor,
     ZeroComparator,
 )
-from .encoders import Encoder
 from .crossbars import Crossbar
+from .encoders import Encoder
 from .register_files import RegisterFile
 from .registers import Reg, RegEn, RegEnRst, RegRst

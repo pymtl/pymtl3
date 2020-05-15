@@ -9,8 +9,8 @@ Author : Shunning Jiang
 """
 
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import mk_mem_msg
-from pymtl3.stdlib.rtl import Adder, Incrementer, Mux, RegEn, RegEnRst, RegisterFile
+from pymtl3.stdlib.mem import mk_mem_msg
+from pymtl3.stdlib.basic_rtl import Adder, Incrementer, Mux, RegEn, RegEnRst, RegisterFile
 
 from .MiscRTL import AluRTL, ImmGenRTL
 from .TinyRV0InstRTL import OPCODE, RD, RS1, RS2, SHAMT

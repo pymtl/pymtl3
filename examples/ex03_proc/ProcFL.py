@@ -9,11 +9,8 @@ Author : Shunning Jiang
 """
 
 from pymtl3 import *
-from pymtl3.stdlib.ifcs.GetGiveIfc import GetIfcFL
-from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcFL
-from pymtl3.stdlib.ifcs.SendRecvIfc import SendIfcFL
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcFL
-from pymtl3.stdlib.ifcs.XcelMsg import mk_xcel_msg
+from pymtl3.stdlib.ifcs import GetIfcFL, SendIfcFL, XcelMasterIfcFL, mk_xcel_msg
+from pymtl3.stdlib.mem import MemMasterIfcFL
 
 from .tinyrv0_encoding import RegisterFile, TinyRV0Inst, disassemble_inst
 

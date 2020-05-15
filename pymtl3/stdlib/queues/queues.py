@@ -9,9 +9,9 @@ Author : Yanghui Ou
 
 
 from pymtl3 import *
-from .enq_deq_ifcs import DeqIfcRTL, EnqIfcRTL
-
 from pymtl3.stdlib.basic_rtl import Mux, RegisterFile
+
+from .enq_deq_ifcs import DeqIfcRTL, EnqIfcRTL
 
 #-------------------------------------------------------------------------
 # Dpath and Ctrl for NormalQueueRTL

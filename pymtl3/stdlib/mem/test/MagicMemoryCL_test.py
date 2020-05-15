@@ -8,10 +8,10 @@ import struct
 import pytest
 
 from pymtl3 import *
-from ..MemMsg import MemMsgType, mk_mem_msg
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL, mk_test_case_table, run_sim
 
 from ..MagicMemoryCL import MagicMemoryCL
+from ..MemMsg import MemMsgType, mk_mem_msg
 
 #-------------------------------------------------------------------------
 # TestHarness

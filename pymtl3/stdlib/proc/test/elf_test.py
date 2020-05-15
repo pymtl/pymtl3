@@ -2,13 +2,11 @@
 # elf_test.py
 #=========================================================================
 
-from ..SparseMemoryImage import SparseMemoryImage
-from .. import elf
-
-import os
 import random
 import struct
 
+from .. import elf
+from ..SparseMemoryImage import SparseMemoryImage
 
 #-------------------------------------------------------------------------
 # test_basic
@@ -51,4 +49,3 @@ def test_basic( tmpdir ):
   # Check that the original and new sparse memory images are equal
 
   assert mem_image == mem_image_test
-

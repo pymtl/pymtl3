@@ -23,8 +23,7 @@ import struct
 import sys
 
 from pymtl3 import *
-from pymtl3.stdlib.cl.MemoryCL import MemoryCL
-from pymtl3.stdlib.ifcs import mk_mem_msg
+from pymtl3.stdlib.mem import MagicMemoryCL, mk_mem_msg
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 # Hack to add project root to python path
@@ -113,7 +112,7 @@ class TestHarness(Component):
 
     s.src  = TestSrcCL ( Bits32, [], src_delay, src_delay   )
     s.sink = TestSinkCL( Bits32, [], sink_delay, sink_delay )
-    s.mem  = MemoryCL  ( 2, latency = mem_latency )
+    s.mem  = MagicMemoryCL  ( 2, latency = mem_latency )
 
     s.dut = m = ProcXcel( ProcClass, XcelClass )
     m.mngr2proc //= s.src.send

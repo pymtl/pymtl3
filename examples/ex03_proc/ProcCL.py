@@ -10,12 +10,10 @@ Author : Shunning Jiang
 from enum import Enum
 
 from pymtl3 import *
-from pymtl3.stdlib.cl.DelayPipeCL import DelayPipeDeqCL
-from pymtl3.stdlib.cl.queues import PipeQueueCL
-from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg
-from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcCL, MemMasterIfcFL
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcCL
-from pymtl3.stdlib.ifcs.XcelMsg import XcelMsgType, mk_xcel_msg
+from pymtl3.stdlib.delays import DelayPipeDeqCL
+from pymtl3.stdlib.queues import PipeQueueCL
+from pymtl3.stdlib.mem import MemMsgType, mk_mem_msg, MemMasterIfcCL
+from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg,  XcelMasterIfcCL
 
 from .tinyrv0_encoding import RegisterFile, TinyRV0Inst, disassemble_inst
 

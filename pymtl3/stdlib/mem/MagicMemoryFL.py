@@ -3,8 +3,9 @@ from pymtl3.extra.pypy.fast_bytearray_funcs import (
     read_bytearray_bits,
     write_bytearray_bits,
 )
-from .MemMsg import MemMsgType
+
 from .mem_ifcs import MemMinionIfcFL
+from .MemMsg import MemMsgType
 
 AMO_FUNS = { MemMsgType.AMO_ADD  : lambda m,a : m+a,
              MemMsgType.AMO_AND  : lambda m,a : m&a,

@@ -2,11 +2,11 @@
 # SparseMemoryImage_test.py
 #=========================================================================
 
-from ..SparseMemoryImage import SparseMemoryImage
-
+import copy
 import random
 import struct
-import copy
+
+from ..SparseMemoryImage import SparseMemoryImage
 
 #-------------------------------------------------------------------------
 # test_sections
@@ -130,4 +130,3 @@ def test_symbols():
   assert mem_image.get_symbol( "func_b" ) == 0x0003000
   assert mem_image.get_symbol( "var_a"  ) == 0x0011000
   assert mem_image.get_symbol( "var_b"  ) == 0x0011000
-

@@ -9,8 +9,8 @@ Date   : Mar 9, 2018
 """
 
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
 from pymtl3.stdlib.basic_rtl import Mux, Reg, RegEn, RegRst
+from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
 
 
 class PipeQueue1RTL( Component ):

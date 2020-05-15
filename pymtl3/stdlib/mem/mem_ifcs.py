@@ -10,9 +10,9 @@ from greenlet import greenlet
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
+from pymtl3.stdlib.ifcs import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
 
 from .MemMsg import MemMsgType, mk_mem_msg
-from pymtl3.stdlib.ifcs import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
 
 
 class MemMasterIfcFL( Interface ):

@@ -12,11 +12,11 @@ Date   : Feb 6, 2020
 """
 
 from pymtl3 import *
-from .MagicMemoryFL import MagicMemoryFL
-from .MemMsg import MemMsgType, mk_mem_msg
-from .mem_ifcs import MemMinionIfcCL
-
 from pymtl3.stdlib.delays import DelayPipeDeqCL, DelayPipeSendCL, StallCL
+
+from .MagicMemoryFL import MagicMemoryFL
+from .mem_ifcs import MemMinionIfcCL
+from .MemMsg import MemMsgType, mk_mem_msg
 
 # BRGTC2 custom MemMsg modified for RISC-V 32
 
