@@ -76,7 +76,7 @@ from .SparseMemoryImage import SparseMemoryImage
 #   elf_half e_shstrndx;
 # } elf_ehdr;
 
-class ElfHeader (object):
+class ElfHeader:
 
   FORMAT = "<16sHHIIIIIHHHHHH"
   NBYTES = struct.calcsize( FORMAT )
@@ -213,7 +213,7 @@ class ElfHeader (object):
 # } elf_shdr;
 #
 
-class ElfSectionHeader (object):
+class ElfSectionHeader:
 
   FORMAT = "<IIIIIIIIII"
   NBYTES = struct.calcsize( FORMAT )
@@ -335,7 +335,7 @@ class ElfSectionHeader (object):
 # } elf_sym;
 #
 
-class ElfSymTabEntry (object):
+class ElfSymTabEntry:
 
   FORMAT = "<IIIBBH"
   NBYTES = struct.calcsize( FORMAT )

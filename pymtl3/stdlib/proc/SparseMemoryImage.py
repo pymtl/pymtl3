@@ -9,18 +9,17 @@
 # Author : Christopher Batten
 # Date   : May 20, 2014
 
-from __future__ import print_function
 
 import binascii
 
 
-class SparseMemoryImage (object):
+class SparseMemoryImage:
 
   #-----------------------------------------------------------------------
   # Nested Class: Section
   #-----------------------------------------------------------------------
 
-  class Section (object):
+  class Section:
 
     def __init__( self, name="", addr=0x00000000, data=bytearray() ):
       self.name = name
