@@ -11,9 +11,9 @@ from greenlet import greenlet
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.rtl.queues import BypassQueueRTL, NormalQueueRTL
+from pymtl3.stdlib.queues import BypassQueueRTL, NormalQueueRTL
 
-from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
+from .send_recv_ifcs import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
 from .XcelMsg import XcelMsgType, mk_xcel_msg
 
 #-------------------------------------------------------------------------

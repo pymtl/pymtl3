@@ -10,53 +10,45 @@ Date   : June 3, 2019
 from pymtl3 import *
 
 
+class XcelMsgType:
+  # TODO: figure out whether we want to use Bits1 here.
+  READ  = 0
+  WRITE = 1
+
+  str = {
+    READ  : "rd",
+    WRITE : "wr",
+  }
+
 def mk_xcel_msg( addr, data ):
   return mk_xcel_req_msg( addr, data ), mk_xcel_resp_msg( data )
 
-def mk_xcel_req_msg( addr, data ):
-  AddrType = mk_bits( addr )
-  DataType = mk_bits( data )
-  cls_name = "XcelReqMsg_{}_{}".format( addr, data )
+def mk_xcel_req_msg( a, d ):
+  @bitstruct
+  class XcelReqMsg:
+    type_ : Bits1
+    addr  : mk_bits( a )
+    data  : mk_bits( d )
 
-  def req_to_str( self ):
-    return "{}:{}:{}".format(
-      "rd" if self.type_ == XcelMsgType.READ else "wr",
-      AddrType( self.addr ),
-      DataType( self.data ) if self.type_ != XcelMsgType.READ else
-      " " * ( data//4 ),
-    )
+    def __str__( self ):
+      return "{}:{}:{}".format(
+        XcelMsgType.str[ int(self.type_) ],
+        self.addr,
+        self.data if self.type_ != XcelMsgType.READ else " " * ( d//4 ),
+      )
 
-  req_cls = mk_bitstruct( cls_name, {
-    'type_': Bits1,
-    'addr':  AddrType,
-    'data':  DataType,
-  },
-  namespace = {
-    '__str__' : req_to_str
-  })
-  return req_cls
+  return XcelReqMsg
 
-def mk_xcel_resp_msg( data ):
-  DataType = mk_bits( data )
-  cls_name = "XcelRespMsg_{}".format( data )
+def mk_xcel_resp_msg( d ):
+  @bitstruct
+  class XcelRespMsg:
+    type_ : Bits1
+    data  : mk_bits( d )
 
-  def resp_to_str( self ):
-    return "{}:{}".format(
-      "rd" if self.type_ == XcelMsgType.READ else "wr",
-      DataType( self.data ) if self.type_ != XcelMsgType.WRITE else
-      " " * ( data//4 ),
-    )
+    def __str__( self ):
+      return "{}:{}".format(
+        XcelMsgType.str[ int(self.type_) ],
+        self.data if self.type_ != XcelMsgType.WRITE else " " * ( d//4 ),
+      )
 
-  resp_cls = mk_bitstruct( cls_name, {
-    'type_': Bits1,
-    'data':  DataType,
-  },
-  namespace = {
-    '__str__' : resp_to_str
-  })
-  return resp_cls
-
-class XcelMsgType:
-  # TODO: figure out whether we want to use Bits1 here.
-  READ  = Bits1(0)
-  WRITE = Bits1(1)
+  return XcelRespMsg
