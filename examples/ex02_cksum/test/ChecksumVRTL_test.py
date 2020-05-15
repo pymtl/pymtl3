@@ -118,3 +118,13 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
 
     # Check timeout
     assert th.sim_cycle_count() < max_cycles
+
+#-------------------------------------------------------------------------
+# Test translation script
+#-------------------------------------------------------------------------
+
+def test_cksum_translate():
+  import os
+  from os.path import dirname
+  script_path = dirname(dirname(__file__)) + '/cksum-translate'
+  os.system(f'python {script_path}')

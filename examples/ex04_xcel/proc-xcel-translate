@@ -118,7 +118,7 @@ A valid output directory should be alloy-asic/designs/<design_name>/rtl
   finally:
     if success:
       path = os.getcwd() + \
-             "/{}.v".format(proc_xcel.translated_top_module_name)
+             f"/{proc_xcel.get_metadata(TranslationPass.translated_filename)}"
 
       if opts.output_dir:
         # Upon success, symlink the file to outputs/design.v which is the

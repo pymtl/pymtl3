@@ -53,3 +53,13 @@ class ProcVRTL_Tests( BaseTests ):
 
     # Force a test failure if we timed out
     assert th.sim_cycle_count() < max_cycles
+
+#-------------------------------------------------------------------------
+# Test translation script
+#-------------------------------------------------------------------------
+
+def test_proc_translate():
+  import os
+  from os.path import dirname
+  script_path = dirname(dirname(__file__)) + '/proc-translate'
+  os.system(f'python {script_path}')

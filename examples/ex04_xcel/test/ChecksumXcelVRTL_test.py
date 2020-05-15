@@ -100,3 +100,13 @@ class ChecksumXcelVRTLSrcSink_Tests( BaseTests ):
 
     # Check timeout
     assert th.sim_cycle_count() < max_cycles
+
+#-------------------------------------------------------------------------
+# Test translation script
+#-------------------------------------------------------------------------
+
+def test_proc_xcel_translate():
+  import os
+  from os.path import dirname
+  script_path = dirname(dirname(__file__)) + '/proc-xcel-translate'
+  os.system(f'python {script_path} --xcel cksum')
