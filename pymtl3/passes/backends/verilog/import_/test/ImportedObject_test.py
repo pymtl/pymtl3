@@ -14,8 +14,8 @@ from pymtl3 import Interface, SimulationPass
 from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.backends.verilog import (
-    TranslationImportPass,
-    VerilatorImportPass,
+    VerilogTranslationImportPass,
+    VerilogVerilatorImportPass,
     VerilogPlaceholder,
     VerilogPlaceholderPass,
 )
@@ -34,9 +34,9 @@ def finalize( m ):
 def local_do_test( _m ):
   _m.elaborate()
   if not hasattr( _m, "_no_trans_import" ):
-    _m.set_metadata( TranslationImportPass.enable, True )
+    _m.set_metadata( VerilogTranslationImportPass.enable, True )
   _m.apply( VerilogPlaceholderPass() )
-  m = TranslationImportPass()( _m )
+  m = VerilogTranslationImportPass()( _m )
   sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
   sim.run_test()
   finalize(m)
@@ -83,7 +83,7 @@ def test_vl_uninit( do_test ):
       s.set_metadata( VerilogPlaceholderPass.port_map, {
           s.in_ : "d", s.out : "q",
       } )
-      s.set_metadata( VerilatorImportPass.vl_xinit, 'ones' )
+      s.set_metadata( VerilogVerilatorImportPass.vl_xinit, 'ones' )
   a = VUninit()
   a._tvs = [
     [    0, 4294967295 ],
@@ -444,12 +444,12 @@ def test_reg_external_trace( do_test ):
       s.set_metadata( VerilogPlaceholderPass.port_map, {
           s.in_ : "d", s.out : "q",
       } )
-      s.set_metadata( VerilatorImportPass.vl_line_trace, True )
-      s.set_metadata( TranslationImportPass.enable, True )
+      s.set_metadata( VerilogVerilatorImportPass.vl_line_trace, True )
+      s.set_metadata( VerilogTranslationImportPass.enable, True )
   a = VRegTrace()
   a.elaborate()
   a.apply( VerilogPlaceholderPass() )
-  a = TranslationImportPass()( a )
+  a = VerilogTranslationImportPass()( a )
   a.apply( SimulationPass() )
 
   assert a.line_trace() == 'q =          0'
@@ -475,11 +475,11 @@ def test_reg_infer_external_trace( do_test ):
       s.set_metadata( VerilogPlaceholderPass.port_map, {
           s.in_ : "d", s.out : "q",
       } )
-      s.set_metadata( TranslationImportPass.enable, True )
+      s.set_metadata( VerilogTranslationImportPass.enable, True )
   a = VRegTrace()
   a.elaborate()
   a.apply( VerilogPlaceholderPass() )
-  a = TranslationImportPass()( a )
+  a = VerilogTranslationImportPass()( a )
   a.apply( SimulationPass() )
 
   assert a.line_trace() == 'q =          0'

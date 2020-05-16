@@ -13,7 +13,7 @@ import pytest
 from pymtl3 import *
 from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 
-from .. import TranslationImportPass
+from .. import VerilogTranslationImportPass
 
 
 def _run_case():
@@ -34,9 +34,9 @@ def _run_case():
 
   m = DUT()
   m.elaborate()
-  m.set_metadata( TranslationImportPass.enable, True )
+  m.set_metadata( VerilogTranslationImportPass.enable, True )
   m.apply( VerilogPlaceholderPass() )
-  m = TranslationImportPass()( m )
+  m = VerilogTranslationImportPass()( m )
 
   m.apply( SimulationPass() )
   m.sim_reset()

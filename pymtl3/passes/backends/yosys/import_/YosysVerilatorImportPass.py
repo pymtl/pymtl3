@@ -1,15 +1,15 @@
 #=========================================================================
-# VerilatorImportPass.py
+# YosysVerilatorImportPass.py
 #=========================================================================
 # Author : Peitian Pan
 # Date   : June 14, 2019
 """Provide a pass that imports arbitrary SystemVerilog modules."""
 
-from pymtl3.passes.backends.verilog import VerilatorImportPass as VerilogImportPass
+from pymtl3.passes.backends.verilog import VerilogVerilatorImportPass
 from pymtl3.passes.backends.yosys.util.utility import gen_mapped_ports
 
 
-class VerilatorImportPass( VerilogImportPass ):
+class YosysVerilatorImportPass( VerilogVerilatorImportPass ):
 
   #-----------------------------------------------------------------------
   # Backend-specific methods
@@ -21,9 +21,9 @@ class VerilatorImportPass( VerilogImportPass ):
 
   @staticmethod
   def get_translation_pass():
-    from pymtl3.passes.backends.yosys.translation.TranslationPass \
-        import TranslationPass
-    return TranslationPass
+    from pymtl3.passes.backends.yosys.translation.YosysTranslationPass \
+        import YosysTranslationPass
+    return YosysTranslationPass
 
   @staticmethod
   def get_gen_mapped_port():

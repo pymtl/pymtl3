@@ -1,5 +1,5 @@
 #=========================================================================
-# TranslationPass.py
+# VerilogTranslationPass.py
 #=========================================================================
 # Author : Peitian Pan
 # Date   : March 12, 2019
@@ -14,7 +14,7 @@ from pymtl3.passes.BasePass import BasePass
 from .VTranslator import VTranslator
 
 
-class TranslationPass( BasePass ):
+class VerilogTranslationPass( BasePass ):
   """Translate a PyMTL component hierarchy into Verilog."""
 
   # Translation pass input pass data
@@ -111,9 +111,9 @@ class TranslationPass( BasePass ):
     s.traverse_hierarchy( top )
 
   def get_translation_config( s ):
-    from pymtl3.passes.backends.verilog.translation.TranslationConfigs \
-        import TranslationConfigs
-    return TranslationConfigs
+    from pymtl3.passes.backends.verilog.translation.VerilogTranslationConfigs \
+        import VerilogTranslationConfigs
+    return VerilogTranslationConfigs
 
   def gen_tr_cfgs( s, m ):
     tr_cfgs = {}

@@ -15,8 +15,8 @@ from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes import TracingConfigs
 from pymtl3.passes.backends.verilog import (
-    TranslationImportPass,
-    VerilatorImportPass,
+    VerilogTranslationImportPass,
+    VerilogVerilatorImportPass,
     VerilogPlaceholderPass,
 )
 
@@ -96,11 +96,11 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
 
   if test_verilog:
-    model.set_metadata( VerilatorImportPass.vl_xinit, test_verilog )
-    model.set_metadata( TranslationImportPass.enable, True )
+    model.set_metadata( VerilogVerilatorImportPass.vl_xinit, test_verilog )
+    model.set_metadata( VerilogTranslationImportPass.enable, True )
 
   model.apply( VerilogPlaceholderPass() )
-  model = TranslationImportPass()( model )
+  model = VerilogTranslationImportPass()( model )
 
   # Create a simulator
 
@@ -150,11 +150,11 @@ def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True
     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
 
   if cmdline_opts['test_verilog']:
-    model.set_metadata( VerilatorImportPass.vl_xinit, cmdline_opts['test_verilog'] )
-    model.set_metadata( TranslationImportPass.enable, True )
+    model.set_metadata( VerilogVerilatorImportPass.vl_xinit, cmdline_opts['test_verilog'] )
+    model.set_metadata( VerilogTranslationImportPass.enable, True )
 
   model.apply( VerilogPlaceholderPass() )
-  model = TranslationImportPass()( model )
+  model = VerilogTranslationImportPass()( model )
 
   # Create a simulator
 

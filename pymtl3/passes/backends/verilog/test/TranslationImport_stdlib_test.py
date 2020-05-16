@@ -25,15 +25,15 @@ from pymtl3.stdlib.rtl.valrdy_queues_test import test_normal_Bits as _normal_Bit
 from pymtl3.stdlib.rtl.valrdy_queues_test import test_pipe_Bits as _pipe_Bits
 from pymtl3.stdlib.test import TestVectorSimulator
 
-from ..TranslationImportPass import TranslationImportPass
+from ..VerilogTranslationImportPass import VerilogTranslationImportPass
 
 
 def local_do_test( _m ):
   try:
     _m.elaborate()
     # Mark component `_m` as to be translated and imported
-    _m.set_metadata( TranslationImportPass.enable, True )
-    m = TranslationImportPass()( _m )
+    _m.set_metadata( VerilogTranslationImportPass.enable, True )
+    m = VerilogTranslationImportPass()( _m )
     sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
     sim.run_test()
   finally:

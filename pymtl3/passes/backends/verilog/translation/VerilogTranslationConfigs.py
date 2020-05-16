@@ -1,14 +1,14 @@
 #=========================================================================
-# TranslationConfigs.py
+# VerilogTranslationConfigs.py
 #=========================================================================
 # Author : Peitian Pan
 # Date   : Jan 28, 2020
 
-from pymtl3.passes.backends.verilog import TranslationPass
+from pymtl3.passes.backends.verilog import VerilogTranslationPass
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 
 
-class TranslationConfigs( BasePassConfigs ):
+class VerilogTranslationConfigs( BasePassConfigs ):
 
   Options = {
     # Translate the current instance?
@@ -43,4 +43,4 @@ class TranslationConfigs( BasePassConfigs ):
     Checker( lambda v: isinstance(v, str), "expects a string" )
   }
 
-  Pass = TranslationPass
+  Pass = VerilogTranslationPass

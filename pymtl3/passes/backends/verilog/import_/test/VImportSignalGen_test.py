@@ -11,13 +11,13 @@ from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test
 
-from ..VerilatorImportPass import VerilatorImportPass
+from ..VerilogVerilatorImportPass import VerilogVerilatorImportPass
 
 
 def local_do_test( m ):
   m.elaborate()
   rtype = rt.RTLIRGetter(cache=False).get_component_ifc_rtlir( m )
-  ipass = VerilatorImportPass()
+  ipass = VerilogVerilatorImportPass()
   symbols, decls = ipass.gen_signal_decl_py( rtype )
   assert symbols == m._ref_symbols
   assert decls == m._ref_decls

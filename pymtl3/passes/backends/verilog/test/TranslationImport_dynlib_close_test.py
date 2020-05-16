@@ -9,17 +9,17 @@ from pymtl3 import *
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator
 
-from .. import TranslationImportPass
-from ..import_.VerilatorImportPass import VerilatorImportPass
+from .. import VerilogTranslationImportPass
+from ..import_.VerilogVerilatorImportPass import VerilogVerilatorImportPass
 from ..util.utility import get_file_hash
 
 
 def run_test( _m ):
   try:
     _m.elaborate()
-    _m.set_metadata( TranslationImportPass.enable, True )
-    _m.set_metadata( VerilatorImportPass.vl_trace, True )
-    m = TranslationImportPass()( _m )
+    _m.set_metadata( VerilogTranslationImportPass.enable, True )
+    _m.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
+    m = VerilogTranslationImportPass()( _m )
     sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
     sim.run_test()
   finally:

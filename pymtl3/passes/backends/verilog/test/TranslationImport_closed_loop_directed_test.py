@@ -21,7 +21,7 @@ from pymtl3.stdlib.rtl.enrdy_queues_test import (
     test_pipe_queue_stall as _pipe_queue_stall,
 )
 
-from .. import TranslationImportPass
+from .. import VerilogTranslationImportPass
 from ..util.test_utility import closed_loop_component_input_test
 
 #-------------------------------------------------------------------------
@@ -31,8 +31,8 @@ from ..util.test_utility import closed_loop_component_input_test
 def run_sim( _th ):
   try:
     _th.elaborate()
-    _th.q.set_metadata( TranslationImportPass.enable, True )
-    th = TranslationImportPass()( _th )
+    _th.q.set_metadata( VerilogTranslationImportPass.enable, True )
+    th = VerilogTranslationImportPass()( _th )
     th.apply( SimulationPass() )
     th.sim_reset()
 

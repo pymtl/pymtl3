@@ -1,16 +1,16 @@
 #=========================================================================
-# TranslationPass.py
+# YosysTranslationPass.py
 #=========================================================================
 # Author : Peitian Pan
 # Date   : June 8, 2019
 """Translate a PyMTL component hierarhcy into yosys-verilog source code."""
 
-from pymtl3.passes.backends.verilog import TranslationPass
+from pymtl3.passes.backends.verilog import VerilogTranslationPass
 
 from .YosysTranslator import YosysTranslator
 
 
-class TranslationPass( TranslationPass ):
+class YosysTranslationPass( VerilogTranslationPass ):
 
   def __call__( s, top ):
     s.top = top

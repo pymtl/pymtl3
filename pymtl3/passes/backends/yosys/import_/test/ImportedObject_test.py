@@ -18,7 +18,7 @@ from pymtl3.passes.backends.verilog.import_.test.ImportedObject_test import (
     test_reg_infer_external_trace,
     test_vl_uninit,
 )
-from pymtl3.passes.backends.yosys import TranslationImportPass
+from pymtl3.passes.backends.yosys import YosysTranslationImportPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator
 
@@ -26,9 +26,9 @@ from pymtl3.stdlib.test import TestVectorSimulator
 def local_do_test( _m ):
   _m.elaborate()
   if not hasattr( _m, "_no_trans_import" ):
-    _m.set_metadata( TranslationImportPass.enable, True )
+    _m.set_metadata( YosysTranslationImportPass.enable, True )
   _m.apply( VerilogPlaceholderPass() )
-  m = TranslationImportPass()( _m )
+  m = YosysTranslationImportPass()( _m )
   sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
   sim.run_test()
   finalize(m)

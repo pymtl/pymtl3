@@ -127,10 +127,10 @@ def main():
   # Apply translation pass and import pass if required
 
   if opts.translate:
-    from pymtl3.passes.backends.yosys import TranslationImportPass
+    from pymtl3.passes.backends.yosys import YosysTranslationImportPass
     model.elaborate()
-    model.proc.set_metadata( TranslationImportPass.enable, True )
-    model = TranslationImportPass()( model )
+    model.proc.set_metadata( YosysTranslationImportPass.enable, True )
+    model = YosysTranslationImportPass()( model )
 
   model.apply( SimulationPass(print_line_trace=opts.trace) )
 

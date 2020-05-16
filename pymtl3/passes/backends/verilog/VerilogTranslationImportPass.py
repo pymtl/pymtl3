@@ -1,5 +1,5 @@
 #=========================================================================
-# TranslationImportPass.py
+# VerilogTranslationImportPass.py
 #=========================================================================
 # Translate and import components in the given hierarhcy.
 #
@@ -9,16 +9,16 @@
 from pymtl3 import MetadataKey
 from pymtl3.passes.BasePass import BasePass
 
-from .import_.VerilatorImportConfigs import VerilatorImportConfigs
-from .import_.VerilatorImportPass import VerilatorImportPass
-from .translation.TranslationConfigs import TranslationConfigs
-from .translation.TranslationPass import TranslationPass
+from .import_.VerilogVerilatorImportConfigs import VerilogVerilatorImportConfigs
+from .import_.VerilogVerilatorImportPass import VerilogVerilatorImportPass
+from .translation.VerilogTranslationConfigs import VerilogTranslationConfigs
+from .translation.VerilogTranslationPass import VerilogTranslationPass
 from .VerilogPlaceholder import VerilogPlaceholder
 from .VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
 from .VerilogPlaceholderPass import VerilogPlaceholderPass
 
 
-class TranslationImportPass( BasePass ):
+class VerilogTranslationImportPass( BasePass ):
 
   #: Enable translation-import on the component.
   #:
@@ -90,11 +90,11 @@ class TranslationImportPass( BasePass ):
 
   @staticmethod
   def get_translation_pass():
-    return TranslationPass
+    return VerilogTranslationPass
 
   @staticmethod
   def get_import_pass():
-    return VerilatorImportPass
+    return VerilogVerilatorImportPass
 
   @staticmethod
   def get_placeholder_pass():

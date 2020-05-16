@@ -21,7 +21,7 @@ import os
 import sys
 
 # Import the translation pass from yosys backend
-from pymtl3.passes.backends.yosys import TranslationPass
+from pymtl3.passes.backends.yosys import YosysTranslationPass
 
 # Hack to add project root to python path
 cur_dir = os.path.dirname( os.path.abspath( __file__ ) )
@@ -84,7 +84,7 @@ def main():
 
   # Tag the processor as to be translated
 
-  proc.set_metadata( TranslationPass.enable, True )
+  proc.set_metadata( YosysTranslationPass.enable, True )
 
   # Perform translation
 
@@ -92,12 +92,12 @@ def main():
 
   try:
     proc.elaborate()
-    proc.apply( TranslationPass() )
+    proc.apply( YosysTranslationPass() )
     success = True
   finally:
     if success:
       path = os.getcwd() + \
-             f"/{proc.get_metadata(TranslationPass.translated_filename)}"
+             f"/{proc.get_metadata(YosysTranslationPass.translated_filename)}"
       print("\nTranslation finished successfully!")
       print(f"You can find the generated SystemVerilog file at {path}.")
     else:

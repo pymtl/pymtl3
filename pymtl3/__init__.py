@@ -27,9 +27,9 @@ from .dsl.MetadataKey import MetadataKey
 from .dsl.Placeholder import Placeholder
 from .passes import TracingConfigs
 from .passes.backends.verilog import (
-    TranslationImportPass,
-    TranslationPass,
-    VerilatorImportPass,
+    VerilogTranslationImportPass,
+    VerilogTranslationPass,
+    VerilogVerilatorImportPass,
     VerilogPlaceholder,
     VerilogPlaceholderPass,
     VerilogTBGenPass,
@@ -44,8 +44,9 @@ __all__ = [
   'non_blocking', 'CalleeIfcCL', 'CallerIfcCL',
   'blocking', 'CalleeIfcFL', 'CallerIfcFL',
 
-  'SimulationPass', 'TracingConfigs', 'TranslationImportPass', 'VerilatorImportPass', 'VerilogTBGenPass',
-  'TranslationPass', 'VerilogPlaceholder', 'VerilogPlaceholderPass',
+  'SimulationPass', 'TracingConfigs', 'VerilogTranslationImportPass',
+  'VerilogVerilatorImportPass', 'VerilogTBGenPass', 'VerilogTranslationPass',
+  'VerilogPlaceholder', 'VerilogPlaceholderPass',
   'Component', 'Placeholder',
 
   'trunc', 'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',

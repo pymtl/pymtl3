@@ -11,7 +11,7 @@ from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
 from pymtl3.stdlib.test import TestVectorSimulator
 
-from .. import TranslationImportPass
+from .. import VerilogTranslationImportPass
 from ..testcases import (
     CaseMultiPlaceholderImport,
     CasePlaceholderTranslationRegIncr,
@@ -52,9 +52,9 @@ def run_test( case ):
   try:
     _m = case.DUT()
     _m.elaborate()
-    _m.set_metadata( TranslationImportPass.enable, True )
+    _m.set_metadata( VerilogTranslationImportPass.enable, True )
     _m.apply( VerilogPlaceholderPass() )
-    m = TranslationImportPass()( _m )
+    m = VerilogTranslationImportPass()( _m )
     sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
     sim.run_test()
   finally:
@@ -88,6 +88,6 @@ def test_pymtl_top_multi_placeholder():
   m = case.DUT()
   m.elaborate()
   m.apply( VerilogPlaceholderPass() )
-  m = TranslationImportPass()( m )
+  m = VerilogTranslationImportPass()( m )
   sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
   sim.run_test()

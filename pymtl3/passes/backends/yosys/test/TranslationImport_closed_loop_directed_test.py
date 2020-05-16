@@ -22,7 +22,7 @@ from pymtl3.stdlib.rtl.enrdy_queues_test import (
     test_pipe_queue_stall as _pipe_queue_stall,
 )
 
-from ..TranslationImportPass import TranslationImportPass
+from ..YosysTranslationImportPass import YosysTranslationImportPass
 
 #-------------------------------------------------------------------------
 # Valrdy queue tests
@@ -31,8 +31,8 @@ from ..TranslationImportPass import TranslationImportPass
 def yosys_run_sim( _th ):
   try:
     _th.elaborate()
-    _th.q.set_metadata( TranslationImportPass.enable, True )
-    th = TranslationImportPass()( _th )
+    _th.q.set_metadata( YosysTranslationImportPass.enable, True )
+    th = YosysTranslationImportPass()( _th )
     th.apply( SimulationPass() )
     th.sim_reset()
 

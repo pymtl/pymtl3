@@ -1,3 +1,3 @@
-from .import_.VerilatorImportPass import VerilatorImportPass
-from .translation.TranslationPass import TranslationPass
-from .TranslationImportPass import TranslationImportPass
+from .import_.YosysVerilatorImportPass import YosysVerilatorImportPass
+from .translation.YosysTranslationPass import YosysTranslationPass
+from .YosysTranslationImportPass import YosysTranslationImportPass

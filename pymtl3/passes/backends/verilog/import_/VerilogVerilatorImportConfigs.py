@@ -1,5 +1,5 @@
 #=========================================================================
-# VerilatorImportConfigs.py
+# VerilogVerilatorImportConfigs.py
 #=========================================================================
 # Author : Peitian Pan
 # Date   : Jul 28, 2019
@@ -14,10 +14,10 @@ from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 from pymtl3.passes.PlaceholderConfigs import expand
 
-from .VerilatorImportPass import VerilatorImportPass
+from .VerilogVerilatorImportPass import VerilogVerilatorImportPass
 
 
-class VerilatorImportConfigs( BasePassConfigs ):
+class VerilogVerilatorImportConfigs( BasePassConfigs ):
 
   Options = {
     # Import this component?
@@ -184,7 +184,7 @@ class VerilatorImportConfigs( BasePassConfigs ):
     'WIDTHCONCAT',
   ]
 
-  Pass = VerilatorImportPass
+  Pass = VerilogVerilatorImportPass
 
   #---------------------------------------------------
   # Public APIs

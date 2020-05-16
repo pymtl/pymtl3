@@ -12,7 +12,7 @@ from pymtl3 import SimulationPass
 from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
 from pymtl3.passes.backends.verilog import (
-    TranslationImportPass,
+    VerilogTranslationImportPass,
     VerilogPlaceholderPass,
     VerilogTBGenPass,
 )
@@ -25,7 +25,7 @@ from ...testcases import CaseConnectArrayBits32FooIfcComp
 def local_do_test( _m ):
   _m.elaborate()
   _m.apply( VerilogPlaceholderPass() )
-  m = TranslationImportPass()( _m )
+  m = VerilogTranslationImportPass()( _m )
   m.verilog_tbgen = '1234'
   m.apply( VerilogTBGenPass() )
   sim = TestVectorSimulator( m, _m._tv, _m._tv_in, _m._tv_out )
@@ -50,7 +50,7 @@ def test_normal_queue( do_test ):
       s.enq_en  =  InPort( Bits1  )
       s.enq_rdy = OutPort( Bits1  )
       s.enq_msg =  InPort( mk_bits( data_width ) )
-      s.set_metadata( TranslationImportPass.enable, True )
+      s.set_metadata( VerilogTranslationImportPass.enable, True )
   num_entries = 1
   q = VQueue(
       data_width = 32,
@@ -77,9 +77,9 @@ def test_CaseConnectArrayBits32FooIfcComp():
   try:
     _m = case.DUT()
     _m.elaborate()
-    _m.set_metadata( TranslationImportPass.enable, True )
+    _m.set_metadata( VerilogTranslationImportPass.enable, True )
     _m.apply( VerilogPlaceholderPass() )
-    m = TranslationImportPass()( _m )
+    m = VerilogTranslationImportPass()( _m )
     m.verilog_tbgen = True
     m.apply( VerilogTBGenPass() )
     sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )

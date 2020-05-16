@@ -37,7 +37,7 @@ from ..translation.structural.test.YosysStructuralTranslatorL3_test import (
 from ..translation.structural.test.YosysStructuralTranslatorL4_test import (
     test_yosys_structural_L4,
 )
-from ..TranslationImportPass import TranslationImportPass
+from ..YosysTranslationImportPass import YosysTranslationImportPass
 
 XFAILED_TESTS = [
     # incoherent translation result of Yosys backend
@@ -50,8 +50,8 @@ def run_test( case ):
   try:
     _m = case.DUT()
     _m.elaborate()
-    _m.set_metadata( TranslationImportPass.enable, True )
-    m = TranslationImportPass()( _m )
+    _m.set_metadata( YosysTranslationImportPass.enable, True )
+    m = YosysTranslationImportPass()( _m )
     sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
     sim.run_test()
   finally:

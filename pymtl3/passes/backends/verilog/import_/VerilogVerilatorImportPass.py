@@ -1,5 +1,5 @@
 #=========================================================================
-# ImportPass.py
+# VerilogVerilatorImportPass.py
 #=========================================================================
 # Author : Peitian Pan
 # Date   : May 25, 2019
@@ -41,7 +41,7 @@ from .verilator_wrapper_c_template import template as c_template
 from .verilator_wrapper_py_template import template as py_template
 
 
-class VerilatorImportPass( BasePass ):
+class VerilogVerilatorImportPass( BasePass ):
   """Import an arbitrary SystemVerilog module as a PyMTL component."""
 
   # Import pass input pass data
@@ -278,15 +278,15 @@ class VerilatorImportPass( BasePass ):
 
   @staticmethod
   def get_translation_pass():
-    from pymtl3.passes.backends.verilog.translation.TranslationPass \
-        import TranslationPass
-    return TranslationPass
+    from pymtl3.passes.backends.verilog.translation.VerilogTranslationPass \
+        import VerilogTranslationPass
+    return VerilogTranslationPass
 
   @staticmethod
   def get_import_config():
-    from pymtl3.passes.backends.verilog.import_.VerilatorImportConfigs \
-        import VerilatorImportConfigs
-    return VerilatorImportConfigs
+    from pymtl3.passes.backends.verilog.import_.VerilogVerilatorImportConfigs \
+        import VerilogVerilatorImportConfigs
+    return VerilogVerilatorImportConfigs
 
   @staticmethod
   def get_gen_mapped_port():
@@ -624,7 +624,7 @@ class VerilatorImportPass( BasePass ):
       'c_flags', 'c_include_path', 'c_srcs',
       'ld_flags', 'ld_libs',
     ]
-    d['ImportPassName'] = 'VerilatorImportPass'
+    d['ImportPassName'] = 'VerilogVerilatorImportPass'
     for cfg in s._volatile_configs:
       d[cfg] = copy.deepcopy(getattr( ip_cfg, cfg ))
 
