@@ -1,21 +1,16 @@
 #=========================================================================
-# ImportedObject_test.py
+# TBGenPass_test.py
 #=========================================================================
-# Author : Peitian Pan
-# Date   : Jun 2, 2019
+# Author : Shunning Jiang
+# Date   : Mar 18, 2020
 """Test if the imported object works correctly."""
-
 
 import pytest
 
 from pymtl3 import SimulationPass
 from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
-from pymtl3.passes.backends.verilog import (
-    VerilogPlaceholderPass,
-    VerilogTBGenPass,
-    VerilogTranslationImportPass,
-)
+from pymtl3.passes.backends.verilog import *
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator
 

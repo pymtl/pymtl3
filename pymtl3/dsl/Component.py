@@ -24,6 +24,16 @@ from .Placeholder import Placeholder
 
 class Component( ComponentLevel7 ):
 
+  #-----------------------------------------------------------------------
+  # Private methods
+  #-----------------------------------------------------------------------
+
+  def __new__( cls, *args, **kwargs ):
+    inst = super().__new__( cls, *args, **kwargs )
+    # Maps a MetadataKey instance to its value
+    inst._metadata = {}
+    return inst
+
   # Override
   def _construct( s ):
 

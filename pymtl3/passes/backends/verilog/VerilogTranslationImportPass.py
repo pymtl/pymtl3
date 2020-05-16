@@ -6,7 +6,7 @@
 # Author : Peitian Pan
 # Date   : Aug 6, 2019
 
-from pymtl3 import MetadataKey
+from pymtl3.dsl import MetadataKey
 from pymtl3.passes.BasePass import BasePass
 
 from .import_.VerilogVerilatorImportConfigs import VerilogVerilatorImportConfigs
@@ -14,7 +14,6 @@ from .import_.VerilogVerilatorImportPass import VerilogVerilatorImportPass
 from .translation.VerilogTranslationConfigs import VerilogTranslationConfigs
 from .translation.VerilogTranslationPass import VerilogTranslationPass
 from .VerilogPlaceholder import VerilogPlaceholder
-from .VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
 from .VerilogPlaceholderPass import VerilogPlaceholderPass
 
 

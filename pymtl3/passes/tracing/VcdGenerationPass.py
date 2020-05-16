@@ -11,27 +11,34 @@ import time
 from collections import defaultdict
 
 from pymtl3.datatypes import Bits, concat
-from pymtl3.dsl import Const
+from pymtl3.dsl import Const, MetadataKey
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 
 
 class VcdGenerationPass( BasePass ):
 
+  # VcdGenerationPass pass public pass data
+
+  #: vcd file name
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ""
+  vcd_file_name = MetadataKey()
+
   def __call__( self, top ):
+    if top.has_metadata( self.vcd_file_name ):
+      vcd_file_name = top.get_metadata( self.vcd_file_name )
 
-    if hasattr( top, "config_tracing" ):
-      top.config_tracing.check()
-
-      if top.config_tracing.tracing != 'none':
+      if vcd_file_name is not None:
+        # top.config_tracing.check()
         if not hasattr( top, "_tracing" ):
           top._tracing = PassMetadata()
-        top._tracing.vcd_func = self.make_vcd_func( top, top._tracing )
+        top._tracing.vcd_func = self.make_vcd_func( top, top._tracing, vcd_file_name )
 
-  def make_vcd_func( self, top, vcdmeta ):
-
-    vcd_file_name = top.config_tracing.vcd_file_name
-
+  def make_vcd_func( self, top, vcdmeta, vcd_file_name ):
+    assert vcd_file_name is not None
     if vcd_file_name != "":
       vcdmeta.vcd_file_name = str(vcd_file_name) + ".vcd"
     else:
