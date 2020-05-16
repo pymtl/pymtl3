@@ -7,7 +7,7 @@
 # Date   : Aug 6, 2019
 
 from pymtl3.passes.backends.verilog.VerilogTranslationImportPass import (
-    VerilogTranslationImportPass
+    VerilogTranslationImportPass,
 )
 
 from .import_.YosysVerilatorImportPass import YosysVerilatorImportPass

@@ -27,12 +27,12 @@ from .dsl.MetadataKey import MetadataKey
 from .dsl.Placeholder import Placeholder
 from .passes import TracingConfigs
 from .passes.backends.verilog import (
-    VerilogTranslationImportPass,
-    VerilogTranslationPass,
-    VerilogVerilatorImportPass,
     VerilogPlaceholder,
     VerilogPlaceholderPass,
     VerilogTBGenPass,
+    VerilogTranslationImportPass,
+    VerilogTranslationPass,
+    VerilogVerilatorImportPass,
 )
 from .passes.PassGroups import SimulationPass
 
