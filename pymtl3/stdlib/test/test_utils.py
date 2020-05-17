@@ -13,12 +13,7 @@ import re
 
 from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
-from pymtl3.passes import TracingConfigs
-from pymtl3.passes.backends.verilog import (
-    VerilogPlaceholderPass,
-    VerilogTranslationImportPass,
-    VerilogVerilatorImportPass,
-)
+from pymtl3.passes.backends.verilog import *
 
 #-------------------------------------------------------------------------
 # mk_test_case_table
@@ -66,7 +61,7 @@ class TestVectorSimulator:
 
   def run_test( self ):
 
-    self.model.apply( SimulationPass(print_line_trace=True) )
+    self.model.apply( DefaultPassGroup(print_line_trace=True) )
 
     self.model.sim_reset()
 
@@ -93,7 +88,7 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
   model.elaborate()
 
   if dump_vcd:
-    model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
+    model.set_metadata( VcdGenerationPass.vcd_file_name, dump_vcd )
 
   if test_verilog:
     model.set_metadata( VerilogVerilatorImportPass.vl_xinit, test_verilog )
@@ -104,7 +99,7 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
 
   # Create a simulator
 
-  model.apply( SimulationPass(print_line_trace=line_trace) )
+  model.apply( DefaultPassGroup(print_line_trace=line_trace) )
 
   # Reset model
 
@@ -147,7 +142,7 @@ def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True
   model.elaborate()
 
   if cmdline_opts['dump_vcd']:
-    model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
+    model.set_metadata( VcdGenerationPass.vcd_file_name, cmdline_opts['dump_vcd'] )
 
   if cmdline_opts['test_verilog']:
     model.set_metadata( VerilogVerilatorImportPass.vl_xinit, cmdline_opts['test_verilog'] )
@@ -158,7 +153,7 @@ def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True
 
   # Create a simulator
 
-  model.apply( SimulationPass(print_line_trace=True) )
+  model.apply( DefaultPassGroup(print_line_trace=True) )
 
   # Reset model
 

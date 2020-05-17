@@ -12,10 +12,24 @@ from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 class CLLineTracePass( BasePass ):
 
+  # CLLineTracePass public pass data
+
+  #: enable
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: True
+  enable = MetadataKey()
+
   def __init__( self, default_trace_len=8 ):
     self.default_trace_len = default_trace_len
 
   def __call__( self, top ):
+
+    # Turn on by default
+    if top.has_metadata( self.enable ) and top.get_metadata( self.enable ) is False:
+      return
+
     if not hasattr( top, "_tracing" ):
       top._tracing = PassMetadata()
     top._tracing.clear_cl_trace = self.process_component( top )

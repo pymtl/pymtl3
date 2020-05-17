@@ -14,6 +14,7 @@ from .import_.VerilogVerilatorImportPass import VerilogVerilatorImportPass
 from .translation.VerilogTranslationConfigs import VerilogTranslationConfigs
 from .translation.VerilogTranslationPass import VerilogTranslationPass
 from .VerilogPlaceholder import VerilogPlaceholder
+from .VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
 from .VerilogPlaceholderPass import VerilogPlaceholderPass
 
 

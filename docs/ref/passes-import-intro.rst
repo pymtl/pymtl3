@@ -121,7 +121,7 @@ Now `m` is a simulatable component hierarchy! Let's try to feed in data through 
 
 ::
 
-    >>> m.apply( SimulationPass() )
+    >>> m.apply( DefaultPassGroup() )
     >>> m.sim_reset()
     >>> m.a @= 1
     >>> m.b @= 1
@@ -179,7 +179,7 @@ directory. You can also simulate the adder like the following:
 
 ::
 
-    >>> m.apply( SimulationPass() )
+    >>> m.apply( DefaultPassGroup() )
     >>> m.sim_reset()
     >>> m.a @= 1
     >>> m.b @= 1

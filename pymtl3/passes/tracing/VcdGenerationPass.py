@@ -32,7 +32,6 @@ class VcdGenerationPass( BasePass ):
       vcd_file_name = top.get_metadata( self.vcd_file_name )
 
       if vcd_file_name is not None:
-        # top.config_tracing.check()
         if not hasattr( top, "_tracing" ):
           top._tracing = PassMetadata()
         top._tracing.vcd_func = self.make_vcd_func( top, top._tracing, vcd_file_name )

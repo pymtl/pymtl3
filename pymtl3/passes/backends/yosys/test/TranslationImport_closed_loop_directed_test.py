@@ -8,7 +8,7 @@
 from pymtl3.passes.backends.verilog.test.TranslationImport_closed_loop_directed_test import (
     _run_queue_test_replace_run_sim,
 )
-from pymtl3.passes.PassGroups import SimulationPass
+from pymtl3.passes.PassGroups import DefaultPassGroup
 from pymtl3.stdlib.queues.test.enrdy_queues_test import (
     test_bypass_queue as _bypass_queue,
 )
@@ -37,7 +37,7 @@ def yosys_run_sim( _th ):
     _th.elaborate()
     _th.q.set_metadata( YosysTranslationImportPass.enable, True )
     th = YosysTranslationImportPass()( _th )
-    th.apply( SimulationPass() )
+    th.apply( DefaultPassGroup() )
     th.sim_reset()
 
     while not th.done() and th.sim_cycle_count() < 1000:

@@ -64,7 +64,7 @@ class IncrWires( Component ):
 
 def test_wires():
   incr = IncrWires()
-  incr.apply( SimulationPass(print_line_trace=True) )
+  incr.apply( DefaultPassGroup(print_line_trace=True) )
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )

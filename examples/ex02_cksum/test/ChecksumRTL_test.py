@@ -10,7 +10,7 @@ Author : Yanghui Ou
 import pytest
 
 from pymtl3 import *
-from pymtl3.passes import TracingConfigs
+from pymtl3.passes.tracing import VcdGenerationPass, PrintTextWavePass
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum
@@ -25,7 +25,7 @@ from ..utils import b128_to_words, words_to_b128
 def test_step_unit():
   step_unit = StepUnit()
   step_unit.elaborate()
-  step_unit.apply( SimulationPass() )
+  step_unit.apply( DefaultPassGroup() )
 
   step_unit.word_in @= 1
   step_unit.sum1_in @= 1
@@ -49,7 +49,7 @@ def checksum_rtl( words ):
   # Create a simulator
   dut = ChecksumRTL()
   dut.elaborate()
-  dut.apply( SimulationPass() )
+  dut.apply( DefaultPassGroup() )
   dut.sim_reset()
 
   # Wait until the checksum unit is ready to receive input
@@ -122,10 +122,11 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
 
     # Check for vcd dumping
     if s.vcd_file_name:
-      th.config_tracing = TracingConfigs(tracing='text_fancy', vcd_file_name=s.vcd_file_name)
+      s.set_metadata( VcdGenerationPass.vcd_file_name, s.vcd_file_name )
+      s.set_metadata( PrintTextWavePass.enable, True )
 
     # Create a simulator
-    th.apply( SimulationPass() )
+    th.apply( DefaultPassGroup() )
     th.sim_reset()
 
     while not th.done() and th.sim_cycle_count() < max_cycles:

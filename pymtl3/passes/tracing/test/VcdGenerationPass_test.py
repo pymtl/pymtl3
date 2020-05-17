@@ -14,13 +14,13 @@
 from pymtl3.datatypes import *
 from pymtl3.dsl import *
 from ..VcdGenerationPass import VcdGenerationPass
-from pymtl3.passes.PassGroups import SimulationPass
+from pymtl3.passes.PassGroups import DefaultPassGroup
 
 
 def run_test( dut, tv, tv_in, tv_out ):
   vcd_file_name = dut.__class__.__name__ + "_funky"
   dut.set_metadata( VcdGenerationPass.vcd_file_name, vcd_file_name )
-  dut.apply( SimulationPass() )
+  dut.apply( DefaultPassGroup() )
   for v in tv:
     tv_in( dut, v )
     dut.sim_tick()

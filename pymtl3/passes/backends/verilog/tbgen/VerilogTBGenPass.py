@@ -29,7 +29,7 @@ class VerilogTBGenPass( BasePass ):
   #: Type: ``str``; input
   #:
   #: Default value: ""
-  vtbgen_case_name = MetadataKey()
+  case_name = MetadataKey()
 
   def __call__( self, top ):
     if not top._dsl.constructed:
@@ -42,9 +42,8 @@ class VerilogTBGenPass( BasePass ):
     tbgen_components = []
 
     def traverse_hierarchy( m ):
-      if m.has_metadata( self.vtbgen_case_name ) and hasattr(m, '_ports'):
-        m.get_metadata( vtbgen_case_name )
-        tbgen_components.append( (m, m.verilog_tbgen) )
+      if m.has_metadata( self.case_name ) and hasattr(m, '_ports'):
+        tbgen_components.append( (m, m.get_metadata( self.case_name )) )
       else:
         for child in m.get_child_components():
           traverse_hierarchy( child )
@@ -125,7 +124,7 @@ class VerilogTBGenPass( BasePass ):
         ))
 
       case_file = open( f"{dut_name}_{case_name}_tb.v.cases", "w" )
-      top._tbgen.tbgen_hooks.append( self.gen_hook_func( top, x, py_signal_order, case_file ) )
+      top._vtbgen.tbgen_hooks.append( self.gen_hook_func( top, x, py_signal_order, case_file ) )
 
   @staticmethod
   def gen_hook_func( top, x, ports, case_file ):

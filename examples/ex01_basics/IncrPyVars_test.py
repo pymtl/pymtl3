@@ -75,7 +75,7 @@ class IncrPyVars( Component ):
 
 def test_py_vars():
   incr = IncrPyVars()
-  incr.apply( SimulationPass() )
+  incr.apply( DefaultPassGroup() )
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )

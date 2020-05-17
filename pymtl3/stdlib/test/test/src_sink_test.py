@@ -35,7 +35,7 @@ class TestHarnessSimple( Component ):
     return "{} > {}".format( s.src.line_trace(), s.sink.line_trace() )
 
   def run_sim( s, max_cycles=100 ):
-    s.apply( SimulationPass() )
+    s.apply( DefaultPassGroup() )
     s.sim_reset()
 
     while not s.done() and s.sim_cycle_count() < max_cycles:
@@ -162,7 +162,7 @@ class TestHarness( Component ):
                                "|".join( [ x.line_trace() for x in s.sinks ] ) )
 
   def run_sim( s, max_cycles=100 ):
-    s.apply( SimulationPass() )
+    s.apply( DefaultPassGroup() )
     s.sim_reset()
 
     while not s.done() and s.sim_cycle_count() < max_cycles:

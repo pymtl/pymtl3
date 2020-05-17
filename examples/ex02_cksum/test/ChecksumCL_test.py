@@ -56,7 +56,7 @@ def checksum_cl( words ):
   # Create a simulator
   dut = WrappedChecksumCL()
   dut.elaborate()
-  dut.apply( SimulationPass() )
+  dut.apply( DefaultPassGroup() )
   dut.sim_reset()
 
   # Wait until recv ready
@@ -190,7 +190,7 @@ class ChecksumCLSrcSink_Tests:
   def run_sim( s, th, max_cycles=1000 ):
 
     # Create a simulator
-    th.apply( SimulationPass() )
+    th.apply( DefaultPassGroup() )
     th.sim_reset()
 
     # Tick the simulator

@@ -132,7 +132,7 @@ def main():
     model.proc.set_metadata( YosysTranslationImportPass.enable, True )
     model = YosysTranslationImportPass()( model )
 
-  model.apply( SimulationPass(print_line_trace=opts.trace) )
+  model.apply( DefaultPassGroup(print_line_trace=opts.trace) )
 
   # Load the program into the model
 

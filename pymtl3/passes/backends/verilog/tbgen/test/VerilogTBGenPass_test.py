@@ -7,7 +7,7 @@
 
 import pytest
 
-from pymtl3 import SimulationPass
+from pymtl3 import DefaultPassGroup
 from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
 from pymtl3.passes.backends.verilog import *
@@ -21,7 +21,7 @@ def local_do_test( _m ):
   _m.elaborate()
   _m.apply( VerilogPlaceholderPass() )
   m = VerilogTranslationImportPass()( _m )
-  m.verilog_tbgen = '1234'
+  m.set_metadata( VerilogTBGenPass.case_name, '1234' )
   m.apply( VerilogTBGenPass() )
   sim = TestVectorSimulator( m, _m._tv, _m._tv_in, _m._tv_out )
   sim.run_test()

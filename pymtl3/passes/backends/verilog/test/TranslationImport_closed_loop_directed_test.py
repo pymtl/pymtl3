@@ -6,7 +6,7 @@
 """Closed-loop test with SystemVerilog translation and import."""
 
 from pymtl3.datatypes import Bits1, mk_bits
-from pymtl3.passes.PassGroups import SimulationPass
+from pymtl3.passes.PassGroups import DefaultPassGroup
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.queues.test.enrdy_queues_test import (
     test_bypass_queue as _bypass_queue,
@@ -37,7 +37,7 @@ def run_sim( _th ):
     _th.elaborate()
     _th.q.set_metadata( VerilogTranslationImportPass.enable, True )
     th = VerilogTranslationImportPass()( _th )
-    th.apply( SimulationPass() )
+    th.apply( DefaultPassGroup() )
     th.sim_reset()
 
     while not th.done() and th.sim_cycle_count() < 1000:

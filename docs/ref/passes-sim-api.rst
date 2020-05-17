@@ -1,7 +1,7 @@
 Simulation Pass API Reference
 =============================
 
-.. autoclass:: pymtl3.passes.PassGroups.SimulationPass
+.. autoclass:: pymtl3.passes.PassGroups.DefaultPassGroup
    :members:
    :special-members:
    :private-members:

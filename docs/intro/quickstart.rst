@@ -82,7 +82,7 @@ full adder logic is implemented inside an update block ``upblk``.
           s.sum  @= s.cin ^ s.a ^ s.b
           s.cout @= ( ( s.a ^ s.b ) & s.cin ) | ( s.a & s.b )
 
-To simulate the full adder, we need to apply the ``SimulationPass``
+To simulate the full adder, we need to apply the ``DefaultPassGroup``
 PyMTL pass. Then we can set the value of input ports and simulate
 the full adder by calling ``fa.sim_tick``:
 
@@ -91,7 +91,7 @@ the full adder by calling ``fa.sim_tick``:
 ::
 
     >>> fa = FullAdder()
-    >>> fa.apply( SimulationPass() )
+    >>> fa.apply( DefaultPassGroup() )
     >>> fa.sim_reset()
     >>> fa.a @= 0
     >>> fa.b @= 1
@@ -127,7 +127,7 @@ And to simulate an 8-bit register incrementer:
 ::
 
     >>> regincr = RegIncr( 8 )
-    >>> regincr.apply( SimulationPass() )
+    >>> regincr.apply( DefaultPassGroup() )
     >>> regincr.sim_reset()
     >>> regincr.in_ @= 42
     >>> regincr.sim_tick()

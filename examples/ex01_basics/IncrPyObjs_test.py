@@ -92,7 +92,7 @@ class IncrPyObjs( Component ):
 
 def test_py_objs():
   incr = IncrPyObjs()
-  incr.apply( SimulationPass() )
+  incr.apply( DefaultPassGroup() )
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )

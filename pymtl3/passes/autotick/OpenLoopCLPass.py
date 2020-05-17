@@ -24,8 +24,7 @@ from ..sim.PrepareSimPass import PrepareSimPass
 from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from ..sim.SimpleTickPass import SimpleTickPass
 from ..tracing.CLLineTracePass import CLLineTracePass
-from ..tracing.CollectSignalPass import CollectSignalPass
-from ..tracing.PrintWavePass import PrintWavePass
+from ..tracing.PrintTextWavePass import PrintTextWavePass
 from ..tracing.VcdGenerationPass import VcdGenerationPass
 
 random.seed(0xdeadbeef)
@@ -343,9 +342,8 @@ class OpenLoopCLPass( BasePass ):
 
     # Shunning: we call line trace related pass here.
     CLLineTracePass()( top )
-    CollectSignalPass()( top )
     VcdGenerationPass()( top )
-    PrintWavePass()( top )
+    PrintTextWavePass()( top )
 
     # Shunning: we reuse ff and posedge schedules from SimpleSchedulePass
     simple = SimpleSchedulePass()

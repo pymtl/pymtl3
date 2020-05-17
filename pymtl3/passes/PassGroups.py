@@ -7,10 +7,8 @@ from .sim.SimpleSchedulePass import SimpleSchedulePass
 from .sim.SimpleTickPass import SimpleTickPass
 from .sim.WrapGreenletPass import WrapGreenletPass
 from .tracing.CLLineTracePass import CLLineTracePass
-from .tracing.CollectSignalPass import CollectSignalPass
 from .tracing.LineTraceParamPass import LineTraceParamPass
-from .tracing.PrintWavePass import PrintWavePass
-from .tracing.TracingConfigs import TracingConfigs
+from .tracing.PrintTextWavePass import PrintTextWavePass
 from .tracing.VcdGenerationPass import VcdGenerationPass
 
 
@@ -23,16 +21,16 @@ class SimpleSimPass( BasePass ):
     SimpleSchedulePass()( top )
     CLLineTracePass()( top )
     VcdGenerationPass()( top )
-    CollectSignalPass()( top )
-    PrintWavePass()( top )
+    PrintTextWavePass()( top )
 
     PrepareSimPass(print_line_trace=True)( top )
 
-# This pass is created to be used for 2019 isca tutorial.
-# Now we can always use this
-class SimulationPass( BasePass ):
-  def __init__( s, *, waveform=None, print_line_trace=True, reset_active_high=True ):
-    s.waveform = waveform
+class DefaultPassGroup( BasePass ):
+  def __init__( s, *, vcd_file_name=None, textwave=False,
+                      print_line_trace=True, reset_active_high=True ):
+
+    s.vcd_file_name = vcd_file_name
+    s.textwave = textwave
     s.print_line_trace = print_line_trace
     s.reset_active_high = reset_active_high
 
@@ -43,12 +41,14 @@ class SimulationPass( BasePass ):
     CLLineTracePass()( top )
     DynamicSchedulePass()( top )
 
-    if s.waveform is not None:
-      top.config_tracing = TracingConfigs( tracing=s.waveform )
+    if s.vcd_file_name:
+      top.set_metadata( VcdGenerationPass.vcd_file_name, dump_vcd )
+
+    if s.textwave:
+      top.set_metadata( PrintTextWavePass.enable, True )
 
     VcdGenerationPass()( top )
-    CollectSignalPass()( top )
-    PrintWavePass()( top )
+    PrintTextWavePass()( top )
 
     PrepareSimPass(print_line_trace=s.print_line_trace,
                    reset_active_high=s.reset_active_high)( top )
