@@ -9,8 +9,8 @@
 from pymtl3.datatypes import Bits32
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import UpblkCyclicError
-from pymtl3.passes.tracing import PrintTextWavePass
 from pymtl3.passes.sim.GenDAGPass import GenDAGPass
+from pymtl3.passes.tracing.PrintTextWavePass import PrintTextWavePass
 
 from ..OpenLoopCLPass import OpenLoopCLPass
 
@@ -67,7 +67,7 @@ def test_top_level_method_tracing():
   A.elaborate()
 
   # Turn on textwave
-  dut.set_metadata( PrintTextWavePass.enable, True )
+  A.set_metadata( PrintTextWavePass.enable, True )
 
   A.apply( GenDAGPass() )
   A.apply( OpenLoopCLPass() )

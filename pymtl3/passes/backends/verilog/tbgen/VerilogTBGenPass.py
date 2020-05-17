@@ -29,7 +29,7 @@ class VerilogTBGenPass( BasePass ):
   #: Type: ``str``; input
   #:
   #: Default value: ""
-  case_name = MetadataKey()
+  case_name = MetadataKey(str)
 
   def __call__( self, top ):
     if not top._dsl.constructed:

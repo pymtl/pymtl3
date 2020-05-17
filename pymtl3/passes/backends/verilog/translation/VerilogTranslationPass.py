@@ -24,14 +24,14 @@ class VerilogTranslationPass( BasePass ):
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  enable                = MetadataKey()
+  enable                = MetadataKey(bool)
 
   #: Specify the filename of the translated source file.
   #:
   #: Type: ``str``; input
   #:
   #: Default value: value of ``explicit_module_name``
-  explicit_file_name    = MetadataKey()
+  explicit_file_name    = MetadataKey(str)
 
   #: Specify the translated name of the component.
   #: Note that this option only works for the top level component.
@@ -39,7 +39,7 @@ class VerilogTranslationPass( BasePass ):
   #: Type: ``str``; input
   #:
   #: Default value: component class name concatenated with parameters
-  explicit_module_name  = MetadataKey()
+  explicit_module_name  = MetadataKey(str)
 
   #: Wrap component translation result within \`ifndef SYNTHESIS
   #: Enabling this option effectively removes the component from
@@ -48,7 +48,7 @@ class VerilogTranslationPass( BasePass ):
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  no_synthesis          = MetadataKey()
+  no_synthesis          = MetadataKey(bool)
 
   #: In the translated source, wrap the clk port connection of the
   #: component within \`ifndef SYNTHESIS.
@@ -59,7 +59,7 @@ class VerilogTranslationPass( BasePass ):
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  no_synthesis_no_clk   = MetadataKey()
+  no_synthesis_no_clk   = MetadataKey(bool)
 
   #: In the translated source, wrap the reset port connection of the
   #: component within \`ifndef SYNTHESIS.
@@ -70,7 +70,7 @@ class VerilogTranslationPass( BasePass ):
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  no_synthesis_no_reset = MetadataKey()
+  no_synthesis_no_reset = MetadataKey(bool)
 
   # Translation pass output pass data
 
@@ -82,7 +82,7 @@ class VerilogTranslationPass( BasePass ):
   #: Whether or not the translated result is the same as the existing output file.
   #:
   #: Type: ``bool``; output
-  is_same               = MetadataKey()
+  is_same               = MetadataKey(bool)
 
   #: A reference of the translator called during translation.
   #:
@@ -92,17 +92,17 @@ class VerilogTranslationPass( BasePass ):
   #: Whether or not the component has been translated.
   #:
   #: Type: ``bool``; output
-  translated            = MetadataKey()
+  translated            = MetadataKey(bool)
 
   #: Filename of the translation result.
   #:
   #: Type: ``str``; output
-  translated_filename   = MetadataKey()
+  translated_filename   = MetadataKey(str)
 
   #: Top level module name in the translation result.
   #:
   #: Type: ``str``; output
-  translated_top_module = MetadataKey()
+  translated_top_module = MetadataKey(str)
 
   def __call__( s, top ):
     """Translate a PyMTL component hierarhcy rooted at ``top``."""

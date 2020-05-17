@@ -25,7 +25,7 @@ class VcdGenerationPass( BasePass ):
   #: Type: ``str``; input
   #:
   #: Default value: ""
-  vcd_file_name = MetadataKey()
+  vcd_file_name = MetadataKey(str)
 
   def __call__( self, top ):
     if top.has_metadata( self.vcd_file_name ):

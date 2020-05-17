@@ -19,7 +19,7 @@ class CLLineTracePass( BasePass ):
   #: Type: ``bool``; input
   #:
   #: Default value: True
-  enable = MetadataKey()
+  enable = MetadataKey(bool)
 
   def __init__( self, default_trace_len=8 ):
     self.default_trace_len = default_trace_len

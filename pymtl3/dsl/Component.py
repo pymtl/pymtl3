@@ -459,6 +459,7 @@ class Component( ComponentLevel7 ):
         key (MetadataKey): Key of the metadata.
         value (object): The metadata. Can be any object.
     """
+    key.check_value( value )
     s._metadata[ key ] = value
 
   def has_metadata( s, key ):

@@ -25,7 +25,7 @@ class VerilogTranslationImportPass( BasePass ):
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  enable = MetadataKey()
+  enable = MetadataKey(bool)
 
   def __call__( s, top ):
     """Translate-import the PyMTL component hierarhcy rooted at ``top``."""

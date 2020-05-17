@@ -24,7 +24,9 @@ from pymtl3.datatypes import (
 from pymtl3.dsl import *
 from pymtl3.passes.errors import ModelTypeError
 from pymtl3.passes.PassGroups import DefaultPassGroup
+
 from ..PrintTextWavePass import PrintTextWavePass
+
 
 def test_collect_signal():
 

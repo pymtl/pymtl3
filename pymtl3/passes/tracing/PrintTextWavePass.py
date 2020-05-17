@@ -32,14 +32,14 @@ class PrintTextWavePass( BasePass ):
   #: Type: ``str``; input
   #:
   #: Default value: ""
-  chars_per_cycle = MetadataKey()
+  chars_per_cycle = MetadataKey(int)
 
   #: enable
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: False
-  enable = MetadataKey()
+  enable = MetadataKey(bool)
 
   def __call__( self, top ):
     if top.has_metadata( self.enable ) and top.get_metadata( self.enable ):
@@ -230,4 +230,3 @@ def dump_wav():
     s, l_dict = top, {}
     exec(compile( src, filename="temp", mode="exec"), globals().update(locals()), l_dict)
     return l_dict['dump_wav']
-

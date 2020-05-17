@@ -35,11 +35,6 @@ class DefaultPassGroup( BasePass ):
     s.reset_active_high = reset_active_high
 
   def __call__( s, top ):
-    LineTraceParamPass()( top )
-    GenDAGPass()( top )
-    WrapGreenletPass()( top )
-    CLLineTracePass()( top )
-    DynamicSchedulePass()( top )
 
     if s.vcd_file_name:
       top.set_metadata( VcdGenerationPass.vcd_file_name, dump_vcd )
@@ -47,6 +42,11 @@ class DefaultPassGroup( BasePass ):
     if s.textwave:
       top.set_metadata( PrintTextWavePass.enable, True )
 
+    LineTraceParamPass()( top )
+    GenDAGPass()( top )
+    WrapGreenletPass()( top )
+    CLLineTracePass()( top )
+    DynamicSchedulePass()( top )
     VcdGenerationPass()( top )
     PrintTextWavePass()( top )
 

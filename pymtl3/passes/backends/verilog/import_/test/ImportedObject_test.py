@@ -10,7 +10,7 @@ from os.path import dirname
 
 import pytest
 
-from pymtl3 import Interface, DefaultPassGroup
+from pymtl3 import DefaultPassGroup, Interface
 from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.backends.verilog import (

@@ -51,175 +51,175 @@ class VerilogVerilatorImportPass( BasePass ):
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  enable              = MetadataKey()
+  enable              = MetadataKey(bool)
 
   #: Print out extra debug information during import.
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  verbose             = MetadataKey()
+  verbose             = MetadataKey(bool)
 
   #: Use Verilog ``line_trace`` output as the Python line_trace return value.
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  vl_line_trace       = MetadataKey()
+  vl_line_trace       = MetadataKey(bool)
 
   #: Enable Verilator coverage.
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  vl_coverage         = MetadataKey()
+  vl_coverage         = MetadataKey(bool)
 
   #: Enable Verilator line coverage.
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  vl_line_coverage    = MetadataKey()
+  vl_line_coverage    = MetadataKey(bool)
 
   #: Enable Verilator toggle coverage.
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  vl_toggle_coverage  = MetadataKey()
+  vl_toggle_coverage  = MetadataKey(bool)
 
   #: Specify the Verilator make directory.
   #:
   #: Type: ``str``; input
   #:
   #: Default value: obj_<top-component-name>
-  vl_mk_dir           = MetadataKey()
+  vl_mk_dir           = MetadataKey(str)
 
   #: Enable Verilog assert.
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  vl_enable_assert    = MetadataKey()
+  vl_enable_assert    = MetadataKey(bool)
 
   #: Verilator optimization level.
   #:
   #: Type: ``int``; input
   #:
   #: Default value: ``3``
-  vl_opt_level        = MetadataKey()
+  vl_opt_level        = MetadataKey(int)
 
   #: Verilator unroll count.
   #:
   #: Type: ``int``; input
   #:
   #: Default value: ``1000000``
-  vl_unroll_count     = MetadataKey()
+  vl_unroll_count     = MetadataKey(int)
 
   #: Verilator unroll statement count.
   #:
   #: Type: ``int``; input
   #:
   #: Default value: ``1000000``
-  vl_unroll_stmts     = MetadataKey()
+  vl_unroll_stmts     = MetadataKey(int)
 
   #: Enable Verilator lint warnings.
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``True``
-  vl_W_lint           = MetadataKey()
+  vl_W_lint           = MetadataKey(bool)
 
   #: Enable Verilator style warnings.
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``True``
-  vl_W_style          = MetadataKey()
+  vl_W_style          = MetadataKey(bool)
 
   #: Enable Verilator fatal warnings.
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``True``
-  vl_W_fatal          = MetadataKey()
+  vl_W_fatal          = MetadataKey(bool)
 
   #: A list of suppressed Verilator warnings.
   #:
   #: Type: ``[str]``; input
   #:
   #: Default value: ``['UNSIGNED', 'UNOPTFLAT', 'WIDTH']``
-  vl_Wno_list         = MetadataKey()
+  vl_Wno_list         = MetadataKey(list)
 
   #: Verilator initialization options.
   #:
   #: Possible values: ``'ones'``, ``'zeros'``, ``'rand'``, and non-zero integers; input
   #:
   #: Default value: ``'zeros'``
-  vl_xinit            = MetadataKey()
+  vl_xinit            = MetadataKey(str)
 
   #: Enable Verilator VCD tracing.
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  vl_trace            = MetadataKey()
+  vl_trace            = MetadataKey(bool)
 
   #: Filename of Verilator VCD tracing.
   #:
   #: Type: ``str``; input
   #:
   #: Default value: translated-component-name.verilator1
-  vl_trace_filename   = MetadataKey()
+  vl_trace_filename   = MetadataKey(str)
 
   #: Time scale of generated Verilator VCD.
   #:
   #: Type: ``str``; input
   #:
   #: Default value: ``'10ps'``
-  vl_trace_timescale  = MetadataKey()
+  vl_trace_timescale  = MetadataKey(str)
 
   #: Cycle time of PyMTL clk pin in the generated Verilator VCD in unit of ``vl_trace_timescale``.
   #:
   #: Type: ``int``; input
   #:
   #: Default value: ``100``
-  vl_trace_cycle_time = MetadataKey()
+  vl_trace_cycle_time = MetadataKey(int)
 
   #: Optional flags to be passed to the C compiler.
   #:
   #: Type: ``str``; input
   #:
   #: Default value: ``''``
-  c_flags             = MetadataKey()
+  c_flags             = MetadataKey(str)
 
   #: Optional include paths to be passed to the C compiler.
   #:
   #: Type: ``[str]``; input
   #:
   #: Default value: ``[]``
-  c_include_path      = MetadataKey()
+  c_include_path      = MetadataKey(list)
 
   #: Optional source file paths to be passed to the C compiler.
   #:
   #: Type: ``[str]``; input
   #:
   #: Default value: ``[]``
-  c_srcs              = MetadataKey()
+  c_srcs              = MetadataKey(list)
 
   #: Optional flags to be passed to LD.
   #:
   #: Type: ``str``; input
   #:
   #: Default value: ``''``
-  ld_flags            = MetadataKey()
+  ld_flags            = MetadataKey(str)
 
   #: Optional libraries to be passed to LD (e.g., ``'-lfoo'``).
   #:
   #: Type: ``str``; input
   #:
   #: Default value: ``''``
-  ld_libs             = MetadataKey()
+  ld_libs             = MetadataKey(str)
 
   # Import pass output pass data
 
@@ -278,14 +278,12 @@ class VerilogVerilatorImportPass( BasePass ):
 
   @staticmethod
   def get_translation_pass():
-    from pymtl3.passes.backends.verilog.translation.VerilogTranslationPass \
-        import VerilogTranslationPass
+    from ..translation.VerilogTranslationPass import VerilogTranslationPass
     return VerilogTranslationPass
 
   @staticmethod
   def get_import_config():
-    from pymtl3.passes.backends.verilog.import_.VerilogVerilatorImportConfigs \
-        import VerilogVerilatorImportConfigs
+    from .VerilogVerilatorImportConfigs import VerilogVerilatorImportConfigs
     return VerilogVerilatorImportConfigs
 
   @staticmethod

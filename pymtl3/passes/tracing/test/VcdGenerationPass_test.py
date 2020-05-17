@@ -13,8 +13,9 @@
 
 from pymtl3.datatypes import *
 from pymtl3.dsl import *
-from ..VcdGenerationPass import VcdGenerationPass
 from pymtl3.passes.PassGroups import DefaultPassGroup
+
+from ..VcdGenerationPass import VcdGenerationPass
 
 
 def run_test( dut, tv, tv_in, tv_out ):
