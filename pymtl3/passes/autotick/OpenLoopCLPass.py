@@ -368,17 +368,19 @@ class OpenLoopCLPass( BasePass ):
 
     # append tracing related work
 
-    if hasattr( top, "_tracing" ):
-      if hasattr( top._tracing, "vcd_func" ):
-        ffs.append( top._tracing.vcd_func )
-      if hasattr( top._tracing, "collect_text_sigs" ):
-        ffs.append( top._tracing.collect_text_sigs )
+    if top.has_metadata( VcdGenerationPass.vcd_func ):
+      ffs.append( top.get_metadata( VcdGenerationPass.vcd_func ) )
+
+    if top.has_metadata( PrintTextWavePass.textwave_func ):
+      ffs.append( top.get_metadata( PrintTextWavePass.textwave_func ) )
 
     # posedge flip
     ffs.extend( top._sched.schedule_posedge_flip )
 
     # clear cl method flag
-    ffs.append( top._tracing.clear_cl_trace )
+    if top.has_metadata( CLLineTracePass.clear_cl_trace_func ):
+      ffs.append( top.get_metadata( CLLineTracePass.clear_cl_trace_func ) )
+
 
     top._sched.new_schedule_index  = 0
     top._sched.orig_schedule_index = 0
