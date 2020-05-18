@@ -9,6 +9,7 @@ import ast
 import copy
 
 import pymtl3.dsl as dsl
+from pymtl3 import MetadataKey
 from pymtl3.datatypes import (
     Bits,
     concat,
@@ -21,26 +22,39 @@ from pymtl3.datatypes import (
     trunc,
     zext,
 )
-from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
+from pymtl3.passes.rtlir.RTLIRPass import RTLIRPass
 from pymtl3.passes.rtlir.rtype.RTLIRType import RTLIRGetter
 from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
 
 from . import BehavioralRTLIR as bir
 
 
-class BehavioralRTLIRGenL1Pass( BasePass ):
+class BehavioralRTLIRGenL1Pass( RTLIRPass ):
+
+  # Pass metadata
+
+  #: A dictionary that maps upblk functions to their BIR representation
+  #:
+  #: Type: ``dict``; output
+  rtlir_upblks = MetadataKey()
+
   def __init__( s, translation_top ):
+    c = s.__class__
     s.tr_top = translation_top
-    if not hasattr( translation_top, "_rtlir_getter" ):
-      translation_top._rtlir_getter = RTLIRGetter(cache=True)
+    if not translation_top.has_metadata( c.rtlir_getter ):
+      translation_top.set_metadata( c.rtlir_getter, RTLIRGetter(cache=True) )
 
   def __call__( s, m ):
     """Generate RTLIR for all upblks of m."""
-    if not hasattr( m, '_pass_behavioral_rtlir_gen' ):
-      m._pass_behavioral_rtlir_gen = PassMetadata()
+    c = s.__class__
 
-    m._pass_behavioral_rtlir_gen.rtlir_upblks = {}
+    if m.has_metadata( c.rtlir_upblks ):
+      rtlir_upblks = m.get_metadata( c.rtlir_upblks )
+    else:
+      rtlir_upblks = {}
+      m.set_metadata( c.rtlir_upblks, rtlir_upblks )
+
     visitor = s.get_rtlir_generator_class()( m )
     upblks = {
       'CombUpblk' : get_ordered_upblks(m),
@@ -59,7 +73,7 @@ class BehavioralRTLIRGenL1Pass( BasePass ):
         upblk.src       = upblk_info[1]
         upblk.lino      = upblk_info[2]
         upblk.filename  = upblk_info[3]
-        m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] = upblk
+        rtlir_upblks[ blk ] = upblk
 
   def get_rtlir_generator_class( s ):
     return BehavioralRTLIRGeneratorL1

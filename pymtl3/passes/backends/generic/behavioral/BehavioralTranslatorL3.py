@@ -26,11 +26,12 @@ class BehavioralTranslatorL3( BehavioralTranslatorL2 ):
   def _gen_behavioral_trans_metadata( s, m ):
     m.apply( BehavioralRTLIRGenL3Pass( s.tr_top ) )
     m.apply( BehavioralRTLIRTypeCheckL3Pass( s.tr_top ) )
-    s.behavioral.rtlir[m] = m._pass_behavioral_rtlir_gen.rtlir_upblks
+    s.behavioral.rtlir[m] = \
+        m.get_metadata( BehavioralRTLIRGenL3Pass.rtlir_upblks )
     s.behavioral.freevars[m] =\
-        m._pass_behavioral_rtlir_type_check.rtlir_freevars
+        m.get_metadata( BehavioralRTLIRTypeCheckL3Pass.rtlir_freevars )
     s.behavioral.tmpvars[m] =\
-        m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
+        m.get_metadata( BehavioralRTLIRTypeCheckL3Pass.rtlir_tmpvars )
 
   #-----------------------------------------------------------------------
   # Freevar datatype dispatch

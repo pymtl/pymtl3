@@ -153,7 +153,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     This method will be recursively applied to different components in the
     hierarchy.
     """
-    m_rtype = m._pass_structural_rtlir_gen.rtlir_type
+    m_rtype = m.get_metadata( StructuralRTLIRGenL1Pass.rtlir_type )
     s.structural.component_is_top[m] = m is s.tr_top
     s.structural.component_name[m] = m_rtype.get_name()
     s.structural.component_file_info[m] = m_rtype.get_file_info()
@@ -193,7 +193,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
   #-----------------------------------------------------------------------
 
   def translate_decls( s, m ):
-    m_rtype  = m._pass_structural_rtlir_gen.rtlir_type
+    m_rtype  = m.get_metadata( StructuralRTLIRGenL1Pass.rtlir_type )
 
     # Ports
     port_decls = []
@@ -238,7 +238,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     else:
       used_set = None
 
-    for const_id, rtype, instance in m._pass_structural_rtlir_gen.consts:
+    for const_id, rtype, instance in m.get_metadata( StructuralRTLIRGenL1Pass.consts ):
       if used_set is None or const_id in used_set:
         if isinstance( rtype, rt.Array ):
           array_type = rtype
@@ -262,7 +262,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
 
   def translate_connections( s, m ):
     connections = []
-    _connections = m._pass_structural_rtlir_gen.connections
+    _connections = m.get_metadata( StructuralRTLIRGenL1Pass.connections )
     for writer, reader in _connections:
       connections.append( s.rtlir_tr_connection(
         s.rtlir_signal_expr_translation( writer, m, 'writer' ),

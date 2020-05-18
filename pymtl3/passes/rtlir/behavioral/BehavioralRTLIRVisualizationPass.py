@@ -13,6 +13,7 @@ from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
+from .BehavioralRTLIRGenL1Pass import BehavioralRTLIRGenL1Pass
 
 
 class BehavioralRTLIRVisualizationPass( BasePass ):
@@ -21,7 +22,7 @@ class BehavioralRTLIRVisualizationPass( BasePass ):
 
     for blk in model.get_update_blocks():
       visitor.init( blk.__name__ )
-      visitor.visit( model._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
+      visitor.visit( model.get_metadata( BehavioralRTLIRGenL1Pass.rtlir_upblks )[ blk ] )
       visitor.dump()
 
 class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):

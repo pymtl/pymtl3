@@ -10,36 +10,59 @@ import math
 from collections import deque
 from contextlib import contextmanager
 
+from pymtl3 import MetadataKey
 from pymtl3.datatypes import Bits32, mk_bits
-from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError, RTLIRConversionError
+from pymtl3.passes.rtlir.RTLIRPass import RTLIRPass
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
 from .BehavioralRTLIR import BaseBehavioralRTLIR
+from .BehavioralRTLIRGenL1Pass import BehavioralRTLIRGenL1Pass
 
 
-class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
+class BehavioralRTLIRTypeCheckL1Pass( RTLIRPass ):
+
+  # Pass metadata
+
+  #: A dictionary that maps free variable names to (object, RTLIRType)
+  #:
+  #: Type: ``dict``; output
+  rtlir_freevars = MetadataKey()
+
+  #: A set of variable names that are accessed in the upblks
+  #:
+  #: Type: ``set(str)``; output
+  rtlir_accessed = MetadataKey()
+
   def __init__( s, translation_top ):
+    c = s.__class__
     s.tr_top = translation_top
-    if not hasattr( translation_top, "_rtlir_getter" ):
-      translation_top._rtlir_getter = rt.RTLIRGetter(cache=True)
+    if not translation_top.has_metadata( c.rtlir_getter ):
+      translation_top.set_metadata( c.rtlir_getter, rt.RTLIRGetter(cache=True) )
 
   def __call__( s, m ):
     """Perform type checking on all RTLIR in rtlir_upblks."""
-    if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
-      m._pass_behavioral_rtlir_type_check = PassMetadata()
-    m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
-    m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
+    c = s.__class__
+
+    rtlir_freevars = {}
+    rtlir_accessed = set()
+
+    m.set_metadata( BehavioralRTLIRTypeCheckL1Pass.rtlir_freevars, rtlir_freevars )
+    m.set_metadata( BehavioralRTLIRTypeCheckL1Pass.rtlir_accessed, rtlir_accessed )
+
     type_checker = s.get_visitor_class()(
       m,
-      m._pass_behavioral_rtlir_type_check.rtlir_freevars,
-      m._pass_behavioral_rtlir_type_check.rtlir_accessed,
-      s.tr_top._rtlir_getter,
+      rtlir_freevars,
+      rtlir_accessed,
+      s.tr_top.get_metadata( c.rtlir_getter ),
     )
+
+    rtlir_upblks = m.get_metadata( BehavioralRTLIRGenL1Pass.rtlir_upblks )
+
     for blk in m.get_update_block_order():
-      type_checker.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
+      type_checker.enter( blk, rtlir_upblks[ blk ] )
 
   #-------------------------------------------------------------------------
   # Type checker

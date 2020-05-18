@@ -36,7 +36,7 @@ __all__ = [
   'blocking', 'CalleeIfcFL', 'CallerIfcFL',
 
   'DefaultPassGroup',
-  'Component', 'Placeholder',
+  'Component', 'Placeholder', 'MetadataKey',
 
   'trunc', 'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',
   'mk_bits', 'Bits',

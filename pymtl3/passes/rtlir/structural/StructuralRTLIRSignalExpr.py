@@ -10,6 +10,8 @@ from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
+from .StructuralRTLIRGenL0Pass import StructuralRTLIRGenL0Pass
+
 
 class BaseSignalExpr:
   """Base abstract class of RTLIR signal expressions."""
@@ -159,7 +161,7 @@ class CurComp( BaseSignalExpr ):
   is the same as the current component's name.
   """
   def __init__( s, comp, comp_id ):
-    super().__init__(comp._pass_structural_rtlir_gen.rtlir_type)
+    super().__init__(comp.get_metadata(StructuralRTLIRGenL0Pass.rtlir_type))
     s.comp_id = comp_id
 
   def __eq__( s, other ):

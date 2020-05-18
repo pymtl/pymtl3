@@ -27,11 +27,11 @@ def local_do_test( m ):
   m.apply( BehavioralRTLIRGenPass( m ) )
   m.apply( BehavioralRTLIRTypeCheckPass( m ) )
   ref = m._rtlir_freevar_ref
-  ns = m._pass_behavioral_rtlir_type_check
+  rtlir_freevars = m.get_metadata( BehavioralRTLIRTypeCheckPass.rtlir_freevars )
 
   for fvar_name in ref.keys():
-    assert fvar_name in ns.rtlir_freevars
-    assert ns.rtlir_freevars[fvar_name] == ref[ fvar_name ]
+    assert fvar_name in rtlir_freevars
+    assert rtlir_freevars[fvar_name] == ref[ fvar_name ]
 
 def test_pymtl_Bits_closure_construct( do_test ):
   a = CaseBits32ClosureConstruct.DUT()

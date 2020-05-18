@@ -47,9 +47,9 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
     m.apply( BehavioralRTLIRGenL1Pass( s.tr_top ) )
     m.apply( BehavioralRTLIRTypeCheckL1Pass( s.tr_top ) )
     s.behavioral.rtlir[m] = \
-        m._pass_behavioral_rtlir_gen.rtlir_upblks
+        m.get_metadata( BehavioralRTLIRGenL1Pass.rtlir_upblks )
     s.behavioral.freevars[m] = \
-        m._pass_behavioral_rtlir_type_check.rtlir_freevars
+        m.get_metadata( BehavioralRTLIRTypeCheckL1Pass.rtlir_freevars )
 
   #-----------------------------------------------------------------------
   # translate_behavioral
@@ -59,7 +59,8 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   def translate_behavioral( s, m ):
     """Translate behavioral part of `m`."""
     # Get upblk metadata
-    s.behavioral.accessed[m] = m._pass_behavioral_rtlir_type_check.rtlir_accessed
+    s.behavioral.accessed[m] = \
+        m.get_metadata( BehavioralRTLIRTypeCheckL1Pass.rtlir_accessed )
     # Translate upblks
     upblk_decls = []
     upblk_srcs = []

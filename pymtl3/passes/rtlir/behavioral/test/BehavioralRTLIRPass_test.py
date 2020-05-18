@@ -45,9 +45,10 @@ def local_do_test( m ):
   m.apply( BehavioralRTLIRTypeCheckPass( m ) )
   m.apply( BehavioralRTLIRVisualizationPass() )
 
+  rtlir_upblks = m.get_metadata( BehavioralRTLIRGenPass.rtlir_upblks )
+
   for blk in m.get_update_blocks():
-    assert\
-      m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] == ref[ blk.__name__ ]
+    assert rtlir_upblks[ blk ] == ref[ blk.__name__ ]
 
 def test_reduce( do_test ):
   a = CaseReducesInx3OutComp.DUT()

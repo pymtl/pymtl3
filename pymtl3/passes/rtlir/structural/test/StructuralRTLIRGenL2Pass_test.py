@@ -21,17 +21,17 @@ def test_L2_struct_attr():
   a = CaseConnectStructAttrToOutComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL2Pass( gen_connections( a ) ) )
-  ns = a._pass_structural_rtlir_gen
+  connections = a.get_metadata( StructuralRTLIRGenL2Pass.connections )
   comp = CurComp(a, 's')
-  assert ns.connections == \
+  assert connections == \
     [(StructAttr(CurCompAttr(comp, 'in_'), 'foo'), CurCompAttr(comp, 'out'))]
 
 def test_L2_packed_index():
   a = CaseConnectArrayStructAttrToOutComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL2Pass( gen_connections( a ) ) )
-  ns = a._pass_structural_rtlir_gen
+  connections = a.get_metadata( StructuralRTLIRGenL2Pass.connections )
   comp = CurComp(a, 's')
-  assert ns.connections == \
+  assert connections == \
     [(PackedIndex(StructAttr(CurCompAttr(comp, 'in_'), 'foo'), 1),
       CurCompAttr(comp, 'out'))]

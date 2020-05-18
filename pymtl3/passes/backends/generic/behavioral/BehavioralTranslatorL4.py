@@ -25,8 +25,9 @@ class BehavioralTranslatorL4( BehavioralTranslatorL3 ):
   def _gen_behavioral_trans_metadata( s, m ):
     m.apply( BehavioralRTLIRGenL4Pass( s.tr_top ) )
     m.apply( BehavioralRTLIRTypeCheckL4Pass( s.tr_top ) )
-    s.behavioral.rtlir[m] = m._pass_behavioral_rtlir_gen.rtlir_upblks
+    s.behavioral.rtlir[m] = \
+        m.get_metadata( BehavioralRTLIRGenL4Pass.rtlir_upblks )
     s.behavioral.freevars[m] =\
-        m._pass_behavioral_rtlir_type_check.rtlir_freevars
+        m.get_metadata( BehavioralRTLIRTypeCheckL4Pass.rtlir_freevars )
     s.behavioral.tmpvars[m] =\
-        m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
+        m.get_metadata( BehavioralRTLIRTypeCheckL4Pass.rtlir_tmpvars )

@@ -39,7 +39,7 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
 
   # Override
   def translate_decls( s, m ):
-    m_rtype = m._pass_structural_rtlir_gen.rtlir_type
+    m_rtype = m.get_metadata( StructuralRTLIRGenL3Pass.rtlir_type )
 
     # Interfaces
     ifc_decls = []

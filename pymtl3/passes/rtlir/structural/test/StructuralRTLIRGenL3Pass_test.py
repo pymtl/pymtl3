@@ -15,6 +15,7 @@ from pymtl3.passes.testcases import (
     CaseConnectValRdyIfcComp,
 )
 
+from ..StructuralRTLIRGenL2Pass import StructuralRTLIRGenL2Pass
 from .StructuralRTLIRGenL1Pass_test import gen_connections
 
 
@@ -22,18 +23,18 @@ def test_L3_ifc_view_attr():
   a = CaseBits32IfcInComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL3Pass( gen_connections( a ) ) )
-  ns = a._pass_structural_rtlir_gen
+  connections = a.get_metadata( StructuralRTLIRGenL2Pass.connections )
   comp = CurComp(a, 's')
-  assert ns.connections == \
+  assert connections == \
     [(InterfaceAttr(CurCompAttr(comp, 'in_'), 'foo'), CurCompAttr(comp, 'out'))]
 
 def test_L3_ifc_view_index():
   a = CaseArrayBits32IfcInComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL3Pass( gen_connections( a ) ) )
-  ns = a._pass_structural_rtlir_gen
+  connections = a.get_metadata( StructuralRTLIRGenL2Pass.connections )
   comp = CurComp(a, 's')
-  assert ns.connections == \
+  assert connections == \
     [(InterfaceAttr(InterfaceViewIndex(CurCompAttr(comp, 'in_'), 1), 'foo'),
      CurCompAttr(comp, 'out'))]
 
@@ -41,7 +42,7 @@ def test_L3_ifc_view_connection():
   a = CaseConnectValRdyIfcComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL3Pass( gen_connections( a ) ) )
-  ns = a._pass_structural_rtlir_gen
+  connections = a.get_metadata( StructuralRTLIRGenL2Pass.connections )
   comp = CurComp(a, 's')
   ref = \
     [
@@ -53,6 +54,6 @@ def test_L3_ifc_view_connection():
       InterfaceAttr(CurCompAttr(comp, 'in_'), 'rdy')),
     ]
   # The order of ports is non-deterministic?
-  assert ns.connections[0] in ref
-  assert ns.connections[1] in ref
-  assert ns.connections[2] in ref
+  assert connections[0] in ref
+  assert connections[1] in ref
+  assert connections[2] in ref

@@ -519,6 +519,7 @@ def is_rtlir_convertible( obj ):
 # a global cache that invalidates garbage collection
 
 NA = "<N/A>"
+
 # uncached=0
 class RTLIRGetter:
   ifc_primitive_types = ( dsl.InPort, dsl.OutPort, dsl.Interface )
