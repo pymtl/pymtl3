@@ -45,10 +45,10 @@ setup(
   name                          = 'pymtl3',
   version                       = get_version(),
   description                   = \
-      'PyMTL 3 (Mamba): Python-based hardware generation, simulation, and verification framework',
+      'PyMTL 3 (Mamba): A Python-based hardware generation, simulation, and verification framework',
   long_description              = get_long_description(),
   long_description_content_type = "text/markdown",
-  url                           = 'https://github.com/cornell-brg/pymtl3',
+  url                           = 'https://github.com/pymtl/pymtl3',
   author                        = 'Batten Research Group',
   author_email                  = 'brg-pymtl@csl.cornell.edu',
 
