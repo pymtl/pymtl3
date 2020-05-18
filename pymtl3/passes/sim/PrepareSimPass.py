@@ -14,8 +14,8 @@ from pymtl3.dsl.Component import Component
 from pymtl3.dsl.Connectable import Const, Interface, MethodPort, Signal
 from pymtl3.dsl.NamedObject import NamedObject
 from pymtl3.extra.pypy import custom_exec
-from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.backends.verilog import VerilogTBGenPass
+from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 from pymtl3.passes.tracing.CLLineTracePass import CLLineTracePass
 from pymtl3.passes.tracing.LineTraceParamPass import LineTraceParamPass
