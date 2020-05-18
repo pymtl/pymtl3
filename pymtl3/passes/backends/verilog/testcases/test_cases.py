@@ -13,7 +13,7 @@ from textwrap import dedent
 
 import pymtl3.passes.rtlir.rtype.RTLIRDataType as rdt
 from pymtl3 import *
-from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
+from pymtl3.passes.backends.verilog import *
 from pymtl3.passes.testcases import (
     Bits32Foo,
     Bits32x5Foo,

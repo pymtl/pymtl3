@@ -29,9 +29,9 @@ def pytest_addoption(parser):
                     default='', nargs='?', const='zeros',
                     help="run verilog translation" )
   group.addoption( "--dump-vcd", dest="dump_vcd", action="store_true",
-                    default=False, help="dump vcd for each test" )
+                    default=None, help="dump vcd for each test" )
   group.addoption( "--dump-vtb", dest="dump_vtb", action="store_true",
-                    default=False, help="dump verilog test bench for each test" )
+                    default=None, help="dump verilog test bench for each test" )
   group.addoption( "--max-cycles", dest="max_cycles", action="store",
                     default="inf", help="max cycles of simulation" )
 
@@ -77,8 +77,8 @@ def pytest_runtest_setup(item):
 def _any_opts_present( config ):
   opt_default_pairs = [
       ( 'test_verilog', ''    ),
-      ( 'dump_vcd',     False ),
-      ( 'dump_vtb',     False ),
+      ( 'dump_vcd',     None ),
+      ( 'dump_vtb',     None ),
       ( 'max_cycles',   "inf" ),
   ]
   return any([config.getoption(opt) != val for opt, val in opt_default_pairs])

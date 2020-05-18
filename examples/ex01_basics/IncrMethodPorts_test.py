@@ -93,7 +93,7 @@ class IncrMethodPorts( Component ):
 
 def test_method_ports():
   incr = IncrMethodPorts()
-  incr.apply( SimulationPass() )
+  incr.apply( DefaultPassGroup() )
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )

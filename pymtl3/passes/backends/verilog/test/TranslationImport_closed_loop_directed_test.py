@@ -6,18 +6,22 @@
 """Closed-loop test with SystemVerilog translation and import."""
 
 from pymtl3.datatypes import Bits1, mk_bits
-from pymtl3.passes.PassGroups import SimulationPass
+from pymtl3.passes.PassGroups import DefaultPassGroup
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.stdlib.rtl.enrdy_queues_test import test_bypass_queue as _bypass_queue
-from pymtl3.stdlib.rtl.enrdy_queues_test import (
+from pymtl3.stdlib.queues.test.enrdy_queues_test import (
+    test_bypass_queue as _bypass_queue,
+)
+from pymtl3.stdlib.queues.test.enrdy_queues_test import (
     test_bypass_queue_stall as _bypass_queue_stall,
 )
-from pymtl3.stdlib.rtl.enrdy_queues_test import test_normal_queue as _normal_queue
-from pymtl3.stdlib.rtl.enrdy_queues_test import (
+from pymtl3.stdlib.queues.test.enrdy_queues_test import (
+    test_normal_queue as _normal_queue,
+)
+from pymtl3.stdlib.queues.test.enrdy_queues_test import (
     test_normal_queue_stall as _normal_queue_stall,
 )
-from pymtl3.stdlib.rtl.enrdy_queues_test import test_pipe_queue as _pipe_queue
-from pymtl3.stdlib.rtl.enrdy_queues_test import (
+from pymtl3.stdlib.queues.test.enrdy_queues_test import test_pipe_queue as _pipe_queue
+from pymtl3.stdlib.queues.test.enrdy_queues_test import (
     test_pipe_queue_stall as _pipe_queue_stall,
 )
 
@@ -33,7 +37,7 @@ def run_sim( _th ):
     _th.elaborate()
     _th.q.set_metadata( VerilogTranslationImportPass.enable, True )
     th = VerilogTranslationImportPass()( _th )
-    th.apply( SimulationPass() )
+    th.apply( DefaultPassGroup() )
     th.sim_reset()
 
     while not th.done() and th.sim_cycle_count() < 1000:

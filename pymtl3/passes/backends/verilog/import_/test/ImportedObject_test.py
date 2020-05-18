@@ -10,7 +10,7 @@ from os.path import dirname
 
 import pytest
 
-from pymtl3 import Interface, SimulationPass
+from pymtl3 import DefaultPassGroup, Interface
 from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.backends.verilog import (
@@ -450,7 +450,7 @@ def test_reg_external_trace( do_test ):
   a.elaborate()
   a.apply( VerilogPlaceholderPass() )
   a = VerilogTranslationImportPass()( a )
-  a.apply( SimulationPass() )
+  a.apply( DefaultPassGroup() )
 
   assert a.line_trace() == 'q =          0'
   a.in_ @= Bits32(1)
@@ -480,7 +480,7 @@ def test_reg_infer_external_trace( do_test ):
   a.elaborate()
   a.apply( VerilogPlaceholderPass() )
   a = VerilogTranslationImportPass()( a )
-  a.apply( SimulationPass() )
+  a.apply( DefaultPassGroup() )
 
   assert a.line_trace() == 'q =          0'
   a.in_ @= Bits32(1)

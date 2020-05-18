@@ -34,7 +34,7 @@ def checksum_xcel_vrtl( words ):
 
   # Create a simulator
   dut.elaborate()
-  dut.apply( SimulationPass() )
+  dut.apply( DefaultPassGroup() )
   dut.sim_reset()
 
   reqs, _ = mk_xcel_transaction( words )
@@ -92,7 +92,7 @@ class ChecksumXcelVRTLSrcSink_Tests( BaseTests ):
     th = YosysTranslationImportPass()( th )
 
     # Create a simulator
-    th.apply( SimulationPass() )
+    th.apply( DefaultPassGroup() )
 
     # Tick the simulator
     while not th.done() and th.sim_cycle_count() < max_cycles:

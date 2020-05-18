@@ -5,8 +5,9 @@
 # Date   : Jan 27, 2020
 
 from pymtl3 import MetadataKey, Placeholder
-from pymtl3.passes.BasePass import BasePass, PassMetadata
-from pymtl3.passes.errors import PlaceholderConfigError
+
+from .BasePass import BasePass
+from .errors import PlaceholderConfigError
 
 
 class PlaceholderPass( BasePass ):
@@ -18,21 +19,21 @@ class PlaceholderPass( BasePass ):
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  enable             = MetadataKey()
+  enable             = MetadataKey(bool)
 
   #: Does the module of external source have clk pin?
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  has_clk            = MetadataKey()
+  has_clk            = MetadataKey(bool)
 
   #: Does the module of external source have reset pin?
   #:
   #: Type: ``bool``; input
   #:
   #: Default value: ``False``
-  has_reset          = MetadataKey()
+  has_reset          = MetadataKey(bool)
 
   # Placeholder pass output pass data
 

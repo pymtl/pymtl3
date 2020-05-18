@@ -7,18 +7,34 @@
 #   Date : May 21, 2019
 
 from pymtl3.dsl import *
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.BasePass import BasePass
 
 
 class CLLineTracePass( BasePass ):
+
+  # CLLineTracePass public pass data
+
+  #: enable
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: True
+  enable = MetadataKey(bool)
+
+  clear_cl_trace_func = MetadataKey()
 
   def __init__( self, default_trace_len=8 ):
     self.default_trace_len = default_trace_len
 
   def __call__( self, top ):
-    if not hasattr( top, "_tracing" ):
-      top._tracing = PassMetadata()
-    top._tracing.clear_cl_trace = self.process_component( top )
+
+    # Turn on by default
+    if top.has_metadata( self.enable ) and top.get_metadata( self.enable ) is False:
+      return
+
+    assert not top.has_metadata( self.clear_cl_trace_func )
+
+    top.set_metadata( self.clear_cl_trace_func, self.process_component( top ) )
 
   def process_component( self, top ):
 

@@ -38,7 +38,7 @@ def _run_case():
   m.apply( VerilogPlaceholderPass() )
   m = VerilogTranslationImportPass()( m )
 
-  m.apply( SimulationPass() )
+  m.apply( DefaultPassGroup() )
   m.sim_reset()
 
   m.in_ @= Bits32(123)

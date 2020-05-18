@@ -110,7 +110,7 @@ class IncrTestBench( Component ):
 
 def test_method_modular():
   tb = IncrTestBench()
-  tb.apply( SimulationPass() )
+  tb.apply( DefaultPassGroup() )
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )

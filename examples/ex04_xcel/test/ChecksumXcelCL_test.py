@@ -10,7 +10,7 @@ Author : Yanghui Ou
 from examples.ex02_cksum.ChecksumFL import checksum
 from examples.ex02_cksum.utils import words_to_b128
 from pymtl3 import *
-from pymtl3.stdlib.cl.queues import BypassQueueCL
+from pymtl3.stdlib.queues import BypassQueueCL
 from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
@@ -83,7 +83,7 @@ def checksum_xcel_cl( words ):
   # Create a simulator using CL accelerator
   dut = WrappedChecksumXcelCL()
   dut.elaborate()
-  dut.apply( SimulationPass() )
+  dut.apply( DefaultPassGroup() )
   dut.sim_reset()
 
   reqs, _ = mk_xcel_transaction( words )
@@ -179,7 +179,7 @@ class ChecksumXcelCLSrcSink_Tests:
 
     # Create a simulator
     th.elaborate()
-    th.apply( SimulationPass() )
+    th.apply( DefaultPassGroup() )
     th.sim_reset()
 
     # Tick the simulator

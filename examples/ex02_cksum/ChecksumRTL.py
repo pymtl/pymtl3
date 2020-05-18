@@ -11,9 +11,8 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 from pymtl3 import *
-from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
-from pymtl3.stdlib.rtl.queues import PipeQueueRTL
+from pymtl3.stdlib.queues import PipeQueueRTL
 
 #-------------------------------------------------------------------------
 # Step unit

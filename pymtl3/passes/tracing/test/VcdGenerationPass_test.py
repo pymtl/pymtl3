@@ -13,15 +13,15 @@
 
 from pymtl3.datatypes import *
 from pymtl3.dsl import *
-from pymtl3.passes import TracingConfigs
-from pymtl3.passes.PassGroups import SimulationPass
+from pymtl3.passes.PassGroups import DefaultPassGroup
+
+from ..VcdGenerationPass import VcdGenerationPass
 
 
 def run_test( dut, tv, tv_in, tv_out ):
   vcd_file_name = dut.__class__.__name__ + "_funky"
-  dut.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=vcd_file_name )
-  dut.elaborate()
-  dut.apply( SimulationPass() )
+  dut.set_metadata( VcdGenerationPass.vcd_file_name, vcd_file_name )
+  dut.apply( DefaultPassGroup() )
   for v in tv:
     tv_in( dut, v )
     dut.sim_tick()

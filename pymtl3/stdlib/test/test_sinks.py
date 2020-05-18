@@ -9,7 +9,7 @@ Author : Yanghui Ou
 """
 
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import RecvIfcRTL, RecvRTL2SendCL, enrdy_to_str
+from pymtl3.stdlib.ifcs import RecvIfcRTL, RecvRTL2SendCL
 
 #-------------------------------------------------------------------------
 # TestSinkCL

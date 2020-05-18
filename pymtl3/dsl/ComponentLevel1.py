@@ -44,9 +44,6 @@ class ComponentLevel1( NamedObject ):
     inst._dsl.upblk_order = []
     inst._dsl.U_U_constraints = set() # contains ( id(func), id(func) )s
 
-    # Maps a MetadataKey instance to its value
-    inst._metadata = {}
-
     return inst
 
   def _collect_vars( s, m ):

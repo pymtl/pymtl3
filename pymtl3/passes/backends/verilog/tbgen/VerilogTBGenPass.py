@@ -8,8 +8,9 @@ from collections import deque
 
 import py
 
+from pymtl3.dsl import MetadataKey
 from pymtl3.extra.pypy import custom_exec
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 
@@ -21,19 +22,32 @@ from .verilog_tbgen_v_template import template as tb_template
 class VerilogTBGenPass( BasePass ):
   """ We only generate TB if it is imported or translation-imported """
 
+  # TBGenPass pass public pass data
+
+  #: tbgen case name
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ""
+  case_name = MetadataKey(str)
+
+  vtbgen_hooks = MetadataKey(list)
+
   def __call__( self, top ):
     if not top._dsl.constructed:
       raise VerilogImportError( top,
         f"please elaborate design {top} before applying the TBGen pass!" )
 
-    top._tbgen = PassMetadata()
-    top._tbgen.tbgen_hooks = []
+    assert not top.has_metadata( self.vtbgen_hooks )
+
+    tbgen_hooks = []
+    top.set_metadata( self.vtbgen_hooks, tbgen_hooks )
 
     tbgen_components = []
 
     def traverse_hierarchy( m ):
-      if hasattr(m, 'verilog_tbgen') and hasattr(m, '_ports'):
-        tbgen_components.append( (m, m.verilog_tbgen) )
+      if m.has_metadata( self.case_name ) and hasattr(m, '_ports'):
+        tbgen_components.append( (m, m.get_metadata( self.case_name )) )
       else:
         for child in m.get_child_components():
           traverse_hierarchy( child )
@@ -114,7 +128,7 @@ class VerilogTBGenPass( BasePass ):
         ))
 
       case_file = open( f"{dut_name}_{case_name}_tb.v.cases", "w" )
-      top._tbgen.tbgen_hooks.append( self.gen_hook_func( top, x, py_signal_order, case_file ) )
+      tbgen_hooks.append( self.gen_hook_func( top, x, py_signal_order, case_file ) )
 
   @staticmethod
   def gen_hook_func( top, x, ports, case_file ):

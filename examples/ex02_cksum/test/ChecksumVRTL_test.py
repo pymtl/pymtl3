@@ -38,7 +38,7 @@ def checksum_vrtl( words ):
 
   # Create a simulator
   dut.elaborate()
-  dut.apply( SimulationPass() )
+  dut.apply( DefaultPassGroup() )
   dut.sim_reset()
 
   # Wait until the checksum unit is ready to receive input
@@ -106,7 +106,7 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
     th = YosysTranslationImportPass()( th )
-    th.apply( SimulationPass() )
+    th.apply( DefaultPassGroup() )
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 

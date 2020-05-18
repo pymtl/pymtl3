@@ -9,18 +9,14 @@ Author : Yanghui Ou
 """
 from examples.ex02_cksum.ChecksumRTL import ChecksumRTL
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMinionIfcRTL
-from pymtl3.stdlib.rtl.queues import NormalQueueRTL
-from pymtl3.stdlib.rtl.registers import Reg
+from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg, XcelMinionIfcRTL
+from pymtl3.stdlib.queues import NormalQueueRTL
+from pymtl3.stdlib.basic_rtl import Reg
 
 
 # TODO: add more comments.
 class ChecksumXcelRTL( Component ):
   def construct( s ):
-    # FIXME gc??
-    # s.x = bytearray(2**25)
-
     # Interface
 
     ReqType, RespType = mk_xcel_msg( 5, 32 )

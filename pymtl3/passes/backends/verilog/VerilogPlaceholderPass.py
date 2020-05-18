@@ -37,35 +37,35 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   #: Type: ``{ str : int }``; input
   #:
   #: Default value: ``{}``
-  params     = MetadataKey()
+  params     = MetadataKey(dict)
 
   #: A dict that maps the PyMTL port name to the external source port name.
   #:
   #: Type: ``{ port : str }``; input
   #:
   #: Default value: ``{}``
-  port_map   = MetadataKey()
+  port_map   = MetadataKey(dict)
 
   #: Top level module name in the external source file.
   #:
   #: Type: ``str``; input
   #:
   #: Default value: PyMTL component class name
-  top_module = MetadataKey()
+  top_module = MetadataKey(str)
 
   #: Path to the external source file.
   #:
   #: Type: ``str``; input
   #:
   #: Default value: <top_module>.v
-  src_file   = MetadataKey()
+  src_file   = MetadataKey(str)
 
   #: List of Verilog source file paths.
   #:
   #: Type: ``[str]``; input
   #:
   #: Default value: []
-  v_flist    = MetadataKey()
+  v_flist    = MetadataKey(list)
 
   #: List of Verilog library file paths. These files will be added to the
   #: beginning of the pikcling result.
@@ -73,14 +73,14 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   #: Type: ``[str]``; input
   #:
   #: Default value: []
-  v_libs     = MetadataKey()
+  v_libs     = MetadataKey(list)
 
   #: List of Verilog include directory paths.
   #:
   #: Type: ``[str]``; input
   #:
   #: Default value: []
-  v_include  = MetadataKey()
+  v_include  = MetadataKey(list)
 
   #: Separator string used by name-mangling of interfaces and arrays.
   #: For example, with the default value, ``s.ifc.msg`` will be mangled to ``ifc_msg``.
@@ -88,7 +88,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   #: Type: ``str``; input
   #:
   #: Default value: ``'_'``
-  separator  = MetadataKey()
+  separator  = MetadataKey(str)
 
   @staticmethod
   def get_placeholder_config():

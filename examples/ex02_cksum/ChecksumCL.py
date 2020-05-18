@@ -18,8 +18,8 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 from pymtl3 import *
-from pymtl3.stdlib.cl.DelayPipeCL import DelayPipeDeqCL
-from pymtl3.stdlib.cl.queues import PipeQueueCL
+from pymtl3.stdlib.delays import DelayPipeDeqCL
+from pymtl3.stdlib.queues import PipeQueueCL
 
 from .ChecksumFL import checksum
 from .utils import b128_to_words

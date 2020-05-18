@@ -9,11 +9,10 @@ Author : Shunning Jiang
 """
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL, mk_mem_msg, mk_xcel_msg
-from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcRTL
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcRTL
-from pymtl3.stdlib.rtl.enrdy_queues import BypassQueue2RTL
-from pymtl3.stdlib.rtl.queues import BypassQueueRTL
+from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL,  mk_xcel_msg, XcelMasterIfcRTL
+from pymtl3.stdlib.mem import mk_mem_msg, MemMasterIfcRTL
+from pymtl3.stdlib.queues.enrdy_queues import BypassQueue2RTL
+from pymtl3.stdlib.queues import BypassQueueRTL
 
 from .MiscRTL import DropUnitRTL
 from .ProcCtrlRTL import ProcCtrl

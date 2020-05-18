@@ -13,7 +13,7 @@ from hypothesis import strategies as st
 
 from pymtl3 import *
 from pymtl3.datatypes import strategies as pm_st
-from pymtl3.stdlib.cl.queues import BypassQueueCL
+from pymtl3.stdlib.queues import BypassQueueCL
 from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
@@ -56,7 +56,7 @@ def checksum_cl( words ):
   # Create a simulator
   dut = WrappedChecksumCL()
   dut.elaborate()
-  dut.apply( SimulationPass() )
+  dut.apply( DefaultPassGroup() )
   dut.sim_reset()
 
   # Wait until recv ready
@@ -190,7 +190,7 @@ class ChecksumCLSrcSink_Tests:
   def run_sim( s, th, max_cycles=1000 ):
 
     # Create a simulator
-    th.apply( SimulationPass() )
+    th.apply( DefaultPassGroup() )
     th.sim_reset()
 
     # Tick the simulator
