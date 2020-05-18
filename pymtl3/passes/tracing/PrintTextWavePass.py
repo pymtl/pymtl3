@@ -19,7 +19,7 @@ Date   : Nov 9, 2019
 import py
 
 from pymtl3.dsl import Const, MetadataKey
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.errors import PassOrderError
 
 
@@ -41,12 +41,20 @@ class PrintTextWavePass( BasePass ):
   #: Default value: False
   enable = MetadataKey(bool)
 
+  textwave_func = MetadataKey()
+  textwave_dict = MetadataKey()
+
   def __call__( self, top ):
     if top.has_metadata( self.enable ) and top.get_metadata( self.enable ):
-      if not hasattr( top, "_tracing" ):
-        top._tracing = PassMetadata()
-      top._tracing.collect_text_sigs = self._collect_sig_func( top, top._tracing )
-      top.print_textwave = self._gen_print_wave(top)
+
+      assert not top.has_metadata( self.textwave_func )
+      assert not top.has_metadata( self.textwave_dict )
+
+      func, sigs_dict = self._collect_sig_func( top )
+
+      top.set_metadata( self.textwave_func, func )
+      top.set_metadata( self.textwave_dict, sigs_dict )
+      top.print_textwave = self._gen_print_wave( top, sigs_dict )
 
   def _process_binary( self, sig, base, max ):
     """
@@ -75,7 +83,7 @@ class PrintTextWavePass( BasePass ):
         temp_hex = '0'*(max-l) + temp_hex
       return temp_hex
 
-  def _gen_print_wave( self, top ):
+  def _gen_print_wave( self, top, sigs_dict ):
 
     def print_wave():
       if top.has_metadata( self.chars_per_cycle ):
@@ -93,7 +101,7 @@ class PrintTextWavePass( BasePass ):
       light_gray = '\033[47m'
       back='\033[0m'  #back to normal printing
 
-      all_signal_values = top._tracing.text_sigs
+      all_signal_values = text_sigs
       #spaces before cycle number
       max_length = 5
       for sig in all_signal_values:
@@ -204,13 +212,13 @@ class PrintTextWavePass( BasePass ):
         print("")
     return print_wave
 
-  def _collect_sig_func( self, top, wavmeta ):
+  def _collect_sig_func( self, top ):
 
     # TODO use actual nets to reduce the amount of saved signals
 
     # Give all ' and " characters a preceding backslash for .format
     wav_srcs = []
-    wavmeta.text_sigs = {}
+    text_sigs = {}
 
     # Now we create per-cycle signal value collect functions
     signal_names = []
@@ -219,8 +227,8 @@ class PrintTextWavePass( BasePass ):
         signal_names.append( (x._dsl.level, repr(x)) )
 
     for _, x in [(0, 's.reset')] + sorted(signal_names):
-      wavmeta.text_sigs[x] = []
-      wav_srcs.append(f"wavmeta.text_sigs['{x}'].append( {x}.to_bits().bin() )")
+      text_sigs[x] = []
+      wav_srcs.append(f"text_sigs['{x}'].append( {x}.to_bits().bin() )")
 
     # TODO use integer index instead of dict, should be easy
     src =  """
@@ -229,4 +237,4 @@ def dump_wav():
 """.format( "\n  ".join(wav_srcs) )
     s, l_dict = top, {}
     exec(compile( src, filename="temp", mode="exec"), globals().update(locals()), l_dict)
-    return l_dict['dump_wav']
+    return l_dict['dump_wav'], text_sigs

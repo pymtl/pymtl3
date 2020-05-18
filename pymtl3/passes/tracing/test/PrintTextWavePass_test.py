@@ -99,7 +99,7 @@ def test_collect_signal():
     assert dut.out == out
 
   #test
-  sig = dut._tracing.text_sigs
+  sig = dut.get_metadata( PrintTextWavePass.textwave_dict )
   siglist = ["s.in0","s.in1","s.out","s.reset"]
   for i in siglist:
     assert i in sig,"signals not captured"
@@ -170,7 +170,7 @@ def test_toy():
   with redirect_stdout(f):
     dut.print_textwave()
   out = f.getvalue()
-  for i in dut._tracing.text_sigs:
+  for i in dut.get_metadata( PrintTextWavePass.textwave_dict ):
     dot = i.find(".")
     sliced = i[dot+1:]
     if sliced != "reset" and sliced != "clk":
@@ -232,7 +232,7 @@ def test_widetoy():
   with redirect_stdout(f):
     dut.print_textwave()
   out = f.getvalue()
-  for i in dut._tracing.text_sigs:
+  for i in dut.get_metadata( PrintTextWavePass.textwave_dict ):
     dot = i.find(".")
     sliced = i[dot+1:]
     if sliced != "reset" and sliced != "clk":
@@ -301,7 +301,7 @@ def test_bitstruct():
   with redirect_stdout(f):
     dut.print_textwave()
   out = f.getvalue()
-  for i in dut._tracing.text_sigs:
+  for i in dut.get_metadata( PrintTextWavePass.textwave_dict ):
     dot = i.find(".")
     sliced = i[dot+1:]
     if sliced != "reset" and sliced != "clk":

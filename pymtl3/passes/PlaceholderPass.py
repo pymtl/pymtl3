@@ -6,7 +6,7 @@
 
 from pymtl3 import MetadataKey, Placeholder
 
-from .BasePass import BasePass, PassMetadata
+from .BasePass import BasePass
 from .errors import PlaceholderConfigError
 
 

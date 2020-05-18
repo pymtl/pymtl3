@@ -15,7 +15,12 @@ from pymtl3.dsl.Connectable import Const, Interface, MethodPort, Signal
 from pymtl3.dsl.NamedObject import NamedObject
 from pymtl3.extra.pypy import custom_exec
 from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.backends.verilog import VerilogTBGenPass
 from pymtl3.passes.errors import PassOrderError
+from pymtl3.passes.tracing.CLLineTracePass import CLLineTracePass
+from pymtl3.passes.tracing.LineTraceParamPass import LineTraceParamPass
+from pymtl3.passes.tracing.PrintTextWavePass import PrintTextWavePass
+from pymtl3.passes.tracing.VcdGenerationPass import VcdGenerationPass
 
 from .SimpleTickPass import SimpleTickPass
 
@@ -83,23 +88,23 @@ class PrepareSimPass( BasePass ):
     # ff_funcs summarizes the execution at the clock edge
     ret = []
     # append tracing related work
-    if hasattr( top, "_tracing" ):
-      if hasattr( top._tracing, "vcd_func" ):
-        ret.append( top._tracing.vcd_func )
-      if hasattr( top._tracing, "collect_text_sigs" ):
-        ret.append( top._tracing.collect_text_sigs )
+    if top.has_metadata( VcdGenerationPass.vcd_func ):
+      ret.append( top.get_metadata( VcdGenerationPass.vcd_func ) )
 
-    if hasattr( top, "_tbgen" ):
-      if hasattr( top._tbgen, "tbgen_hooks" ):
-        ret.extend( top._tbgen.tbgen_hooks )
+    if top.has_metadata( PrintTextWavePass.textwave_func ):
+      ret.append( top.get_metadata( PrintTextWavePass.textwave_func ) )
+
+    if top.has_metadata( VerilogTBGenPass.vtbgen_hooks ):
+      ret.extend( top.get_metadata( VerilogTBGenPass.vtbgen_hooks ) )
 
     ret.extend( top._sched.schedule_ff )
     ret.extend( top._sched.schedule_posedge_flip )
     ret.append( self.create_advance_sim_cycle( top ) )
+
     # clear cl method flag after flip
-    if hasattr( top, "_tracing" ):
-      if hasattr( top._tracing, "clear_cl_trace" ):
-        ret.append( top._tracing.clear_cl_trace )
+    if top.has_metadata( CLLineTracePass.clear_cl_trace_func ):
+      ret.append( top.get_metadata( CLLineTracePass.clear_cl_trace_func ) )
+
     return ret
 
   # Simulation related APIs

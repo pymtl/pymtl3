@@ -10,7 +10,7 @@ import py
 
 from pymtl3.dsl import MetadataKey
 from pymtl3.extra.pypy import custom_exec
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 
@@ -31,13 +31,17 @@ class VerilogTBGenPass( BasePass ):
   #: Default value: ""
   case_name = MetadataKey(str)
 
+  vtbgen_hooks = MetadataKey(list)
+
   def __call__( self, top ):
     if not top._dsl.constructed:
       raise VerilogImportError( top,
         f"please elaborate design {top} before applying the TBGen pass!" )
 
-    top._vtbgen = PassMetadata()
-    top._vtbgen.tbgen_hooks = []
+    assert not top.has_metadata( self.vtbgen_hooks )
+
+    tbgen_hooks = []
+    top.set_metadata( self.vtbgen_hooks, tbgen_hooks )
 
     tbgen_components = []
 
@@ -124,7 +128,7 @@ class VerilogTBGenPass( BasePass ):
         ))
 
       case_file = open( f"{dut_name}_{case_name}_tb.v.cases", "w" )
-      top._vtbgen.tbgen_hooks.append( self.gen_hook_func( top, x, py_signal_order, case_file ) )
+      tbgen_hooks.append( self.gen_hook_func( top, x, py_signal_order, case_file ) )
 
   @staticmethod
   def gen_hook_func( top, x, ports, case_file ):

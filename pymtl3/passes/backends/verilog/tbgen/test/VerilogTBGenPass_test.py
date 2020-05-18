@@ -75,7 +75,7 @@ def test_CaseConnectArrayBits32FooIfcComp():
     _m.set_metadata( VerilogTranslationImportPass.enable, True )
     _m.apply( VerilogPlaceholderPass() )
     m = VerilogTranslationImportPass()( _m )
-    m.verilog_tbgen = True
+    m.set_metadata( VerilogTBGenPass.case_name, 'sb' )
     m.apply( VerilogTBGenPass() )
     sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
     sim.run_test()
