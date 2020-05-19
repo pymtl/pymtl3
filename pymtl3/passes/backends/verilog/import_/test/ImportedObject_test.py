@@ -20,7 +20,7 @@ from pymtl3.passes.backends.verilog import (
     VerilogVerilatorImportPass,
 )
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 
 def finalize( m ):

@@ -13,7 +13,7 @@ from pymtl3 import *
 from pymtl3.stdlib.queues import BypassQueueCL
 from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 
 from ..ChecksumXcelCL import ChecksumXcelCL
 

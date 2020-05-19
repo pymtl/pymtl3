@@ -9,7 +9,7 @@ Author: Yanghui Ou
 import pytest
 
 from pymtl3 import *
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL, run_sim
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL, run_sim
 
 from ..cl_queues import BypassQueueCL, NormalQueueCL, PipeQueueCL
 

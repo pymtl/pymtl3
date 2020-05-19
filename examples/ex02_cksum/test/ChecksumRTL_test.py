@@ -11,7 +11,7 @@ import pytest
 
 from pymtl3 import *
 from pymtl3.passes.tracing import VcdGenerationPass, PrintTextWavePass
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum
 from ..ChecksumRTL import ChecksumRTL, StepUnit

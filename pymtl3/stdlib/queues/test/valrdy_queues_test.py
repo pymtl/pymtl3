@@ -1,6 +1,6 @@
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import InValRdyIfc, OutValRdyIfc
-from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 from ..valrdy_queues import *
 

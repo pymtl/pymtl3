@@ -8,7 +8,7 @@ Author : Yanghui Ou
   Date : Apr 5, 2019
 """
 from pymtl3 import *
-from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 from ..encoders import Encoder
 

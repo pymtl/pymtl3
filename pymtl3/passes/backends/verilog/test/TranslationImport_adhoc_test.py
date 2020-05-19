@@ -9,7 +9,7 @@ import pytest
 
 from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
-from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 from .. import VerilogTranslationImportPass
 from ..testcases import (

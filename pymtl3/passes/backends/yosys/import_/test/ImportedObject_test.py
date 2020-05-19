@@ -20,7 +20,7 @@ from pymtl3.passes.backends.verilog.import_.test.ImportedObject_test import (
 )
 from pymtl3.passes.backends.yosys import YosysTranslationImportPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 
 def local_do_test( _m ):

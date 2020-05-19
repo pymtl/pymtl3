@@ -24,7 +24,7 @@ import sys
 
 from pymtl3 import *
 from pymtl3.stdlib.mem import MagicMemoryCL, mk_mem_msg
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 
 # Hack to add project root to python path
 sim_dir = os.path.dirname( os.path.abspath( __file__ ) )

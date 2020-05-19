@@ -8,7 +8,7 @@
 import pytest
 
 from pymtl3 import *
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL, mk_test_case_table, run_sim
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL, mk_test_case_table, run_sim
 
 from ..DelayPipeCL import DelayPipeDeqCL, DelayPipeSendCL
 

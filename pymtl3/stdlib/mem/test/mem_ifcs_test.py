@@ -7,7 +7,7 @@
 # Date  : May 19, 2019
 """
 from pymtl3 import *
-from pymtl3.stdlib.test import run_sim
+from pymtl3.stdlib.test_utils import run_sim
 
 from ..mem_ifcs import MemMasterIfcFL, MemMinionIfcCL
 from ..MemMsg import MemMsgType, mk_mem_msg

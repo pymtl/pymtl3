@@ -7,7 +7,7 @@
 
 from pymtl3 import *
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 from .. import VerilogTranslationImportPass
 from ..import_.VerilogVerilatorImportPass import VerilogVerilatorImportPass

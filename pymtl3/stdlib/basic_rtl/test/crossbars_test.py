@@ -4,7 +4,7 @@ Crossbar_test.py
 ======================================================================
 """
 from pymtl3 import *
-from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 from ..crossbars import Crossbar
 

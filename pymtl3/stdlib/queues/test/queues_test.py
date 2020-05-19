@@ -11,7 +11,7 @@ from itertools import product
 import pytest
 
 from pymtl3 import *
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL, TestVectorSimulator, run_sim
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL, TestVectorSimulator, run_sim
 
 from ..queues import (
     BypassQueue1EntryRTL,

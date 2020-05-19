@@ -28,7 +28,7 @@ from pymtl3.stdlib.queues.test.valrdy_queues_test import (
     test_normal_Bits as _normal_Bits,
 )
 from pymtl3.stdlib.queues.test.valrdy_queues_test import test_pipe_Bits as _pipe_Bits
-from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 from ..VerilogTranslationImportPass import VerilogTranslationImportPass
 

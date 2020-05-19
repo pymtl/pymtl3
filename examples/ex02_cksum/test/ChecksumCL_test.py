@@ -15,7 +15,7 @@ from pymtl3 import *
 from pymtl3.datatypes import strategies as pm_st
 from pymtl3.stdlib.queues import BypassQueueCL
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 
 from ..ChecksumCL import ChecksumCL
 from ..ChecksumFL import checksum

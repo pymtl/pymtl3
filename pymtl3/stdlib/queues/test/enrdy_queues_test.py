@@ -9,7 +9,7 @@ Date   : Mar 9, 2018
 import pytest
 
 from pymtl3 import *
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL, run_sim
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL, run_sim
 
 from ..enrdy_queues import *
 

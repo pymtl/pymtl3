@@ -5,7 +5,7 @@ arbiters_test.py
 This file contains unit tests for the arbiters collection models.
 """
 from pymtl3 import *
-from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 from ..arbiters import RoundRobinArbiter, RoundRobinArbiterEn
 
