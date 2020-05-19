@@ -27,8 +27,6 @@ from ..tracing.CLLineTracePass import CLLineTracePass
 from ..tracing.PrintTextWavePass import PrintTextWavePass
 from ..tracing.VcdGenerationPass import VcdGenerationPass
 
-random.seed(0xdeadbeef)
-
 class OpenLoopCLPass( BasePass ):
   def __init__( self, print_line_trace=True ):
     self.print_line_trace = print_line_trace
