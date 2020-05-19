@@ -5,8 +5,6 @@
 # Date   : Apr 3, 2019
 """Provide L4 structural RTLIR generation pass."""
 
-from pymtl3.passes.BasePass import PassMetadata
-
 from .StructuralRTLIRGenL3Pass import StructuralRTLIRGenL3Pass
 
 

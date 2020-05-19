@@ -40,21 +40,26 @@ class ProcVRTL_Tests( BaseTests ):
     th.load( mem_image )
 
     # Translate the processor and import it back in
-    from pymtl3.passes.backends.yosys import TranslationImportPass
-
-    th.proc.yosys_translate_import = True
-    th = TranslationImportPass()( th )
+    from pymtl3.passes.backends.yosys import YosysTranslationImportPass
+    th.proc.set_metadata( YosysTranslationImportPass.enable, True )
+    th = YosysTranslationImportPass()( th )
 
     # Create a simulator and run simulation
-    th.apply( SimulationPass() )
+    th.apply( DefaultPassGroup(print_line_trace=True) )
     th.sim_reset()
 
-    print()
-    ncycles = 0
-    while not th.done() and ncycles < max_cycles:
-      th.tick()
-      print("{:3}: {}".format( ncycles, th.line_trace() ))
-      ncycles += 1
+    while not th.done() and th.sim_cycle_count() < max_cycles:
+      th.sim_tick()
 
     # Force a test failure if we timed out
-    assert ncycles < max_cycles
+    assert th.sim_cycle_count() < max_cycles
+
+#-------------------------------------------------------------------------
+# Test translation script
+#-------------------------------------------------------------------------
+
+def test_proc_translate():
+  import os
+  from os.path import dirname
+  script_path = dirname(dirname(__file__)) + '/proc-translate'
+  os.system(f'python {script_path}')

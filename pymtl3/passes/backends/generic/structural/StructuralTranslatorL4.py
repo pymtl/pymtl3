@@ -46,7 +46,7 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
   # Override
   def translate_decls( s, m ):
     super().translate_decls( m )
-    m_rtype = m._pass_structural_rtlir_gen.rtlir_type
+    m_rtype = m.get_metadata( StructuralRTLIRGenL4Pass.rtlir_type )
 
     # Translate subcomponent declarations
     subcomp_decls = []

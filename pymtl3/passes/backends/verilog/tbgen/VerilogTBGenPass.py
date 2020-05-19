@@ -8,11 +8,11 @@ from collections import deque
 
 import py
 
-from pymtl3.datatypes import get_nbits, to_bits
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.dsl import MetadataKey
+from pymtl3.extra.pypy import custom_exec
+from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.utils import custom_exec
 
 from ..errors import VerilogImportError
 from ..util.utility import get_rtype
@@ -22,19 +22,32 @@ from .verilog_tbgen_v_template import template as tb_template
 class VerilogTBGenPass( BasePass ):
   """ We only generate TB if it is imported or translation-imported """
 
+  # TBGenPass pass public pass data
+
+  #: tbgen case name
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ""
+  case_name = MetadataKey(str)
+
+  vtbgen_hooks = MetadataKey(list)
+
   def __call__( self, top ):
     if not top._dsl.constructed:
       raise VerilogImportError( top,
         f"please elaborate design {top} before applying the TBGen pass!" )
 
-    top._tbgen = PassMetadata()
-    top._tbgen.tbgen_hooks = []
+    assert not top.has_metadata( self.vtbgen_hooks )
+
+    tbgen_hooks = []
+    top.set_metadata( self.vtbgen_hooks, tbgen_hooks )
 
     tbgen_components = []
 
     def traverse_hierarchy( m ):
-      if hasattr(m, 'verilog_tbgen') and hasattr(m, '_ports'):
-        tbgen_components.append( (m, m.verilog_tbgen) )
+      if m.has_metadata( self.case_name ) and hasattr(m, '_ports'):
+        tbgen_components.append( (m, m.get_metadata( self.case_name )) )
       else:
         for child in m.get_child_components():
           traverse_hierarchy( child )
@@ -63,7 +76,7 @@ class VerilogTBGenPass( BasePass ):
         p_n_dim, p_rtype = get_rtype( port )
         dtype = p_rtype.get_dtype()
         if   isinstance( dtype, rdt.Vector ): nbits = dtype.get_length()
-        elif isinstance( dtype, rdt.Struct ): nbits = get_nbits(dtype.get_class())
+        elif isinstance( dtype, rdt.Struct ): nbits = dtype.get_class().nbits
         else:                                 raise Exception( f"unrecognized data type {d}!" )
 
         # signal_decls
@@ -115,17 +128,17 @@ class VerilogTBGenPass( BasePass ):
         ))
 
       case_file = open( f"{dut_name}_{case_name}_tb.v.cases", "w" )
-      top._tbgen.tbgen_hooks.append( self.gen_hook_func( top, x, py_signal_order, case_file ) )
+      tbgen_hooks.append( self.gen_hook_func( top, x, py_signal_order, case_file ) )
 
   @staticmethod
   def gen_hook_func( top, x, ports, case_file ):
-    port_srcs = [ f"'h{{str(to_bits(x.{p}))}}" for p in ports ]
+    port_srcs = [ f"'h{{str(x.{p}.to_bits())}}" for p in ports ]
 
     src =  """
 def dump_case():
-  if top.simulated_cycles >= 2: # skip reset
+  if top.sim_cycle_count() > 2: # skip the 2 cycles of reset
     print(f"`T({});", file=case_file, flush=True)
 """.format( ",".join(port_srcs) )
     _locals = {}
-    custom_exec( py.code.Source(src).compile(), {'top': top, 'x': x, 'to_bits': to_bits, 'case_file': case_file}, _locals)
+    custom_exec( py.code.Source(src).compile(), {'top': top, 'x': x, 'case_file': case_file}, _locals)
     return _locals['dump_case']

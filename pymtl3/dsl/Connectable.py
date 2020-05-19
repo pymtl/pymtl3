@@ -10,7 +10,7 @@ Date   : Apr 16, 2018
 import types
 from collections import deque
 
-from pymtl3.datatypes import Bits, Bits1, mk_bits
+from pymtl3.datatypes import Bits, Bits1, is_bitstruct_class, mk_bits
 
 from .errors import InvalidConnectionError
 from .NamedObject import DSLMetadata, NamedObject
@@ -63,7 +63,6 @@ def _connect_check( o1, o2, internal ):
 
   o1_connectable = False
   o2_connectable = False
-  top = None
 
   # Get access to the top level component by identifying a connectable
 
@@ -81,14 +80,12 @@ def _connect_check( o1, o2, internal ):
   if not o1_connectable and not o2_connectable:
     if internal:  return None, False, False
 
-    raise InvalidConnectionError("class {} and class {} are both not connectable.\n"
-                                  "  (when connecting {} to {})" \
-        .format( type(o1), type(o2), repr(o1), repr(o2)) )
+    raise InvalidConnectionError(f"class {type(o1)} and class {type(o2)} are both not connectable.\n"
+                                 f"  (when connecting {o1!r} to {o2!r})")
 
   # Get the component from elaborate_stack
-
   try:
-    host = top._dsl.elaborate_stack[-1]
+    host = NamedObject._elaborate_stack[-1]
   except AttributeError:
     raise InvalidConnectionError("Cannot call connect after elaboration.\n"
                                  "- Please use top.add_connection(...) API.")
@@ -145,7 +142,13 @@ class Const( Connectable ):
 class Signal( NamedObject, Connectable ):
 
   def __init__( s, Type=Bits1 ):
-    assert isinstance( Type, type ), "Use actual type instead of instance!"
+    if isinstance( Type, int ):
+      Type = mk_bits(Type)
+    else:
+      assert isinstance( Type, type ) and ( issubclass( Type, Bits ) or is_bitstruct_class(Type) ), \
+              f"RTL signal can only be of Bits type or bitstruct type, not {Type}.\n" \
+              f"Note: an integer is also accepted: Wire(32) is equivalent to Wire(Bits32))"
+
     s._dsl.Type = Type
     s._dsl.type_instance = None
 
@@ -324,7 +327,7 @@ class Signal( NamedObject, Connectable ):
     return leaf_signals
 
   def is_sliced_signal( s ):
-    return not s._dsl.slice is None
+    return s._dsl.slice is not None
 
   def is_top_level_signal( s ):
     return s._dsl.top_level_signal is s

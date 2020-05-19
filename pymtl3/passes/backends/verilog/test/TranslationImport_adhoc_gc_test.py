@@ -13,7 +13,7 @@ import pytest
 from pymtl3 import *
 from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 
-from .. import TranslationImportPass
+from .. import VerilogTranslationImportPass
 
 
 def _run_case():
@@ -26,23 +26,23 @@ def _run_case():
       s.mem[1] =12
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
-      @s.update
+      @update
       def upblk():
-        s.out = s.in_ + 1
+        s.out @= s.in_ + 1
     def line_trace( s ):
       return f"{s.in_} > {s.out}"
 
   m = DUT()
   m.elaborate()
-  m.verilog_translate_import = True
+  m.set_metadata( VerilogTranslationImportPass.enable, True )
   m.apply( VerilogPlaceholderPass() )
-  m = TranslationImportPass()( m )
+  m = VerilogTranslationImportPass()( m )
 
-  m.apply( SimulationPass() )
+  m.apply( DefaultPassGroup() )
   m.sim_reset()
 
-  m.in_ = Bits32(123)
-  m.tick()
+  m.in_ @= Bits32(123)
+  m.sim_tick()
   assert m.out == 124
 
   m.finalize()

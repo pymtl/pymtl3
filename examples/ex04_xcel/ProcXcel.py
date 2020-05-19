@@ -10,10 +10,8 @@ Author : Shunning Jiang
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL, mk_mem_msg
-from pymtl3.stdlib.ifcs.GetGiveIfc import GetIfcFL
-from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcCL, MemMasterIfcFL, MemMasterIfcRTL
-from pymtl3.stdlib.ifcs.SendRecvIfc import SendIfcFL
+from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL, SendIfcFL, GetIfcFL
+from pymtl3.stdlib.mem import MemMasterIfcCL, MemMasterIfcFL, MemMasterIfcRTL, mk_mem_msg
 
 
 class ProcXcel( Component ):
@@ -26,8 +24,11 @@ class ProcXcel( Component ):
 
     # Instruction Memory Request/Response Interface
 
-    s.proc = ProcClass()( commit_inst = s.commit_inst )
-    s.xcel = XcelClass()( xcel = s.proc.xcel )
+    s.proc = ProcClass()
+    s.proc.commit_inst //= s.commit_inst
+
+    s.xcel = XcelClass()
+    s.xcel.xcel //= s.proc.xcel
 
     if   isinstance( s.proc.imem, MemMasterIfcRTL ): # RTL proc
       s.mngr2proc = RecvIfcRTL( Bits32 )
@@ -47,12 +48,11 @@ class ProcXcel( Component ):
       s.imem = MemMasterIfcFL()
       s.dmem = MemMasterIfcFL()
 
-    connect_pairs(
-      s.mngr2proc, s.proc.mngr2proc,
-      s.proc2mngr, s.proc.proc2mngr,
-      s.imem,      s.proc.imem,
-      s.dmem,      s.proc.dmem,
-    )
+
+    s.mngr2proc //= s.proc.mngr2proc
+    s.proc2mngr //= s.proc.proc2mngr
+    s.imem      //= s.proc.imem
+    s.dmem      //= s.proc.dmem
 
   def line_trace( s ):
     return "{}|{}".format( s.proc.line_trace(), s.xcel.line_trace() )

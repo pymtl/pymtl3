@@ -9,12 +9,15 @@ import pytest
 
 from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
-from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator
 
-from .. import TranslationImportPass
+from .. import VerilogTranslationImportPass
 from ..testcases import (
+    CaseMultiPlaceholderImport,
     CasePlaceholderTranslationRegIncr,
     CasePlaceholderTranslationVReg,
+    CaseVIncludePopulation,
+    CaseVLibsTranslation,
 )
 from ..translation.behavioral.test.VBehavioralTranslatorL1_test import (
     test_verilog_behavioral_L1,
@@ -49,10 +52,10 @@ def run_test( case ):
   try:
     _m = case.DUT()
     _m.elaborate()
-    _m.verilog_translate_import = True
+    _m.set_metadata( VerilogTranslationImportPass.enable, True )
     _m.apply( VerilogPlaceholderPass() )
-    m = TranslationImportPass()( _m )
-    sim = TestVectorSimulator( m, case.TEST_VECTOR, case.TV_IN, case.TV_OUT )
+    m = VerilogTranslationImportPass()( _m )
+    sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
     sim.run_test()
   finally:
     try:
@@ -73,7 +76,18 @@ def run_test( case ):
           get_parameter('case', test_verilog_structural_L4) + [
             CasePlaceholderTranslationVReg,
             CasePlaceholderTranslationRegIncr,
+            CaseVIncludePopulation,
+            CaseVLibsTranslation,
           ]
 )
 def test_verilog_translation_import_adhoc( case ):
   run_test( case )
+
+def test_pymtl_top_multi_placeholder():
+  case = CaseMultiPlaceholderImport
+  m = case.DUT()
+  m.elaborate()
+  m.apply( VerilogPlaceholderPass() )
+  m = VerilogTranslationImportPass()( m )
+  sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
+  sim.run_test()

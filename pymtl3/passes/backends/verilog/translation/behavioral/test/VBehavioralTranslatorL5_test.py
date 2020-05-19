@@ -24,7 +24,7 @@ def run_test( case, m ):
 
   m.apply( BehavioralRTLIRGenPass( m ) )
   m.apply( BehavioralRTLIRTypeCheckPass( m ) )
-  upblks = m._pass_behavioral_rtlir_gen.rtlir_upblks
+  upblks = m.get_metadata( BehavioralRTLIRGenPass.rtlir_upblks )
   m_all_upblks = m.get_update_blocks()
   assert len(m_all_upblks) == 1
 

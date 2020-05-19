@@ -41,9 +41,9 @@ class IncrValueModular( Component ):
     connect( s.in_, s.buf1 )
     s.out //= s.buf2
 
-    @s.update
+    @update
     def upB():
-      s.buf2 = s.buf1 + b8(1)
+      s.buf2 @= s.buf1 + b8(1)
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
@@ -63,18 +63,18 @@ class IncrTestBench( Component ):
     # Instantiate IncrValueModular child component here
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
-    s.incr     = IncrValueModular()
+    s.incr = IncrValueModular()
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
     # UpA writes data to input
-    @s.update
+    @update
     def upA():
-      s.incr.in_ = s.incr_in
-      s.incr_in += b8(10)
+      s.incr.in_ @= s.incr_in
+      s.incr_in  += b8(10)
 
     # UpC read data from output
-    @s.update
+    @update
     def upC():
       s.incr_out = s.incr.out
 
@@ -87,7 +87,7 @@ class IncrTestBench( Component ):
 
 def test_value_modular():
   tb = IncrTestBench()
-  tb.apply( SimulationPass() )
+  tb.apply( DefaultPassGroup() )
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )
@@ -98,6 +98,6 @@ def test_value_modular():
   # Print out the simulation line trace.
   print( "\n==== Line trace ====" )
   print( "   in_     out")
+  tb.sim_reset()
   for i in range( 6 ):
-    tb.tick()
-    print( "{:2}: {}".format( i, tb.line_trace() ) )
+    tb.sim_tick()

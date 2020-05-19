@@ -9,7 +9,16 @@ Date   : June 2, 2019
 import random
 
 from pymtl3.datatypes import *
-from pymtl3.dsl import Component, InPort, OutPort, Placeholder, Wire, connect
+from pymtl3.dsl import (
+    Component,
+    InPort,
+    OutPort,
+    Placeholder,
+    Wire,
+    connect,
+    update,
+    update_ff,
+)
 from pymtl3.dsl.errors import InvalidAPICallError
 
 from .sim_utils import simple_sim_pass
@@ -18,18 +27,20 @@ from .sim_utils import simple_sim_pass
 def test_api_not_elaborated():
 
   class X( Component ):
-    def construct( s, nbits=0 ):
-      s.in_ = InPort ( mk_bits(nbits) )
-      s.out = OutPort( mk_bits(nbits) )
-      @s.update
+    def construct( s, nbits=1 ):
+      s.in_ = InPort ( nbits )
+      s.out = OutPort( nbits )
+      @update
       def up_x():
-        s.out = s.in_ + 1
+        s.out @= s.in_ + 1
 
   class Y( Component ):
-    def construct( s, nbits=0 ):
-      s.in_ = InPort ( mk_bits(nbits) )
-      s.out = OutPort( mk_bits(nbits) )
-      s.x = X()( in_ = s.in_, out = s.out )
+    def construct( s, nbits=1 ):
+      s.in_ = InPort ( nbits )
+      s.out = OutPort( nbits )
+      s.x = X()
+      s.x.in_ //= s.in_
+      s.x.out //= s.out
 
   a = Y()
   a.elaborate()
@@ -56,9 +67,9 @@ class Real_shamt( Component ):
   def construct( s, shamt=1 ):
     s.in_ = InPort ( Bits32 )
     s.out = OutPort( Bits32 )
-    @s.update
+    @update
     def up_real():
-      s.out = s.in_ << shamt
+      s.out @= s.in_ << shamt
 
   def line_trace( s ):
     return "{}>{}".format( s.in_, s.out )
@@ -67,19 +78,22 @@ class Real_shamt2( Component ):
   def construct( s, shamt=1 ):
     s.in_ = InPort ( Bits32 )
     s.out = OutPort( Bits32 )
-    @s.update
+    @update
     def up_real():
-      s.out = s.in_ + shamt
+      s.out @= s.in_ + shamt
 
   def line_trace( s ):
     return "{}>{}".format( s.in_, s.out )
 
 class Foo_shamt_list_wrap( Component ):
-  def construct( s, nbits=0 ):
-    s.in_ = InPort ( mk_bits(nbits) )
-    s.out = [ OutPort( mk_bits(nbits) ) for i in range(5) ]
+  def construct( s, nbits=1 ):
+    s.in_ = InPort ( nbits )
+    s.out = [ OutPort( nbits ) for _ in range(5) ]
 
-    s.inner = [ Foo_shamt( i )( in_ = s.in_, out = s.out[i] ) for i in range(5) ]
+    s.inner = [ Foo_shamt( i ) for i in range(5) ]
+    for i in range(5):
+      s.inner[i].in_ //= s.in_
+      s.inner[i].out //= s.out[i]
 
   def line_trace( s ):
     return "|".join( [ x.line_trace() for x in s.inner ] )
@@ -87,13 +101,15 @@ class Foo_shamt_list_wrap( Component ):
 def test_real_replaced_by_real2():
 
   class Real_wrap( Component ):
-    def construct( s, nbits=0 ):
-      s.in_ = InPort ( mk_bits(nbits) )
-      s.out = OutPort( mk_bits(nbits) )
-      s.w   = Wire( mk_bits(nbits) )
+    def construct( s, nbits=1 ):
+      s.in_ = InPort ( nbits )
+      s.out = OutPort( nbits )
+      s.w   = Wire( nbits )
       connect( s.w, s.out )
 
-      s.inner = Real_shamt( 5 )( in_ = s.in_, out = s.w )
+      s.inner = Real_shamt( 5 )
+      s.inner.in_ //= s.in_
+      s.inner.out //= s.w
 
     def line_trace( s ):
       return s.inner.line_trace()
@@ -170,7 +186,8 @@ def test_replace_deep_list_of_foo_by_real():
   class TopWrap( Component ):
     def construct( s ):
       s.in_    = InPort( Bits32 )
-      s.foobar = Foo_shamt_list_wrap( 32 )( in_ = s.in_ )
+      s.foobar = Foo_shamt_list_wrap( 32 )
+      s.foobar.in_ //= s.in_
 
   foo_wrap = TopWrap()
 
@@ -198,18 +215,18 @@ def test_replace_component_upblk_rw_port():
 
   class Real_wrap( Component ):
     def construct( s, nbits=0 ):
-      s.in_ = InPort ( mk_bits(nbits) )
-      s.out = OutPort( mk_bits(nbits) )
-      s.w   = Wire( mk_bits(nbits) )
+      s.in_ = InPort ( nbits )
+      s.out = OutPort( nbits )
+      s.w   = Wire( nbits )
       connect( s.w, s.out )
 
-      @s.update
+      @update
       def up_in():
-        s.inner.in_ = s.in_
+        s.inner.in_ @= s.in_
 
-      @s.update
+      @update
       def up_out():
-        s.w = s.inner.out
+        s.w @= s.inner.out
 
       s.inner = Real_shamt( 5 )#( in_ = s.in_, out = s.w )
 
@@ -242,24 +259,24 @@ def test_replace_component_func_rw_port():
 
   class Real_wrap( Component ):
     def construct( s, nbits=0 ):
-      s.in_ = InPort ( mk_bits(nbits) )
-      s.out = OutPort( mk_bits(nbits) )
-      s.w   = Wire( mk_bits(nbits) )
+      s.in_ = InPort ( nbits )
+      s.out = OutPort( nbits )
+      s.w   = Wire( nbits )
       connect( s.w, s.out )
 
       @s.func
       def assign_in( x ):
-        s.inner.in_ = x
+        s.inner.in_ @= x
 
-      @s.update
+      @update
       def up_in():
         assign_in( s.in_ )
 
       @s.func
       def read_out():
-        s.w = s.inner.out
+        s.w @= s.inner.out
 
-      @s.update
+      @update
       def up_out():
         read_out()
 
@@ -296,9 +313,9 @@ def test_ctrl_dpath_connected_replaced_both():
 
       connect( s.in_, s.wire )
 
-      @s.update
+      @update
       def out():
-        s.out = s.wire + 10
+        s.out @= s.wire + 10
 
   class Module2( Component ):
     def construct( s ):
@@ -308,9 +325,9 @@ def test_ctrl_dpath_connected_replaced_both():
 
       connect( s.in_, s.wire )
 
-      @s.update
+      @update
       def out():
-        s.out = s.wire + 444
+        s.out @= s.wire + 444
 
   class Inner( Component ):
     def construct( s ):
@@ -338,8 +355,8 @@ def test_ctrl_dpath_connected_replaced_both():
   a = Top()
 
   a.elaborate()
-  a.replace_component( a.inner.m1, Module2() )
-  a.replace_component( a.inner.m2, Module2() )
+  a.replace_component_with_obj( a.inner.m1, Module2() )
+  a.replace_component_with_obj( a.inner.m2, Module2() )
 
   simple_sim_pass( a )
 
@@ -356,18 +373,18 @@ def test_connect_upblk_orders():
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
       s.out2 = OutPort( Bits32 )
-      @s.update
+      @update
       def up_out():
-        s.out = Bits32(0)
+        s.out @= Bits32(0)
 
       s.wire = Wire(Bits32)
-      @s.update_ff
+      @update_ff
       def up_ff():
         s.wire <<= s.wire + 1
 
-      @s.update
+      @update
       def up_out2():
-        s.out2 = Bits32(0)
+        s.out2 @= Bits32(0)
 
   class Top( Component ):
     def construct( s ):
@@ -393,9 +410,9 @@ def test_connect_upblk_orders():
   # class X( Component ):
     # def construct( s, nbits=0 ):
       # s.leak = bytearray(1<<30)
-      # s.in_ = InPort ( mk_bits(nbits) )
-      # s.out = OutPort( mk_bits(nbits) )
-      # @s.update
+      # s.in_ = InPort ( nbits )
+      # s.out = OutPort( nbits )
+      # @update
       # def up_x():
         # s.out = s.in_ + 1
   # for i in range(100):

@@ -5,6 +5,9 @@
 # Date   : Feb 13, 2019
 """Helper methods for RTLIR."""
 
+from hashlib import blake2b
+
+
 def collect_objs( m, Type ):
   """Return a list of members of `m` that are of type `Type`."""
 
@@ -35,6 +38,8 @@ def get_component_full_name( c_rtype ):
   for arg_name, arg_value in comp_params:
     assert arg_name != ''
     comp_name += '__' + arg_name + '_' + get_string(arg_value)
+  if not comp_params:
+    comp_name += '_noparam'
   return comp_name
 
 def get_ordered_upblks( m ):
@@ -47,3 +52,10 @@ def get_ordered_update_ff( m ):
   """Return a list of update-ff update blocks that have deterministic order"""
 
   return [ x for x in m.get_update_block_order() if x in m.get_update_ff() ]
+
+def get_hashed_name( obj_name, param_name ):
+  if len(f'{obj_name}__{param_name}') >= 64:
+    param_hash = blake2b(digest_size = 8)
+    param_hash.update(param_name.encode('ascii'))
+    param_name = param_hash.hexdigest()
+  return f'{obj_name}__{param_name}'

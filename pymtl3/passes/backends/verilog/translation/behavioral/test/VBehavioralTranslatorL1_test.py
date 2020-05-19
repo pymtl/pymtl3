@@ -21,7 +21,9 @@ from ....testcases import (
     CaseBits32x2ConcatUnpackedSignalComp,
     CaseBits64PartSelUpblkComp,
     CaseBits64SextInComp,
+    CaseBits64TruncInComp,
     CaseBits64ZextInComp,
+    CaseDefaultBitsComp,
     CasePassThroughComp,
     CasePythonClassAttr,
     CaseSequentialPassThroughComp,
@@ -36,7 +38,7 @@ def run_test( case, m ):
   m.apply( BehavioralRTLIRTypeCheckPass( m ) )
 
   visitor = BehavioralRTLIRToVVisitorL1(lambda x: x in verilog_reserved)
-  upblks = m._pass_behavioral_rtlir_gen.rtlir_upblks
+  upblks = m.get_metadata( BehavioralRTLIRGenPass.rtlir_upblks )
   m_all_upblks = m.get_update_blocks()
   assert len(m_all_upblks) == 1
 
@@ -54,11 +56,13 @@ def run_test( case, m ):
       CaseBits32x2ConcatMixedComp,
       CaseBits64SextInComp,
       CaseBits64ZextInComp,
+      CaseBits64TruncInComp,
       CaseBits32x2ConcatFreeVarComp,
       CaseBits32x2ConcatUnpackedSignalComp,
       CaseBits32BitSelUpblkComp,
       CaseBits64PartSelUpblkComp,
       CasePythonClassAttr,
+      CaseDefaultBitsComp,
     ]
 )
 def test_verilog_behavioral_L1( case ):

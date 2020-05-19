@@ -7,41 +7,44 @@ Author : Shunning Jiang, Yanghui Ou, Peitian Pan
 Date   : Sep 8, 2019
 """
 
-import os
 import time
 from collections import defaultdict
 
-from pymtl3.datatypes import Bits, concat, get_nbits, to_bits
-from pymtl3.dsl import Const
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.datatypes import Bits, concat
+from pymtl3.dsl import Const, MetadataKey
+from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.errors import PassOrderError
 
 
 class VcdGenerationPass( BasePass ):
 
+  # VcdGenerationPass pass public pass data
+
+  #: vcd file name
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ""
+  vcd_file_name = MetadataKey(str)
+
+  vcd_func = MetadataKey()
+
   def __call__( self, top ):
+    if top.has_metadata( self.vcd_file_name ):
+      vcd_file_name = top.get_metadata( self.vcd_file_name )
 
-    if hasattr( top, "config_tracing" ):
-      top.config_tracing.check()
+      if vcd_file_name is not None:
+        assert not top.has_metadata( self.vcd_func )
+        top.set_metadata( self.vcd_func, self.make_vcd_func( top, vcd_file_name ) )
 
-      if top.config_tracing.tracing != 'none':
-        if not hasattr( top, "_tracing" ):
-          top._tracing = PassMetadata()
-        top._tracing.vcd_func = self.make_vcd_func( top, top._tracing )
-
-  def make_vcd_func( self, top, vcdmeta ):
-
-    vcd_file_name = top.config_tracing.vcd_file_name
-
+  def make_vcd_func( self, top, vcd_file_name ):
+    assert vcd_file_name is not None
     if vcd_file_name != "":
-      vcdmeta.vcd_file_name = str(vcd_file_name) + ".vcd"
+      vcd_file_name = str(vcd_file_name) + ".vcd"
     else:
-      vcdmeta.vcd_file_name = str(top.__class__.__name__) + ".vcd"
+      vcd_file_name = str(top.__class__.__name__) + ".vcd"
 
-    vcd_file = vcdmeta.vcd_file = open( vcdmeta.vcd_file_name, "w" )
-
-    print(f"[Tracing mode = {top.config_tracing.tracing}] "
-          f"Writing value change dump (VCD) to {os.getcwd()}/{(vcdmeta.vcd_file_name)}")
+    vcd_file = open( vcd_file_name, "w" )
 
     # Get vcd timescale
 
@@ -94,7 +97,7 @@ class VcdGenerationPass( BasePass ):
     # they belong to a top level wire and we count that wire
 
     trimmed_value_nets = []
-    vcdmeta.vcd_clock_net_idx = None
+    vcd_clock_net_idx = None
 
     # FIXME handle the case where the top level signal is in a value net
     for writer, net in top.get_all_value_nets():
@@ -104,8 +107,8 @@ class VcdGenerationPass( BasePass ):
           new_net.append( x )
           if repr(x) == "s.clk":
             # Hardcode clock net because it needs to go up and down
-            assert vcdmeta.vcd_clock_net_idx is None
-            vcdmeta.vcd_clock_net_idx = len(trimmed_value_nets)
+            assert vcd_clock_net_idx is None
+            vcd_clock_net_idx = len(trimmed_value_nets)
 
       if new_net:
         trimmed_value_nets.append( new_net )
@@ -128,6 +131,7 @@ class VcdGenerationPass( BasePass ):
       return name.replace('[','(').replace(']',')').replace(':', '__')
 
     def recurse_models( m, spaces ):
+      nonlocal vcd_clock_net_idx, vcd_sim_ncycles
 
       # Special case the top level "s" to "top"
 
@@ -156,8 +160,8 @@ class VcdGenerationPass( BasePass ):
 
           # Check if it's clock. Hardcode clock net
           if repr(signal) == "s.clk":
-            assert vcdmeta.vcd_clock_net_idx is None
-            vcdmeta.vcd_clock_net_idx = len(trimmed_value_nets)
+            assert vcd_clock_net_idx is None
+            vcd_clock_net_idx = len(trimmed_value_nets)
 
           # This is a signal whose connection is not captured by the
           # global net data structure. This might be a sliced signal or
@@ -174,7 +178,7 @@ class VcdGenerationPass( BasePass ):
         # to get the actual name like enq.rdy
         # TODO struct
         signal_name = vcd_mangle_name( repr(signal)[ len(m_name)+1: ] )
-        print( f"{spaces}  $var reg {get_nbits(signal._dsl.Type)} {symbol} {signal_name} $end",
+        print( f"{spaces}  $var reg {signal._dsl.Type.nbits} {symbol} {signal_name} $end",
                file=vcd_file )
 
       # Recursively visit all submodels.
@@ -191,14 +195,14 @@ class VcdGenerationPass( BasePass ):
     # nets in the design.
     print( "$enddefinitions $end\n", file=vcd_file )
 
-    # vcdmeta.last_values is an array of values from the previous cycle
+    # last_values is an array of values from the previous cycle
 
-    last_values = vcdmeta.last_values = [0 for _ in range(len(trimmed_value_nets))]
+    last_values = [0 for _ in range(len(trimmed_value_nets))]
 
     for i, net in enumerate(trimmed_value_nets):
       # Convert everything to Bits to get around lack of bit struct support.
       # The first cycle VCD contains the default value
-      bin_str = to_bits( net[0]._dsl.Type() ).bin()
+      bin_str = net[0]._dsl.Type().to_bits().bin()
 
       print( f"b{bin_str} {net_symbol_mapping[i]}", file=vcd_file )
 
@@ -207,14 +211,14 @@ class VcdGenerationPass( BasePass ):
 
     # Now we create per-cycle signal value collect functions
 
-    vcdmeta.vcd_sim_ncycles = 0
+    vcd_sim_ncycles = 0
 
     # Separate clock net from normal nets ahead of time
-    clock_symbol = net_symbol_mapping[ vcdmeta.vcd_clock_net_idx ]
+    clock_symbol = net_symbol_mapping[ vcd_clock_net_idx ]
 
     net_details = [ ( trimmed_value_nets[i][0], net_symbol_mapping[i] )
                     for i in range(len(trimmed_value_nets))
-                      if i != vcdmeta.vcd_clock_net_idx ]
+                      if i != vcd_clock_net_idx ]
 
     # Flip clock for the first cycle
     print( '\n#0\nb0b1 {}\n'.format( clock_symbol ), file=vcd_file, flush=True )
@@ -226,6 +230,7 @@ class VcdGenerationPass( BasePass ):
     # Python 3 destroys a lot of our hacks .. sigh
 
     def dump_vcd_inner( s ):
+      nonlocal vcd_sim_ncycles
 
       for i, (signal, symbol) in enumerate( net_details ):
 
@@ -234,7 +239,7 @@ class VcdGenerationPass( BasePass ):
         # TODO: treat each field in a BitStruct as a separate signal?
 
         try:
-          net_bits_bin = to_bits( eval(repr(signal)) )
+          net_bits_bin = eval(repr(signal)).to_bits()
         except Exception as e:
           raise TypeError(f'{e}\n - {signal} becomes another type. Please check your code.')
 
@@ -247,13 +252,13 @@ class VcdGenerationPass( BasePass ):
           print( f'b{net_bits_bin_str} {symbol}', file=vcd_file )
 
       # Flop clock at the end of cycle
-      next_neg_edge = 100 * vcdmeta.vcd_sim_ncycles + 50
+      next_neg_edge = 100 * vcd_sim_ncycles + 50
       print( f'\n#{next_neg_edge}\nb0b0 {clock_symbol}', file=vcd_file )
 
       # Flip clock of the next cycle
       next_pos_edge = next_neg_edge + 50
       print( f'#{next_pos_edge}\nb0b1 {clock_symbol}\n', file=vcd_file, flush=True )
-      vcdmeta.vcd_sim_ncycles += 1
+      vcd_sim_ncycles += 1
 
     def gen_dump_vcd( s ):
       def dump_vcd():

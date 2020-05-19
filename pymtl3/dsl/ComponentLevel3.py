@@ -18,7 +18,7 @@ import linecache
 from collections import defaultdict
 
 from pymtl3.datatypes import Bits, is_bitstruct_inst
-from pymtl3.utils import custom_exec
+from pymtl3.extra.pypy import custom_exec
 
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2, compiled_re
@@ -57,7 +57,6 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def __new__( cls, *args, **kwargs ):
     inst = super().__new__( cls, *args, **kwargs )
-    inst._dsl.call_kwargs   = None
     inst._dsl.adjacency     = defaultdict(set)
     inst._dsl.connect_order = []
     inst._dsl.consts        = set()
@@ -71,35 +70,6 @@ class ComponentLevel3( ComponentLevel2 ):
       all_ajd = s._dsl.all_adjacency
       for k, v in m._dsl.adjacency.items():
         all_ajd[k] |= v
-
-  # Override
-  def _construct( s ):
-    """ We override _construct here to finish the saved __call__
-    connections right after constructing the model. The reason why we
-    take this detour instead of connecting in __call__ directly, is that
-    __call__ is done before setattr, and hence the child components don't
-    know their name yet. _dsl.constructed is called in setattr after name
-    tagging, so this is valid. (see NamedObject.py). """
-
-    if not s._dsl.constructed:
-
-      # Merge the actual keyword args and those args set by set_parameter
-      if s._dsl.param_tree is None:
-        kwargs = s._dsl.kwargs
-      elif s._dsl.param_tree.leaf is None:
-        kwargs = s._dsl.kwargs
-      else:
-        kwargs = s._dsl.kwargs.copy()
-        if "construct" in s._dsl.param_tree.leaf:
-          more_args = s._dsl.param_tree.leaf[ "construct" ]
-          kwargs.update( more_args )
-
-      s.construct( *s._dsl.args, **kwargs )
-
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
-
-      s._dsl.constructed = True
 
   # The following three methods should only be called when types are
   # already checked
@@ -115,7 +85,12 @@ class ComponentLevel3( ComponentLevel2 ):
     root = root.body[0]
     assert isinstance( root, ast.AugAssign ) and isinstance( root.op, ast.FloorDiv )
 
-    lhs, rhs = root.target, root.value
+    # lhs, rhs = root.target, root.value
+    # Shunning: here we need to use ast from repr(o), because root.target
+    # can be "m.in_" in some cases where we actually know what m is but the
+    # source code still captures "m"
+    lhs, rhs = ast.parse( f"s{repr(o)[len(repr(s)):]}" ).body[0].value, root.value
+    lhs.ctx = ast.Store()
     # We expect the lambda to have no argument:
     # {'args': [], 'vararg': None, 'kwonlyargs': [], 'kw_defaults': [], 'kwarg': None, 'defaults': []}
     assert isinstance( rhs, ast.Lambda ) and not rhs.args.args and rhs.args.vararg is None, \
@@ -133,7 +108,7 @@ class ComponentLevel3( ComponentLevel2 ):
     lambda_upblk = ast.FunctionDef(
       name=blk_name,
       args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
-      body=[ast.Assign(targets=[lhs], value=rhs, lineno=2, col_offset=6)],
+      body=[ast.AugAssign(target=lhs, op=ast.MatMult(), value=rhs, lineno=2, col_offset=6)],
       decorator_list=[],
       returns=None,
       lineno=1, col_offset=4,
@@ -212,10 +187,10 @@ class ComponentLevel3( ComponentLevel2 ):
 
     # Add the source code to linecache for the compiled function
 
-    new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=") )
+    new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "@=") )
     linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name)
 
-    ComponentLevel1.update( s, blk )
+    ComponentLevel1._update( s, blk )
 
     # This caching here does no caching because the block name contains
     # the signal name intentionally to avoid conflicts. With //= it is
@@ -278,7 +253,9 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def _connect_signal_signal( s, o1, o2 ):
     if not (o1._dsl.Type is o2._dsl.Type):
-      raise InvalidConnectionError( f"Type mismatch {o1._dsl.Type} != {o2._dsl.Type} during {o1}<->{o2}." )
+      raise InvalidConnectionError( f"Bitwidth mismatch {o1._dsl.Type.__name__} != {o2._dsl.Type.__name__}\n"
+                                    f"- In class {type(s)}\n- When connecting {o1} <-> {o2}\n"
+                                    f"Suggestion: make sure both sides of connection have matching bitwidth")
 
     if o1 not in s._dsl.adjacency[o2]:
       assert o2 not in s._dsl.adjacency[o1]
@@ -364,58 +341,6 @@ class ComponentLevel3( ComponentLevel2 ):
       assert isinstance( o1, Signal ), f"Cannot connect {o1!r} to {o2!r}."
 
       s._connect_signal_const( o1, o2 )
-
-  def _continue_call_connect( s ):
-    """ Here we continue to establish the connections from signals of the
-    parent object, to signals in the current object. Since it is the
-    parent that connects a constant integer to a signal, we should point
-    the Const object back to the parent object by setting _parent_obj to
-    s._parent_obj."""
-
-    parent = s._dsl.parent_obj
-
-    top = s._dsl.elaborate_top
-
-    # _continue_call_connect is actually connecting stuff at parent level,
-    # but it currently happens before before we pop the child component.
-    # To make minimal modification, I temporarily pop it from
-    # elaborate_stack and append it back at the end of this method
-
-    tmp = top._dsl.elaborate_stack.pop()
-
-    try: # Catch AssertionError from _connect
-
-      # Process saved __call__ kwargs
-      for (kw, target) in s._dsl.call_kwargs.items():
-        try:
-          obj = getattr( s, kw )
-        except AttributeError:
-          raise InvalidConnectionError( "{} is not a member of class {}".format(kw, s.__class__) )
-
-        # Obj is a list of signals
-        # We assume the a dict of { index: obj } is provided.
-        if   isinstance( obj, list ):
-          # Make sure the connection target is a dictionary {idx: obj}
-          if not isinstance( target, dict ):
-            raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
-          for idx, item in target.items():
-            parent._connect( obj[idx], item, internal=False )
-
-        # Obj is a single signal
-        # If the target is a list, it's fanout connection
-        elif isinstance( target, (tuple, list) ):
-          for item in target:
-            parent._connect( obj, item, internal=False )
-
-        # Target is a single object
-        else:
-          parent._connect( obj, target, internal=False )
-
-    except AssertionError as e:
-      raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
-
-    # Append tmp back to elaborate_stack
-    top._dsl.elaborate_stack.append(tmp)
 
   @staticmethod
   def _floodfill_nets( signal_list, adjacency ):
@@ -828,13 +753,9 @@ class ComponentLevel3( ComponentLevel2 ):
       >>> s.x = SomeReg(Bits1)( in_ = s.in_ )
     It connects s.in_ to s.x.in_ in the same line as model construction.
     """
-    assert args == ()
-    if s._dsl.constructed:
-      raise InvalidConnectionError("Connection using __call__, "
-                                   "i.e. s.x( a = s.a ), is illegal "
-                                   "after constructing s.x")
-    s._dsl.call_kwargs = kwargs
-    return s
+    raise PyMTLDeprecationError("\n__call__ connection has been deprecated! "
+                                "\n- Please use free function connect(s.x,s.y) or "
+                                "syntactic sugar s.x//=s.y instead.")
 
   def connect( s, *args, **kwargs ):
     raise PyMTLDeprecationError("\ns.connect method has been deprecated! "

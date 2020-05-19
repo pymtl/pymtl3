@@ -23,9 +23,8 @@ import struct
 import sys
 
 from pymtl3 import *
-from pymtl3.stdlib.cl.MemoryCL import MemoryCL
-from pymtl3.stdlib.ifcs import mk_mem_msg
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.mem import MagicMemoryCL, mk_mem_msg
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 
 # Hack to add project root to python path
 sim_dir = os.path.dirname( os.path.abspath( __file__ ) )
@@ -113,17 +112,15 @@ class TestHarness(Component):
 
     s.src  = TestSrcCL ( Bits32, [], src_delay, src_delay   )
     s.sink = TestSinkCL( Bits32, [], sink_delay, sink_delay )
-    s.mem  = MemoryCL  ( 2, latency = mem_latency )
+    s.mem  = MagicMemoryCL  ( 2, latency = mem_latency )
 
-    s.dut  = ProcXcel  ( ProcClass, XcelClass )(
-      mngr2proc = s.src.send,
-      proc2mngr = s.sink.recv,
-      imem      = s.mem.ifc[0],
-      dmem      = s.mem.ifc[1],
+    s.dut = m = ProcXcel( ProcClass, XcelClass )
+    m.mngr2proc //= s.src.send
+    m.proc2mngr //= s.sink.recv
+    m.imem      //= s.mem.ifc[0]
+    m.dmem      //= s.mem.ifc[1]
 
-      commit_inst = s.commit_inst,
-    )
-
+    m.commit_inst //= s.commit_inst
 
   #-----------------------------------------------------------------------
   # load
@@ -217,12 +214,12 @@ def main():
   # Apply translation pass and import pass if required
 
   if opts.translate:
-    from pymtl3.passes.backends.yosys import TranslationImportPass
+    from pymtl3.passes.backends.yosys import YosysTranslationImportPass
     model.elaborate()
-    model.dut.yosys_translate_import = True
-    model = TranslationImportPass()( model )
+    model.dut.set_metadata( YosysTranslationImportPass.enable, True )
+    model = YosysTranslationImportPass()( model )
 
-  model.apply( SimulationPass() )
+  model.apply( DefaultPassGroup(print_line_trace=opts.trace) )
 
   # Load the program into the model
 
@@ -232,24 +229,17 @@ def main():
   # Run the simulation
   #-----------------------------------------------------------------------
 
-  count       = 0
   commit_inst = 0
 
   model.sim_reset()
 
   limit = opts.limit
 
-  if opts.trace:
-    print("{:3}: {}".format( count, model.line_trace() ))
-
-  while not model.done() and count < limit:
-    model.tick()
+  while not model.done() and model.sim_cycle_count() < limit:
+    model.sim_tick()
     commit_inst += int(model.commit_inst)
-    count = count + 1
-    if opts.trace:
-      print("{:3}: {}".format( count, model.line_trace() ))
 
-  assert count < limit
+  assert model.sim_cycle_count() < limit
 
   # Verify the results of simulation
 
@@ -262,9 +252,9 @@ def main():
 
   # Display stats
 
-  print( "  total_num_cycles      = {}".format( count ) )
+  print( "  total_num_cycles      = {}".format( model.sim_cycle_count() ) )
   print( "  total_committed_insts = {}".format( commit_inst ) )
-  print( "  CPI                   = {:1.2f}".format( count/float(commit_inst) ) )
+  print( "  CPI                   = {:1.2f}".format( model.sim_cycle_count()/float(commit_inst) ) )
   print()
 
   exit(0)

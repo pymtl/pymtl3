@@ -45,9 +45,10 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
     # The dictionary of operator-character pairs
     s.ops = {
       # Unary operators
-      bir.Invert : '~', bir.Not : '!', bir.UAdd : '+', bir.USub : '-',
+      # bir.Invert : '~', bir.Not : '!', bir.UAdd : '+', bir.USub : '-',
+      bir.Invert : '~', bir.UAdd : '+', bir.USub : '-',
       # Boolean operators
-      bir.And : '&&', bir.Or : '||',
+      # bir.And : '&&', bir.Or : '||',
       # Binary operators
       bir.Add : '+', bir.Sub : '-', bir.Mult : '*', bir.Div : '/',
       bir.Mod : '%', bir.Pow : '**',
@@ -61,7 +62,8 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
   def visit_expr_wrap( s, node ):
     """Return expressions selectively wrapped with brackets."""
     if isinstance( node,
-        ( bir.IfExp, bir.UnaryOp, bir.BoolOp, bir.BinOp, bir.Compare ) ):
+        # ( bir.IfExp, bir.UnaryOp, bir.BoolOp, bir.BinOp, bir.Compare ) ):
+        ( bir.IfExp, bir.UnaryOp, bir.BinOp, bir.Compare ) ):
       return f"( {s.visit(node)} )"
     else:
       return s.visit( node )
@@ -136,11 +138,11 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
 
     begin    = ' begin' if len( node.body ) > 1 else ''
 
-    cmp_op   = '>' if node.step._value[31] else '<'
-    inc_op   = '-' if node.step._value[31] else '+'
+    cmp_op   = '>' if node.step._value < 0 else '<'
+    inc_op   = '-' if node.step._value < 0 else '+'
 
     step_abs = s.visit( node.step )
-    if node.step._value[31] and step_abs[0] == '-':
+    if node.step._value < 0 and step_abs[0] == '-':
       step_abs = step_abs[1:]
 
     for stmt in node.body:
@@ -148,7 +150,7 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
     make_indent( body, 1 )
 
     for_begin = \
-      'for ( int {v} = {s}; {v} {comp} {t}; {v} {inc}= {stp} ){begin}'.format(
+      'for ( int unsigned {v} = {s}; {v} {comp} {t}; {v} {inc}= {stp} ){begin}'.format(
       v = loop_var, s = start, t = end, stp = step_abs,
       comp = cmp_op, inc = inc_op, begin = begin
     )
@@ -198,18 +200,15 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
   # visit_BoolOp
   #-----------------------------------------------------------------------
 
-  def visit_BoolOp( s, node ):
-    for value in node.values:
-      value._top_expr = True
-
-    op     = s.ops[ type( node.op ) ]
-    values = []
-
-    for value in node.values:
-      values.append( s.visit_expr_wrap( value ) )
-    src = f' {op} '.join( values )
-
-    return src
+  # def visit_BoolOp( s, node ):
+  #   for value in node.values:
+  #     value._top_expr = True
+  #   op     = s.ops[ type( node.op ) ]
+  #   values = []
+  #   for value in node.values:
+  #     values.append( s.visit_expr_wrap( value ) )
+  #   src = f' {op} '.join( values )
+  #   return src
 
   #-----------------------------------------------------------------------
   # visit_BinOp
@@ -245,14 +244,20 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
 
   def visit_LoopVar( s, node ):
     s.check_res( node, node.name )
-    return node.name
+    nbits = node.Type.get_dtype().get_length()
+    return f"{nbits}'({node.name})"
 
   #-----------------------------------------------------------------------
   # visit_TmpVar
   #-----------------------------------------------------------------------
 
   def visit_TmpVar( s, node ):
-    return f"__tmpvar__{node.upblk_name}_{node.name}"
+    tmpvar = f"__tmpvar__{node.upblk_name}_{node.name}"
+    if not node._is_explicit and not s.is_assign_LHS:
+      nbits = node.Type.get_dtype().get_length()
+      return f"{nbits}'({tmpvar})"
+    else:
+      return tmpvar
 
   #-----------------------------------------------------------------------
   # visit_LoopVarDecl

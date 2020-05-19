@@ -9,6 +9,7 @@ The L2 generation, L2 type check, and visualization passes are invoked. The
 generation pass results are verified against a reference AST.
 """
 
+from pymtl3.dsl.errors import UpdateBlockWriteError
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL2Pass import (
     BehavioralRTLIRGenL2Pass,
@@ -70,7 +71,7 @@ def local_do_test( m ):
   try:
     ref = m._rtlir_test_ref
     for blk in m.get_update_blocks():
-      upblk = m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ]
+      upblk = m.get_metadata( BehavioralRTLIRGenL2Pass.rtlir_upblks )[ blk ]
       assert upblk == ref[ blk.__name__ ]
   except AttributeError:
     pass
@@ -83,7 +84,7 @@ def test_L2_lambda_connect( do_test ):
   a = CaseLambdaConnectComp.DUT()
   a._rtlir_test_ref = { '_lambda__s_out' : CombUpblk( '_lambda__s_out', [
     Assign( [Attribute( Base( a ), 'out' )],
-            BinOp(Attribute(Base(a), 'in_'), Add(), SizeCast(32, Number(42))), True
+            BinOp(Attribute(Base(a), 'in_'), Add(), Number(42)), True
         ) ] ) }
   do_test( a )
 
@@ -91,7 +92,7 @@ def test_L2_lambda_connect_with_list( do_test ):
   a = CaseLambdaConnectWithListComp.DUT()
   a._rtlir_test_ref = { '_lambda__s_out_1_' : CombUpblk( '_lambda__s_out_1_', [
     Assign( [Index( Attribute( Base( a ), 'out' ), Number(1) )],
-            BinOp(Attribute(Base(a), 'in_'), Add(), SizeCast(32, Number(42))), True
+            BinOp(Attribute(Base(a), 'in_'), Add(), Number(42)), True
         ) ] ) }
   do_test( a )
 
@@ -156,11 +157,11 @@ def test_L2_ifexp_body_else_diff_type( do_test ):
     do_test( CaseDifferentTypesIfExpComp )
 
 def test_L2_unary_not_cast_to_bool( do_test ):
-  with expected_failure( PyMTLTypeError, "cannot be cast to bool" ):
+  with expected_failure( PyMTLTypeError, "Vector1 vs Struct Bits32Foo" ):
     do_test( CaseNotStructComp )
 
 def test_L2_bool_cast_to_bool( do_test ):
-  with expected_failure( PyMTLTypeError, "cannot be cast into bool" ):
+  with expected_failure( PyMTLTypeError, "should be of vector type" ):
     do_test( CaseAndStructComp )
 
 def test_L2_binop_non_vector( do_test ):
@@ -184,7 +185,7 @@ def test_L2_for_else( do_test ):
     do_test( CaseForLoopElseComp )
 
 def test_L2_for_index_signal( do_test ):
-  with expected_failure( PyMTLSyntaxError, "loop index must be a temporary variable" ):
+  with expected_failure( UpdateBlockWriteError, "@=" ):
     do_test( CaseSignalAsLoopIndexComp )
 
 def test_L2_for_index_redefined( do_test ):

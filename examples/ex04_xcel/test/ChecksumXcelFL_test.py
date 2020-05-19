@@ -25,7 +25,7 @@ def checksum_xcel_fl( words ):
   # Create a simulator using ChecksumXcelFL
   dut = ChecksumXcelFL()
   dut.elaborate()
-  dut.apply( SimulationPass() )
+  dut.apply( DefaultPassGroup() )
 
   # Transfer checksum input
   for i in range( 4 ):

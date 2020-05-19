@@ -11,12 +11,13 @@ is a data type object or simply a data type. RTLIR instance type Signal
 can be parameterized by the generated type objects.
 """
 from functools import reduce
+from math import ceil, log2
 
 import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst
 
 from ..errors import RTLIRConversionError
-from ..util.utility import collect_objs
+from ..util.utility import collect_objs, get_hashed_name
 
 
 class BaseRTLIRDataType:
@@ -29,12 +30,28 @@ class BaseRTLIRDataType:
 
 class Vector( BaseRTLIRDataType ):
   """RTLIR data type class for vector type."""
-  def __init__( s, nbits ):
+  def __init__( s, nbits, is_explicit = True ):
     assert nbits > 0, 'vector bitwidth should be a positive integer!'
     s.nbits = nbits
+    s._is_explicit = is_explicit
+
+  def get_name( s ):
+    return s.get_full_name()
+
+  def get_full_name( s ):
+    return str(int(s.nbits))
 
   def get_length( s ):
-    return s.nbits
+    return int(s.nbits)
+
+  def get_index_width( s ):
+    if s.nbits <= 1:
+      return 1
+    else:
+      return ceil(log2(s.nbits))
+
+  def is_explicit( s ):
+    return s._is_explicit
 
   def __eq__( s, other ):
     return (isinstance(other, Vector) and s.nbits == other.nbits) or \
@@ -72,13 +89,23 @@ class Struct( BaseRTLIRDataType ):
       # s.file_info = "Not available"
 
   def __eq__( s, u ):
-    return isinstance(u, Struct) and s.name == u.name
+    return isinstance(u, Struct) and s.get_full_name() == u.get_full_name()
 
   def __hash__( s ):
     return hash((type(s), s.name))
 
   def get_name( s ):
-    return s.name
+    class_name = s.name
+    field_str  = '__'.join(f'{field_name}_{field_type.get_full_name()}' \
+                           for field_name, field_type in s.properties.items())
+    return get_hashed_name( class_name, field_str )
+
+  def get_full_name( s ):
+    # Derive the name of BitStruct from both the class name and its fields
+    class_name = s.name
+    field_str  = '__'.join(f'{field_name}_{field_type.get_full_name()}' \
+                           for field_name, field_type in s.properties.items())
+    return f'{class_name}__{field_str}'
 
   # def get_file_info( s ):
     # return s.file_info
@@ -87,7 +114,10 @@ class Struct( BaseRTLIRDataType ):
     return s.cls
 
   def get_length( s ):
-    return sum( d.get_length() for d in s.properties.values() )
+    return int(sum( d.get_length() for d in s.properties.values() ))
+
+  def get_index_width( s ):
+    assert False, 'rdt.Struct cannot be indexed!'
 
   def has_property( s, p ):
     return p in s.properties
@@ -103,7 +133,7 @@ class Struct( BaseRTLIRDataType ):
     return s == obj
 
   def __str__( s ):
-    return f'Struct {s.name}'
+    return f'Struct {s.get_name()}'
 
 class Bool( BaseRTLIRDataType ):
   """RTLIR data type class for struct type.
@@ -120,6 +150,9 @@ class Bool( BaseRTLIRDataType ):
 
   def get_length( s ):
     return 1
+
+  def get_index_width( s ):
+    assert False, 'rdt.Bool cannot be indexed!'
 
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""
@@ -151,8 +184,15 @@ class PackedArray( BaseRTLIRDataType ):
   def __hash__( s ):
     return hash((type(s), tuple(s.dim_sizes), s.sub_dtype))
 
+  def get_name( s ):
+    return s.get_full_name()
+
+  def get_full_name( s ):
+    dimension_str = 'x'.join(str(d) for d in s.dim_sizes)
+    return f'{s.sub_dtype.get_full_name()}x{dimension_str}'
+
   def get_length( s ):
-    return s.sub_dtype.get_length()*reduce( lambda p,x: p*x, s.dim_sizes, 1 )
+    return int(s.sub_dtype.get_length()*reduce( lambda p,x: p*x, s.dim_sizes, 1 ))
 
   def get_next_dim_type( s ):
     if len( s.dim_sizes ) == 1:
@@ -161,6 +201,14 @@ class PackedArray( BaseRTLIRDataType ):
 
   def get_dim_sizes( s ):
     return s.dim_sizes
+
+  def get_index_width( s ):
+    assert s.dim_sizes, 'rdt.PackedArray is created without dimension!'
+    n_elements = s.dim_sizes[0]
+    if n_elements <= 1:
+      return 1
+    else:
+      return ceil(log2(n_elements))
 
   def get_sub_dtype( s ):
     return s.sub_dtype
@@ -220,7 +268,7 @@ def get_rtlir_dtype( obj ):
 
       # python int object
       elif Type is int:
-        return Vector( 32 )
+        return Vector( _get_nbits_from_value( obj ), False )
 
       # Struct data type
       elif is_bitstruct_class( Type ):
@@ -236,9 +284,7 @@ def get_rtlir_dtype( obj ):
 
     # Python integer objects
     elif isinstance( obj, int ):
-      # Following the Verilog bitwidth rule: number literals have 32 bit width
-      # by default.
-      return Vector( 32 )
+      return Vector( _get_nbits_from_value( obj ), False )
 
     # PyMTL Bits objects
     elif isinstance( obj, Bits ):
@@ -253,3 +299,11 @@ def get_rtlir_dtype( obj ):
   except AssertionError as e:
     msg = '' if e.args[0] is None else e.args[0]
     raise RTLIRConversionError( obj, msg )
+
+def _get_nbits_from_value( value ):
+  if -1 <= value <= 1:
+    return 1
+  if value < 0:
+    return ceil(log2(abs(value)))
+  else:
+    return ceil(log2(value+1))

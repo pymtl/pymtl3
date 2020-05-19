@@ -24,6 +24,10 @@ from .Placeholder import Placeholder
 
 p = re.compile('( *((@|def).*))')
 
+def update( blk ):
+  NamedObject._elaborate_stack[-1]._update( blk )
+  return blk
+
 class ComponentLevel1( NamedObject ):
 
   #-----------------------------------------------------------------------
@@ -64,7 +68,7 @@ class ComponentLevel1( NamedObject ):
   # Construction-time APIs
   #-----------------------------------------------------------------------
 
-  def update( s, blk ):
+  def _update( s, blk ):
     if isinstance( s, Placeholder ):
       raise InvalidPlaceholderError( "Cannot define update block <{}> "
               "in a placeholder component.".format( blk.__name__ ) )
@@ -75,7 +79,6 @@ class ComponentLevel1( NamedObject ):
     s._dsl.name_upblk[ name ] = blk
     s._dsl.upblks.add( blk )
     s._dsl.upblk_order.append( blk )
-    return blk
 
   def get_update_block( s, name ):
     return s._dsl.name_upblk[ name ]

@@ -45,7 +45,7 @@ def local_do_test( m ):
   try:
     ref = m._rtlir_test_ref
     for blk in m.get_update_blocks():
-      upblk = m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ]
+      upblk = m.get_metadata( BehavioralRTLIRGenL3Pass.rtlir_upblks )[ blk ]
       assert upblk == ref[ blk.__name__ ]
   except AttributeError:
     pass
@@ -73,7 +73,7 @@ def test_L3_struct_inst( do_test ):
   a = CaseBits32FooInstantiationComp.DUT()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       [Attribute( Base( a ), 'out' )], StructInst(
-        Bits32Foo, [ SizeCast( 32, Number( 42 ) ) ] ), True ) ] ) }
+        Bits32Foo, [ Number( 42 ) ] ), True ) ] ) }
   do_test( a )
 
 def test_L3_const_struct( do_test ):

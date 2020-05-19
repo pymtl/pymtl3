@@ -11,9 +11,8 @@ from examples.ex02_cksum.ChecksumCL import ChecksumCL
 from examples.ex02_cksum.ChecksumRTL import ChecksumRTL
 from examples.ex02_cksum.utils import words_to_b128
 from pymtl3 import *
-from pymtl3.stdlib.cl.queues import BypassQueueCL, NormalQueueCL
-from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMinionIfcCL
+from pymtl3.stdlib.queues import BypassQueueCL, NormalQueueCL
+from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg, XcelMinionIfcCL
 
 #-------------------------------------------------------------------------
 # ChecksumXcelCL
@@ -54,7 +53,7 @@ class ChecksumXcelCL( Component ):
     connect( s.checksum_unit.send, s.out_q.enq )
     connect( s.xcel.req, s.in_q.enq )
 
-    @s.update
+    @update_once
     def up_tick():
       if s.state == s.XCFG:
         # Dequeue a request message from input queue and send response.

@@ -28,11 +28,11 @@ def local_do_test( m ):
   m.apply( BehavioralRTLIRTypeCheckPass( m ) )
   m.apply( BehavioralRTLIRVisualizationPass() )
   ref = m._rtlir_tmpvar_ref
-  ns = m._pass_behavioral_rtlir_type_check
+  rtlir_tmpvars = m.get_metadata( BehavioralRTLIRTypeCheckPass.rtlir_tmpvars )
 
   for tvar_name in ref.keys():
-    assert tvar_name in ns.rtlir_tmpvars
-    assert ns.rtlir_tmpvars[tvar_name] == ref[tvar_name]
+    assert tvar_name in rtlir_tmpvars
+    assert rtlir_tmpvars[tvar_name] == ref[tvar_name]
 
 def test_tmp_wire( do_test ):
   a = CaseBits32TmpWireComp.DUT()

@@ -11,13 +11,13 @@ from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test
 
-from ..VerilatorImportPass import VerilatorImportPass
+from ..VerilogVerilatorImportPass import VerilogVerilatorImportPass
 
 
 def local_do_test( m ):
   m.elaborate()
   rtype = rt.RTLIRGetter(cache=False).get_component_ifc_rtlir( m )
-  ipass = VerilatorImportPass()
+  ipass = VerilogVerilatorImportPass()
   symbols, decls = ipass.gen_signal_decl_py( rtype )
   assert symbols == m._ref_symbols
   assert decls == m._ref_decls
@@ -64,9 +64,9 @@ def test_struct_port_single( do_test ):
     def construct( s ):
       s.in_ = InPort( struct )
   a = A()
-  a._ref_symbols = { 'struct' : struct }
+  a._ref_symbols = { 'struct__bar_32__foo_32' : struct }
   a._ref_decls = [
-    "s.in_ = InPort( struct )",
+    "s.in_ = InPort( struct__bar_32__foo_32 )",
   ]
   do_test( a )
 
@@ -79,9 +79,9 @@ def test_struct_port_array( do_test ):
     def construct( s ):
       s.in_ = [ InPort( struct ) for _ in range(2) ]
   a = A()
-  a._ref_symbols = { 'struct' : struct }
+  a._ref_symbols = { 'struct__bar_32__foo_32' : struct }
   a._ref_decls = [
-    "s.in_ = [ InPort( struct ) for _ in range(2) ]",
+    "s.in_ = [ InPort( struct__bar_32__foo_32 ) for _ in range(2) ]",
   ]
   do_test( a )
 
@@ -94,9 +94,9 @@ def test_packed_array_port_array( do_test ):
     def construct( s ):
       s.in_ = [ InPort( struct ) for _ in range(2) ]
   a = A()
-  a._ref_symbols = { 'struct' : struct }
+  a._ref_symbols = { 'struct__bar_32__foo_32x3x2' : struct }
   a._ref_decls = [
-    "s.in_ = [ InPort( struct ) for _ in range(2) ]",
+    "s.in_ = [ InPort( struct__bar_32__foo_32x3x2 ) for _ in range(2) ]",
   ]
   do_test( a )
 
@@ -114,9 +114,9 @@ def test_nested_struct( do_test ):
   a = A()
   # Inner struct will not be added to `symbols` because struct
   # refers to it!
-  a._ref_symbols = { 'struct' : struct }
+  a._ref_symbols = { 'struct__bar_32__inner_inner_struct__foo_32' : struct }
   a._ref_decls = [
-    "s.in_ = [ InPort( struct ) for _ in range(2) ]",
+    "s.in_ = [ InPort( struct__bar_32__inner_inner_struct__foo_32 ) for _ in range(2) ]",
   ]
   do_test( a )
 

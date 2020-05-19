@@ -48,15 +48,18 @@ class Pixel:
 Author : Yanghui Ou, Shunning Jiang
   Date : Oct 19, 2019
 """
+import functools
 import keyword
+import operator
 import types
 import warnings
 
 import py
 
-from pymtl3.utils import custom_exec
+from pymtl3.extra.pypy import custom_exec
 
 from .bits_import import *
+from .helpers import concat
 
 #-------------------------------------------------------------------------
 # Constants
@@ -80,6 +83,19 @@ def is_bitstruct_class(cls):
   """Returns True if obj is a dataclass ."""
   return isinstance(cls, type) and hasattr(cls, _FIELDS)
 
+def get_bitstruct_inst_all_classes( obj ):
+  # list: put all types together
+  if isinstance( obj, list ):
+    return functools.reduce( operator.or_, [ get_bitstruct_inst_all_classes(x) for x in obj ] )
+  ret = { obj.__class__ }
+  # BitsN or int
+  if isinstance( obj, (Bits, int) ):
+    return ret
+  # BitStruct
+  assert is_bitstruct_inst( obj ), f"{obj} is not a valid PyMTL Bitstruct!"
+  return ret | functools.reduce( operator.or_, [ get_bitstruct_inst_all_classes(getattr(obj, v))
+                                                for v in obj.__bitstruct_fields__.keys() ] )
+
 _DEFAULT_SELF_NAME = 's'
 _ANTI_CONFLICT_SELF_NAME = '__bitstruct_self__'
 
@@ -94,14 +110,13 @@ _ANTI_CONFLICT_SELF_NAME = '__bitstruct_self__'
 # Also note that this whole _create_fn thing is similar to the original
 # dataclass implementation!
 
-def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False ):
+def _create_fn( fn_name, args_lst, body_lst, _globals=None ):
   # Assemble argument string and body string
   args = ', '.join(args_lst)
   body = '\n'.join(f'  {statement}' for statement in body_lst)
 
   # Assemble the source code and execute it
-  src = '@classmethod\n' if class_method else ''
-  src += f'def {fn_name}({args}):\n{body}'
+  src = f'def {fn_name}({args}):\n{body}'
   if _globals is None: _globals = {}
   _locals = {}
   custom_exec( py.code.Source(src).compile(), _globals, _locals )
@@ -270,30 +285,48 @@ def _mk_hash_fn( fields ):
     [ f'return hash({self_tuple})' ]
   )
 
+#--------------------------PyMTL3 specific--------------------------------
+
 #-------------------------------------------------------------------------
 # _mk_ff_fn
 #-------------------------------------------------------------------------
 # Creates __ilshift__ and _flip functions that looks like the following:
 #
 # def __ilshift__( self, other ):
-#   self._next = other.clone()
+#   if self.__class__ is not other.__class__:
+#     other = self.__class__.from_bits( other.to_bits() )
+#   self.x <<= other.x
+#   self.y[0][0] <<= other.y[0][0]
 #
 # def _flip( self ):
-#   self.x = self._next.x
-#   for i in range(5):
-#     for j in range(6):
-#       self.y[i][j]._flip()
+#   self.x._flip()
+#   self.y[i][j]._flip()
 
 def _mk_ff_fn( fields ):
-  ilshift_strs = []
-  flip_strs    = [ '_next = self._next' ]
+
+  def _gen_list_ilshift_strs( type_, prefix='' ):
+    if isinstance( type_, list ):
+      ilshift_strs, flip_strs = [], []
+      for i in range(len(type_)):
+        ils, fls = _gen_list_ilshift_strs( type_[0], f"{prefix}[{i}]" )
+        ilshift_strs.extend( ils )
+        flip_strs.extend( fls )
+      return ilshift_strs, flip_strs
+    else:
+      return [ f"self.{prefix} <<= other.{prefix}" ], [f"self.{prefix}._flip()"]
+
+  ilshift_strs = [ 'if self.__class__ is not other.__class__:',
+                   '  other = self.__class__.from_bits( other.to_bits() )']
+  flip_strs = []
   for name, type_ in fields.items():
-    flip_strs.append( f'self.{name} = _next.{name}' )
+    ils, fls = _gen_list_ilshift_strs( type_, name )
+    ilshift_strs.extend( ils )
+    flip_strs.extend( fls )
 
   return _create_fn(
     '__ilshift__',
-    [ 'self', 'o' ],
-    [ 'self._next = o.clone()', 'return self' ],
+    [ 'self', 'other' ],
+    ilshift_strs + [ "return self" ],
   ), _create_fn(
     '_flip',
     [ 'self' ],
@@ -340,6 +373,151 @@ def _mk_deepcopy_fn( fields ):
     [ 'self', 'memo' ],
     clone_strs + [ ')' ],
   )
+
+#-------------------------------------------------------------------------
+# _mk_imatmul_fn
+#-------------------------------------------------------------------------
+# Creates @= function that copies the value over ...
+# TODO create individual from_bits for imatmul and ilshift
+
+# def __imatmul__( self, other ):
+#   if self.__class__ is not other.__class__:
+#     other = self.__class__.from_bits( other.to_bits() )
+#   self.x @= other.x
+#   self.y[0] @= other.y[0]
+#   self.y[1] @= other.y[1]
+
+def _mk_imatmul_fn( fields ):
+
+  def _gen_list_imatmul_strs( type_, prefix='' ):
+    if isinstance( type_, list ):
+      ret = []
+      for i in range(len(type_)):
+        ret.extend( _gen_list_imatmul_strs( type_[0], f"{prefix}[{i}]" ) )
+      return ret
+    else:
+      return [ f"self.{prefix} @= other.{prefix}" ]
+
+  imatmul_strs = [ 'if self.__class__ is not other.__class__:',
+                   '  other = self.__class__.from_bits( other.to_bits() )']
+  for name, type_ in fields.items():
+    imatmul_strs.extend( _gen_list_imatmul_strs( type_, name ) )
+
+  return _create_fn(
+    '__imatmul__',
+    [ 'self', 'other' ],
+    imatmul_strs + [ "return self" ],
+  )
+
+#-------------------------------------------------------------------------
+# _mk_nbits_to_bits_fn
+#-------------------------------------------------------------------------
+# Creates nbits, to_bits function that copies the value over ...
+#
+# def to_bits( self ):
+#   return concat( self.x, self.y[0], self.y[1] )
+#
+# TODO packing order of array? x[0] is LSB or MSB of a list
+# current we do LSB
+
+def _mk_nbits_to_bits_fn( fields ):
+
+  def _gen_to_bits_strs( type_, prefix, start_bit ):
+
+    if isinstance( type_, list ):
+      to_strs = []
+      # The packing order is LSB, so we need to reverse the list to make x[-1] higher bits
+      for i in reversed(range(len(type_))):
+        start_bit, tos = _gen_to_bits_strs( type_[0], f"{prefix}[{i}]", start_bit )
+        to_strs.extend( tos )
+      return start_bit, to_strs
+
+    elif is_bitstruct_class( type_ ):
+      to_strs = []
+      for name, typ in getattr(type_, _FIELDS).items():
+        start_bit, tos = _gen_to_bits_strs( typ, f"{prefix}.{name}", start_bit )
+        to_strs.extend( tos )
+      return start_bit, to_strs
+
+    else:
+      end_bit = start_bit + type_.nbits
+      return end_bit, [ f"self.{prefix}" ]
+
+  to_bits_strs = []
+  total_nbits  = 0
+  for name, type_ in fields.items():
+    total_nbits, tos = _gen_to_bits_strs( type_, name, total_nbits )
+    to_bits_strs.extend( tos )
+
+  return total_nbits, _create_fn( 'to_bits', [ 'self' ],
+                                  [ f"return concat({', '.join(to_bits_strs)})" ],
+                                  _globals={'concat':concat} )
+
+#-------------------------------------------------------------------------
+# _mk_from_bits_fn
+#-------------------------------------------------------------------------
+# Creates static method from_bits that creates a new bitstruct based on Bits
+# and instance method _from_bits that copies the value over
+#
+# @staticmethod
+# def from_bits( other ):
+#   return self.__class__( other[16:32], other[0:16] )
+
+def _mk_from_bits_fns( fields, total_nbits ):
+
+  def _gen_from_bits_strs( type_, end_bit ):
+
+    if isinstance( type_, list ):
+      from_strs = []
+      # Since we are doing LSB for x[0], we need to unpack from the last
+      # element of the list, and then reverse it again to construct a list ...
+      for i in range(len(type_)):
+        end_bit, fs = _gen_from_bits_strs( type_[0], end_bit )
+        from_strs.extend( fs )
+      return end_bit, [ f"[{','.join(reversed(from_strs))}]" ]
+
+    elif is_bitstruct_class( type_ ):
+      if type_ in type_name_mapping:
+        type_name = type_name_mapping[ type_ ]
+      else:
+        type_name = f"_type{len(type_name_mapping)}"
+        type_name_mapping[ type_ ] = type_name
+
+      from_strs = []
+      for name, typ in getattr(type_, _FIELDS).items():
+        end_bit, fs = _gen_from_bits_strs( typ, end_bit )
+        from_strs.extend( fs )
+      return end_bit, [ f"{type_name}({','.join(from_strs)})" ]
+
+    else:
+      if type_ not in type_name_mapping:
+        type_name_mapping[ type_ ] = type_.__name__
+      else:
+        assert type_name_mapping[ type_ ] == type_.__name__
+      start_bit = end_bit - type_.nbits
+      return start_bit, [ f"other[{start_bit}:{end_bit}]" ]
+
+  from_bits_strs = []
+  end_bit = total_nbits
+
+  # This is to make sure we capture two types with the same name but different
+  # attributes
+  type_name_mapping = {}
+  type_count = 0
+
+  for _, type_ in fields.items():
+    end_bit, fs = _gen_from_bits_strs( type_, end_bit )
+    from_bits_strs.extend( fs )
+
+  assert end_bit == 0
+  _globals = { y: x for x,y in type_name_mapping.items() }
+  assert len(_globals) == len(type_name_mapping)
+
+  # TODO add assertion in bits
+  return _create_fn( 'from_bits', [ 'cls', 'other' ],
+                     [ "assert cls.nbits == other.nbits, f'LHS bitstruct {cls.nbits}-bit <> RHS other {other.nbits}-bit'",
+                       "other = other.to_bits()",
+                       f"return cls({','.join(from_bits_strs)})" ], _globals )
 #-------------------------------------------------------------------------
 # _check_valid_array
 #-------------------------------------------------------------------------
@@ -430,7 +608,15 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
       return tuple( [ _convert_list_to_tuple( y ) for y in x ] )
     return x
 
+  reserved_fields = ['to_bits', 'from_bits', 'nbits']
+  for x in reserved_fields:
+    assert x not in cls.__dict__, f"Currently a bitstruct cannot have {reserved_fields}, but "\
+                                  f"{x} is provided as {cls.__dict__[x]}"
+
+
   for a_name, a_type in cls_annotations.items():
+    assert a_name not in reserved_fields, f"Currently a bitstruct cannot have {reserved_fields}, but "\
+                                          f"{a_name} is annotated as {a_type}"
     _check_field_annotation( cls, a_name, a_type )
     fields[ a_name ] = a_type
     hashable_fields[ a_name ] = _convert_list_to_tuple( a_type )
@@ -496,6 +682,16 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   cls.clone = _mk_clone_fn( fields )
 
   cls.__deepcopy__ = _mk_deepcopy_fn( fields )
+
+  # Shunning: add imatmul for assignment, as well as nbits/to_bits/from_bits
+  assert '__imatmul__' not in cls.__dict__ and 'to_bits' not in cls.__dict__ and \
+         'nbits' not in cls.__dict__ and 'from_bits' not in cls.__dict__
+
+  cls.__imatmul__ = _mk_imatmul_fn( fields )
+  cls.nbits, cls.to_bits = _mk_nbits_to_bits_fn( fields )
+
+  from_bits = _mk_from_bits_fns( fields, cls.nbits )
+  cls.from_bits = classmethod(from_bits)
 
   assert not 'get_field_type' in cls.__dict__
 

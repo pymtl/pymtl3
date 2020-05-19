@@ -30,7 +30,7 @@ class NoWriterError( Exception ):
       "\nNet:\n - ".join( [ "\n - ".join( [ repr(x) for x in y ] )
                             for y in nets ]) ) )
 
-class InvalidUpblkWriteError( Exception ):
+class WriteNonSignalError( Exception ):
   """ In update/update_ff, raise when a component is assigned """
   def __init__( self, hostobj, blk, lineno, obj ):
 
@@ -58,9 +58,9 @@ Suggestion: check the declaration of the variables, or fix this assignment.""".f
       repr(hostobj), hostobj.__class__.__name__ )
     )
 
-class InvalidFFAssignError( Exception ):
-  """ In update_ff, raise when signal is not <<= -ed, or temp is not = -ed """
-  def __init__( self, hostobj, blk, lineno, suggestion ):
+class UpdateBlockWriteError( Exception ):
+  """ In update, raise when signal is not @= -ed """
+  def __init__( self, hostobj, blk, op, lineno, suggestion ):
 
     filepath = inspect.getfile( hostobj.__class__ )
     blk_src, base_lineno  = inspect.getsourcelines( blk )
@@ -75,14 +75,66 @@ class InvalidFFAssignError( Exception ):
 In file {}:{} in {}
 
 {} {}
-^^^ In update_ff, we only allow <<= to valid fields for constructing nonblocking assignments.
+^^^ In update, only '@=' statements can assign value to signals, not {}
 (when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: Line {} {}""".format( \
       filepath, error_lineno, blk.__name__,
-      error_lineno, blk_src[ lineno ].lstrip(''),
+      error_lineno, blk_src[ lineno ].lstrip(''), op,
       repr(hostobj), hostobj.__class__.__name__,
       error_lineno, suggestion )
+    )
+
+class UpdateFFBlockWriteError( Exception ):
+  """ In update_ff, raise when signal is not <<= -ed"""
+  def __init__( self, hostobj, blk, op, lineno, suggestion ):
+
+    filepath = inspect.getfile( hostobj.__class__ )
+    blk_src, base_lineno  = inspect.getsourcelines( blk )
+
+    # Shunning: we need to subtract 1 from inspect's lineno when we add it
+    # to base_lineno because it starts from 1!
+    lineno -= 1
+    error_lineno = base_lineno + lineno
+
+    return super().__init__( \
+"""
+In file {}:{} in {}
+
+{} {}
+^^^ In update_ff, only '<<=' statements can assign value to signals, not {}
+(when constructing instance {} of class \"{}\" in the hierarchy)
+
+Suggestion: Line {} {}""".format( \
+      filepath, error_lineno, blk.__name__,
+      error_lineno, blk_src[ lineno ].lstrip(''), op,
+      repr(hostobj), hostobj.__class__.__name__,
+      error_lineno, suggestion )
+    )
+
+class UpdateFFNonTopLevelSignalError( Exception ):
+  """ In update_ff, raise when non-top signal is <<= -ed"""
+  def __init__( self, hostobj, blk, lineno ):
+    filepath = inspect.getfile( hostobj.__class__ )
+    blk_src, base_lineno  = inspect.getsourcelines( blk )
+
+    # Shunning: we need to subtract 1 from inspect's lineno when we add it
+    # to base_lineno because it starts from 1!
+    lineno -= 1
+    error_lineno = base_lineno + lineno
+
+    return super().__init__( \
+"""
+In file {}:{} in {}
+
+{} {}
+^^^ In update_ff, currently only top level signals (not a slice or a subfield) can appear on the left-hand side of '<<='
+(when constructing instance {} of class \"{}\" in the hierarchy)
+""".format( \
+      filepath, error_lineno, blk.__name__,
+      error_lineno, blk_src[ lineno ].lstrip(''),
+      repr(hostobj), hostobj.__class__.__name__,
+      )
     )
 
 class VarNotDeclaredError( Exception ):
@@ -155,6 +207,24 @@ Suggestion: fix incorrect field access at line {}, or fix the declaration somewh
       repr(blk_hostobj), blk_hostobj.__class__.__name__,
       error_lineno ) )
 
+class UnmarkedUpdateOnceError( Exception ):
+  """ In update, raise when signal is not @= -ed """
+  def __init__( self, hostobj, blk, objs ):
+
+    filepath = inspect.getfile( hostobj.__class__ )
+    blk_src, base_lineno  = inspect.getsourcelines( blk )
+    return super().__init__( \
+"""
+In file {}:{} (component {}):
+Since update block {} calls the CL/FL method ports/interfaces below, it should be marked as @update_once
+- {}
+
+Suggestion: Mark update block {} as @update_once""".format( \
+      filepath, base_lineno, repr(hostobj), blk.__name__,
+      "\n- ".join( sorted( [repr(x) for x in objs] ) ),
+      blk.__name__ )
+    )
+
 class UpblkFuncSameNameError( Exception ):
   """ Raise when two update block/function are declared with the same name """
   def __init__( self, name ):
@@ -192,6 +262,12 @@ class InvalidAPICallError( Exception ):
     "{} is only allowed to be called at the top module that .elaborate() "
     "was called on (an instance of {}), but this API call is on {}." \
     .format( api_name, top.__class__, "top."+repr(obj)[2:] ) )
+
+class UnsetMetadataError( Exception ):
+  """ Raised when the value of a given metadata key is not set. """
+  def __init__( self, key, obj ):
+    return super().__init__(
+        f"\nAttempting to retrieve unset metadata {key} from component {obj}!" )
 
 class LeftoverPlaceholderError( Exception ):
   """ Raise upon declaring an update block in a placeholder component. """

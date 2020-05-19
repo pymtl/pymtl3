@@ -1,6 +1,6 @@
 `include "trace.v"
 
-module VRegTrace(
+module test_VRegTrace(
   input  logic          clk,
   input  logic          reset,
   output logic [32-1:0] q,

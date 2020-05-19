@@ -1,6 +1,9 @@
 #=========================================================================
 # Mamba2020Pass.py
 #=========================================================================
+# This pass implements trace breaking techniques and supports non-DAG, so
+# we don't need the old TraceBreaking pass which only supports DAG
+# anymore.
 #
 # Author : Shunning Jiang
 # Date   : Feb 14, 2020
@@ -12,23 +15,20 @@ import py
 
 from pymtl3.datatypes import Bits, is_bitstruct_class
 from pymtl3.dsl import MethodPort
+from pymtl3.dsl.errors import UpblkCyclicError
+from pymtl3.extra.pypy import custom_exec
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
-from pymtl3.utils import custom_exec
 
 from ..sim.DynamicSchedulePass import kosaraju_scc
 from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag
-from ..sim.SimpleTickPass import SimpleTickPass
 from .HeuristicTopoPass import CountBranchesLoops
-from .UnrollTickPass import UnrollTickPass
+from .UnrollSimPass import UnrollSimPass
 
 # _DEBUG = True
 _DEBUG = False
 
-class Mamba2020Pass( BasePass ):
-
-  def __init__( self ):
-    self.meta_block_id = 0
+class Mamba2020Pass( UnrollSimPass ):
 
   def __call__( self, top ):
     if not hasattr( top._dag, "all_constraints" ):
@@ -42,6 +42,7 @@ class Mamba2020Pass( BasePass ):
     # Extract branchiness first
     # Initialize all generated net block to 0 branchiness
 
+    self.meta_block_id = 0
     self.branchiness = { x: 0 for x in top._dag.genblks }
     self.only_loop_at_top = { x: False for x in top._dag.genblks }
     v = CountBranchesLoops()
@@ -70,7 +71,15 @@ class Mamba2020Pass( BasePass ):
 
     self.schedule_intra_cycle( top )
 
-    self.assemble_tick( top )
+    top._sim = PassMetadata()
+    self.create_print_line_trace( top )
+    self.create_sim_cycle_count( top )
+    self.create_lock_unlock_simulation( top )
+    top.lock_in_simulation()
+
+    self.create_sim_eval_comb( top )
+    self.create_sim_tick( top )
+    self.create_sim_reset( top )
 
   #-----------------------------------------------------------------------
   # compile_meta_block
@@ -189,6 +198,7 @@ class Mamba2020Pass( BasePass ):
 
     SCCs, G_new = kosaraju_scc( G, G_T )
 
+    onces = top.get_all_update_once()
     # This function compiles a SCC block
     scc_id = 0 # global id across all sccs
     def compile_scc( i ):
@@ -198,6 +208,14 @@ class Mamba2020Pass( BasePass ):
 
       if len(scc) == 1:
         return list(scc)[0]
+
+      for x in scc:
+        if x in onces:
+          raise UpblkCyclicError("update_once blocks are not allowed to appear in a cycle. \n - " + \
+                          "\n - ".join( [
+                            f"{y.__name__} ({'@update_once' if y in onces else '@update'} " \
+                            f"in 'top.{repr(top.get_update_block_host_component(y))[2:]}')"
+                            for y in scc] ))
 
       scc_id += 1
       if _DEBUG: print( f"{'='*100}\n SCC{scc_id}\n{'='*100}" )
@@ -250,8 +268,9 @@ class Mamba2020Pass( BasePass ):
           variables.update( constraint_objs[ (u, v) ] )
 
       if len(variables) == 0:
-        raise Exception("There is a cyclic dependency without involving variables."
-                        "Probably a loop that involves update_once:\n{}".format(", ".join( [ x.__name__ for x in scc] )))
+        raise UpblkCyclicError("There is a cyclic dependency without involving variables."
+                        "Probably a loop that involves blocks that should be update_once:\n{}"\
+                        .format(", ".join( [ x.__name__ for x in scc] )))
 
       # generate a loop for scc
       # Shunning: we just simply loop over the whole SCC block
@@ -264,7 +283,7 @@ def wrapped_SCC_{0}():
   while True:
     N += 1
     if N > 100:
-      raise Exception("Combinational loop detected at runtime in {{{4}}} after 100 iters!")
+      raise UpblkCyclicError("Combinational loop detected at runtime in {{{4}}} after 100 iters!")
     {1}
     {3}
     {2}
@@ -337,7 +356,7 @@ generated_block = wrapped_SCC_{0}
       cur_meta, cur_br, cur_count = [], 0, 0
       scc_schedule = []
 
-      _globals = { 's': top }
+      _globals = { 's': top, 'UpblkCyclicError': UpblkCyclicError }
       blk_srcs = []
 
       # If there is only 10 blocks, we directly unroll it
@@ -559,55 +578,3 @@ generated_block = wrapped_SCC_{0}
     else:
       for i, meta in enumerate( schedule ):
         top._sched.update_schedule.append( self.compile_meta_block( meta ) )
-
-
-  def assemble_tick( self, top ):
-
-    final_schedule = []
-
-    # call ff blocks first
-    final_schedule.extend( top._sched.schedule_ff )
-
-    # append tracing related work
-
-    if hasattr( top, "_tracing" ):
-      if hasattr( top._tracing, "vcd_func" ):
-        final_schedule.append( top._tracing.vcd_func )
-      if hasattr( top._tracing, "collect_text_sigs" ):
-        final_schedule.append( top._tracing.collect_text_sigs )
-
-    # posedge flip
-    final_schedule.extend( top._sched.schedule_posedge_flip )
-
-    # advance cycle after posedge
-    def generate_advance_sim_cycle( top ):
-      def advance_sim_cycle():
-        top.simulated_cycles += 1
-      return advance_sim_cycle
-    final_schedule.append( generate_advance_sim_cycle(top) )
-
-    # clear cl method flag
-    if hasattr( top, "_tracing" ):
-      if hasattr( top._tracing, "clear_cl_trace" ):
-        final_schedule.append( top._tracing.clear_cl_trace )
-
-    # execute all update blocks
-    final_schedule.extend( top._sched.update_schedule )
-
-    # Generate tick
-    top.tick = UnrollTickPass.gen_tick_function( final_schedule )
-    # reset sim_cycles
-    top.simulated_cycles = 0
-
-    # FIXME update_once?
-    # check if the design has method_port
-    method_ports = top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) )
-
-    if len(method_ports) == 0:
-      # Pure RTL design, add eval_combinational
-      top.eval_combinational = SimpleTickPass.gen_tick_function( top._sched.update_schedule )
-    else:
-      tmp = list(method_ports)[0]
-      def eval_combinational():
-        raise NotImplementedError(f"top is not a pure RTL design. {'top'+repr(tmp)[1:]} is a method port.")
-      top.eval_combinational = eval_combinational

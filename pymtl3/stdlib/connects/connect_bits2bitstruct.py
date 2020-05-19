@@ -8,7 +8,7 @@ has the same width.
 Author : Yanghui Ou
   Date : Feb 24, 2020
 '''
-from pymtl3 import Bits, connect, get_nbits
+from pymtl3 import Bits, connect
 from pymtl3.datatypes.bitstructs import _FIELDS, is_bitstruct_class
 
 #-------------------------------------------------------------------------
@@ -65,8 +65,8 @@ def connect_bits2bitstruct( signal1, signal2 ):
   else:
     assert False, 'Can only connect a bitstruct wire to bits wire'
 
-  bw1 = get_nbits( type1 )
-  bw2 = get_nbits( type2 )
+  bw1 = type1.nbits
+  bw2 = type2.nbits
   assert bw1 == bw2, 'Bitwidth mismatch! ' \
     f'{type1.__qualname__} is {bw1}-bit ' \
     f'but {type2.__qualname__} is {bw2}-bit.'

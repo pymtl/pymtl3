@@ -20,26 +20,28 @@ from pymtl3.dsl.errors import UpblkCyclicError
 
 from ..BasePass import BasePass, PassMetadata
 from ..errors import PassOrderError
+from ..sim.PrepareSimPass import PrepareSimPass
 from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from ..sim.SimpleTickPass import SimpleTickPass
 from ..tracing.CLLineTracePass import CLLineTracePass
-from ..tracing.CollectSignalPass import CollectSignalPass
-from ..tracing.PrintWavePass import PrintWavePass
+from ..tracing.PrintTextWavePass import PrintTextWavePass
 from ..tracing.VcdGenerationPass import VcdGenerationPass
 
-random.seed(0xdeadbeef)
 
 class OpenLoopCLPass( BasePass ):
   def __init__( self, print_line_trace=True ):
-    self.line_trace_on = print_line_trace
+    self.print_line_trace = print_line_trace
 
   def __call__( self, top ):
     if not hasattr( top._dag, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
 
     top._sched = PassMetadata()
+    top._sim   = PassMetadata()
 
     self.schedule_with_top_level_callee( top )
+
+    top.lock_in_simulation()
 
   def schedule_with_top_level_callee( self, top ):
 
@@ -339,9 +341,8 @@ class OpenLoopCLPass( BasePass ):
 
     # Shunning: we call line trace related pass here.
     CLLineTracePass()( top )
-    CollectSignalPass()( top )
     VcdGenerationPass()( top )
-    PrintWavePass()( top )
+    PrintTextWavePass()( top )
 
     # Shunning: we reuse ff and posedge schedules from SimpleSchedulePass
     simple = SimpleSchedulePass()
@@ -349,48 +350,51 @@ class OpenLoopCLPass( BasePass ):
     simple.schedule_posedge_flip( top )
 
     # Currently the tick order is:
-    # [ clear_cl_trace, update, ff, tracing, posedge ]
+    # [ update, ff, tracing, posedge, clear_cl_trace ]
     # in order to avoid ticking for the first cycle.
 
-    schedule = []
-
-    # clear cl method flag
-    schedule.append( top._tracing.clear_cl_trace )
-
-    # execute all update blocks
-    schedule.extend( update_schedule )
+    ffs = [ lambda: False ]
 
     # print trace after all update blocks
     def print_line_trace():
-      print(top.num_cycles_executed, top.__class__.__name__.ljust(15), ':', top.line_trace())
+      print(top._sim.simulated_cycles, top.__class__.__name__.ljust(15), ':', top.line_trace())
 
-    if self.line_trace_on:
-      schedule.append( print_line_trace )
+    if self.print_line_trace:
+      ffs.append( print_line_trace )
 
     # call ff blocks first
-    schedule.extend( top._sched.schedule_ff )
+    ffs.extend( top._sched.schedule_ff )
 
     # append tracing related work
 
-    if hasattr( top, "_tracing" ):
-      if hasattr( top._tracing, "vcd_func" ):
-        schedule.append( top._tracing.vcd_func )
-      if hasattr( top._tracing, "collect_text_sigs" ):
-        schedule.append( top._tracing.collect_text_sigs )
+    if top.has_metadata( VcdGenerationPass.vcd_func ):
+      ffs.append( top.get_metadata( VcdGenerationPass.vcd_func ) )
+
+    if top.has_metadata( PrintTextWavePass.textwave_func ):
+      ffs.append( top.get_metadata( PrintTextWavePass.textwave_func ) )
 
     # posedge flip
-    schedule.extend( top._sched.schedule_posedge_flip )
+    ffs.extend( top._sched.schedule_posedge_flip )
+
+    # clear cl method flag
+    if top.has_metadata( CLLineTracePass.clear_cl_trace_func ):
+      ffs.append( top.get_metadata( CLLineTracePass.clear_cl_trace_func ) )
+
 
     top._sched.new_schedule_index  = 0
     top._sched.orig_schedule_index = 0
 
+    schedule = update_schedule + ffs
 
     # Here we are trying to avoid scanning the original schedule that
     # contains methods because we will need isinstance in that case.
     # As a result we created a preprocessed list for execution and use
     # the dictionary to look up the new index of functions.
 
-    schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]
+    ffs_no_method = [ x for x in ffs if not isinstance(x, CalleePort) ]
+    ups_no_method = [ x for x in update_schedule if not isinstance(x, CalleePort) ]
+
+    schedule_no_method = ups_no_method + ffs_no_method
     mapping = { x : i for i, x in enumerate( schedule_no_method ) }
 
     def wrap_method( top, method,
@@ -410,7 +414,7 @@ class OpenLoopCLPass( BasePass ):
             schedule_no_method[i]()
             i += 1
           i = j = 0
-          top.num_cycles_executed += 1
+          top._sim.simulated_cycles += 1
 
         # We advance from the current point i to the method's position in
         # the schedule without method just to execute those blocks
@@ -448,7 +452,32 @@ class OpenLoopCLPass( BasePass ):
                                 map_next_func,
                                 schedule_no_method,
                                 i )
-    top.num_cycles_executed = 0
 
-    # This is for reset to work correctly
-    top.tick = SimpleTickPass.gen_tick_function( schedule_no_method )
+    top._sim.simulated_cycles = 0
+
+    ff = SimpleTickPass.gen_tick_function( ffs_no_method )
+    up = SimpleTickPass.gen_tick_function( ups_no_method )
+
+    print_line_trace = self.print_line_trace and hasattr( top, 'line_trace' )
+
+    def sim_reset():
+      if print_line_trace:
+        print()
+      top._sim.simulated_cycles += 1
+      top.reset @= Bits1( 1 )
+      up()
+      if print_line_trace:
+        print( f"{top._sim.simulated_cycles:3}r {top.line_trace()}" )
+      ff()
+      top._sim.simulated_cycles += 1
+      up()
+      if print_line_trace:
+        print( f"{top._sim.simulated_cycles:3}r {top.line_trace()}" )
+      ff()
+      top._sim.simulated_cycles += 1
+      top.reset @= Bits1( 0 )
+      up()
+    top.sim_reset = sim_reset
+
+    PrepareSimPass.create_lock_unlock_simulation( top )
+    PrepareSimPass.create_sim_cycle_count( top )

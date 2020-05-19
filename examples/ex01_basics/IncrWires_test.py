@@ -31,9 +31,9 @@ class IncrWires( Component ):
     s.buf2 = Wire( Bits8 )
 
     # UpA writes data to buf1
-    @s.update
+    @update
     def upA():
-      s.buf1 = s.incr_in
+      s.buf1 @= s.incr_in
       s.incr_in += b8(10)
 
     # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -44,14 +44,14 @@ class IncrWires( Component ):
     #; experiment with change all three update blocks to update_on_edge
     #; and observe the change in the line trace.
 
-    @s.update
+    @update
     def upB():
-      s.buf2 = s.buf1 + b8(1)
+      s.buf2 @= s.buf1 + b8(1)
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
     # UpC read data from buf2
-    @s.update
+    @update
     def upC():
       s.incr_out = s.buf2
 
@@ -64,7 +64,7 @@ class IncrWires( Component ):
 
 def test_wires():
   incr = IncrWires()
-  incr.apply( SimulationPass() )
+  incr.apply( DefaultPassGroup(print_line_trace=True) )
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )
@@ -75,6 +75,6 @@ def test_wires():
   # Print out the simulation line trace.
   print( "\n==== Line trace ====" )
   print( "   buf1    buf2")
+  incr.sim_reset()
   for i in range( 6 ):
-    incr.tick()
-    print("{:2}: {}".format( i, incr.line_trace() ))
+    incr.sim_tick()

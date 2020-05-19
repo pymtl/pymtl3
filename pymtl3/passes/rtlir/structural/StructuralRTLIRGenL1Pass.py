@@ -5,23 +5,27 @@
 # Date   : Apr 3, 2019
 """Provide L1 structural RTLIR generation pass."""
 
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3 import MetadataKey
 from pymtl3.passes.PlaceholderConfigs import PlaceholderConfigs
+# from pymtl3.passes.rtlir.RTLIRPass import RTLIRPass
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype.RTLIRType import RTLIRGetter
 
+from .StructuralRTLIRGenL0Pass import StructuralRTLIRGenL0Pass
 from .StructuralRTLIRSignalExpr import gen_signal_expr
 
 
-class StructuralRTLIRGenL1Pass( BasePass ):
+class StructuralRTLIRGenL1Pass( StructuralRTLIRGenL0Pass ):
+
   def __init__( s, inst_conns ):
     s.inst_conns = inst_conns
 
   def __call__( s, tr_top ):
     """ generate structural RTLIR for component `tr_top` """
+    c = s.__class__
     s.tr_top = tr_top
-    if not hasattr( tr_top, "_rtlir_getter" ):
-      tr_top._rtlir_getter = RTLIRGetter(cache=True)
+    if not tr_top.has_metadata( c.rtlir_getter ):
+      tr_top.set_metadata( c.rtlir_getter, RTLIRGetter(cache=True) )
 
     try:
       s._gen_metadata( tr_top )
@@ -30,25 +34,23 @@ class StructuralRTLIRGenL1Pass( BasePass ):
       raise RTLIRConversionError( tr_top, msg )
 
   def _gen_metadata( s, m ):
-
-    # Create namespace
-    if not hasattr( m, '_pass_structural_rtlir_gen' ):
-      m._pass_structural_rtlir_gen = PassMetadata()
-
-    ns = m._pass_structural_rtlir_gen
+    c = s.__class__
 
     # Generate RTLIR types
-    ns.rtlir_type = s.tr_top._rtlir_getter.get_rtlir( m )
+    rtlir_type = s.tr_top.get_metadata( c.rtlir_getter ).get_rtlir( m )
+    m.set_metadata( c.rtlir_type, rtlir_type )
 
     # Generate constants
-    ns.consts = []
-    rtype = ns.rtlir_type
+    consts = []
+    rtype = rtlir_type
     const_types = rtype.get_consts_packed()
     for const_name, const_rtype in const_types:
       assert hasattr(m, const_name), \
         f"Internal error: {const_name} is not a member of {m}"
       const_instance = getattr(m, const_name)
-      ns.consts.append( ( const_name, const_rtype, const_instance ) )
+      consts.append( ( const_name, const_rtype, const_instance ) )
+
+    m.set_metadata( c.consts, consts )
 
     # Sort connections
     m_conns_set   = s.inst_conns[m]
@@ -67,4 +69,6 @@ class StructuralRTLIRGenL1Pass( BasePass ):
                                  "connect_order. Please contact PyMTL developers!"
         ordered_conns[i] = x
 
-    ns.connections = [ (gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])) for x in ordered_conns ]
+    connections = [ (gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])) for x in ordered_conns ]
+
+    m.set_metadata( c.connections, connections )

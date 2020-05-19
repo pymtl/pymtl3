@@ -9,11 +9,8 @@ Author : Shunning Jiang
 """
 
 from pymtl3 import *
-from pymtl3.stdlib.ifcs.GetGiveIfc import GetIfcFL
-from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcFL
-from pymtl3.stdlib.ifcs.SendRecvIfc import SendIfcFL
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcFL
-from pymtl3.stdlib.ifcs.XcelMsg import mk_xcel_msg
+from pymtl3.stdlib.ifcs import GetIfcFL, SendIfcFL, XcelMasterIfcFL, mk_xcel_msg
+from pymtl3.stdlib.mem import MemMasterIfcFL
 
 from .tinyrv0_encoding import RegisterFile, TinyRV0Inst, disassemble_inst
 
@@ -40,13 +37,13 @@ class ProcFL( Component ):
     s.R = RegisterFile(32)
     s.raw_inst = None
 
-    @s.update
+    @update_once
     def up_ProcFL():
       if s.reset:
         s.PC = b32( 0x200 )
         return
 
-      s.commit_inst = Bits1( 0 )
+      s.commit_inst @= 0
 
       try:
         s.raw_inst = s.imem.read( s.PC, 4 ) # line trace
@@ -123,7 +120,7 @@ class ProcFL( Component ):
         print( "Unexpected error at PC={:0>8s}!".format( str(s.PC) ) )
         raise
 
-      s.commit_inst = b1( 1 )
+      s.commit_inst @= 1
 
   #-----------------------------------------------------------------------
   # line_trace

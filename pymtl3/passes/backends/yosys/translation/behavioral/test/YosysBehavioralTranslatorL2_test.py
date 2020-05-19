@@ -18,6 +18,7 @@ from ....testcases import (
     CaseIfBoolOpInForStmtComp,
     CaseIfDanglingElseInnerComp,
     CaseIfDanglingElseOutterComp,
+    CaseIfExpBothImplicitComp,
     CaseIfExpInForStmtComp,
     CaseIfExpUnaryOpInForStmtComp,
     CaseIfTmpVarInForStmtComp,
@@ -35,7 +36,7 @@ def run_test( case, m ):
   m.apply( BehavioralRTLIRTypeCheckPass( m ) )
 
   visitor = YosysBehavioralRTLIRToVVisitorL2(lambda x: x in verilog_reserved)
-  upblks = m._pass_behavioral_rtlir_gen.rtlir_upblks
+  upblks = m.get_metadata( BehavioralRTLIRGenPass.rtlir_upblks )
   m_all_upblks = m.get_update_blocks()
   assert len(m_all_upblks) == 1
 
@@ -54,6 +55,7 @@ def run_test( case, m ):
       CaseNestedIfComp,
       CaseForRangeLowerUpperStepPassThroughComp,
       CaseIfExpInForStmtComp,
+      CaseIfExpBothImplicitComp,
       CaseIfBoolOpInForStmtComp,
       CaseIfTmpVarInForStmtComp,
       CaseFixedSizeSliceComp,

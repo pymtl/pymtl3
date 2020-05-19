@@ -24,18 +24,18 @@ from pymtl3.passes.backends.verilog.test.TranslationImport_stdlib_test import (
     test_pipe_Bits,
 )
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator
 
-from ..TranslationImportPass import TranslationImportPass
+from ..YosysTranslationImportPass import YosysTranslationImportPass
 
 
 def local_do_test( _m ):
   try:
     _m.elaborate()
     # Mark component `_m` as to be translated and imported
-    _m.yosys_translate_import = True
-    m = TranslationImportPass()( _m )
-    sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
+    _m.set_metadata( YosysTranslationImportPass.enable, True )
+    m = YosysTranslationImportPass()( _m )
+    sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
     sim.run_test()
   finally:
     try:

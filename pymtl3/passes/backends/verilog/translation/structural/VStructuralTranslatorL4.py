@@ -5,15 +5,16 @@
 
 from textwrap import dedent
 
-from pymtl3 import Placeholder
 from pymtl3.passes.backends.generic.structural.StructuralTranslatorL4 import (
     StructuralTranslatorL4,
 )
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRGetter
 from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.rtlir.RTLIRPass import RTLIRPass
 
 from ...util.utility import make_indent, pretty_concat
+from ...VerilogPlaceholder import VerilogPlaceholder
 from .VStructuralTranslatorL3 import VStructuralTranslatorL3
 
 
@@ -30,12 +31,15 @@ class VStructuralTranslatorL4(
   def rtlir_tr_subcomp_port_decl( s, m, c_id, c_rtype, c_array_type, port_id,
       port_rtype, port_dtype, port_array_type ):
     obj = c_rtype.obj
-    if hasattr( obj, 'config_placeholder' ):
-      pmap = obj.config_placeholder.get_port_map()
+    if obj.has_metadata(s._placeholder_pass.placeholder_config):
+      pmap = obj.get_metadata(s._placeholder_pass.placeholder_config).get_port_map()
     else:
       pmap= lambda x: x
+    direction = port_rtype.get_direction()
+    if direction == 'input':
+      direction += ' '
     return {
-        'direction' : port_rtype.get_direction(),
+        'direction' : direction,
         'data_type' : port_dtype['data_type'],
         'packed_type' : port_dtype['packed_type'],
         'id' : port_id,
@@ -50,16 +54,19 @@ class VStructuralTranslatorL4(
       ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_array_type ):
     if isinstance( port_rtype, rt.Port ):
       obj = c_rtype.obj
-      if hasattr( obj, 'config_placeholder' ):
-        pmap = obj.config_placeholder.get_port_map()
+      if obj.has_metadata(s._placeholder_pass.placeholder_config):
+        pmap = obj.get_metadata(s._placeholder_pass.placeholder_config).get_port_map()
       else:
         pmap = lambda x: x
       vname = f'{ifc_id}__{port_id}'
       pyname = vname.replace('__', '.')
       ph_id = vname if pmap(pyname) == pyname else pmap(pyname)
       port_dtype = s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
+      direction = port_rtype.get_direction()
+      if direction == 'input':
+        direction += ' '
       return [{
-          'direction' : port_rtype.get_direction(),
+          'direction' : direction,
           'data_type' : port_dtype['data_type'],
           'packed_type' : port_dtype['packed_type'],
           'id' : vname,
@@ -129,11 +136,11 @@ class VStructuralTranslatorL4(
         attr = c_id + ''.join(f'[{dim}]' for dim in _n_dim)
         obj = eval(f'm.{attr}')
         # Get the translated component name
-        obj_c_rtype = s.tr_top._rtlir_getter.get_rtlir(obj)
+        obj_c_rtype = s.tr_top.get_metadata(RTLIRPass.rtlir_getter).get_rtlir(obj)
         _c_name = s.rtlir_tr_component_unique_name(obj_c_rtype)
 
-        if isinstance(obj, Placeholder):
-          c_name = obj.config_placeholder.pickled_top_module
+        if isinstance(obj, VerilogPlaceholder):
+          c_name = obj.get_metadata( s._placeholder_pass.placeholder_config ).pickled_top_module
         else:
           c_name = _c_name
 

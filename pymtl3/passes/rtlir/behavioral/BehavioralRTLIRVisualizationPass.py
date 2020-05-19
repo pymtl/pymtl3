@@ -13,6 +13,7 @@ from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
+from .BehavioralRTLIRGenL1Pass import BehavioralRTLIRGenL1Pass
 
 
 class BehavioralRTLIRVisualizationPass( BasePass ):
@@ -21,7 +22,7 @@ class BehavioralRTLIRVisualizationPass( BasePass ):
 
     for blk in model.get_update_blocks():
       visitor.init( blk.__name__ )
-      visitor.visit( model._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
+      visitor.visit( model.get_metadata( BehavioralRTLIRGenL1Pass.rtlir_upblks )[ blk ] )
       visitor.dump()
 
 class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
@@ -149,6 +150,16 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
       s.g.edge( str(local_cur), str(s.cur+1), label = 'values[{idx}]'.format(idx = i) )
       s.visit( f )
 
+  def visit_Truncate( s, node ):
+    s.cur += 1
+    local_cur = s.cur
+    table_body = '<TR><TD COLSPAN="2">Truncate</TD></TR> <TR><TD>nbits</TD><TD>{nbits}</TD></TR>'
+    table_opt = s.gen_table_opt( node )
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(nbits=s.get_str(node.nbits))
+    s.g.node( str( s.cur ), label = label )
+    s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
+    s.visit( node.value )
+
   def visit_ZeroExt( s, node ):
     s.cur += 1
     local_cur = s.cur
@@ -227,19 +238,6 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     s.visit( node.op )
     s.g.edge( str(local_cur), str(s.cur+1), label = 'operand' )
     s.visit( node.operand )
-
-  def visit_BoolOp( s, node ):
-    s.cur += 1
-    local_cur = s.cur
-    table_body = '<TR><TD COLSPAN="2">BoolOp</TD></TR>'
-    table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail)
-    s.g.node( str( s.cur ), label = label )
-    s.g.edge( str(local_cur), str(s.cur+1), label = 'op' )
-    s.visit( node.op )
-    for i, f in enumerate(node.values):
-      s.g.edge( str(local_cur), str(s.cur+1), label = 'values[{idx}]'.format(idx = i) )
-      s.visit( f )
 
   def visit_BinOp( s, node ):
     s.cur += 1
@@ -356,14 +354,6 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     label = (s.table_header + table_body + table_opt + s.table_trail)
     s.g.node( str( s.cur ), label = label )
 
-  def visit_Not( s, node ):
-    s.cur += 1
-    local_cur = s.cur
-    table_body = '<TR><TD COLSPAN="2">Not</TD></TR>'
-    table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail)
-    s.g.node( str( s.cur ), label = label )
-
   def visit_UAdd( s, node ):
     s.cur += 1
     local_cur = s.cur
@@ -376,22 +366,6 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     s.cur += 1
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">USub</TD></TR>'
-    table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail)
-    s.g.node( str( s.cur ), label = label )
-
-  def visit_And( s, node ):
-    s.cur += 1
-    local_cur = s.cur
-    table_body = '<TR><TD COLSPAN="2">And</TD></TR>'
-    table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail)
-    s.g.node( str( s.cur ), label = label )
-
-  def visit_Or( s, node ):
-    s.cur += 1
-    local_cur = s.cur
-    table_body = '<TR><TD COLSPAN="2">Or</TD></TR>'
     table_opt = s.gen_table_opt( node )
     label = (s.table_header + table_body + table_opt + s.table_trail)
     s.g.node( str( s.cur ), label = label )
