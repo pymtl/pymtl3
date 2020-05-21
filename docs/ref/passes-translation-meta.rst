@@ -4,20 +4,20 @@ Translation Pass Metadata Reference
 Verilog translation pass
 ------------------------
 
-.. autoclass:: pymtl3.passes.backends.verilog.translation.TranslationPass.TranslationPass
+.. autoclass:: pymtl3.passes.backends.verilog.translation.VerilogTranslationPass.VerilogTranslationPass
 
    .. automethod:: __init__
    .. automethod:: __call__
 
 Here are the available input and output metadata of the Verilog translation pass:
 
-.. autoclass:: pymtl3.passes.backends.verilog.translation.TranslationPass.TranslationPass
+.. autoclass:: pymtl3.passes.backends.verilog.translation.VerilogTranslationPass.VerilogTranslationPass
    :members:
 
 Yosys translation pass
 ----------------------
 
-.. autoclass:: pymtl3.passes.backends.yosys.translation.TranslationPass.TranslationPass
+.. autoclass:: pymtl3.passes.backends.yosys.translation.YosysTranslationPass.YosysTranslationPass
 
    .. automethod:: __init__
    .. automethod:: __call__

@@ -75,8 +75,8 @@ A simulatable PyMTL component hierarchy must not have placeholders. We provide
 import passes to replace the placeholders in the hierarchy with simulatable components.
 For Verilog external modules, two passes need to be applied on the top-level component
 so that the hierarchy is simulatable: `pymtl3.passes.backends.verilog.VerilogPlaceholderPass`
-and `pymtl3.passes.backends.verilog.TranslationImportPass`. Both have been included when
-you do `from pymtl3 import *`.
+and `pymtl3.passes.backends.verilog.VerilogTranslationImportPass`. Both have been included when
+you do `from pymtl3.passes.backends.verilog import *`.
 
 Example: import a PyMTL RTL component
 -------------------------------------
@@ -110,10 +110,11 @@ and apply the necessary import passes on it:
 
 ::
 
+    >>> from pymtl3.passes.backends.verilog import *
     >>> m = FullAdder()
     >>> m.elaborate()
     >>> m.apply( VerilogPlaceholderPass() )
-    >>> m = TranslationImportPass()( m )
+    >>> m = VerilogTranslationImportPass()( m )
 
 Now `m` is a simulatable component hierarchy! Let's try to feed in data through its ports...
 
@@ -167,9 +168,10 @@ to set up metadata to tell the translation-import pass to translate the full add
 
 ::
 
-    >>> m.set_metadata( TranslationImportPass.enable, True )
+    >>> from pymtl3.passes.backends.verilog import *
+    >>> m.set_metadata( VerilogTranslationImportPass.enable, True )
     >>> m.apply( VerilogPlaceholderPass() )
-    >>> m = TranslationImportPass()( m )
+    >>> m = VerilogTranslationImportPass()( m )
 
 Now we have a simulatable hierarchy backed by the translated Verilog full adder! You can
 find the translation result `FullAdder_no_param__pickled.v` under the current working
@@ -192,9 +194,9 @@ Advanced Verilog import
 -----------------------
 
 These import features make use of options offered by `VerilogPlaceholderPass` and
-`VerilatorImportPass`. In general, the options related to the Verilog module and
+`VerilogVerilatorImportPass`. In general, the options related to the Verilog module and
 source files are class attributes of `VerilogPlaceholderPass`; the options
-related to Verilator and C++ simulator compilation are class attributes of `VerilatorImportPass`.
+related to Verilator and C++ simulator compilation are class attributes of `VerilogVerilatorImportPass`.
 
 While technically PyMTL is able to import any Verilatable Verilog design, code that conforms to
 certain rules can be imported much easier. For example, "pickled" designs are easier to import
@@ -366,9 +368,9 @@ coverage (`--coverage`), line coverage (`--coverage-line`), and toggle coverage 
       def construct( s ):
         # interface declaration here
         ...
-        s.set_metadata( VerilatorImportPass.vl_coverage, True )
-        s.set_metadata( VerilatorImportPass.vl_line_coverage, True )
-        s.set_metadata( VerilatorImportPass.vl_toggle_coverage, True )
+        s.set_metadata( VerilogVerilatorImportPass.vl_coverage, True )
+        s.set_metadata( VerilogVerilatorImportPass.vl_line_coverage, True )
+        s.set_metadata( VerilogVerilatorImportPass.vl_toggle_coverage, True )
 
 How to suppress certian Verilator warnings?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -384,10 +386,10 @@ warning. `vl_Wno_list` takes a list of warning names to be suppressed.
       def construct( s ):
         # interface declaration here
         ...
-        s.set_metadata( VerilatorImportPass.vl_W_lint, False )
-        s.set_metadata( VerilatorImportPass.vl_W_style, False )
-        s.set_metadata( VerilatorImportPass.vl_W_fatal, False )
-        s.set_metadata( VerilatorImportPass.vl_Wno_list, [ 'MODDUP' ] )
+        s.set_metadata( VerilogVerilatorImportPass.vl_W_lint, False )
+        s.set_metadata( VerilogVerilatorImportPass.vl_W_style, False )
+        s.set_metadata( VerilogVerilatorImportPass.vl_W_fatal, False )
+        s.set_metadata( VerilogVerilatorImportPass.vl_Wno_list, [ 'MODDUP' ] )
 
 How to dump VCD from the Verilator-Python co-simulation?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -422,7 +424,7 @@ enable Verilog line trace like this
       def construct( s ):
         # interface declaration here
         ...
-        s.set_metadata( VerilatorImportPass.vl_line_trace, True )
+        s.set_metadata( VerilogVerilatorImportPass.vl_line_trace, True )
 
 Is it possible to add source files, include paths, or flags to the C compiler?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -430,7 +432,7 @@ Is it possible to add source files, include paths, or flags to the C compiler?
 .. note:: This feature has not been thoroughly tested.
 
 If your Verilog simulation requires external C sources, include paths, or flags,
-you can specify them through the following options provided by `VerilatorImportPass`:
+you can specify them through the following options provided by `VerilogVerilatorImportPass`:
 `c_flags` (string), `c_include_path` (a list of paths), `c_srcs` (a list of paths),
 `ld_flags` (string), `ld_libs` (string).
 

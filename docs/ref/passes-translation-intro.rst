@@ -77,9 +77,9 @@ implemented:
 
 To translate a component, it must have metadata that enables the
 translation pass and the translation pass needs to be applied on it. The following code
-shows how these can be done. The name ``TranslationPass``, which refers to the Verilog
+shows how these can be done. The name ``VerilogTranslationPass``, which refers to the Verilog
 translation pass, has already been included previously when we did
-``from pymtl3 import *``. Note that you can set metadata of a component anytime after
+``from pymtl3.passes.backends.verilog import *``. Note that you can set metadata of a component anytime after
 that object has been created, but you should only apply the translation pass after it
 has been elaborated.
 
@@ -87,10 +87,11 @@ has been elaborated.
 
 ::
 
+    >>> from pymtl3.passes.backends.verilog import *
     >>> m = FullAdder()
     >>> m.elaborate()
-    >>> m.set_metadata( TranslationPass.enable, True )
-    >>> m.apply( TranslationPass() )
+    >>> m.set_metadata( VerilogTranslationPass.enable, True )
+    >>> m.apply( VerilogTranslationPass() )
 
 After that you should be able to inspect the translated Verilog code in the current
 working directory.
@@ -125,7 +126,7 @@ enforces an explicit name on the translation result of `m`
 
 ::
 
-    m.set_metadata( TranslationPass.explicit_module_name, 'FooModule' )
+    m.set_metadata( VerilogTranslationPass.explicit_module_name, 'FooModule' )
 
 Use an explicit name for the translated .v file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -137,7 +138,7 @@ enforces an explicit file name on the translated .v file
 
 ::
 
-    m.set_metadata( TranslationPass.explicit_file_name, 'FooModule.v' )
+    m.set_metadata( VerilogTranslationPass.explicit_file_name, 'FooModule.v' )
 
 You can use an absolute path to dump the translation result to places
 other than the current working directory.
@@ -156,10 +157,10 @@ translation pass to generate the appropriate Verilog code
 
 ::
 
-    m.set_metadata( TranslationPass.no_synthesis, True )
+    m.set_metadata( VerilogTranslationPass.no_synthesis, True )
 
 Also, since PyMTL3 assumes each component has implicit `clk` and `reset` pins, you can
-set `TranslationPass.no_synthesis_no_clk` and `TranslationPass.no_synthesis_no_reset` to
+set `VerilogTranslationPass.no_synthesis_no_clk` and `VerilogTranslationPass.no_synthesis_no_reset` to
 `True` to remove the `clk` and `reset` pins from the module itnerfae during synthesis.
 
 Common Verilog translation questions

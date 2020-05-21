@@ -4,20 +4,20 @@ Import Pass Metadata Reference
 Verilog import pass
 -------------------
 
-.. autoclass:: pymtl3.passes.backends.verilog.import_.VerilatorImportPass.VerilatorImportPass
+.. autoclass:: pymtl3.passes.backends.verilog.import_.VerilogVerilatorImportPass.VerilogVerilatorImportPass
 
    .. automethod:: __init__
    .. automethod:: __call__
 
 Here are the available input and output metadata of the Verilog import pass:
 
-.. autoclass:: pymtl3.passes.backends.verilog.import_.VerilatorImportPass.VerilatorImportPass
+.. autoclass:: pymtl3.passes.backends.verilog.import_.VerilogVerilatorImportPass.VerilogVerilatorImportPass
    :members:
 
 Yosys import pass
 -----------------
 
-.. autoclass:: pymtl3.passes.backends.yosys.import_.VerilatorImportPass.VerilatorImportPass
+.. autoclass:: pymtl3.passes.backends.yosys.import_.YosysVerilatorImportPass.YosysVerilatorImportPass
 
    .. automethod:: __init__
    .. automethod:: __call__
