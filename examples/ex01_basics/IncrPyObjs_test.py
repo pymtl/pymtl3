@@ -46,7 +46,7 @@ class IncrPyObjs( Component ):
     s.buf2 = Buffer()
 
     # UpA writes data to buf1
-    @s.update
+    @update
     def upA():
       s.buf1.write( s.incr_in )
       s.incr_in += b8(10)
@@ -57,7 +57,7 @@ class IncrPyObjs( Component ):
     #; The upB update block should read data from buf1, increment it by
     #; one, and write the result to buf2 using method calls.
 
-    @s.update
+    @update
     def upB():
       tmp = s.buf1.read()
       s.buf2.write( tmp + b8(1) )
@@ -65,7 +65,7 @@ class IncrPyObjs( Component ):
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
     # UpC reads data from buf2
-    @s.update
+    @update
     def upC():
       s.incr_out = s.buf2.read()
 
@@ -92,17 +92,17 @@ class IncrPyObjs( Component ):
 
 def test_py_objs():
   incr = IncrPyObjs()
-  incr.apply( SimpleSim )
+  incr.apply( DefaultPassGroup() )
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )
-  for blk in incr._sched.schedule:
+  for blk in incr._sched.update_schedule:
     if not blk.__name__.startswith('s'):
       print( blk.__name__ )
 
   # Print out the simulation line trace.
   print( "\n==== Line trace ====" )
   print( "   buf1    buf2")
+  incr.sim_reset()
   for i in range( 6 ):
-    incr.tick()
-    print("{:2}: {}".format( i, incr.line_trace() ))
+    incr.sim_tick()

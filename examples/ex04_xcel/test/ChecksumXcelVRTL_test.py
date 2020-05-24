@@ -8,7 +8,7 @@ Author : Yanghui Ou
   Date : June 14, 2019
 """
 from pymtl3 import *
-from pymtl3.passes.yosys import TranslationImportPass
+from pymtl3.passes.backends.yosys import YosysTranslationImportPass
 
 from ..ChecksumXcelRTL import ChecksumXcelRTL
 from .ChecksumXcelCL_test import mk_xcel_transaction
@@ -29,12 +29,12 @@ def checksum_xcel_vrtl( words ):
 
   # Translate the checksum unit and import it back in using the yosys
   # backend
-  dut.yosys_translate_import = True
-  dut = TranslationImportPass()( dut )
+  dut.set_metadata( YosysTranslationImportPass.enable, True )
+  dut = YosysTranslationImportPass()( dut )
 
   # Create a simulator
   dut.elaborate()
-  dut.apply( SimulationPass )
+  dut.apply( DefaultPassGroup() )
   dut.sim_reset()
 
   reqs, _ = mk_xcel_transaction( words )
@@ -42,24 +42,24 @@ def checksum_xcel_vrtl( words ):
   for req in reqs:
 
     # Wait until xcel is ready to accept a request
-    dut.xcel.resp.rdy = b1(1)
+    dut.xcel.resp.rdy @= 1
     while not dut.xcel.req.rdy:
-      dut.xcel.req.en   = b1(0)
-      dut.tick()
+      dut.xcel.req.en @= 0
+      dut.sim_tick()
 
     # Send a request
-    dut.xcel.req.en  = b1(1)
-    dut.xcel.req.msg = req
-    dut.tick()
+    dut.xcel.req.en  @= 1
+    dut.xcel.req.msg @= req
+    dut.sim_tick()
 
     # Wait for response
     while not dut.xcel.resp.en:
-      dut.xcel.req.en = b1(0)
-      dut.tick()
+      dut.xcel.req.en @= 0
+      dut.sim_tick()
 
     # Get the response message
     resp_data = dut.xcel.resp.msg.data
-    dut.tick()
+    dut.sim_tick()
 
   return resp_data
 
@@ -88,21 +88,25 @@ class ChecksumXcelVRTLSrcSink_Tests( BaseTests ):
 
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()
-    th.dut.yosys_translate_import = True
-    th = TranslationImportPass()( th )
+    th.dut.set_metadata( YosysTranslationImportPass.enable, True )
+    th = YosysTranslationImportPass()( th )
 
     # Create a simulator
-    th.apply( SimulationPass )
-    ncycles = 0
-    th.sim_reset()
-    print( "" )
+    th.apply( DefaultPassGroup() )
 
     # Tick the simulator
-    print("{:3}: {}".format( ncycles, th.line_trace() ))
-    while not th.done() and ncycles < max_cycles:
-      th.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, th.line_trace() ))
+    while not th.done() and th.sim_cycle_count() < max_cycles:
+      th.sim_tick()
 
     # Check timeout
-    assert ncycles < max_cycles
+    assert th.sim_cycle_count() < max_cycles
+
+#-------------------------------------------------------------------------
+# Test translation script
+#-------------------------------------------------------------------------
+
+def test_proc_xcel_translate():
+  import os
+  from os.path import dirname
+  script_path = dirname(dirname(__file__)) + '/proc-xcel-translate'
+  os.system(f'python {script_path} --xcel cksum')

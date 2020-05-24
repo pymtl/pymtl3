@@ -13,9 +13,9 @@ from hypothesis import strategies as st
 
 from pymtl3 import *
 from pymtl3.datatypes import strategies as pm_st
-from pymtl3.stdlib.cl.queues import BypassQueueCL
+from pymtl3.stdlib.queues import BypassQueueCL
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 
 from ..ChecksumCL import ChecksumCL
 from ..ChecksumFL import checksum
@@ -32,8 +32,8 @@ from ..utils import b128_to_words, words_to_b128
 class WrappedChecksumCL( Component ):
 
   def construct( s, DutType=ChecksumCL ):
-    s.recv = NonBlockingCalleeIfc( Bits128 )
-    s.give = NonBlockingCalleeIfc( Bits32  )
+    s.recv = CalleeIfcCL( Type=Bits128 )
+    s.give = CalleeIfcCL( Type=Bits32  )
 
     s.checksum_unit = DutType()
     s.out_q = BypassQueueCL( num_entries=1 )
@@ -56,19 +56,20 @@ def checksum_cl( words ):
   # Create a simulator
   dut = WrappedChecksumCL()
   dut.elaborate()
-  dut.apply( SimulationPass )
+  dut.apply( DefaultPassGroup() )
+  dut.sim_reset()
 
   # Wait until recv ready
   while not dut.recv.rdy():
-    dut.tick()
+    dut.sim_tick()
 
   # Call recv on dut
   dut.recv( words_to_b128( words ) )
-  dut.tick()
+  dut.sim_tick()
 
   # Wait until dut is ready to give result
   while not dut.give.rdy():
-    dut.tick()
+    dut.sim_tick()
 
   return dut.give()
 
@@ -113,7 +114,7 @@ class ChecksumCL_Tests( BaseTests ):
   #; example, change the update block in the CL implementation to be
   #; something like this:
   #;
-  #;   @s.update
+  #;   @update
   #;   def up_checksum_cl():
   #;     if s.pipe.enq.rdy() and s.in_q.deq.rdy():
   #;       bits = s.in_q.deq()
@@ -189,21 +190,15 @@ class ChecksumCLSrcSink_Tests:
   def run_sim( s, th, max_cycles=1000 ):
 
     # Create a simulator
-    th.elaborate()
-    th.apply( SimulationPass )
-    ncycles = 0
+    th.apply( DefaultPassGroup() )
     th.sim_reset()
-    print( "" )
 
     # Tick the simulator
-    print("{:3}: {}".format( ncycles, th.line_trace() ))
-    while not th.done() and ncycles < max_cycles:
-      th.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, th.line_trace() ))
+    while not th.done() and th.sim_cycle_count() < max_cycles:
+      th.sim_tick()
 
     # Check timeout
-    assert ncycles < max_cycles
+    assert th.sim_cycle_count() < max_cycles
 
   #-----------------------------------------------------------------------
   # test_srcsink_simple
@@ -278,7 +273,7 @@ class ChecksumCLSrcSink_Tests:
     sink_init  = st.integers( 0, 10 ),
     sink_intv  = st.integers( 0, 3  ),
   )
-  @hypothesis.settings( deadline=None, max_examples=16 )
+  @hypothesis.settings( deadline=None, max_examples=50 )
   def test_srcsink_hypothesis( s, input_msgs, src_init, src_intv, sink_init, sink_intv ):
     src_msgs  = [ words_to_b128( words ) for words in input_msgs ]
     sink_msgs = [ checksum( words ) for words in input_msgs ]

@@ -6,19 +6,25 @@ DataStruct_test.py
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
-from pymtl3.datatypes import Bits16, Bits32
+from pymtl3.datatypes import Bits16, Bits32, bitstruct
+from pymtl3.dsl.ComponentLevel1 import update
+from pymtl3.dsl.ComponentLevel2 import update_ff
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
-from pymtl3.dsl.errors import MultiWriterError, NoWriterError
+from pymtl3.dsl.errors import (
+    MultiWriterError,
+    NoWriterError,
+    UpdateFFBlockWriteError,
+    UpdateFFNonTopLevelSignalError,
+)
 
 from .sim_utils import simple_sim_pass
 
 
+@bitstruct
 class SomeMsg:
-
-  def __init__( s, a=0, b=0 ):
-    s.a = int(a)
-    s.b = Bits32(b)
+  a: Bits32
+  b: Bits32
 
 def _test_model( cls ):
   A = cls()
@@ -83,11 +89,11 @@ def test_rd_A_b_wr_A_impl():
     def construct( s ):
       s.A  = Wire( SomeMsg )
 
-      @s.update
+      @update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A @= SomeMsg( 12, 123 )
 
-      @s.update
+      @update
       def up_rd_A_b():
         assert s.A.a == 12 and s.A.b == 123
 
@@ -100,13 +106,13 @@ def test_wr_A_b_wr_A_conflict():
     def construct( s ):
       s.A  = Wire( SomeMsg )
 
-      @s.update
+      @update
       def up_wr_A_b():
-        s.A.b = Bits32( 123 )
+        s.A.b @= Bits32( 123 )
 
-      @s.update
+      @update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A @= SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -122,11 +128,11 @@ def test_wr_A_b_rd_A_impl():
     def construct( s ):
       s.A  = Wire( SomeMsg )
 
-      @s.update
+      @update
       def up_wr_A_b():
-        s.A.b = 123
+        s.A.b @= 123
 
-      @s.update
+      @update
       def up_rd_A():
         z = s.A
 
@@ -139,15 +145,15 @@ def test_wr_A_b_rd_A_rd_A_b_can_schedule():
     def construct( s ):
       s.A  = Wire( SomeMsg )
 
-      @s.update
+      @update
       def up_wr_A_b():
-        s.A.b = Bits32( 123 )
+        s.A.b @= Bits32( 123 )
 
-      @s.update
+      @update
       def up_rd_A():
         z = s.A
 
-      @s.update
+      @update
       def up_rd_A_b():
         assert s.A.b == 123
 
@@ -160,15 +166,15 @@ def test_wr_A_rd_fields_can_schedule():
     def construct( s ):
       s.A  = Wire( SomeMsg )
 
-      @s.update
+      @update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A @= SomeMsg( 12, 123 )
 
-      @s.update
+      @update
       def up_rd_A_a():
         assert s.A.a == 12
 
-      @s.update
+      @update
       def up_rd_A_b():
         assert s.A.b == 123
 
@@ -181,15 +187,15 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
     def construct( s ):
       s.A  = Wire( SomeMsg )
 
-      @s.update
+      @update
       def up_wr_A_b():
-        s.A.b = Bits32( 123 )
+        s.A.b @= Bits32( 123 )
 
-      @s.update
+      @update
       def up_rd_A():
         z = s.A
 
-      @s.update
+      @update
       def up_rd_A_a():
         assert s.A.a == 12
 
@@ -214,11 +220,11 @@ def test_connect_rd_A_b_wr_x_conn_A_impl():
 
       connect( s.x, s.A )
 
-      @s.update
+      @update
       def up_wr_x():
-        s.x = SomeMsg( 12, 123 )
+        s.x @= SomeMsg( 12, 123 )
 
-      @s.update
+      @update
       def up_rd_A_b():
         assert s.A.b == 123
 
@@ -235,9 +241,9 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 
       connect( s.x, s.A )
 
-      @s.update
+      @update
       def up_wr_A_b():
-        s.A.b = Bits32( 123 )
+        s.A.b @= Bits32( 123 )
 
   _test_model( Top )
 
@@ -253,11 +259,11 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 
       # s.x |= s.A
 
-      # @s.update
+      # @update
       # def up_wr_A_b():
         # s.A.b = Bits32( 123 )
 
-      # @s.update
+      # @update
       # def up_wr_x_b():
         # s.x.a = 12
 
@@ -274,13 +280,13 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
       connect( s.x, s.A )
 
-      @s.update
+      @update
       def up_wr_A_b():
-        s.A.b = Bits32( 123 )
+        s.A.b @= Bits32( 123 )
 
-      @s.update
+      @update
       def up_wr_x():
-        s.x = SomeMsg( 12, 123 )
+        s.x @= SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -300,11 +306,11 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
 
       connect( s.A.b, s.x )
 
-      @s.update
+      @update
       def up_wr_x():
-        s.x = Bits32( 123 )
+        s.x @= Bits32( 123 )
 
-      @s.update
+      @update
       def up_rd_A():
         z = s.A
 
@@ -321,13 +327,13 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
       connect( s.A.b, s.x )
 
-      @s.update
+      @update
       def up_wr_x():
-        s.x = Bits32( 123 )
+        s.x @= Bits32( 123 )
 
-      @s.update
+      @update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A @= SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -347,11 +353,11 @@ def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
 
       connect( s.A.b, s.x )
 
-      @s.update
+      @update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A @= SomeMsg( 12, 123 )
 
-      @s.update
+      @update
       def up_rd_x():
         z = s.x
 
@@ -370,13 +376,13 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
       connect( s.A.b, s.x )
       connect( s.A,   s.y )
 
-      @s.update
+      @update
       def up_wr_x():
-        s.x = Bits32( 123 )
+        s.x @= Bits32( 123 )
 
-      @s.update
+      @update
       def up_wr_y():
-        s.y = SomeMsg( 12, 123 )
+        s.y @= SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -398,13 +404,13 @@ def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
       connect( s.A.b, s.x )
       connect( s.A,   s.y )
 
-      @s.update
+      @update
       def up_wr_x():
-        s.x = Bits32( 123 )
+        s.x @= Bits32( 123 )
 
-      @s.update
+      @update
       def up_rd_y():
-        z = s.y
+        assert s.y == SomeMsg( 0, 123 )
 
   _test_model( Top )
 
@@ -421,13 +427,13 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
       connect( s.A.b, s.x )
       connect( s.A,   s.y )
 
-      @s.update
+      @update
       def up_rd_x():
         z = s.x
 
-      @s.update
+      @update
       def up_wr_y():
-        s.y = SomeMsg( 12, 123 )
+        s.y @= SomeMsg( 12, 123 )
 
   _test_model( Top )
 
@@ -445,29 +451,29 @@ def test_iterative_find_nets():
       connect( s.x.a, s.y.a ) # net2
       connect( s.y, s.z ) # net3
 
-      @s.update
+      @update
       def up_wr_s_w():
-        s.w = SomeMsg( 12, 123 )
+        s.w @= SomeMsg( 12, 123 )
 
   _test_model( Top )
 
 def test_deep_connections():
 
+  @bitstruct
   class Msg1:
-    def __init__( s, a=0, b=0 ):
-      s.a = int( a )
-      s.b = Bits32( b )
+    a: Bits16
+    b: Bits32
 
+  @bitstruct
   class Msg2:
-    def __init__( s, a=Msg1(), b=Msg1() ):
-      s.p = a
-      s.q = b
+    p: Msg1
+    q: Msg1
 
+  @bitstruct
   class Msg3:
-    def __init__( s, a=Msg1(), b=Msg2(), c=0 ):
-      s.x = a
-      s.y = b
-      s.z = int( c )
+    x: Msg1
+    y: Msg2
+    z: Bits16
 
   class Top( ComponentLevel3 ):
     def construct( s ):
@@ -477,23 +483,23 @@ def test_deep_connections():
       s.y  = Wire( Msg2 )
       s.z  = Wire( Msg3 )
 
-      s.w  = Wire( int )
+      s.w  = Wire( 16 )
 
       connect( s.A.y.p, s.x )
       connect( s.A.z,   s.w )
       connect( s.A,     s.z )
 
-      @s.update
+      @update
       def up_z():
         yy = s.z
 
-      @s.update
+      @update
       def up_rd_x():
         zz = s.x
 
-      @s.update
+      @update
       def up_wr_y():
-        s.w = Msg2( 12, 123 )
+        s.w @= Msg2( 12, 123 )
 
   try:
     _test_model( Top )
@@ -504,9 +510,9 @@ def test_deep_connections():
 
 def test_struct_with_list_of_bits():
 
+  @bitstruct
   class B:
-    def __init__( s, foo=42 ):
-      s.foo = [ Bits32( foo ) for _ in range(5) ]
+    foo: [ Bits32 ] * 5
 
   class A( ComponentLevel3 ):
     def construct( s ):
@@ -520,14 +526,14 @@ def test_struct_with_list_of_bits():
 
 def test_nested_struct_2d_array_index():
 
+  @bitstruct
   class C:
-    def __init__( s, bar=42 ):
-      s.bar = Bits16(bar)
+    bar: Bits16
 
+  @bitstruct
   class B:
-    def __init__( s, foo=0, bar=42 ):
-      s.foo = Bits32(foo)
-      s.bar = [ [ C() for _ in range(5) ] for _ in range(5) ]
+    foo: Bits32
+    bar: [ [C]*5 ] * 5
 
   class A( ComponentLevel3 ):
     def construct( s ):
@@ -537,8 +543,41 @@ def test_nested_struct_2d_array_index():
       connect( s.struct.bar[1][4], s.out )
       connect( s.struct.bar[1][4].bar, s.out2 )
 
+      s.wire = Wire( B )
+      @update_ff
+      def ffs():
+        s.wire.bar <<= 1
+
   a = A()
-  a.elaborate()
-  print(a.struct.__dict__)
-  print(a.struct.bar[1][4].__dict__)
-  print(a.struct.bar[1][4].bar._dsl.__dict__)
+  try:
+    a.elaborate()
+  except UpdateFFNonTopLevelSignalError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown UpdateFFNonTopLevelSignalError.")
+
+# TODO better error message?
+def test_ff_cannot_write_to_struct_field():
+
+  @bitstruct
+  class C:
+    bar: Bits16
+
+  @bitstruct
+  class B:
+    foo: Bits32
+    bar: [ [C]*5 ] * 5
+
+  class A( ComponentLevel3 ):
+    def construct( s ):
+      s.wire = Wire( B )
+      @update_ff
+      def ffs():
+        s.wire.bar <<= 1
+
+  try:
+    _test_model( A )
+  except UpdateFFNonTopLevelSignalError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown UpdateFFNonTopLevelSignalError.")

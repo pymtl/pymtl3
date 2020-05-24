@@ -41,12 +41,18 @@ class SeqUpblk( BaseBehavioralRTLIR ):
     return True
 
 class Assign( BaseBehavioralRTLIR ):
-  def __init__( s, target, value ):
-    s.target = target
+  def __init__( s, targets, value, blocking ):
+    s.targets = targets
     s.value = value
+    s.blocking = blocking
 
   def __eq__( s, other ):
-    return isinstance(other, Assign) and s.target == other.target and s.value == other.value
+    if not isinstance(other, Assign) or s.value != other.value or s.blocking != other.blocking:
+      return False
+    for x, y in zip( s.targets, other.targets ):
+      if x != y:
+        return False
+    return True
 
 class If( BaseBehavioralRTLIR ):
   def __init__( s, cond, body, orelse ):
@@ -99,6 +105,14 @@ class Concat( BaseBehavioralRTLIR ):
       if x != y:
         return False
     return True
+
+class Truncate( BaseBehavioralRTLIR ):
+  def __init__( s, nbits, value ):
+    s.nbits = nbits
+    s.value = value
+
+  def __eq__( s, other ):
+    return isinstance(other, Truncate) and s.nbits == other.nbits and s.value == other.value
 
 class ZeroExt( BaseBehavioralRTLIR ):
   def __init__( s, nbits, value ):
@@ -162,19 +176,6 @@ class UnaryOp( BaseBehavioralRTLIR ):
   def __eq__( s, other ):
     return isinstance(other, UnaryOp) and s.op == other.op and s.operand == other.operand
 
-class BoolOp( BaseBehavioralRTLIR ):
-  def __init__( s, op, values ):
-    s.op = op
-    s.values = values
-
-  def __eq__( s, other ):
-    if not isinstance(other, BoolOp) or s.op != other.op:
-      return False
-    for x, y in zip( s.values, other.values ):
-      if x != y:
-        return False
-    return True
-
 class BinOp( BaseBehavioralRTLIR ):
   def __init__( s, left, op, right ):
     s.left = left
@@ -210,13 +211,15 @@ class Index( BaseBehavioralRTLIR ):
     return isinstance(other, Index) and s.value == other.value and s.idx == other.idx
 
 class Slice( BaseBehavioralRTLIR ):
-  def __init__( s, value, lower, upper ):
+  def __init__( s, value, lower, upper, base = None, size = None ):
     s.value = value
     s.lower = lower
     s.upper = upper
+    s.base = base
+    s.size = size
 
   def __eq__( s, other ):
-    return isinstance(other, Slice) and s.value == other.value and s.lower == other.lower and s.upper == other.upper
+    return isinstance(other, Slice) and s.value == other.value and s.lower == other.lower and s.upper == other.upper and s.base == other.base and s.size == other.size
 
 class Base( BaseBehavioralRTLIR ):
   def __init__( s, base ):
@@ -258,19 +261,10 @@ class LoopVarDecl( BaseBehavioralRTLIR ):
 class Invert( BaseBehavioralRTLIR ):
   pass
 
-class Not( BaseBehavioralRTLIR ):
-  pass
-
 class UAdd( BaseBehavioralRTLIR ):
   pass
 
 class USub( BaseBehavioralRTLIR ):
-  pass
-
-class And( BaseBehavioralRTLIR ):
-  pass
-
-class Or( BaseBehavioralRTLIR ):
   pass
 
 class Add( BaseBehavioralRTLIR ):

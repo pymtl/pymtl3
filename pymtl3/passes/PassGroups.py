@@ -1,82 +1,65 @@
+from .autotick.OpenLoopCLPass import OpenLoopCLPass
+from .BasePass import BasePass
+from .sim.DynamicSchedulePass import DynamicSchedulePass
+from .sim.GenDAGPass import GenDAGPass
+from .sim.PrepareSimPass import PrepareSimPass
+from .sim.SimpleSchedulePass import SimpleSchedulePass
+from .sim.SimpleTickPass import SimpleTickPass
+from .sim.WrapGreenletPass import WrapGreenletPass
+from .tracing.CLLineTracePass import CLLineTracePass
+from .tracing.LineTraceParamPass import LineTraceParamPass
+from .tracing.PrintTextWavePass import PrintTextWavePass
+from .tracing.VcdGenerationPass import VcdGenerationPass
 
-from pymtl3.dsl import Component
 
-from .CLLineTracePass import CLLineTracePass
-from .DynamicSchedulePass import DynamicSchedulePass
-from .GenDAGPass import GenDAGPass
-from .LineTraceParamPass import LineTraceParamPass
-from .mamba.HeuristicTopoPass import HeuristicTopoPass
-from .mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
-from .mamba.UnrollTickPass import UnrollTickPass
-from .OpenLoopCLPass import OpenLoopCLPass
-from .SimpleSchedulePass import SimpleSchedulePass
-from .SimpleTickPass import SimpleTickPass
-from .VcdGenerationPass import VcdGenerationPass
-from .WrapGreenletPass import WrapGreenletPass
+# SimpleSim can be used when the UDG is a DAG
+class SimpleSimPass( BasePass ):
+  def __call__( s, top ):
+    LineTraceParamPass()( top )
+    GenDAGPass()( top )
+    WrapGreenletPass()( top )
+    SimpleSchedulePass()( top )
+    CLLineTracePass()( top )
+    VcdGenerationPass()( top )
+    PrintTextWavePass()( top )
 
-SimpleSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  WrapGreenletPass(),
-  SimpleSchedulePass(),
-  CLLineTracePass(),
-  # VcdGenerationPass(),
-  SimpleTickPass(),
-  LineTraceParamPass(),
-  Component.lock_in_simulation
-]
+    PrepareSimPass(print_line_trace=True)( top )
 
-DynamicSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  WrapGreenletPass(),
-  DynamicSchedulePass(),
-  CLLineTracePass(),
-  SimpleTickPass(),
-  Component.lock_in_simulation
-]
+class DefaultPassGroup( BasePass ):
+  def __init__( s, *, vcd_file_name=None, textwave=False,
+                      print_line_trace=True, reset_active_high=True ):
 
-# This pass is created to be used for 2019 isca tutorial.
-SimulationPass = [
-  GenDAGPass(),
-  WrapGreenletPass(),
-  DynamicSchedulePass(),
-  CLLineTracePass(),
-  VcdGenerationPass(),
-  SimpleTickPass(),
-  Component.lock_in_simulation
-]
+    s.vcd_file_name = vcd_file_name
+    s.textwave = textwave
+    s.print_line_trace = print_line_trace
+    s.reset_active_high = reset_active_high
 
-OpenLoopCLSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  OpenLoopCLPass(), # Inject this pass to build infrastructure
-  SimpleSchedulePass(), # Still generate schedule and tick
-  # TODO: make OpenLoopCLPass work with CLLineTracePass
-  SimpleTickPass(),
-  Component.lock_in_simulation
-]
+  def __call__( s, top ):
 
-UnrollSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  WrapGreenletPass(),
-  SimpleSchedulePass(),
-  UnrollTickPass(),
-  Component.lock_in_simulation
-]
+    if s.vcd_file_name:
+      top.set_metadata( VcdGenerationPass.vcd_file_name, dump_vcd )
 
-HeuTopoUnrollSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  HeuristicTopoPass(),
-  UnrollTickPass(),
-  Component.lock_in_simulation
-]
+    if s.textwave:
+      top.set_metadata( PrintTextWavePass.enable, True )
 
-TraceBreakingSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  TraceBreakingSchedTickPass(),
-  Component.lock_in_simulation
-]
+    LineTraceParamPass()( top )
+    GenDAGPass()( top )
+    WrapGreenletPass()( top )
+    CLLineTracePass()( top )
+    DynamicSchedulePass()( top )
+    VcdGenerationPass()( top )
+    PrintTextWavePass()( top )
+
+    PrepareSimPass(print_line_trace=s.print_line_trace,
+                   reset_active_high=s.reset_active_high)( top )
+
+class AutoTickSimPass( BasePass ):
+  def __init__( s, print_line_trace=True ):
+    s.print_line_trace = print_line_trace
+
+  def __call__( s, top ):
+    top.elaborate()
+    GenDAGPass()( top )
+    WrapGreenletPass()( top )
+    OpenLoopCLPass( s.print_line_trace )( top )
+    top.lock_in_simulation()

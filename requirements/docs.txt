@@ -1,0 +1,4 @@
+# Documentation dependencies
+sphinx
+sphinx-prompt
+sphinx-rtd-theme

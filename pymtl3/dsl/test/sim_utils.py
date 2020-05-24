@@ -8,10 +8,12 @@ Author : Shunning Jiang
 Date   : Jan 1, 2018
 """
 import random
-from collections import defaultdict, deque
+from collections import defaultdict
 
 import py.code
 
+from pymtl3.datatypes import Bits1
+from pymtl3.datatypes.bitstructs import get_bitstruct_inst_all_classes
 from pymtl3.dsl.ComponentLevel1 import ComponentLevel1
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
@@ -20,10 +22,11 @@ from pymtl3.dsl.ComponentLevel5 import ComponentLevel5
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6
 from pymtl3.dsl.ComponentLevel7 import ComponentLevel7
 from pymtl3.dsl.Connectable import (
+    BlockingIfc,
     Const,
     Interface,
     MethodPort,
-    NonBlockingInterface,
+    NonBlockingIfc,
     Signal,
 )
 from pymtl3.dsl.errors import (
@@ -36,7 +39,7 @@ from pymtl3.dsl.Placeholder import Placeholder
 
 
 def simple_sim_pass( s, seed=0xdeadbeef ):
-  #  random.seed( seed )
+  random.seed( 1 )
   assert isinstance( s, ComponentLevel1 )
 
   if not hasattr( s._dsl, "all_U_U_constraints" ):
@@ -55,7 +58,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   gen_upblk_writes = {}
 
   if isinstance( s, ComponentLevel2 ):
-    all_update_on_edge = set( s._dsl.all_update_on_edge )
+    all_update_ff = set( s._dsl.all_update_ff )
 
     if isinstance( s, ComponentLevel3 ):
       nets = s.get_all_value_nets()
@@ -65,27 +68,37 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         readers = [ x for x in signals if x is not writer ]
 
         fanout  = len( readers )
-        wstr    = repr(writer)
-        rstrs   = [ repr(x) for x in readers ]
 
-        upblk_name = "{}__{}".format(repr(writer), fanout)\
+        upblk_name = f"{writer!r}__{fanout}" \
                         .replace( ".", "_" ).replace( ":", "_" ) \
                         .replace( "[", "_" ).replace( "]", "" ) \
-                        .replace( "(", "_" ).replace( ")", "" )
+                        .replace( "(", "_" ).replace( ")", "" ) \
+                        .replace( ",", "_" )
 
-        src = """
-        def {0}():
-          common_writer = {1}
-          {2}
-        _recent_blk = {0}
-        """.format( upblk_name, wstr, "; ".join(
-                    [ "{} = common_writer".format( x ) for x in rstrs ] ) )
-        exec(py.code.Source( src ).compile(), locals(), globals())
+        rstrs    = [ f"{x!r} @= _w" for x in readers ] # THIS IS SLOW, NOW WE CAN HAVE BETTER MECHANISM
+        _globals = { 's': s }
 
-        all_upblks.add( _recent_blk )
+        if isinstance( writer, Const ) and type(writer._dsl.const) is not int:
+          types = get_bitstruct_inst_all_classes( writer._dsl.const )
+
+          for t in types:
+            if t.__name__ in _globals:
+              assert t is _globals[ t.__name__ ], "Cannot handle two subfields with the same struct name but different structs"
+            _globals[ t.__name__ ] = t
+
+        src = f"""
+        def {upblk_name}():
+          _w = {writer!r}
+          {"; ".join(rstrs)}
+        """
+        _locals = {}
+        exec(py.code.Source( src ).compile(), _globals, _locals)
+
+        _recent_blk = _locals[upblk_name]
 
         # Collect read/writer metadata, directly insert them into _all_X
 
+        all_upblks.add( _recent_blk )
         gen_upblk_reads [ _recent_blk ] = [ writer ]
         gen_upblk_writes[ _recent_blk ] = readers
 
@@ -169,19 +182,19 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         x = x.get_parent_object()
 
       # Check the sibling slices. Cover 3)
-      for x in obj.get_sibling_slices():
-        if x.slice_overlap( obj ) and x in write_upblks:
-          writers.append( x )
+      if obj.is_signal():
+        for x in obj.get_sibling_slices():
+          if x.slice_overlap( obj ) and x in write_upblks:
+            writers.append( x )
 
       # Add all constraints
       for writer in writers:
         for wr_blk in write_upblks[ writer ]:
-          for rd_blk in rd_blks:
-            if wr_blk != rd_blk:
-              if rd_blk in all_update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-              else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+          if wr_blk not in all_update_ff:
+            for rd_blk in rd_blks:
+              if wr_blk != rd_blk:
+                if rd_blk not in all_update_ff:
+                  impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
     # Collect all objs that read the variable whose id is "write"
     # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -202,20 +215,19 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
       # Add all constraints
       for wr_blk in wr_blks:
-        for reader in readers:
-          for rd_blk in read_upblks[ reader ]:
-            if wr_blk != rd_blk:
-              if rd_blk in all_update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-              else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+        if wr_blk not in all_update_ff:
+          for reader in readers:
+            for rd_blk in read_upblks[ reader ]:
+              if wr_blk != rd_blk:
+                if rd_blk not in all_update_ff:
+                  impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
-    all_constraints = expl_constraints.copy()
+    all_constraints = { *expl_constraints }
     for (x, y) in impl_constraints:
       if (y, x) not in expl_constraints: # no conflicting expl
         all_constraints.add( (x, y) )
   else:
-    all_constraints = expl_constraints.copy()
+    all_constraints = { *expl_constraints }
 
   #-----------------------------------------------------------------------
   # Process method constraints
@@ -244,7 +256,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, NonBlockingInterface ):
+        elif isinstance( call, (NonBlockingIfc, BlockingIfc) ):
           method_blks[ call.method.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
@@ -266,7 +278,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       # We allow the user to call the interface directly in a non-blocking
       # interface, so if they do call it, we use the actual method within
       # the method field
-      elif isinstance( x, NonBlockingInterface ):
+      elif isinstance( x, (NonBlockingIfc, BlockingIfc) ):
         xx = x.method.method
 
       else:
@@ -275,7 +287,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       if   isinstance( y, MethodPort ):
         yy = y.method
 
-      elif isinstance( y, NonBlockingInterface ):
+      elif isinstance( y, (NonBlockingIfc, BlockingIfc) ):
         yy = y.method.method
 
       else:
@@ -290,7 +302,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
     for method, assoc_blks in method_blks.items():
       visited = {  (method, 0)  }
-      Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
+      Q = [ (method, 0) ] # -1: pred, 0: don't know, 1: succ
 
       if verbose: print()
       while Q:
@@ -380,9 +392,31 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                 visited.add( (v, 1) )
                 Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
 
-  # Construct the graph
+
+  def make_double_buffer_func( s ):
+
+    strs = [ f"{repr(x)}._flip()" for x in s._dsl.all_signals if x._dsl.needs_double_buffer ]
+
+    if not strs:
+      def no_double_buffer():
+        pass
+      return no_double_buffer
+
+
+    src = """
+    def double_buffer():
+      {}
+    """.format( "\n      ".join(strs) )
+    local = locals()
+    exec(py.code.Source( src ).compile(), local)
+    return local['double_buffer']
+
+  # Construct the graph for update blocks
 
   vs  = all_upblks
+  if isinstance( s, ComponentLevel2 ):
+    vs -= all_update_ff
+
   es  = defaultdict(list)
   InD = { v:0 for v in vs }
 
@@ -393,7 +427,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   # Perform topological sort for a serial schedule.
 
   serial_schedule = []
-  Q = deque( [ v for v in vs if not InD[v] ] )
+  Q = [ v for v in vs if not InD[v] ]
   while Q:
     random.shuffle(Q)
     #  print Q
@@ -410,7 +444,15 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       '* Please consult update dependency graph for details.'
     )
 
-  assert serial_schedule, "No update block found in the model"
+
+  if isinstance( s, ComponentLevel2 ):
+    final_serial_schedule = list(all_update_ff)
+    final_serial_schedule.append( make_double_buffer_func( s ) )
+    final_serial_schedule.extend( serial_schedule )
+  else:
+    final_serial_schedule = serial_schedule
+
+  assert final_serial_schedule, "No update block found in the model"
 
   if verbose:
     from graphviz import Digraph
@@ -429,26 +471,40 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     dot.render( "/tmp/upblk-dag.gv", view=True )
 
   def tick_normal():
-    for blk in serial_schedule:
+    for blk in final_serial_schedule:
       blk()
   s.tick = tick_normal
-  s._dsl.schedule = serial_schedule
+  s._dsl.schedule = final_serial_schedule
 
   # Clean up Signals
 
   def cleanup_signals( m ):
     if isinstance( m, list ):
       for i, o in enumerate( m ):
-        if   isinstance( o, Signal ): m[i] = o.default_value()
-        elif isinstance( o, Const ):  m[i] = o.const
-        else:                         cleanup_signals( o )
+        if isinstance( o, Signal ):
+          m[i] = o.default_value()
+          m[i] <<= o.default_value()
+        else:
+          cleanup_signals( o )
 
     elif isinstance( m, NamedObject ):
       for name, obj in m.__dict__.items():
-        if ( isinstance( name, str ) and not name.startswith("_") ) \
-          or isinstance( name, tuple ):
-          if   isinstance( obj, Signal ): setattr( m, name, obj.default_value() )
-          elif isinstance( obj, Const ):  setattr( m, name, obj.const )
-          else:                           cleanup_signals( obj )
+        if isinstance( name, str ) and name[0] != '_':
+          if   isinstance( obj, Signal ):
+            value = obj.default_value()
+            value <<= obj.default_value()
+            setattr( m, name, value )
+          else:
+            cleanup_signals( obj )
 
   cleanup_signals( s )
+
+  def create_reset( top ):
+    def reset():
+      top.reset = Bits1(1)
+      top.tick()
+      top.tick()
+      top.reset = Bits1(0)
+    return reset
+
+  s.sim_reset = create_reset( s )

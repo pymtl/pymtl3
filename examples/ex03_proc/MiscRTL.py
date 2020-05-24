@@ -8,15 +8,15 @@ Author : Shunning Jiang
   Date : June 13, 2019
 """
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
-from pymtl3.stdlib.rtl import RegRst
+from pymtl3.stdlib.ifcs import GetIfcRTL, GiveIfcRTL
+from pymtl3.stdlib.basic_rtl import RegRst
 
 from .TinyRV0InstRTL import *
 
 # State Constants
 
-SNOOP = Bits1(0)
-WAIT  = Bits1(1)
+SNOOP = 0
+WAIT  = 1
 
 #-------------------------------------------------------------------------
 # DropUnit
@@ -28,53 +28,50 @@ WAIT  = Bits1(1)
 
 class DropUnitRTL( Component ):
 
-  def construct( s, Type ):
+  def construct( s, dtype ):
 
-    s.drop = InPort( Bits1 )
-    s.in_  = RecvIfcRTL( Type )
-    s.out  = SendIfcRTL( Type )
+    s.drop = InPort()
+    s.in_  = GetIfcRTL( dtype )
+    s.out  = GiveIfcRTL( dtype )
 
-    s.in_.msg //= s.out.msg
+    s.out.ret //= s.in_.ret
 
-    s.snoop_state = RegRst( Bits1, reset_value=0 )
+    s.snoop_state = Wire()
 
-    @s.update
+    #------------------------------------------------------------------
+    # state_transitions
+    #------------------------------------------------------------------
+
+    @update_ff
     def state_transitions():
-      curr_state = s.snoop_state.out
 
-      s.snoop_state.in_ = curr_state
+      if s.reset:
+        s.snoop_state <<= SNOOP
 
-      if s.snoop_state.out == SNOOP:
-        # we wait if we haven't received the response yet
-        if s.drop & (~s.out.rdy | ~s.in_.en):
-          s.snoop_state.in_ = WAIT
+      elif s.snoop_state == SNOOP:
+        if s.drop & ~s.in_.rdy:
+          s.snoop_state <<= WAIT
 
-      elif s.snoop_state.out == WAIT:
-        # we are done waiting if the response arrives
-        if s.in_.en:
-          s.snoop_state.in_ = SNOOP
+      elif s.snoop_state == WAIT:
+        if s.in_.rdy:
+          s.snoop_state <<= SNOOP
 
-    @s.update
-    def state_output_val():
-      if   s.snoop_state.out == SNOOP:
-        s.out.en = s.in_.en & ~s.drop # if in is enabled, s.in_.rdy and s.out.rdy must be True
+    #------------------------------------------------------------------
+    # set_outputs
+    #------------------------------------------------------------------
 
-      elif s.snoop_state.out == WAIT:
-        s.out.en = b1(0)
+    @update
+    def set_outputs():
+      s.out.rdy @= 0
+      s.in_.en  @= 0
 
-      else:
-        s.out.en = b1(0)
+      if   s.snoop_state == SNOOP:
+        s.out.rdy @= s.in_.rdy & ~s.drop
+        s.in_.en  @= s.out.en
 
-    @s.update
-    def state_output_rdy():
-      if   s.snoop_state.out == SNOOP:
-        s.in_.rdy = s.out.rdy
-
-      elif s.snoop_state.out == WAIT:
-        s.in_.rdy = b1(1)
-
-      else:
-        s.in_.rdy = b1(1)
+      elif s.snoop_state == WAIT:
+        s.out.rdy @= 0
+        s.in_.en  @= s.in_.rdy
 
 #-------------------------------------------------------------------------
 # Generate intermediate (imm) based on type
@@ -85,30 +82,29 @@ class ImmGenRTL( Component ):
   # Interface
 
   def construct( s ):
-    dtype = mk_bits( 32 )
 
-    s.imm_type = InPort( Bits3 )
-    s.inst     = InPort( dtype )
-    s.imm      = OutPort( dtype )
+    s.imm_type = InPort( 3 )
+    s.inst     = InPort( 32 )
+    s.imm      = OutPort( 32 )
 
-    @s.update
+    @update
     def up_immgen():
-      s.imm = dtype(0)
+      s.imm @= 0
 
       # Always sext!
-      if   s.imm_type == b3(0): # I-type
-        s.imm = concat( sext( s.inst[ I_IMM ], 32 ) )
+      if   s.imm_type == 0: # I-type
+        s.imm @= concat( sext( s.inst[ I_IMM ], 32 ) )
 
-      elif s.imm_type == b3(2): # B-type
-        s.imm = concat( sext( s.inst[ B_IMM3 ], 20 ),
-                                    s.inst[ B_IMM2 ],
-                                    s.inst[ B_IMM1 ],
-                                    s.inst[ B_IMM0 ],
-                                    Bits1( 0 ) )
+      elif s.imm_type == 2: # B-type
+        s.imm @= concat( sext( s.inst[ B_IMM3 ], 20 ),
+                               s.inst[ B_IMM2 ],
+                               s.inst[ B_IMM1 ],
+                               s.inst[ B_IMM0 ],
+                               b1( 0 ) )
 
-      elif s.imm_type == b3(1): # S-type
-        s.imm = concat( sext( s.inst[ S_IMM1 ], 27 ),
-                              s.inst[ S_IMM0 ] )
+      elif s.imm_type == 1: # S-type
+        s.imm @= concat( sext( s.inst[ S_IMM1 ], 27 ),
+                               s.inst[ S_IMM0 ] )
 
 #-------------------------------------------------------------------------
 # ALU
@@ -117,35 +113,34 @@ class ImmGenRTL( Component ):
 class AluRTL( Component ):
 
   def construct( s, nbits=32 ):
-    dtype = mk_bits( nbits )
 
-    s.in0      = InPort ( dtype )
-    s.in1      = InPort ( dtype )
-    s.fn       = InPort ( Bits4 )
+    s.in0      = InPort ( nbits )
+    s.in1      = InPort ( nbits )
+    s.fn       = InPort ( 4 )
 
-    s.out      = OutPort( dtype )
-    s.ops_ne   = OutPort( Bits1 )
+    s.out      = OutPort( nbits )
+    s.ops_ne   = OutPort()
 
-    @s.update
+    @update
     def comb_logic():
-      if   s.fn == b4(0): s.out = s.in0               # COPY OP0
-      elif s.fn == b4(1): s.out = s.in1               # COPY OP1
-      elif s.fn == b4(2): s.out = s.in0 + s.in1       # ADD
-      elif s.fn == b4(3): s.out = s.in0 << s.in1[0:5] # SLL
-      elif s.fn == b4(4): s.out = s.in0 >> s.in1[0:5] # SRL
+      if   s.fn == 0: s.out @= s.in0               # COPY OP0
+      elif s.fn == 1: s.out @= s.in1               # COPY OP1
+      elif s.fn == 2: s.out @= s.in0 + s.in1       # ADD
+      elif s.fn == 3: s.out @= s.in0 << zext(s.in1[0:5], 32) # SLL
+      elif s.fn == 4: s.out @= s.in0 >> zext(s.in1[0:5], 32) # SRL
 
       # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''
       # Implement AND in the ALU
       # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
       #; Add code to implement a bitwise-and operation for in0 and in1.
 
-      elif s.fn == b4(5): s.out = s.in0 & s.in1       # AND
+      elif s.fn == 5: s.out @= s.in0 & s.in1       # AND
 
       # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
-      else:               s.out = dtype(0)            # Unknown
+      else:           s.out @= 0            # Unknown
 
-      s.ops_ne = s.in0 != s.in1
+      s.ops_ne @= s.in0 != s.in1
 
   def line_trace( s ):
     op_dict = { 0:" +", 1:"c0", 2:"c1", 3:"<< ", 4:" &"}

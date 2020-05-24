@@ -7,35 +7,19 @@
 
 import ast
 
-from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 
 from . import BehavioralRTLIR as bir
-from .BehavioralRTLIRGenL1Pass import BehavioralRTLIRGeneratorL1
+from .BehavioralRTLIRGenL1Pass import (
+    BehavioralRTLIRGeneratorL1,
+    BehavioralRTLIRGenL1Pass,
+)
 
 
-class BehavioralRTLIRGenL2Pass( BasePass ):
-  def __call__( s, m ):
-    """ generate RTLIR for all upblks of m"""
-    if not hasattr( m, '_pass_behavioral_rtlir_gen' ):
-      m._pass_behavioral_rtlir_gen = PassMetadata()
-
-    m._pass_behavioral_rtlir_gen.rtlir_upblks = {}
-    visitor = BehavioralRTLIRGeneratorL2( m )
-    upblks = {
-      'CombUpblk' : list(m.get_update_blocks() - m.get_update_on_edge()),
-      'SeqUpblk'  : list(m.get_update_on_edge())
-    }
-    # Sort the upblks by their name
-    upblks['CombUpblk'].sort( key = lambda x: x.__name__ )
-    upblks['SeqUpblk'].sort( key = lambda x: x.__name__ )
-
-    for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
-      for blk in upblks[ upblk_type ]:
-        visitor._upblk_type = upblk_type
-        m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] = \
-          visitor.enter( blk, m.get_update_block_ast( blk ) )
+class BehavioralRTLIRGenL2Pass( BehavioralRTLIRGenL1Pass ):
+  def get_rtlir_generator_class( s ):
+    return BehavioralRTLIRGeneratorL2
 
 class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
   def __init__( s, component ):
@@ -46,9 +30,14 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     # opmap maps an ast operator to its RTLIR counterpart.
     s.opmap = {
       # Bool operators
-      ast.And    : bir.And(),       ast.Or     : bir.Or(),
+      # Note: we do not support boolean operators because Python does
+      # not allow overloading And and Or operators. Using them in
+      # expressions might lead to inconsistent semantics.
+      # ast.And    : bir.And(),       ast.Or     : bir.Or(),
       # Unary operators
-      ast.Invert : bir.Invert(),    ast.Not    : bir.Not(),
+      # Note: ast.Not is disallowed because it is a boolean operator
+      # ast.Not    : bir.Not(),
+      ast.Invert : bir.Invert(),
       ast.UAdd   : bir.UAdd(),      ast.USub   : bir.USub(),
       # Binary operators
       ast.Add    : bir.Add(),       ast.Sub    : bir.Sub(),
@@ -62,6 +51,17 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       ast.Lt     : bir.Lt(),        ast.LtE    : bir.LtE(),
       ast.Gt     : bir.Gt(),        ast.GtE    : bir.GtE()
     }
+
+  def get_blocking( s, node, bir_node ):
+    has_tmpvar = any(isinstance(n, bir.TmpVar) for n in bir_node.targets)
+    all_tmpvar = all(isinstance(n, bir.TmpVar) for n in bir_node.targets)
+    if has_tmpvar and not all_tmpvar:
+      raise PyMTLSyntaxError( s.blk, node,
+        'all targets have to be tmpvars if any target on LHS is a tmpvar!' )
+    if has_tmpvar:
+      return True
+    else:
+      return super().get_blocking(node, bir_node)
 
   def visit_Call( s, node ):
     obj = s.get_call_obj( node )
@@ -164,19 +164,22 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     return ret
 
   def visit_BoolOp( s, node ):
-    if not type(node.op) in s.opmap:
-      raise PyMTLSyntaxError( s.blk, node,
-        'Operator ' + str( node.op ) + ' is not supported!' )
-    op  = s.opmap[ type( node.op ) ]
-    op.ast = node.op
+    raise PyMTLSyntaxError( s.blk, node,
+        'Boolean operations are not translatable due to inconsistent semantics '
+        'between Python and PyMTL. Please consider using bitwise &, |, and ~ instead!')
+    # if not type(node.op) in s.opmap:
+    #   raise PyMTLSyntaxError( s.blk, node,
+    #     'Operator ' + str( node.op ) + ' is not supported!' )
+    # op  = s.opmap[ type( node.op ) ]
+    # op.ast = node.op
 
-    values = []
-    for value in node.values:
-      values.append( s.visit( value ) )
+    # values = []
+    # for value in node.values:
+    #   values.append( s.visit( value ) )
 
-    ret = bir.BoolOp( op, values )
-    ret.ast = node
-    return ret
+    # ret = bir.BoolOp( op, values )
+    # ret.ast = node
+    # return ret
 
   def visit_BinOp( s, node ):
     left  = s.visit( node.left )
@@ -194,7 +197,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     if not type(node.op) in s.opmap:
       raise PyMTLSyntaxError( s.blk, node,
         'Operator ' + str( node.op ) + ' is not supported!' )
-    op  = s.opmap[ type( node.op ) ]
+    op = s.opmap[ type( node.op ) ]
     op.ast = node.op
     operand = s.visit( node.operand )
     ret = bir.UnaryOp( op, operand )

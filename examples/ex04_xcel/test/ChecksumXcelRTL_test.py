@@ -24,7 +24,7 @@ def checksum_xcel_rtl( words ):
   # Create a simulator using RTL accelerator
   dut = ChecksumXcelRTL()
   dut.elaborate()
-  dut.apply( SimulationPass )
+  dut.apply( DefaultPassGroup() )
   dut.sim_reset()
 
   reqs, _ = mk_xcel_transaction( words )
@@ -32,24 +32,23 @@ def checksum_xcel_rtl( words ):
   for req in reqs:
 
     # Wait until xcel is ready to accept a request
-    dut.xcel.resp.rdy = b1(1)
+    dut.xcel.resp.rdy @= 1
     while not dut.xcel.req.rdy:
-      dut.xcel.req.en   = b1(0)
-      dut.tick()
+      dut.xcel.req.en @= 0
+      dut.sim_tick()
 
     # Send a request
-    dut.xcel.req.en  = b1(1)
-    dut.xcel.req.msg = req
-    dut.tick()
+    dut.xcel.req.en  @= 1
+    dut.xcel.req.msg @= req
+    dut.sim_tick()
 
     # Wait for response
     while not dut.xcel.resp.en:
-      dut.xcel.req.en = b1(0)
-      dut.tick()
+      dut.xcel.req.en @= 0
+      dut.sim_tick()
 
     # Get the response message
     resp_data = dut.xcel.resp.msg.data
-    dut.tick()
 
   return resp_data
 

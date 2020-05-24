@@ -13,11 +13,11 @@ Date   : Aug 23, 2018
 """
 import os
 
-import py.code
+from pymtl3.extra.pypy import custom_exec
 
 # This __new__ approach has better performance
 # bits_template = """
-# class Bits{nbits}(object):
+# class Bits{nbits}:
   # nbits = {nbits}
   # def __new__( cls, value = 0 ):
     # return Bits( {nbits}, value )
@@ -26,52 +26,51 @@ if os.getenv("PYMTL_BITS") == "1":
   from .PythonBits import Bits
   # print "[env: PYMTL_BITS=1] Use Python Bits"
   bits_template = """
-class Bits{nbits}(Bits):
-  nbits = {nbits}
-  def __init__( s, value=0 ):
-    return super( Bits{nbits}, s ).__init__( {nbits}, value )
-
-_bits_types[{nbits}] = Bits{nbits}
-b{nbits} = Bits{nbits}
+class Bits{0}(Bits):
+  __slots__ = ( "_nbits", "_uint", "_next" )
+  nbits = {0}
+  def __init__( s, v=0, *, trunc_int=False ):
+    return super().__init__( {0}, v, trunc_int )
+_bits_types[{0}] = b{0} = Bits{0}
 """
 else:
   try:
     from mamba import Bits
     # print "[default w/  Mamba] Use Mamba Bits"
     bits_template = """
-class Bits{nbits}(Bits):
-  nbits = {nbits}
-  def __new__( cls, value=0 ):
-    return Bits.__new__( cls, {nbits}, value )
-
-_bits_types[{nbits}] = Bits{nbits}
-b{nbits} = Bits{nbits}
+class Bits{0}(Bits):
+  nbits = {0}
+  def __new__( cls, v=0, *, trunc_int=False ):
+    return Bits.__new__( cls, {0}, v, trunc_int )
+_bits_types[{0}] = b{0} = Bits{0}
 """
   except ImportError:
     from .PythonBits import Bits
     # print "[default w/o Mamba] Use Python Bits"
+    # The action of a __slots__ declaration is limited to the class where it is defined.
+    # As a result, subclasses will have a __dict__ unless they also define __slots__.
     bits_template = """
-class Bits{nbits}(Bits):
-  nbits = {nbits}
-  def __init__( s, value=0 ):
-    return super( Bits{nbits}, s ).__init__( {nbits}, value )
-
-_bits_types[{nbits}] = Bits{nbits}
-b{nbits} = Bits{nbits}
+class Bits{0}(Bits):
+  __slots__ = ( "_nbits", "_uint", "_next" )
+  nbits = {0}
+  def __init__( s, v=0, *, trunc_int=False ):
+    return super().__init__( {0}, v, trunc_int )
+_bits_types[{0}] = b{0} = Bits{0}
 """
 
-_bitwidths     = list(range(1, 256)) + [ 384, 512, 768, 1024, 1536, 2048, 4096 ]
-_bits_types    = dict()
+_bitwidths  = list(range(1, 256)) + [ 384, 512 ]
+_bits_types = dict()
 
-exec(py.code.Source( "".join([ bits_template.format( **vars() ) \
-                        for nbits in _bitwidths ]) ).compile())
+custom_exec(compile( "".join([ bits_template.format(nbits) for nbits in _bitwidths ]),
+                     filename="bits_import.py", mode="exec"), globals(), locals() )
 
 def mk_bits( nbits ):
-  assert nbits < 16384, "We don't allow bitwidth to exceed 16384."
-  if nbits in _bits_types:  return _bits_types[ nbits ]
-
-  exec((py.code.Source( bits_template.format( **vars() ) ).compile()), globals())
-  return _bits_types[ nbits ]
+  assert nbits > 0, "We don't allow Bits0"
+  # assert nbits < 512, "We don't allow bitwidth to exceed 512."
+  if nbits not in _bits_types:
+    custom_exec(compile( bits_template.format(nbits), filename=f"Bits{nbits}", mode="exec" ),
+                globals(), locals() )
+  return _bits_types[nbits]
 
 def get_nbits( nbits_cls ):
   return nbits_cls.nbits

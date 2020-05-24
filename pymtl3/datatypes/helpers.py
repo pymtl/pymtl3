@@ -15,28 +15,46 @@ from .bits_import import *
 def get_nbits( Type ):
   return Type.nbits
 
-def concat( *args ):
-  nbits = sum( [ x.nbits for x in args ] )
-  concat_bits = Bits( nbits, 0 )
+try:
+  from mamba import concat
+except:
+  def concat( *args ):
+    end = sum( x.nbits for x in args )
+    concat_bits = Bits( end, 0 )
+    for x in args:
+      x_nbits = x.nbits
+      concat_bits[ end - x_nbits : end ] = x
+      end -= x_nbits
 
-  begin = 0
-  for bits in reversed( args ):
-    concat_bits[ begin : begin+bits.nbits ] = bits
-    begin += bits.nbits
+    return concat_bits
 
-  return concat_bits
+def trunc( value, new_width ):
+  if isinstance( new_width, int ):
+    assert new_width <= value.nbits
+    return Bits( new_width, value.uint(), trunc_int=True )
+  else:
+    assert issubclass( new_width, Bits )
+    return new_width( value.uint(), trunc_int=True )
 
 def zext( value, new_width ):
-  assert new_width > value.nbits
-  return Bits( new_width, value )
+  if isinstance( new_width, int ):
+    assert new_width >= value.nbits
+    return Bits( new_width, value.uint() )
+  else:
+    assert issubclass( new_width, Bits )
+    return new_width( value.uint() )
 
 def clog2( N ):
   assert N > 0
   return int( math.ceil( math.log( N, 2 ) ) )
 
 def sext( value, new_width ):
-  assert new_width > value.nbits
-  return Bits( new_width, value.int() )
+  if isinstance( new_width, int ):
+    assert new_width >= value.nbits
+    return Bits( new_width, value.int() )
+  else:
+    assert issubclass( new_width, Bits )
+    return new_width( value.int() )
 
 def reduce_and( value ):
   try:

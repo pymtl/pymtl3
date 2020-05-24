@@ -1,0 +1,3 @@
+# Explicit constraints to workaround dependency resolution of pip
+# Currently only required for CI
+attrs>=19.2.0
