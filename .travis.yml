@@ -25,8 +25,8 @@ install:
  - sudo apt-get install -y graphviz
 
  # Install verilator
- - wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.008.tar.gz
- - tar -C ${HOME} -xzf verilator-travis-4.008.tar.gz
+ - wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.026.tar.gz
+ - tar -C ${HOME} -xzf verilator-travis-4.026.tar.gz
  - export VERILATOR_ROOT=${HOME}/verilator
  - export PATH=${VERILATOR_ROOT}/bin:${PATH}
  - export PYMTL_VERILATOR_INCLUDE_DIR=${VERILATOR_ROOT}/share/verilator/include
@@ -34,27 +34,29 @@ install:
 
  # Install Python requirements
  - pip install --upgrade pip setuptools twine
- - pip install --requirement requirements.txt
+ - pip install --requirement requirements/CI.txt
  - pip install .
  - pip list
 
 #------------------------------------------------------------------------
 # test runner
 #------------------------------------------------------------------------
+# We only report code coverage for non-PyPy runs
 
 script:
- - autoflake --in-place --remove-duplicate-keys .
+ - autoflake --recursive --in-place --remove-duplicate-keys .
  - pyupgrade --py3-only --keep-percent-format $(find . -name '*.py')
  - isort --apply --recursive ./pymtl3
  - flake8 --select=F --ignore=F401,F405,F403,F811,F821,F841
  - git diff --exit-code
  - mkdir -p build
  - cd build
- - py.test --cov-report xml --cov=pymtl3 ../pymtl3 $CONFIG
+ - export NOT_USING_PYPY=$(python -V | grep -q "PyPy"; echo $?)
+ - py.test `if [ $NOT_USING_PYPY -eq 1 ]; then echo "--cov-report xml --cov=pymtl3"; else echo ""; fi` .. $CONFIG --hypothesis-profile CI
 
 #-------------------------------------------------------------------------
 # after success
 #-------------------------------------------------------------------------
 
 after_success:
-  - codecov
+  - if [ $NOT_USING_PYPY -eq 1 ]; then codecov; fi

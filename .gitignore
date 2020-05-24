@@ -26,3 +26,5 @@ pymtl3.egg-info/
 htmlcov/
 .coverage
 coverage.xml
+
+*.vcd

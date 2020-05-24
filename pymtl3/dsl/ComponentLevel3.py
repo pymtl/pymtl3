@@ -10,14 +10,18 @@ readers. Interface connections are handled separately, and they should
 be revamped when adding method-based interfaces.
 
 Author : Shunning Jiang
-Date   : Apr 16, 2018
+Date   : Jan 29, 2020
 """
-from collections import defaultdict, deque
+import ast
+import inspect
+import linecache
+from collections import defaultdict
 
-from pymtl3.datatypes import Bits
+from pymtl3.datatypes import Bits, is_bitstruct_inst
+from pymtl3.extra.pypy import custom_exec
 
 from .ComponentLevel1 import ComponentLevel1
-from .ComponentLevel2 import ComponentLevel2
+from .ComponentLevel2 import ComponentLevel2, compiled_re
 from .Connectable import (
     Connectable,
     Const,
@@ -34,6 +38,7 @@ from .errors import (
     MultiWriterError,
     NotElaboratedError,
     NoWriterError,
+    PyMTLDeprecationError,
     SignalTypeError,
 )
 from .NamedObject import NamedObject
@@ -52,10 +57,10 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def __new__( cls, *args, **kwargs ):
     inst = super().__new__( cls, *args, **kwargs )
-    inst._dsl.call_kwargs   = None
     inst._dsl.adjacency     = defaultdict(set)
     inst._dsl.connect_order = []
     inst._dsl.consts        = set()
+
     return inst
 
   # Override
@@ -66,45 +71,150 @@ class ComponentLevel3( ComponentLevel2 ):
       for k, v in m._dsl.adjacency.items():
         all_ajd[k] |= v
 
-  # Override
-  def _construct( s ):
-    """ We override _construct here to finish the saved __call__
-    connections right after constructing the model. The reason why we
-    take this detour instead of connecting in __call__ directly, is that
-    __call__ is done before setattr, and hence the child components don't
-    know their name yet. _dsl.constructed is called in setattr after name
-    tagging, so this is valid. (see NamedObject.py). """
-
-    if not s._dsl.constructed:
-
-      # Merge the actual keyword args and those args set by set_parameter
-      if s._dsl.param_tree is None:
-        kwargs = s._dsl.kwargs
-      elif s._dsl.param_tree.leaf is None:
-        kwargs = s._dsl.kwargs
-      else:
-        kwargs = s._dsl.kwargs.copy()
-        if "construct" in s._dsl.param_tree.leaf:
-          more_args = s._dsl.param_tree.leaf[ "construct" ]
-          kwargs.update( more_args )
-
-      s.construct( *s._dsl.args, **kwargs )
-
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
-
-      s._dsl.constructed = True
-
   # The following three methods should only be called when types are
   # already checked
+  def _create_assign_lambda( s, o, lamb ):
+    assert isinstance( o, Signal ), "You can only assign(//=) a lambda function to a Wire/InPort/OutPort."
+
+    srcs, line = inspect.getsourcelines( lamb )
+
+    src  = compiled_re.sub( r'\2', ''.join(srcs) ).lstrip(' ')
+    root = ast.parse(src)
+    assert isinstance( root, ast.Module ) and len(root.body) == 1, "We only support single-statement lambda."
+
+    root = root.body[0]
+    assert isinstance( root, ast.AugAssign ) and isinstance( root.op, ast.FloorDiv )
+
+    # lhs, rhs = root.target, root.value
+    # Shunning: here we need to use ast from repr(o), because root.target
+    # can be "m.in_" in some cases where we actually know what m is but the
+    # source code still captures "m"
+    lhs, rhs = ast.parse( f"s{repr(o)[len(repr(s)):]}" ).body[0].value, root.value
+    lhs.ctx = ast.Store()
+    # We expect the lambda to have no argument:
+    # {'args': [], 'vararg': None, 'kwonlyargs': [], 'kw_defaults': [], 'kwarg': None, 'defaults': []}
+    assert isinstance( rhs, ast.Lambda ) and not rhs.args.args and rhs.args.vararg is None, \
+      "The lambda shouldn't contain any argument."
+
+    rhs = rhs.body
+
+    # Compose a new and valid function based on the lambda's lhs and rhs
+    # Note that we don't need to add those source code of closure var
+    # assignment to linecache. To get the matching line number in the
+    # error message, we set the line number of update block
+    # Shunning: bugfix:
+
+    blk_name = "_lambda__{}".format( repr(o).replace(".","_").replace("[", "_").replace("]", "_").replace(":", "_") )
+    lambda_upblk = ast.FunctionDef(
+      name=blk_name,
+      args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
+      body=[ast.AugAssign(target=lhs, op=ast.MatMult(), value=rhs, lineno=2, col_offset=6)],
+      decorator_list=[],
+      returns=None,
+      lineno=1, col_offset=4,
+    )
+    lambda_upblk_module = ast.Module(body=[ lambda_upblk ])
+
+    # Manually wrap the lambda upblk with a closure function that adds the
+    # desired variables to the closure of `_lambda__*`
+    # We construct AST for the following function to add free variables in the
+    # closure of the lambda function to the closure of the generated lambda
+    # update block.
+    #
+    # def closure( lambda_closure ):
+    #   <FreeVarName1> = lambda_closure[<Idx1>].cell_contents
+    #   <FreeVarName2> = lambda_closure[<Idx2>].cell_contents
+    #   ...
+    #   <FreeVarNameN> = lambda_closure[<IdxN>].cell_contents
+    #   def _lambda__<lambda_blk_name>():
+    #     # the assignment statement appears here
+    #   return _lambda__<lambda_blk_name>
+
+    new_root = ast.Module( body=[
+      ast.FunctionDef(
+          name="closure",
+          args=ast.arguments(args=[ast.arg(arg="lambda_closure", annotation=None, lineno=1, col_offset=12)],
+                             vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
+          body=[
+            ast.Assign(
+              targets=[ast.Name(id=var, ctx=ast.Store(), lineno=1+idx, col_offset=2)],
+              value=ast.Attribute(
+                value=ast.Subscript(
+                  value=ast.Name(
+                    id='lambda_closure',
+                    ctx=ast.Load(),
+                    lineno=1+idx, col_offset=5+len(var),
+                  ),
+                  slice=ast.Index(
+                    value=ast.Num(
+                      n=idx,
+                      lineno=1+idx, col_offset=19+len(var),
+                    ),
+                  ),
+                  ctx=ast.Load(),
+                  lineno=1+idx, col_offset=5+len(var),
+                ),
+                attr='cell_contents',
+                ctx=ast.Load(),
+                lineno=1+idx, col_offset=5+len(var),
+              ),
+              lineno=1+idx, col_offset=2,
+            ) for idx, var in enumerate(lamb.__code__.co_freevars)
+          ] + [ lambda_upblk ] + [
+            ast.Return(
+              value=ast.Name(
+                id=blk_name,
+                ctx=ast.Load(),
+                lineno=4+len(lamb.__code__.co_freevars), col_offset=9,
+              ),
+              lineno=4+len(lamb.__code__.co_freevars), col_offset=2,
+            )
+          ],
+          decorator_list=[],
+          returns=None,
+          lineno=1, col_offset=0,
+        )
+    ] )
+
+    # In Python 3 we need to supply a dict as local to get the newly
+    # compiled function from closure.
+    # Then `closure(lamb.__closure__)` returns the lambda update block with
+    # the correct free variables in its closure.
+
+    dict_local = {}
+    custom_exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
+    blk = dict_local[ 'closure' ]( lamb.__closure__ )
+
+    # Add the source code to linecache for the compiled function
+
+    new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "@=") )
+    linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name)
+
+    ComponentLevel1._update( s, blk )
+
+    # This caching here does no caching because the block name contains
+    # the signal name intentionally to avoid conflicts. With //= it is
+    # more possible than normal update block to have conflicts:
+    # if param == 1:  s.out //= s.in_ + 1
+    # else:           s.out //= s.out + 100
+    # Here these two blocks will implicity have the same name but they
+    # have different contents based on different param.
+    # So the cache call here is just to reuse the existing interface to
+    # register the AST/src of the generated block for elaborate or passes
+    # to use.
+    s._cache_func_meta( blk, is_update_ff=False,
+      given=("".join(srcs), lambda_upblk_module, line, inspect.getsourcefile( lamb )) )
+    return blk
 
   def _connect_signal_const( s, o1, o2 ):
+    Type = o1._dsl.Type
     if isinstance( o2, int ):
-      if not issubclass( o1._dsl.Type, (int, Bits) ):
-        raise InvalidConnectionError( "We don't support connecting an integer constant "
-                                       "to non-int/Bits type {}".format( o1._dsl.Type ) )
-      o2 = Const( o1._dsl.Type, o2, s )
+      if not issubclass( Type, (int, Bits) ):
+        raise InvalidConnectionError( f"We don't support connecting an integer constant "
+                                      f"to non-int/Bits type {Type}" )
+      o2 = Const( Type, Type(o2), s )
     elif isinstance( o2, Bits ):
+      # PP: this was from the gt-hdl branch and is slightly different from the 3.0 master branch
       if not issubclass( o1._dsl.Type, Bits ):
         raise InvalidConnectionError( "We don't support connecting a Bits{} constant "
                                       "to non-Bits type {}".format( o2.nbits, o1._dsl.Type ) )
@@ -112,6 +222,8 @@ class ComponentLevel3( ComponentLevel2 ):
         raise InvalidConnectionError( "Bitwidth mismatch when connecting a Bits{} constant "
                                       "to signal {} with type Bits{}.".format( o2.nbits, o1, o1._dsl.Type.nbits ) )
       o2 = Const( o1._dsl.Type, o2, s )
+
+    # PP: I added this to handle connecting a constant
     elif isinstance( o2, Const ):
       if not issubclass( o1._dsl.Type, Bits ):
         raise InvalidConnectionError( "We don't support connecting a Const[{}] constant "
@@ -122,7 +234,26 @@ class ComponentLevel3( ComponentLevel2 ):
       assert o2._dsl.parent_obj == None
       o2._dsl.parent_obj = s
 
-  # TODO implement connecting a const struct
+      # Type2 = type(o2)
+      # if not issubclass( Type, Bits ):
+      #   raise InvalidConnectionError( f"We don't support connecting a {Type2} constant "
+      #                                 f"to non-Bits type {Type}" )
+      # if Type is not Type2:
+      #   raise InvalidConnectionError( f"Bitwidth mismatch when connecting a {Type2} constant "
+      #                                 f"to signal {o1} with type {Type}." )
+      # o2 = Const( Type, o2, s )
+    elif is_bitstruct_inst( o2 ):
+      Type2 = type(o2)
+      if Type is not Type2:
+        raise InvalidConnectionError( f"We don't support connecting a {Type2} constant bitstruct"
+                                      f"to non-bitstruct type {Type}" )
+      o2 = Const( Type, o2, s )
+    else:
+      raise InvalidConnectionError(f"\n>>> {o2} of type {type(o2)} is not a const! \n"
+                                   f">>> It cannot be connected to signal {o1} of type {o1._dsl.Type}!\n"
+                                   f"Suggestion: fix the RHS of connection to be an instance of {o1._dsl.Type}.")
+
+    # TODO implement connecting a const struct
 
     host = o1.get_host_component()
 
@@ -141,37 +272,10 @@ class ComponentLevel3( ComponentLevel2 ):
     s._dsl.connect_order.append( (o1, o2) )
 
   def _connect_signal_signal( s, o1, o2 ):
-    o1_type = None
-    o2_type = None
-
-    try:  o1_type = o1._dsl.Type
-    except AttributeError:  pass
-    try:  o2_type = o2._dsl.Type
-    except AttributeError:  pass
-
-    if o1_type is None:
-      if o2_type is None:
-        if o1 not in s._dsl.adjacency[o2]:
-          assert o2 not in s._dsl.adjacency[o1]
-          s._dsl.adjacency[o1].add( o2 )
-          s._dsl.adjacency[o2].add( o1 )
-          s._dsl.connect_order.append( (o1, o2) )
-          return
-      else: # o2_type is not None
-        raise TypeError( "lhs has no Type, but rhs has Type {}".format( o2_type ) )
-    else: # o1_type is not None
-      if o2_type is None:
-        raise TypeError( "lhs has Type {}, but rhs has no Type".format( o1_type ) )
-
-    # Here o1/o2 both have Type
-
-    try:
-      o1_nbits = o1_type.nbits
-      o2_nbits = o2_type.nbits
-      assert o1_nbits == o2_nbits, "Bitwidth mismatch {} != {} " \
-      "({}-bit {} <> {}-bit {})".format( o1_nbits, o2_nbits, o1_nbits, repr(o1), o2_nbits, repr(o2) )
-    except AttributeError: # at least one of them is not Bits
-      assert o1_type == o2_type, "Type mismatch {} != {}".format( o1_type, o2_type )
+    if not (o1._dsl.Type is o2._dsl.Type):
+      raise InvalidConnectionError( f"Bitwidth mismatch {o1._dsl.Type.__name__} != {o2._dsl.Type.__name__}\n"
+                                    f"- In class {type(s)}\n- When connecting {o1} <-> {o2}\n"
+                                    f"Suggestion: make sure both sides of connection have matching bitwidth")
 
     if o1 not in s._dsl.adjacency[o2]:
       assert o2 not in s._dsl.adjacency[o1]
@@ -195,7 +299,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
       # Sort the keys to always connect in a unique order
       for name in sorted(this.__dict__):
-        if not name.startswith("_"):
+        if name[0] != '_': # filter private variables
           obj = this.__dict__[ name ]
           if hasattr( other, name ):
             # other has the corresponding field, connect recursively
@@ -254,61 +358,9 @@ class ComponentLevel3( ComponentLevel2 ):
       # One is connectable, we make sure it's o1
       if o2_connectable:
         o1, o2 = o2, o1
-      assert isinstance( o1, Signal ), "Can only connect constant to a SIGNAL."
+      assert isinstance( o1, Signal ), f"Cannot connect {o1!r} to {o2!r}."
 
       s._connect_signal_const( o1, o2 )
-
-  def _continue_call_connect( s ):
-    """ Here we continue to establish the connections from signals of the
-    parent object, to signals in the current object. Since it is the
-    parent that connects a constant integer to a signal, we should point
-    the Const object back to the parent object by setting _parent_obj to
-    s._parent_obj."""
-
-    parent = s._dsl.parent_obj
-
-    top = s._dsl.elaborate_top
-
-    # _continue_call_connect is actually connecting stuff at parent level,
-    # but it currently happens before before we pop the child component.
-    # To make minimal modification, I temporarily pop it from
-    # elaborate_stack and append it back at the end of this method
-
-    tmp = top._dsl.elaborate_stack.pop()
-
-    try: # Catch AssertionError from _connect
-
-      # Process saved __call__ kwargs
-      for (kw, target) in s._dsl.call_kwargs.items():
-        try:
-          obj = getattr( s, kw )
-        except AttributeError:
-          raise InvalidConnectionError( "{} is not a member of class {}".format(kw, s.__class__) )
-
-        # Obj is a list of signals
-        # We assume the a dict of { index: obj } is provided.
-        if   isinstance( obj, list ):
-          # Make sure the connection target is a dictionary {idx: obj}
-          if not isinstance( target, dict ):
-            raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
-          for idx, item in target.items():
-            parent._connect( obj[idx], item, internal=False )
-
-        # Obj is a single signal
-        # If the target is a list, it's fanout connection
-        elif isinstance( target, (tuple, list) ):
-          for item in target:
-            parent._connect( obj, item, internal=False )
-
-        # Target is a single object
-        else:
-          parent._connect( obj, target, internal=False )
-
-    except AssertionError as e:
-      raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
-
-    # Append tmp back to elaborate_stack
-    top._dsl.elaborate_stack.append(tmp)
 
   @staticmethod
   def _floodfill_nets( signal_list, adjacency ):
@@ -321,9 +373,9 @@ class ComponentLevel3( ComponentLevel2 ):
       # If obj has adjacent signals
       if obj in adjacency and obj not in visited:
         net = set()
-        Q   = deque( [ obj ] )
+        Q   = [ obj ]
         while Q:
-          u = Q.popleft()
+          u = Q.pop()
           visited.add( u )
           net.add( u )
           for v in adjacency[u]:
@@ -382,16 +434,13 @@ class ComponentLevel3( ComponentLevel2 ):
 
     for net in nets:
       for member in net:
-        host = member
-        while not isinstance( host, ComponentLevel3 ):
-          host = host.get_parent_object() # go to the component
-        member._dsl.host = host
+        host = member.get_host_component()
 
         # Specialize two cases:
         # 1. A top-level input port is writer.
         # 2. An output port of a placeholder module is a writer
-        if ( isinstance( member, InPort ) and member._dsl.host == s ) or \
-           ( isinstance( member, OutPort ) and isinstance( member._dsl.host, Placeholder ) ):
+        if ( isinstance( member, InPort ) and host == s ) or \
+           ( isinstance( member, OutPort ) and isinstance( host, Placeholder ) ):
           writer_prop[ member ] = True
 
     headless = nets
@@ -507,18 +556,18 @@ class ComponentLevel3( ComponentLevel2 ):
       # We need to do DFS to check all connected port types
       # Each node is a writer when we expand it to other nodes
 
-      S = deque( [ writer ] )
-      visited = {  writer  }
+      S = [ writer ]
+      visited = { writer }
 
       while S:
         u = S.pop() # u is the writer
-        whost = u._dsl.host
+        whost = u.get_host_component()
 
         for v in s._dsl.all_adjacency[u]: # v is the reader
           if v not in visited:
             visited.add( v )
             S.append( v )
-            rhost = v._dsl.host
+            rhost = v.get_host_component()
 
             # 1. have the same host: writer_host(x)/reader_host(x):
             # Hence, writer is anything, reader is wire or outport
@@ -724,21 +773,14 @@ class ComponentLevel3( ComponentLevel2 ):
       >>> s.x = SomeReg(Bits1)( in_ = s.in_ )
     It connects s.in_ to s.x.in_ in the same line as model construction.
     """
-    assert args == ()
-    if s._dsl.constructed:
-      raise InvalidConnectionError("Connection using __call__, "
-                                   "i.e. s.x( a = s.a ), is illegal "
-                                   "after constructing s.x")
-    s._dsl.call_kwargs = kwargs
-    return s
+    raise PyMTLDeprecationError("\n__call__ connection has been deprecated! "
+                                "\n- Please use free function connect(s.x,s.y) or "
+                                "syntactic sugar s.x//=s.y instead.")
 
-  def get_all_value_nets( s ):
-
-    if s._dsl._has_pending_value_connections:
-      s._dsl.all_value_nets = s._resolve_value_connections()
-      s._dsl._has_pending_value_connections = False
-
-    return s._dsl.all_value_nets
+  def connect( s, *args, **kwargs ):
+    raise PyMTLDeprecationError("\ns.connect method has been deprecated! "
+                                "\n- Please use free function connect(s.x,s.y) or "
+                                "syntactic sugar s.x//=s.y instead.")
 
   #-----------------------------------------------------------------------
   # elaborate
@@ -765,3 +807,11 @@ class ComponentLevel3( ComponentLevel2 ):
   #-----------------------------------------------------------------------
   # We have moved these implementations to Component.py because the
   # outside world should only use Component.py
+
+  def get_all_value_nets( s ):
+
+    if s._dsl._has_pending_value_connections:
+      s._dsl.all_value_nets = s._resolve_value_connections()
+      s._dsl._has_pending_value_connections = False
+
+    return s._dsl.all_value_nets

@@ -8,6 +8,7 @@ Date   : May 28, 2019
 """
 from pymtl3.datatypes.bits_import import Bits4, Bits8
 from pymtl3.dsl.Component import Component
+from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel3 import connect
 from pymtl3.dsl.Connectable import InPort, OutPort
 from pymtl3.dsl.NamedObject import NamedObject
@@ -135,15 +136,15 @@ def test_set_param_hierarchical():
 
 def test_component():
   class Incr( Component ):
-    def construct( s, DataType=Bits4(), incr_value=1 ):
+    def construct( s, DataType=Bits4, incr_value=1 ):
       s.in_ = InPort ( DataType )
       s.out = OutPort( DataType )
 
-      s.incr_value = DataType( incr_value )
+      s.incr_value = incr_value
 
-      @s.update
+      @update
       def up_incr():
-        s.out = s.in_ + s.incr_value
+        s.out @= s.in_ + s.incr_value
 
   class IncrArray( Component ):
     def construct( s, num_incrs=1, DataType=Bits4() ):

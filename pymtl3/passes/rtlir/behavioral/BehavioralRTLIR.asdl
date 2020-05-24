@@ -9,12 +9,13 @@ module BehavioralRTLIR
   upblk = CombUpblk( string name, stmt* body )
         | SeqUpblk( string name, stmt* body )
 
-  stmt = Assign( expr target, expr value )
+  stmt = Assign( expr* targets, expr value, bool blocking )
        | If( expr cond, stmt* body, stmt* orelse )
        | For( loopvar_decl var, expr start, expr end, expr step, stmt* body )
 
   expr = Number( int value )
        | Concat( expr* values )
+       | Truncate( int nbits, expr value )
        | ZeroExt( int nbits, expr value )
        | SignExt( int nbits, expr value )
        | Reduce( operator op, expr value )
@@ -22,7 +23,11 @@ module BehavioralRTLIR
        | StructInst( object struct, expr* values )
        | IfExp( expr cond, expr body, expr orelse )
        | UnaryOp( unaryop op, expr operand )
-       | BoolOp( boolop op, expr* values )
+
+       -- Boolean operations are not allowed because they can lead to
+       -- inconsistent semantics for Bits and ints.
+       -- | BoolOp( boolop op, expr* values )
+
        | BinOp( expr left, operator op, expr right )
        | Compare( expr left, cmpop op, expr right )
 
@@ -30,7 +35,10 @@ module BehavioralRTLIR
        -- an assignment
        | Attribute( expr value, identifier attr )
        | Index( expr value, expr idx )
-       | Slice( expr value, expr lower, expr upper )
+       -- Slice nodes might have `slice_size` and `slice_base` attributes
+       -- annotated by the type checking pass. These fields indicate this
+       -- slice object is a constant size slicing (i.e. [base +: size]).
+       | Slice( expr value, expr lower, expr upper, expr? base, int? size )
        | Base( object base )
        | LoopVar( string name )
        | FreeVar( string name, object obj )
@@ -38,9 +46,11 @@ module BehavioralRTLIR
 
   loopvar_decl = LoopVarDecl( string name )
 
-  unaryop = Invert | Not | UAdd | USub
+  -- Not is also a boolean operator!
+  -- unaryop = Invert | Not | UAdd | USub
+  -- boolop = And | Or
 
-  boolop = And | Or
+  unaryop = Invert | UAdd | USub
 
   operator = Add | Sub | Mult | Div | Mod | Pow | ShiftLeft | ShiftRightLogic | BitAnd | BitOr | BitXor
 

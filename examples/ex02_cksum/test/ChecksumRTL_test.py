@@ -7,9 +7,11 @@ Test cases for RTL checksum unit.
 Author : Yanghui Ou
   Date : June 6, 2019
 """
+import pytest
+
 from pymtl3 import *
-from pymtl3.passes.yosys import ImportPass, TranslationPass
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+from pymtl3.passes.tracing import VcdGenerationPass, PrintTextWavePass
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum
 from ..ChecksumRTL import ChecksumRTL, StepUnit
@@ -23,15 +25,16 @@ from ..utils import b128_to_words, words_to_b128
 def test_step_unit():
   step_unit = StepUnit()
   step_unit.elaborate()
-  step_unit.apply( SimulationPass )
+  step_unit.apply( DefaultPassGroup() )
 
-  step_unit.word_in = b16(1)
-  step_unit.sum1_in = b32(1)
-  step_unit.sum2_in = b32(1)
-  step_unit.tick()
+  step_unit.word_in @= 1
+  step_unit.sum1_in @= 1
+  step_unit.sum2_in @= 1
+  step_unit.sim_eval_combinational()
+  assert step_unit.sum1_out == 2
+  assert step_unit.sum2_out == 3
 
-  assert step_unit.sum1_out == b32(2)
-  assert step_unit.sum2_out == b32(3)
+  step_unit.sim_tick()
 
 #-------------------------------------------------------------------------
 # Wrap RTL checksum unit into a function
@@ -46,24 +49,24 @@ def checksum_rtl( words ):
   # Create a simulator
   dut = ChecksumRTL()
   dut.elaborate()
-  dut.apply( SimulationPass )
+  dut.apply( DefaultPassGroup() )
   dut.sim_reset()
 
   # Wait until the checksum unit is ready to receive input
-  dut.send.rdy = b1(1)
+  dut.send.rdy @= 1
   while not dut.recv.rdy:
-    dut.recv.en = b1(0)
-    dut.tick()
+    dut.recv.en @= 0
+    dut.sim_tick()
 
   # Feed in the input
-  dut.recv.en = b1(1)
-  dut.recv.msg = bits_in
-  dut.tick()
+  dut.recv.en  @= 1
+  dut.recv.msg @= bits_in
+  dut.sim_tick()
 
   # Wait until the checksum unit is about to send the message
   while not dut.send.en:
-    dut.recv.en = b1(0)
-    dut.tick()
+    dut.recv.en @= 0
+    dut.sim_tick()
 
   # Return the result
   return dut.send.msg
@@ -90,6 +93,7 @@ class ChecksumRTL_Tests( BaseTests ):
 
 from .ChecksumCL_test import ChecksumCLSrcSink_Tests as BaseSrcSinkTests
 
+@pytest.mark.usefixtures("cmdline_opts")
 class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
 
   # [setup_class] will be called by pytest before running all the tests in
@@ -105,38 +109,31 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
   # [setup_method] will be called by pytest before executing each class method.
   # See pytest documetnation for more details.
   def setup_method( s, method ):
-    s.vcd_file_name = ""
-
-    import sys
-    if hasattr( sys, '_pymtl_dump_vcd' ):
-      if sys._pymtl_dump_vcd:
-        s.vcd_file_name = "{}.{}".format( s.DutType.__name__, method.__name__ )
+    s.current_test_method_name = method.__name__
 
   # [teardown_method] will be called by pytest after executing each class method.
   # See pytest documetnation for more details.
   def teardown_method( s, method ):
-      s.vcd_file_name = ""
+    s.current_test_method_name = ""
 
   def run_sim( s, th, max_cycles=1000 ):
 
+    s.vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
+
     # Check for vcd dumping
     if s.vcd_file_name:
-      th.dump_vcd = True
-      th.vcd_file_name = s.vcd_file_name
+      s.set_metadata( VcdGenerationPass.vcd_file_name, s.vcd_file_name )
+      s.set_metadata( PrintTextWavePass.enable, True )
 
     # Create a simulator
-    th.elaborate()
-    th.apply( SimulationPass )
-    ncycles = 0
+    th.apply( DefaultPassGroup() )
     th.sim_reset()
-    print( "" )
 
-    # Tick the simulator
-    print("{:3}: {}".format( ncycles, th.line_trace() ))
-    while not th.done() and ncycles < max_cycles:
-      th.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, th.line_trace() ))
+    while not th.done() and th.sim_cycle_count() < max_cycles:
+      th.sim_tick()
+
+    if s.vcd_file_name:
+      th.print_textwave()
 
     # Check timeout
-    assert ncycles < max_cycles
+    assert th.sim_cycle_count() < max_cycles

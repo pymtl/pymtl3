@@ -60,50 +60,6 @@ class SendIfcRTL( Interface, Generic[T_SendIfcDataType] ):
   def construct( s ) -> None: ...
 
 #-------------------------------------------------
-# Enq/Deq Ifc
-#-------------------------------------------------
-
-T_EnqIfcDataType = TypeVar('T_EnqIfcDataType')
-
-class EnqIfcRTL( Interface, Generic[T_EnqIfcDataType] ):
-
-  msg: InPort[T_EnqIfcDataType]
-  en : InPort[Bits1]
-  rdy: OutPort[Bits1]
-
-  def __init__( s ) -> None: ...
-
-  def construct( s ) -> None: ...
-
-T_DeqIfcDataType = TypeVar('T_DeqIfcDataType')
-
-class DeqIfcRTL( Interface, Generic[T_DeqIfcDataType] ):
-
-  msg: OutPort[T_DeqIfcDataType]
-  en : InPort[Bits1]
-  rdy: OutPort[Bits1]
-
-  def __init__( s ) -> None: ...
-
-  def construct( s ) -> None: ...
-
-#-------------------------------------------------
-# Mem Ifc
-#-------------------------------------------------
-
-T_MemMasterIfcReqType  = TypeVar('T_MemMasterIfcReqType')
-T_MemMasterIfcRespType = TypeVar('T_MemMasterIfcRespType')
-
-class MemMasterIfcRTL( Interface, Generic[T_MemMasterIfcReqType, T_MemMasterIfcRespType] ):
-
-  req:  SendIfcRTL[T_MemMasterIfcReqType]
-  resp: RecvIfcRTL[T_MemMasterIfcRespType]
-
-  def __init__( s ) -> None: ...
-
-  def construct( s ) -> None: ...
-
-#-------------------------------------------------
 # Xcel Ifc
 #-------------------------------------------------
 

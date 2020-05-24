@@ -5,49 +5,14 @@
 # Date   : Apr 3, 2019
 """Provide L4 structural RTLIR generation pass."""
 
-from pymtl3.passes.BasePass import PassMetadata
-
 from .StructuralRTLIRGenL3Pass import StructuralRTLIRGenL3Pass
-from .StructuralRTLIRSignalExpr import gen_signal_expr
 
 
 class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
-  # Override
-  def __call__( s, tr_top ):
-    s.gen_metadata( tr_top )
-    super().__call__( tr_top )
-
-  def gen_metadata( s, m ):
-    if not hasattr( m, '_pass_structural_rtlir_gen' ):
-      m._pass_structural_rtlir_gen = PassMetadata()
-    for child in m.get_child_components():
-      s.gen_metadata( child )
+  """At L4 we need to recursively generate metadata for every component"""
 
   # Override
-  def gen_rtlir_types( s, m ):
-    super().gen_rtlir_types( m )
-    for child in m.get_child_components():
-      s.gen_rtlir_types( child )
-
-  # Override
-  def gen_constants( s, m ):
-    super().gen_constants( m )
-    for child in m.get_child_components():
-      s.gen_constants( child )
-
-  # Override
-  def collect_connections( s, m ):
-    return \
-      super().collect_connections( m ) + \
-      [((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False) for x in s.c_sc[m]] + \
-      [((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False) for x in s.c_cc[m]]
-
-  # Override
-  def sort_connections( s, m ):
-    """Sort connections by the order `s.connect` is called.
-
-    At L4 we need to recursively generate connections for every component.
-    """
-    super().sort_connections( m )
-    for child in m.get_child_components():
-      s.sort_connections( child )
+  def _gen_metadata( s, m ):
+    super()._gen_metadata( m )
+    for child in m.get_child_components(repr):
+      s._gen_metadata( child )

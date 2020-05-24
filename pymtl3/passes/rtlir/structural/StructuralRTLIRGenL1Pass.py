@@ -5,68 +5,70 @@
 # Date   : Apr 3, 2019
 """Provide L1 structural RTLIR generation pass."""
 
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3 import MetadataKey
+from pymtl3.passes.PlaceholderConfigs import PlaceholderConfigs
+# from pymtl3.passes.rtlir.RTLIRPass import RTLIRPass
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
-from pymtl3.passes.rtlir.rtype.RTLIRType import get_rtlir
+from pymtl3.passes.rtlir.rtype.RTLIRType import RTLIRGetter
 
+from .StructuralRTLIRGenL0Pass import StructuralRTLIRGenL0Pass
 from .StructuralRTLIRSignalExpr import gen_signal_expr
 
 
-class StructuralRTLIRGenL1Pass( BasePass ):
-  def __init__( s, conns_self_self, conns_self_child, conns_child_child ):
-    # connections_self_self, connections_self_child, connections_child_child
-    s.c_ss = conns_self_self
-    s.c_sc = conns_self_child
-    s.c_cc = conns_child_child
+class StructuralRTLIRGenL1Pass( StructuralRTLIRGenL0Pass ):
+
+  def __init__( s, inst_conns ):
+    s.inst_conns = inst_conns
 
   def __call__( s, tr_top ):
     """ generate structural RTLIR for component `tr_top` """
-    if not hasattr( tr_top, '_pass_structural_rtlir_gen' ):
-      tr_top._pass_structural_rtlir_gen = PassMetadata()
+    c = s.__class__
     s.tr_top = tr_top
+    if not tr_top.has_metadata( c.rtlir_getter ):
+      tr_top.set_metadata( c.rtlir_getter, RTLIRGetter(cache=True) )
+
     try:
-      s.gen_rtlir_types( tr_top )
-      s.gen_constants( tr_top )
-      s.sort_connections( tr_top )
+      s._gen_metadata( tr_top )
     except AssertionError as e:
-      msg = '' if e.args[0] is None else e.args[0]
+      msg = '' if not e.args is None else e.args[0]
       raise RTLIRConversionError( tr_top, msg )
 
-  def gen_rtlir_types( s, tr_top ):
-    tr_top._pass_structural_rtlir_gen.rtlir_type = get_rtlir( tr_top )
+  def _gen_metadata( s, m ):
+    c = s.__class__
 
-  def gen_constants( s, m ):
-    ns = m._pass_structural_rtlir_gen
-    ns.consts = []
-    rtype = ns.rtlir_type
+    # Generate RTLIR types
+    rtlir_type = s.tr_top.get_metadata( c.rtlir_getter ).get_rtlir( m )
+    m.set_metadata( c.rtlir_type, rtlir_type )
+
+    # Generate constants
+    consts = []
+    rtype = rtlir_type
     const_types = rtype.get_consts_packed()
     for const_name, const_rtype in const_types:
       assert hasattr(m, const_name), \
-        "Internal error: {} is not a member of {}".format( const_name, m )
+        f"Internal error: {const_name} is not a member of {m}"
       const_instance = getattr(m, const_name)
-      ns.consts.append( ( const_name, const_rtype, const_instance ) )
+      consts.append( ( const_name, const_rtype, const_instance ) )
 
-  def collect_connections( s, m ):
-    return [((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False) for x in s.c_ss[m]]
+    m.set_metadata( c.consts, consts )
 
-  def sort_connections( s, m ):
-    m_connections = s.collect_connections( m )
-    connections = []
-    for u, v in m.get_connect_order():
-      _u, _v = gen_signal_expr( m, u ), gen_signal_expr( m, v )
-      for idx, ( ( wr, rd ), visited ) in enumerate( m_connections ):
+    # Sort connections
+    m_conns_set   = s.inst_conns[m]
+    ordered_conns = [ *m.get_connect_order() ]
 
-        if not visited and ( ( s.contains( _u, wr ) and s.contains( _v, rd ) ) or \
-           ( s.contains( _u, rd ) and s.contains( _v, wr ) ) ):
-          connections.append( ( wr, rd ) )
-          m_connections[idx] = ( m_connections[idx][0], True )
-    connections.extend( x[0] for x in m_connections if not x[1] )
-    m._pass_structural_rtlir_gen.connections = connections
+    # NOTE: this assertion can fail due to connections that
+    # are made outside the component that has them. so i'm removing
+    # this for now until we can figure out a better way to do sanity
+    # check here.
+    # assert len(ordered_conns) == len(m_conns_set)
 
-  def contains( s, obj, signal ):
-    """Return if obj contains signal.
+    for i, x in enumerate(ordered_conns):
+      if x not in m_conns_set:
+        x = (x[1], x[0])
+        assert x in m_conns_set, "There is a connection missing from "\
+                                 "connect_order. Please contact PyMTL developers!"
+        ordered_conns[i] = x
 
-    At level 1 all signals have their corresponding object in `s.connect`.
-    Therefore just checking whether obj is equal to signal is enough at level 1.
-    """
-    return obj == signal
+    connections = [ (gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])) for x in ordered_conns ]
+
+    m.set_metadata( c.connections, connections )

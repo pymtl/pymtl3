@@ -64,7 +64,7 @@ class IncrMethodModular( Component ):
     connect( s.read,  s.buf2.read  )
 
     # upB reads from buf1, increments the value by 1, and writes to buf2
-    @s.update
+    @update_once
     def upB():
       s.buf2.write( s.buf1.read() + b8(1) )
 
@@ -91,13 +91,13 @@ class IncrTestBench( Component ):
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
     # UpA writes data to input
-    @s.update
+    @update_once
     def upA():
       s.incr.write( s.incr_in )
       s.incr_in += 10
 
     # UpC reads data from output
-    @s.update
+    @update_once
     def upC():
       s.incr_out = s.incr.read()
 
@@ -110,17 +110,17 @@ class IncrTestBench( Component ):
 
 def test_method_modular():
   tb = IncrTestBench()
-  tb.apply( SimpleSim )
+  tb.apply( DefaultPassGroup() )
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )
-  for blk in tb._sched.schedule:
+  for blk in tb._sched.update_schedule:
     if not blk.__name__.startswith('s'):
       print( blk.__name__ )
 
   # Print out the simulation line trace.
   print( "\n==== Line trace ====" )
   print( "   in_     out")
+  tb.sim_reset()
   for i in range( 6 ):
-    tb.tick()
-    print( "{:2}: {}".format( i, tb.line_trace() ) )
+    tb.sim_tick()

@@ -10,12 +10,10 @@ Author : Shunning Jiang
 from enum import Enum
 
 from pymtl3 import *
-from pymtl3.stdlib.cl.DelayPipeCL import DelayPipeDeqCL
-from pymtl3.stdlib.cl.queues import PipeQueueCL
-from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg
-from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcCL, MemMasterIfcFL
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcCL
-from pymtl3.stdlib.ifcs.XcelMsg import XcelMsgType, mk_xcel_msg
+from pymtl3.stdlib.delays import DelayPipeDeqCL
+from pymtl3.stdlib.queues import PipeQueueCL
+from pymtl3.stdlib.mem import MemMsgType, mk_mem_msg, MemMasterIfcCL
+from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg,  XcelMasterIfcCL
 
 from .tinyrv0_encoding import RegisterFile, TinyRV0Inst, disassemble_inst
 
@@ -47,15 +45,22 @@ class ProcCL( Component ):
 
     s.xcel = XcelMasterIfcCL( xreq_class, xresp_class )
 
-    s.proc2mngr = NonBlockingCallerIfc()
-    s.mngr2proc = NonBlockingCalleeIfc()
+    s.proc2mngr = CallerIfcCL()
+    s.mngr2proc = CalleeIfcCL()
 
     # Buffers to hold input messages
 
-    s.imemresp_q  = DelayPipeDeqCL(0)( enq = s.imem.resp )
-    s.dmemresp_q  = DelayPipeDeqCL(1)( enq = s.dmem.resp )
-    s.mngr2proc_q = DelayPipeDeqCL(1)( enq = s.mngr2proc )
-    s.xcelresp_q  = DelayPipeDeqCL(0)( enq = s.xcel.resp )
+    s.imemresp_q  = DelayPipeDeqCL(0)
+    s.imemresp_q.enq //= s.imem.resp
+
+    s.dmemresp_q  = DelayPipeDeqCL(1)
+    s.dmemresp_q.enq //= s.dmem.resp
+
+    s.mngr2proc_q = DelayPipeDeqCL(1)
+    s.mngr2proc_q.enq //= s.mngr2proc
+
+    s.xcelresp_q  = DelayPipeDeqCL(0)
+    s.xcelresp_q.enq //= s.xcel.resp
 
     s.pc = b32( 0x200 )
     s.R  = RegisterFile( 32 )
@@ -67,7 +72,7 @@ class ProcCL( Component ):
     s.DXM_status = PipelineStatus.idle
     s.W_status   = PipelineStatus.idle
 
-    @s.update
+    @update_once
     def F():
       s.F_status = PipelineStatus.idle
 
@@ -92,7 +97,7 @@ class ProcCL( Component ):
 
     s.raw_inst = b32(0)
 
-    @s.update
+    @update_once
     def DXM():
       s.redirected_pc_DXM = -1
       s.DXM_status = PipelineStatus.idle
@@ -132,11 +137,11 @@ class ProcCL( Component ):
           # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
           elif inst_name == "addi":
-            s.DXM_W_queue.enq( (inst.rd, s.R[ inst.rs1 ] + inst.i_imm.int(), DXM_W.arith) )
+            s.DXM_W_queue.enq( (inst.rd, s.R[ inst.rs1 ] + sext(inst.i_imm, 32), DXM_W.arith) )
           elif inst_name == "sw":
             if s.dmem.req.rdy():
               s.dmem.req( memreq_cls( MemMsgType.WRITE, 0,
-                                      s.R[ inst.rs1 ] + inst.s_imm.int(),
+                                      s.R[ inst.rs1 ] + sext(inst.s_imm, 32),
                                       0,
                                       s.R[ inst.rs2 ] ) )
               s.DXM_W_queue.enq( (0, 0, DXM_W.mem) )
@@ -146,7 +151,7 @@ class ProcCL( Component ):
           elif inst_name == "lw":
             if s.dmem.req.rdy():
               s.dmem.req( memreq_cls( MemMsgType.READ, 0,
-                                      s.R[ inst.rs1 ] + inst.i_imm.int(),
+                                      s.R[ inst.rs1 ] + sext(inst.i_imm, 32),
                                       0 ) )
               s.DXM_W_queue.enq( (inst.rd, 0, DXM_W.mem) )
             else:
@@ -154,7 +159,7 @@ class ProcCL( Component ):
 
           elif inst_name == "bne":
             if s.R[ inst.rs1 ] != s.R[ inst.rs2 ]:
-              s.redirected_pc_DXM = pc + inst.b_imm.int()
+              s.redirected_pc_DXM = pc + sext(inst.b_imm, 32)
             s.DXM_W_queue.enq( None )
 
           elif inst_name == "csrw":
@@ -188,9 +193,9 @@ class ProcCL( Component ):
 
     s.rd = b5(0)
 
-    @s.update
+    @update_once
     def W():
-      s.commit_inst = Bits1(0)
+      s.commit_inst @= 0
       s.W_status = PipelineStatus.idle
 
       if s.DXM_W_queue.deq.rdy():
@@ -239,7 +244,7 @@ class ProcCL( Component ):
 
       if s.W_status == PipelineStatus.work:
         s.DXM_W_queue.deq()
-        s.commit_inst = Bits1(1)
+        s.commit_inst @= 1
 
   #-----------------------------------------------------------------------
   # line_trace

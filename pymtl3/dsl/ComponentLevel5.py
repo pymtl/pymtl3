@@ -11,8 +11,9 @@ from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2
 from .ComponentLevel4 import ComponentLevel4
 from .Connectable import CalleePort, CallerPort, Const, Interface, MethodPort, Signal
-from .errors import MultiWriterError
+from .errors import InvalidConnectionError, MultiWriterError
 from .NamedObject import NamedObject
+from .Placeholder import Placeholder
 
 
 # This method_port is a syntactic sugar to create a CalleePort
@@ -29,8 +30,7 @@ class ComponentLevel5( ComponentLevel4 ):
 
   def _handle_decorated_methods( s ):
 
-    cls_dict = s.__class__.__dict__
-    for x in cls_dict:
+    for x in s.__class__.__dict__:
       method = getattr( s, x )
       # We identify decorated method port here
       if hasattr( method, "_callee_port" ):
@@ -60,9 +60,6 @@ class ComponentLevel5( ComponentLevel4 ):
       # Same as parent class _construct
       s.construct( *s._dsl.args, **kwargs )
 
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
-
       s._dsl.constructed = True
 
   def _connect_method_ports( s, o1, o2 ):
@@ -89,7 +86,7 @@ class ComponentLevel5( ComponentLevel4 ):
       # One is connectable, we make sure it's o1
       if o2_connectable:
         o1, o2 = o2, o1
-      assert isinstance( o1, Signal ), "Can only connect constant to a SIGNAL."
+      assert isinstance( o1, Signal ), f"Cannot connect {o2} to {o1!r} of {type(o1)}."
 
       s._connect_signal_const( o1, o2 )
 
@@ -109,7 +106,8 @@ class ComponentLevel5( ComponentLevel4 ):
       for member in net:
 
         if isinstance( member, CalleePort ):
-          if member.method is not None:
+          if member.method is not None or \
+             isinstance( member.get_host_component(), Placeholder ):
             if writer is None:
               writer = member
             else:
@@ -121,6 +119,8 @@ class ComponentLevel5( ComponentLevel4 ):
         else:
           assert isinstance( member, CallerPort ), "We don't allow connecting method " \
                                                    "port to other ports of {} type".format( member.__class__ )
+      assert writer is not None, "This method net has no actual method to call.\n- {}" \
+                                  .format( '\n- '.join([ repr(x) for x in net]) )
       ret.append( (writer, net) )
 
     return ret

@@ -1,10 +1,21 @@
-
-from .EnqDeqIfc import DeqIfcRTL, EnqIfcRTL
-from .GetGiveIfc import GetIfcRTL, GiveIfcRTL
-from .ifcs_utils import enrdy_to_str, valrdy_to_str
-from .MemMsg import MemMsgType, mk_mem_msg, mk_mem_req_msg, mk_mem_resp_msg
-from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
-from .ValRdyIfc import InValRdyIfc, OutValRdyIfc
+# from .EnqDeqIfc import DeqIfcFL, DeqIfcRTL, EnqIfcFL, EnqIfcRTL
+from .get_give_ifcs import GetIfcFL, GetIfcRTL, GiveIfcFL, GiveIfcRTL
+from .send_recv_ifcs import (
+    RecvCL2SendRTL,
+    RecvIfcFL,
+    RecvIfcRTL,
+    RecvRTL2SendCL,
+    SendIfcFL,
+    SendIfcRTL,
+)
+from .val_rdy_ifcs import InValRdyIfc, OutValRdyIfc
+from .xcel_ifcs import (
+    XcelMasterIfcCL,
+    XcelMasterIfcFL,
+    XcelMasterIfcRTL,
+    XcelMinionIfcCL,
+    XcelMinionIfcFL,
+    XcelMinionIfcRTL,
+)
 from .XcelMsg import XcelMsgType, mk_xcel_msg, mk_xcel_req_msg, mk_xcel_resp_msg
 from .xcel_ifcs import XcelMasterIfcRTL
-from .mem_ifcs import MemMasterIfcRTL

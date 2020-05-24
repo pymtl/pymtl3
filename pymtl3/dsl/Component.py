@@ -7,14 +7,18 @@ Add clk/reset signals.
 Author : Yanghui Ou
   Date : Apr 6, 2019
 """
-from collections import defaultdict
-
-from pymtl3.datatypes import Bits1, Bits, BitStruct
+from pymtl3.datatypes import Bits1, Bits, is_bitstruct_class
 
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
 from .Connectable import Const, InPort, Interface, MethodPort, OutPort, Signal, Wire
-from .errors import InvalidAPICallError, InvalidConnectionError, NotElaboratedError
+from .errors import (
+    InvalidAPICallError,
+    InvalidConnectionError,
+    NotElaboratedError,
+    UnsetMetadataError,
+)
+from .MetadataKey import MetadataKey
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
@@ -26,7 +30,7 @@ class Component( ComponentLevel7 ):
     # Check if all the type instances are valid PyMTL types
     if not isinstance( Types, tuple ):
       Types = (Types,)
-    assert all(issubclass(Type, (Bits, BitStruct)) for Type in Types)
+    assert all(issubclass(x, Bits) or is_bitstruct_class(x) for x in Types)
     assert not hasattr(cls, "_rt_types") or cls._rt_types is None
     cls._rt_types = Types
     return super(Component, cls).__class_getitem__( Types )
@@ -44,6 +48,16 @@ class Component( ComponentLevel7 ):
             {name:inst for name, inst in zip(names, instances)} )
       s.__class__._rt_types = None
     super(Component, s).__init__()
+
+  #-----------------------------------------------------------------------
+  # Private methods
+  #-----------------------------------------------------------------------
+
+  def __new__( cls, *args, **kwargs ):
+    inst = super().__new__( cls, *args, **kwargs )
+    # Maps a MetadataKey instance to its value
+    inst._metadata = {}
+    return inst
 
   # Override
   def _construct( s ):
@@ -78,9 +92,6 @@ class Component( ComponentLevel7 ):
         parent._connect_signal_signal( s.clk, parent.clk )
         parent._connect_signal_signal( s.reset, parent.reset )
 
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
-
       s._dsl.constructed = True
 
   # This function deduplicates those checks in each API
@@ -91,13 +102,13 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def _collect_objects_local( s, filt ):
+  def _collect_objects_local( s, filt, sort_key = None ):
     assert s._dsl.constructed
     ret = set()
     stack = []
     for (name, obj) in s.__dict__.items():
       if   isinstance( name, str ):
-        if not name.startswith("_"): # filter private variables
+        if name[0] != '_': # filter private variables
           stack.append( obj )
     while stack:
       u = stack.pop()
@@ -106,7 +117,10 @@ class Component( ComponentLevel7 ):
       # ONLY LIST IS SUPPORTED
       elif isinstance( u, list ):
         stack.extend( u )
-    return ret
+    if sort_key:
+      return sorted( ret, key = sort_key )
+    else:
+      return list(ret)
 
   def _flush_pending_value_connections( s ):
     if s._dsl._has_pending_value_connections:
@@ -129,19 +143,19 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-    top._dsl.elaborate_stack = [ parent ]
+    NamedObject._elaborate_stack = [ parent ]
 
     # Check if we are adding obj to a list of to a component
     if not indices:
-      # If we are adding field s.x, we simply reuse the setattr hook
-      assert not hasattr( s, name )
+      # If we are adding field parent.x, we simply reuse the setattr hook
+      assert not hasattr( parent, name ), f"Invalid add_component call: {parent} already has field {name}!"
 
       NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
       setattr( parent, name, obj )
       del NamedObject.__setattr__
 
     else:
-      assert hasattr( s, name )
+      assert hasattr( parent, name ), f"Invalid add_component call: Field '{name}' of {parent} should exist and be a list, but doesn't exist!"
 
       # We use the indices to get the list parent and set the element
 
@@ -150,6 +164,8 @@ class Component( ComponentLevel7 ):
       while i < len(indices) - 1:
         list_parent = list_parent[ indices[i] ]
         i += 1
+
+      assert list_parent[ indices[i] ] is None, f"Invalid add_component call: {parent} already has field '{name}!'"
       list_parent[ indices[i] ] = obj
 
       # NOTE THAT we cannot use setattr hook for the top level metadata
@@ -159,8 +175,7 @@ class Component( ComponentLevel7 ):
 
       obj._dsl.parent_obj = parent
       obj._dsl.level      = parent._dsl.level + 1
-      obj._dsl.my_name    = u_name = name + "".join( [ "[{}]".format(x)
-                                                     for x in indices ] )
+      obj._dsl.my_name    = u_name = name + "".join( [ f"[{x}]" for x in indices ] )
 
       # Iterate through the param_tree and update u
       if parent._dsl.param_tree is not None:
@@ -186,15 +201,16 @@ class Component( ComponentLevel7 ):
       obj._dsl._my_indices  = indices
 
       obj._dsl.elaborate_top = top
-      top._dsl.elaborate_stack.append( obj )
+      obj._dsl.NamedObject_fields = set()
 
+      NamedObject._elaborate_stack.append( obj )
       NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
       obj._construct()
       del NamedObject.__setattr__
 
-      top._dsl.elaborate_stack.pop()
+      NamedObject._elaborate_stack.pop()
 
-    added_components = obj._collect_all( [ lambda x: isinstance( x, Component ) ] )[0]
+    added_components = obj._collect_all_single( lambda x: isinstance( x, Component ) )
 
     # First elaborate all functions to spawn more named objects
     for c in added_components:
@@ -252,7 +268,7 @@ class Component( ComponentLevel7 ):
     for func, obj_name in provided_func_calls:
       parent._dsl.func_calls[func].add( eval(obj_name) )
 
-    del top._dsl.elaborate_stack
+    del NamedObject._elaborate_stack
 
   def _delete_component( top, obj ):
 
@@ -289,6 +305,7 @@ class Component( ComponentLevel7 ):
       else:
         # Simply delete the attribute if it's merely a field
         delattr( parent, foo._dsl.my_name )
+        parent._dsl.NamedObject_fields.remove( foo._dsl.my_name )
 
       # Remove all components, signals, and method ports
       removed_components, removed_signals, removed_method_ports = \
@@ -436,95 +453,100 @@ class Component( ComponentLevel7 ):
     # import gc
     # gc.collect() # this takes 0.1 seconds
 
+  # Override, add pypy hooks
+  def elaborate( s ):
+    try:
+      import pypyjit
+      pypyjit.set_param("off")
+    except:
+      pass
+
+    super().elaborate()
+
+    # try:
+      # import pypyjit
+      # pypyjit.set_param("default")
+    # except:
+      # pass
+
+  #-----------------------------------------------------------------------
+  # Public APIs (can be called either before or after elaboration)
+  #-----------------------------------------------------------------------
+
+  """ Metadata APIs """
+
+  def set_metadata( s, key, value ):
+    """Set the metadata ``key`` of the given component to be ``value``.
+
+    Can be called before, during, or after elaboration.
+
+    Args:
+        key (MetadataKey): Key of the metadata.
+        value (object): The metadata. Can be any object.
+    """
+    key.check_value( value )
+    s._metadata[ key ] = value
+
+  def has_metadata( s, key ):
+    """Check if the component has metadata for ``key``.
+
+    Can be called before, during, or after elaboration.
+
+    Args:
+        key (MetadataKey): Key of the metadata.
+
+    Returns:
+        bool: Whether or not the component has the metadata for ``key``.
+
+    Raises:
+        TypeError: Raised if ``key`` is not an instance of :class:`MetadataKey`.
+    """
+    if not isinstance( key, MetadataKey ):
+      raise TypeError(f'the given object {key} is not a MetadataKey!')
+    return key in s._metadata
+
+  def get_metadata( s, key ):
+    """Get the metadata ``key`` of the given component.
+
+    Can be called before, during, or after elaboration.
+
+    Args:
+        key (MetadataKey): Key of the metadata.
+
+    Returns:
+        object: The metadata of the given ``key``.
+
+    Raises:
+        TypeError: Raised if ``key`` is not an instance of :class:`MetadataKey`.
+        UnsetMetadataError: Raised if the component does not have metadata for
+            the given ``key``.
+    """
+    if not s.has_metadata( key ):
+      raise UnsetMetadataError( key, s )
+    return s._metadata[ key ]
+
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
   #-----------------------------------------------------------------------
 
   """ Convenience/utility APIs """
 
-  def apply( s, *args ):
+  def apply( s, pass_instance ):
+    try:
+      import pypyjit
+      pypyjit.set_param("off")
+    except:
+      pass
+    if not hasattr( s._dsl, "elaborate_top" ):
+      s.elaborate()
 
-    if isinstance(args[0], list):
-      assert len(args) == 1
-      for step in args[0]:
-        step( s )
-
-    elif len(args) == 1:
-      assert callable( args[0] )
-      args[0]( s )
-
-  # Simulation related APIs
-  def sim_reset( s ):
-    s._check_called_at_elaborate_top( "sim_reset" )
-
-    s.reset = Bits1( 1 )
-    s.tick() # Tick twice to propagate the reset signal
-    s.tick()
-    s.reset = Bits1( 0 )
+    assert type(pass_instance) is not type, f"Should pass in a pass instance like " \
+                                            f"'{pass_instance.__name__}()' instead of '{pass_instance.__name__}'"
+    assert callable( pass_instance ), f"Should override __call__ of {pass_instance.__name__} for a valid pass"
+    pass_instance( s )
 
   def check( s ):
     s._check_valid_dsl_code()
-
-  # TODO maybe we should implement these two lock/unlock APIs as passes?
-  # They expose kernel implementation details though ...
-  def lock_in_simulation( s ):
-    s._check_called_at_elaborate_top( "lock_in_simulation" )
-
-    s._dsl.swapped_signals = defaultdict(list)
-    s._dsl.swapped_values  = defaultdict(list)
-
-    def cleanup_connectables( current_obj, host_component ):
-
-      # Deduplicate code. Choose operation based on type of current_obj
-      if isinstance( current_obj, list ):
-        iterable = enumerate( current_obj )
-        is_list = True
-      elif isinstance( current_obj, NamedObject ):
-        iterable = current_obj.__dict__.items()
-        is_list = False
-      else:
-        return
-
-      for i, obj in iterable:
-        if not is_list and i.startswith("_"): # impossible to have tuple
-          continue
-
-        if   isinstance( obj, Component ):
-          cleanup_connectables( obj, obj )
-
-        elif isinstance( obj, (Interface, list) ):
-          cleanup_connectables( obj, host_component )
-
-        elif isinstance( obj, Signal ):
-          try:
-            if is_list: current_obj[i] = obj.default_value()
-            else:       setattr( current_obj, i, obj.default_value() )
-          except Exception as err:
-            err.message = repr(obj) + " -- " + err.message
-            err.args = (err.message,)
-            raise err
-          s._dsl.swapped_signals[ host_component ].append( (current_obj, i, obj, is_list) )
-
-    cleanup_connectables( s, s )
-    s._dsl.locked_simulation = True
-
-  def unlock_simulation( s ):
-    s._check_called_at_elaborate_top( "unlock_simulation" )
-    try:
-      assert s._dsl.locked_simulation
-    except:
-      raise AttributeError("Cannot unlock an unlocked/never locked model.")
-
-    for component, records in s._dsl.swapped_signals.items():
-      for current_obj, i, obj, is_list in records:
-        if is_list:
-          s._dsl.swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
-          current_obj[i] = obj
-        else:
-          s._dsl.swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
-          setattr( current_obj, i, obj )
-
-    s._dsl.locked_simulation = False
 
   """ APIs that provide local metadata of a component """
 
@@ -534,33 +556,42 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_child_components( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, Component ) )
+  def get_child_components( s, sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, Component ), sort_key )
 
-  def get_input_value_ports( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, InPort ) )
+  def get_input_value_ports( s, sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, InPort ), sort_key )
 
-  def get_output_value_ports( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, OutPort ) )
+  def get_output_value_ports( s , sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, OutPort ), sort_key )
 
-  def get_wires( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, Wire ) )
+  def get_wires( s , sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, Wire ), sort_key )
 
   def get_update_blocks( s ):
     assert s._dsl.constructed
     return s._dsl.upblks
 
-  def get_update_on_edge( s ):
+  def get_update_ff( s ):
     assert s._dsl.constructed
-    return s._dsl.update_on_edge
+    return s._dsl.update_ff
 
   def get_upblk_metadata( s ):
     assert s._dsl.constructed
     return s._dsl.upblk_reads, s._dsl.upblk_writes, s._dsl.upblk_calls
 
+  # These xxx_order APIs should be used when some pass wants to process
+  # connections/upblks in the order that they are created
+
   def get_connect_order( s ):
     try:
       return s._dsl.connect_order
+    except AttributeError:
+      raise NotElaboratedError()
+
+  def get_update_block_order( s ):
+    try:
+      return s._dsl.upblk_order
     except AttributeError:
       raise NotElaboratedError()
 
@@ -571,11 +602,11 @@ class Component( ComponentLevel7 ):
     try:
       return { x for x in s._dsl.all_named_objects if filt(x) }
     except AttributeError:
-      return s._collect_all( [ filt ] )[0]
+      return s._collect_all_single( filt )
 
-  def get_local_object_filter( s, filt ):
+  def get_local_object_filter( s, filt, sort_key = None ):
     assert callable( filt )
-    return s._collect_objects_local( filt )
+    return s._collect_objects_local( filt, sort_key )
 
   def get_all_components( s ):
     try:
@@ -591,10 +622,17 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_all_update_on_edge( s ):
+  def get_all_update_ff( s ):
     try:
-      s._check_called_at_elaborate_top( "get_all_update_on_edge" )
-      return s._dsl.all_update_on_edge
+      s._check_called_at_elaborate_top( "get_all_update_ff" )
+      return s._dsl.all_update_ff
+    except AttributeError:
+      raise NotElaboratedError()
+
+  def get_all_update_once( s ):
+    try:
+      s._check_called_at_elaborate_top( "get_all_update_once" )
+      return s._dsl.all_update_once
     except AttributeError:
       raise NotElaboratedError()
 
@@ -613,24 +651,19 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_update_block_ast( s, blk ):
+  # is_lambda?, src, line, filename, ast
+  def get_update_block_info( s, blk ):
     try:
-      name_ast = s.__class__._name_ast
+      name_info = s.__class__._name_info
     except AttributeError: # This component doesn't have update block
       return None
 
-    return name_ast[blk.__name__]
+    return name_info[blk.__name__]
 
   def get_update_block_host_component( s, blk ):
     try:
       s._check_called_at_elaborate_top( "get_update_block_host_component" )
       return s._dsl.all_upblk_hostobj[ blk ]
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_astnode_obj_mapping( s ):
-    try:
-      return s._dsl.astnode_objs
     except AttributeError:
       raise NotElaboratedError()
 

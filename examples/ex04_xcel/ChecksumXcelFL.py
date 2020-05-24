@@ -9,8 +9,7 @@ Author : Yanghui Ou
 """
 from examples.ex02_cksum.ChecksumFL import checksum
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import mk_xcel_msg
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMinionIfcFL
+from pymtl3.stdlib.ifcs import mk_xcel_msg, XcelMinionIfcFL
 
 
 # Address space: 0~3: checksum input, 4: go bit, 5: result
@@ -22,15 +21,14 @@ class ChecksumXcelFL( Component ):
 
     ReqType, RespType = mk_xcel_msg( 5, 32 )
 
-    s.xcel = XcelMinionIfcFL( ReqType, RespType,
-                              read=s.read, write=s.write)
+    s.xcel = XcelMinionIfcFL( read=s.read, write=s.write )
 
     # Components
 
     s.reg_file = [ b32(0) for _ in range(6) ]
 
     s.trace = "            "
-    @s.update
+    @update
     def up_clear_trace():
       s.trace = "            "
 

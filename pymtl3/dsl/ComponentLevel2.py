@@ -5,7 +5,7 @@ ComponentLevel2.py
 At level two we introduce implicit variable constraints.
 By default we assume combinational semantics:
 - upA reads Wire x while upB writes Wire x ==> upB = WR(x) < RD(x) = upA
-When upA is marked as update_on_edge ==> for all upblks upX that
+When upA is marked as update_ff ==> for all upblks upX that
 write/read variables in upA, upA < upX:
 - upA = RD(x) < WR(x) = upB and upA = WR(x) < RD(x) = upB
 
@@ -18,6 +18,8 @@ import inspect
 import re
 from collections import defaultdict
 
+from pymtl3.datatypes import Bits, is_bitstruct_class
+
 from . import AstHelper
 from .ComponentLevel1 import ComponentLevel1
 from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
@@ -25,17 +27,27 @@ from .ConstraintTypes import RD, WR, U, ValueConstraint
 from .errors import (
     InvalidConstraintError,
     InvalidFuncCallError,
+    InvalidIndexError,
     InvalidPlaceholderError,
     MultiWriterError,
     NotElaboratedError,
+    PyMTLDeprecationError,
     SignalTypeError,
     UpblkFuncSameNameError,
+    UpdateBlockWriteError,
+    UpdateFFBlockWriteError,
+    UpdateFFNonTopLevelSignalError,
     VarNotDeclaredError,
+    WriteNonSignalError,
 )
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
-p = re.compile('( *(@|def))')
+compiled_re = re.compile('( *(@|def))')
+
+def update_ff( blk ):
+  NamedObject._elaborate_stack[-1]._update_ff( blk )
+  return blk
 
 class ComponentLevel2( ComponentLevel1 ):
 
@@ -46,7 +58,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def __new__( cls, *args, **kwargs ):
     inst = super().__new__( cls, *args, **kwargs )
 
-    inst._dsl.update_on_edge = set()
+    inst._dsl.update_ff = set()
 
     # constraint[var] = (sign, func)
     inst._dsl.RD_U_constraints = defaultdict(set)
@@ -55,7 +67,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
     return inst
 
-  def _cache_func_meta( s, func ):
+  def _cache_func_meta( s, func, is_update_ff, given=None ):
     """ Convention: the source of a function/update block across different
     instances should be the same. You can construct different functions
     based on the condition, but please use different names. This not only
@@ -63,28 +75,36 @@ class ComponentLevel2( ComponentLevel1 ):
 
     According to the convention, we can cache the information of a
     function in the *class object* to avoid redundant parsing. """
-    cls = type(s)
+    cls = s.__class__
     try:
-      name_src = cls._name_src
-      name_ast = cls._name_ast
-      name_rd  = cls._name_rd
-      name_wr  = cls._name_wr
-      name_fc  = cls._name_fc
-    except:
-      name_src = cls._name_src = {}
-      name_ast = cls._name_ast = {}
-      name_rd  = cls._name_rd  = {}
-      name_wr  = cls._name_wr  = {}
-      name_fc  = cls._name_fc  = {}
+      name_info = cls._name_info
+      name_rd   = cls._name_rd
+      name_wr   = cls._name_wr
+      name_fc   = cls._name_fc
+    except Exception:
+      name_info = cls._name_info = {}
+      name_rd   = cls._name_rd  = {}
+      name_wr   = cls._name_wr  = {}
+      name_fc   = cls._name_fc  = {}
 
     name = func.__name__
-    if name not in name_src:
-      name_src[ name ] = src  = p.sub( r'\2', inspect.getsource(func) )
-      name_ast[ name ] = tree = ast.parse( src )
-      name_rd[ name ]  = rd   = []
-      name_wr[ name ]  = wr   = []
-      name_fc[ name ]  = fc   = []
-      AstHelper.extract_reads_writes_calls( func, tree, rd, wr, fc )
+
+    if name not in name_info:
+      if given is None:
+        _src, _line = inspect.getsourcelines( func )
+        _src = "".join( _src )
+        _ast = ast.parse( compiled_re.sub( r'\2', _src ) )
+
+        name_info[ name ] = (False, _src, _line, inspect.getsourcefile( func ), _ast )
+      else:
+        _src, _ast, _line, _file = given
+
+        name_info[ name ] = ( True, _src, _line, _file, _ast )
+
+      name_rd[ name ]  = _rd   = []
+      name_wr[ name ]  = _wr   = []
+      name_fc[ name ]  = _fc   = []
+      AstHelper.extract_reads_writes_calls( s, func, _ast, _rd, _wr, _fc )
 
   def _elaborate_read_write_func( s ):
 
@@ -92,48 +112,71 @@ class ComponentLevel2( ComponentLevel1 ):
     # I refactor the process of materializing objects in this function
     # Pass in the func as well for error message
 
-    def extract_obj_from_names( func, names ):
+    def extract_obj_from_names( func, names, update_ff=False, is_write=False ):
 
-      def expand_array_index( obj, name_depth, node_depth, idx_depth, idx, obj_list ):
+      def expand_array_index( obj, name_depth, node_depth, idx_depth, idx ):
         """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_variable """
 
         if idx_depth >= len(idx): # exhausted, go to next level of name
-          lookup_variable( obj, name_depth+1, node_depth+1, obj_list )
+          lookup_variable( obj, name_depth+1, node_depth+1 )
+          return
 
-        elif idx[ idx_depth ] == "*": # special case, materialize all objects
+        current_idx = idx[ idx_depth ]
+
+        if current_idx == "*": # special case, materialize all objects
           if isinstance( obj, NamedObject ): # Signal[*] is the signal itself
-            add_all( obj, obj_list, node_depth )
+            objs.add( obj )
           else:
             for i, child in enumerate( obj ):
-              expand_array_index( child, name_depth, node_depth, idx_depth+1, idx, obj_list )
+              expand_array_index( child, name_depth, node_depth, idx_depth+1, idx )
+
+        # Here we try to find the value of free variables in the current
+        # component scope.
+        # tuple: [x] where x is a closure/global variable
+        # slice: [x:y] where x and y are either normal integers or
+        #        closure/global variable.
         else:
+          if isinstance( current_idx, tuple ):
+            is_closure, name = current_idx
+            current_idx = _closure[ name ] if is_closure else _globals[ name ]
+          elif isinstance( current_idx, slice ):
+            start = current_idx.start
+            if isinstance( start, tuple ):
+              is_closure, name = start
+              start = _closure[ name ] if is_closure else _globals[ name ]
+            stop  = current_idx.stop
+            if isinstance( stop, tuple ):
+              is_closure, name = stop
+              stop = _closure[ name ] if is_closure else _globals[ name ]
+            current_idx = slice(start, stop)
+
           try:
-            child = obj[ idx[ idx_depth ] ]
+            child = obj[ current_idx ]
           except TypeError: # cannot convert to integer
-            raise VarNotDeclaredError( obj, idx[idx_depth], func, s, nodelist[node_depth].lineno )
+            raise VarNotDeclaredError( obj, current_idx, func, s, nodelist[node_depth].lineno )
           except IndexError:
             return
+          except AssertionError:
+            raise InvalidIndexError( obj, current_idx, func, s, nodelist[node_depth].lineno )
 
-          s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
-          expand_array_index( child, name_depth, node_depth, idx_depth+1, idx, obj_list )
+          expand_array_index( child, name_depth, node_depth, idx_depth+1, idx )
 
-      def add_all( obj, obj_list, node_depth ):
-        """ Already found, but it is an array of objects,
-            s.x = [ [ A() for _ in range(2) ] for _ in range(3) ].
-            Recursively collect all signals. """
-        if   isinstance( obj, NamedObject ):
-          obj_list.add( obj )
-        elif isinstance( obj, list ): # SORRY
-          for i, child in enumerate( obj ):
-            add_all( child, obj_list, node_depth+1 )
-
-      def lookup_variable( obj, name_depth, node_depth, obj_list ):
+      def lookup_variable( obj, name_depth, node_depth ):
         """ Look up the object s.a.b.c in s. Jump to expand_array_index if c[] """
         if obj is None:
           return
 
         if name_depth >= len(obj_name): # exhausted
-          add_all( obj, obj_list, node_depth ) # if this object is a list/array again...
+          if   isinstance( obj, NamedObject ):
+            objs.add( obj )
+          elif isinstance( obj, list ) and obj: # Exhaust all the elements in the high-d array
+            Q = [ *obj ] # PEP 448 -- see https://stackoverflow.com/a/43220129/6470797
+            while Q:
+              m = Q.pop()
+              if isinstance( m, NamedObject ):
+                objs.add( m )
+              elif isinstance( m, list ):
+                Q.extend( m )
           return
 
         # still have names
@@ -144,30 +187,90 @@ class ComponentLevel2( ComponentLevel1 ):
           print(e)
           raise VarNotDeclaredError( obj, field, func, s, nodelist[node_depth].lineno )
 
-        s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
-
-        if not idx: lookup_variable   ( child, name_depth+1, node_depth+1, obj_list )
-        else:       expand_array_index( child, name_depth,   node_depth+1, 0, idx, obj_list )
+        if not idx: lookup_variable   ( child, name_depth+1, node_depth+1 )
+        else:       expand_array_index( child, name_depth,   node_depth+1, 0, idx )
 
       """ extract_obj_from_names:
       Here we enumerate names and use the above functions to turn names
       into objects """
 
+      _globals = func.__globals__
+
+      _closure = {}
+      for i, var in enumerate( func.__code__.co_freevars ):
+        try:  _closure[ var ] = func.__closure__[i].cell_contents
+        except ValueError: pass
+
       all_objs = set()
 
-      for obj_name, nodelist in names:
-        objs = set()
-
+      # Now we turn names into actual objects
+      for obj_name, nodelist, op in names:
         if obj_name[0][0] == "s":
-          s._dsl.astnode_objs[ nodelist[0] ].append( s )
-          lookup_variable( s, 1, 1, objs )
-          all_objs |= objs
+          objs = set()
+          lookup_variable( s, 1, 1 )
+
+          if not is_write or not objs:
+            all_objs |= objs
+            continue
+
+          # Now we perform write checks
+
+          for obj in objs: # The objects in objs are all NamedObject
+            if not isinstance( obj, Signal ):
+              raise WriteNonSignalError( s, func, nodelist[0].lineno, obj )
+            all_objs.add( obj )
+
+          # Check all assignments in update_ff and update
+          # - <<= in update_ff
+          # - @= in update
+          # - = in update/update_ff
+
+          if update_ff:
+            # - signals can only be at LHS of <<=
+            #   * only top level signals
+            # - signals cannot be at LHS of @= or =
+
+            if op is None:
+              raise UpdateFFBlockWriteError( s, func, '=', nodelist[0].lineno,
+                "Fix the '=' assignment with '<<='")
+            elif op == 'for':
+              raise UpdateFFBlockWriteError( s, func, op, nodelist[0].lineno,
+                "Fix the loop variable in for-loop assignment")
+            elif not isinstance( op, ast.LShift ):
+              if isinstance( op, ast.MatMult ):
+                raise UpdateFFBlockWriteError( s, func, '@=', nodelist[0].lineno,
+                  "Fix the '@=' assignment with '<<='")
+
+              raise UpdateFFBlockWriteError( s, func, op+'=', nodelist[0].lineno,
+                "Fix the signal assignment with '<<='")
+
+
+            for x in objs:
+              if not x.is_top_level_signal():
+                raise UpdateFFNonTopLevelSignalError( s, func, nodelist[0].lineno )
+
+              x._dsl.needs_double_buffer = True
+
+          else: # update
+            # - signals can only be at LHS of @=
+            # - signals cannot be at LHS of <<= or =
+            if op is None:
+              raise UpdateBlockWriteError( s, func, '=', nodelist[0].lineno,
+                "Fix the '=' assignment with '@='")
+            elif op == 'for':
+              raise UpdateBlockWriteError( s, func, op, nodelist[0].lineno,
+                "Fix the loop variable in for-loop assignment")
+            elif not isinstance( op, ast.MatMult ):
+              if isinstance( op, ast.LShift ):
+                raise UpdateBlockWriteError( s, func, '<<=', nodelist[0].lineno,
+                  "Fix the '<<=' assignment with '@='")
+              raise UpdateBlockWriteError( s, func, op+'=', nodelist[0].lineno,
+                "Fix the signal assignment with '@='")
 
         # This is a function call without "s." prefix, check func list
         elif obj_name[0][0] in s._dsl.name_func:
           call = s._dsl.name_func[ obj_name[0][0] ]
           all_objs.add( call )
-          s._dsl.astnode_objs[ nodelist[0] ].append( call )
 
       return all_objs
 
@@ -183,7 +286,6 @@ class ComponentLevel2( ComponentLevel1 ):
 
     # what object each astnode corresponds to. You can't have two update
     # blocks in one component that have the same ast.
-    s._dsl.astnode_objs = defaultdict(list)
     s._dsl.func_reads  = {}
     s._dsl.func_writes = {}
     s._dsl.func_calls  = {}
@@ -197,7 +299,8 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.upblk_calls  = {}
     for name, blk in s._dsl.name_upblk.items():
       s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
-      s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ] )
+      s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ],
+                                    update_ff = blk in s._dsl.update_ff, is_write=True )
       s._dsl.upblk_calls [ blk ] = extract_obj_from_names( blk, name_fc[ name ] )
 
   # Override
@@ -205,7 +308,7 @@ class ComponentLevel2( ComponentLevel1 ):
     super()._collect_vars( m )
 
     if isinstance( m, ComponentLevel2 ):
-      s._dsl.all_update_on_edge |= m._dsl.update_on_edge
+      s._dsl.all_update_ff |= m._dsl.update_ff
 
       for k, k_cons in m._dsl.RD_U_constraints.items():
         s._dsl.all_RD_U_constraints[k] |= k_cons
@@ -262,7 +365,7 @@ class ComponentLevel2( ComponentLevel1 ):
     super()._uncollect_vars( m )
 
     if isinstance( m, ComponentLevel2 ):
-      s._dsl.all_update_on_edge -= m._dsl.update_on_edge
+      s._dsl.all_update_ff -= m._dsl.update_ff
 
       for k in m._dsl.RD_U_constraints:
         s._dsl.all_RD_U_constraints[k] -= m._dsl.RD_U_constraints[k]
@@ -411,25 +514,31 @@ class ComponentLevel2( ComponentLevel1 ):
 
   def func( s, func ): # @s.func is for those functions
     if isinstance( s, Placeholder ):
-      raise InvalidPlaceholderError( "Cannot define function "
+      raise InvalidPlaceholderError( "Cannot define function {}"
               "in a placeholder component.".format( func.__name__ ) )
     name = func.__name__
     if name in s._dsl.name_func or name in s._dsl.name_upblk:
       raise UpblkFuncSameNameError( name )
 
     s._dsl.name_func[ name ] = func
-    s._cache_func_meta( func )
+    s._cache_func_meta( func, is_update_ff=False )
     return func
 
   # Override
-  def update( s, blk ):
-    super().update( blk )
-    s._cache_func_meta( blk ) # add caching of src/ast
-    return blk
+  def _update( s, blk ):
+    super()._update( blk )
+
+    s._cache_func_meta( blk, is_update_ff=False ) # add caching of src/ast
 
   def update_on_edge( s, blk ):
-    s._dsl.update_on_edge.add( blk )
-    return s.update( blk )
+    raise PyMTLDeprecationError("\ns.update_on_edge decorator has been deprecated! "
+                                "\n- Please use @update_ff instead.")
+
+  def _update_ff( s, blk ):
+    super()._update( blk )
+
+    s._dsl.update_ff.add( blk )
+    s._cache_func_meta( blk, is_update_ff=True ) # add caching of src/ast
 
   # Override
   def add_constraints( s, *args ): # add RD-U/WR-U constraints
@@ -472,7 +581,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def _elaborate_declare_vars( s ):
     super()._elaborate_declare_vars()
 
-    s._dsl.all_update_on_edge = set()
+    s._dsl.all_update_ff = set()
 
     s._dsl.all_RD_U_constraints = defaultdict(set)
     s._dsl.all_WR_U_constraints = defaultdict(set)
@@ -505,7 +614,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._elaborate_construct()
 
     # First elaborate all functions to spawn more named objects
-    for c in s._collect_all( [ lambda s: isinstance( s, ComponentLevel2 ) ] )[0]:
+    for c in s._collect_all_single( lambda s: isinstance( s, ComponentLevel2 ) ):
       c._elaborate_read_write_func()
 
     s._elaborate_collect_all_named_objects()

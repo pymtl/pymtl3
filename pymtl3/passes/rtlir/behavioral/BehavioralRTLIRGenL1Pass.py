@@ -9,24 +9,56 @@ import ast
 import copy
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, concat, reduce_and, reduce_or, reduce_xor, sext, zext
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3 import MetadataKey
+from pymtl3.datatypes import (
+    Bits,
+    concat,
+    is_bitstruct_class,
+    is_bitstruct_inst,
+    reduce_and,
+    reduce_or,
+    reduce_xor,
+    sext,
+    trunc,
+    zext,
+)
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
+from pymtl3.passes.rtlir.RTLIRPass import RTLIRPass
+from pymtl3.passes.rtlir.rtype.RTLIRType import RTLIRGetter
+from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
 
 from . import BehavioralRTLIR as bir
 
 
-class BehavioralRTLIRGenL1Pass( BasePass ):
+class BehavioralRTLIRGenL1Pass( RTLIRPass ):
+
+  # Pass metadata
+
+  #: A dictionary that maps upblk functions to their BIR representation
+  #:
+  #: Type: ``dict``; output
+  rtlir_upblks = MetadataKey()
+
+  def __init__( s, translation_top ):
+    c = s.__class__
+    s.tr_top = translation_top
+    if not translation_top.has_metadata( c.rtlir_getter ):
+      translation_top.set_metadata( c.rtlir_getter, RTLIRGetter(cache=True) )
+
   def __call__( s, m ):
     """Generate RTLIR for all upblks of m."""
-    if not hasattr( m, '_pass_behavioral_rtlir_gen' ):
-      m._pass_behavioral_rtlir_gen = PassMetadata()
+    c = s.__class__
 
-    m._pass_behavioral_rtlir_gen.rtlir_upblks = {}
-    visitor = BehavioralRTLIRGeneratorL1( m )
+    if m.has_metadata( c.rtlir_upblks ):
+      rtlir_upblks = m.get_metadata( c.rtlir_upblks )
+    else:
+      rtlir_upblks = {}
+      m.set_metadata( c.rtlir_upblks, rtlir_upblks )
+
+    visitor = s.get_rtlir_generator_class()( m )
     upblks = {
-      'CombUpblk' : list(m.get_update_blocks() - m.get_update_on_edge()),
-      'SeqUpblk'  : list(m.get_update_on_edge())
+      'CombUpblk' : get_ordered_upblks(m),
+      'SeqUpblk'  : get_ordered_update_ff(m),
     }
     # Sort the upblks by their name
     upblks['CombUpblk'].sort( key = lambda x: x.__name__ )
@@ -35,13 +67,20 @@ class BehavioralRTLIRGenL1Pass( BasePass ):
     for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
       for blk in upblks[ upblk_type ]:
         visitor._upblk_type = upblk_type
-        m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] = \
-          visitor.enter( blk, m.get_update_block_ast( blk ) )
+        upblk_info = m.get_update_block_info( blk )
+        upblk = visitor.enter( blk, upblk_info[-1] )
+        upblk.is_lambda = upblk_info[0]
+        upblk.src       = upblk_info[1]
+        upblk.lino      = upblk_info[2]
+        upblk.filename  = upblk_info[3]
+        rtlir_upblks[ blk ] = upblk
+
+  def get_rtlir_generator_class( s ):
+    return BehavioralRTLIRGeneratorL1
 
 class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
   def __init__( s, component ):
     s.component = component
-    s.mapping   = component.get_astnode_obj_mapping()
 
   def enter( s, blk, ast ):
     """Entry point of RTLIR generation."""
@@ -61,42 +100,33 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       except ValueError:
         pass
 
+    s.const_extractor = ConstantExtractor( s.blk, s.globals, s.closure )
     ret = s.visit( ast )
     ret.component = s.component
     return ret
 
+  def handle_constant( s, node, obj ):
+    if isinstance( obj, int ):
+      return bir.Number( obj )
+    elif isinstance( obj, Bits ):
+      return bir.SizeCast( obj.nbits, bir.Number( obj.uint() ) )
+    else:
+      return None
+
   def get_call_obj( s, node ):
-    if getattr(node, "starargs", False):
+    if hasattr(node, "starargs") and node.starargs:
       raise PyMTLSyntaxError( s.blk, node, 'star argument is not supported!')
-    if getattr(node, "kwargs", False):
+    if hasattr(node, "kwargs") and node.kwargs:
       raise PyMTLSyntaxError( s.blk, node,
         'double-star argument is not supported!')
     if node.keywords:
       raise PyMTLSyntaxError( s.blk, node, 'keyword argument is not supported!')
-    if not isinstance( node.func, ast.Name ):
-      raise PyMTLSyntaxError( s.blk, node,
-        '{} is called but is not a name!'.format(node.func))
-    func = node.func
 
-    # Find the corresponding object of node.func field
-    # TODO: Support Verilog task?
-    if func in s.mapping:
-      # The node.func field corresponds to a member of this class
-      obj = s.mapping[ func ][ 0 ]
+    obj = s.const_extractor.enter( node.func )
+    if obj is not None:
+      return obj
     else:
-      try:
-        # An object in global namespace is used
-        if func.id in s.globals:
-          obj = s.globals[ func.id ]
-        # An object in closure is used
-        elif func.id in s.closure:
-          obj = s.closure[ func.id ]
-        else:
-          raise NameError
-      except NameError:
-        raise PyMTLSyntaxError( s.blk, node,
-          node.func.id + ' function is not found!' )
-    return obj
+      raise PyMTLSyntaxError( s.blk, node, f'{node.func} function is not found!' )
 
   def visit_Module( s, node ):
     if len( node.body ) != 1 or \
@@ -112,7 +142,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     We do not need to check the decorator list -- the fact that we are
     visiting this node ensures this node was added to the upblk
-    dictionary through s.update() (or other PyMTL decorators) earlier!
+    dictionary through update() (or other PyMTL decorators) earlier!
     """
     # Check the arguments of the function
     if node.args.args or node.args.vararg or node.args.kwarg:
@@ -130,15 +160,50 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     return ret
 
   def visit_Assign( s, node ):
-    if len( node.targets ) != 1:
+    blocking = {
+      'CombUpblk' : True,
+      'SeqUpblk'  : False,
+    }
+
+    if len( node.targets ) < 1:
       raise PyMTLSyntaxError( s.blk, node,
-        'Assigning to multiple targets is not allowed!' )
+        'At least one assignment target should be provided!' )
+
+    if s._upblk_type not in blocking:
+      raise PyMTLSyntaxError( s.blk, node,
+        'Assignment should be in either a combinational or a sequential update block!' )
 
     value = s.visit( node.value )
-    target = s.visit( node.targets[0] )
-    ret = bir.Assign( target, value )
+    targets = [ s.visit( target ) for target in node.targets ]
+    ret = bir.Assign( targets, value, blocking = False )
+
+    # Determine if this is a blocking/non-blocking assignment
+    ret.blocking = s.get_blocking(node, ret)
+
     ret.ast = node
     return ret
+
+  def get_blocking( s, node, bir_node ):
+    blocking = {
+      'CombUpblk' : True,
+      'SeqUpblk'  : False,
+    }
+    return blocking[s._upblk_type]
+
+  def visit_AugAssign( s, node ):
+    """Return the behavioral RTLIR of a non-blocking assignment
+
+    If the given AugAssign is not @= or <<=, throw PyMTLSyntaxError
+    """
+    if isinstance( node.op, (ast.LShift, ast.MatMult) ):
+      value = s.visit( node.value )
+      targets = [ s.visit( node.target ) ]
+      blocking = False if isinstance(node.op, ast.LShift) else True
+      ret = bir.Assign( targets, value, blocking )
+      ret.ast = node
+      return ret
+    raise PyMTLSyntaxError( s.blk, node,
+        'invalid operation: augmented assignment is not @= or <<= assignment!' )
 
   def visit_Call( s, node ):
     """Return the behavioral RTLIR of method calls.
@@ -151,7 +216,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     if ( obj == copy.copy ) or ( obj == copy.deepcopy ):
       if len( node.args ) != 1:
         raise PyMTLSyntaxError( s.blk, node,
-          'copy method {} takes exactly 1 argument!'.format(obj))
+          f'copy method {obj} takes exactly 1 argument!')
       ret = s.visit( node.args[0] )
       ret.ast = node
       return ret
@@ -169,13 +234,13 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # Deal with Bits type cast
     if isinstance(obj, type) and issubclass( obj, Bits ):
       nbits = obj.nbits
-      if len( node.args ) != 1:
+      if len( node.args ) > 1:
         raise PyMTLSyntaxError( s.blk, node,
-          'exactly one argument should be given to Bits!' )
-      value = s.visit( node.args[0] )
-      ret = bir.SizeCast( nbits, value )
-      ret.ast = node
-      return ret
+          'exactly one or zero argument should be given to Bits!' )
+      if len( node.args ) == 0:
+        ret = bir.SizeCast( nbits, bir.Number( 0 ) )
+      else:
+        ret = bir.SizeCast( nbits, s.visit( node.args[0] ) )
 
     # concat method
     elif obj is concat:
@@ -184,30 +249,51 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
           'at least one argument should be given to concat!' )
       values = [s.visit(c) for c in node.args]
       ret = bir.Concat( values )
-      ret.ast = node
-      return ret
 
     # zext method
     elif obj is zext:
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to zext!' )
-      nbits = s.visit( node.args[1] )
-      value = s.visit( node.args[0] )
-      ret = bir.ZeroExt( nbits, value )
-      ret.ast = node
-      return ret
+
+      nbits = s.const_extractor.enter( node.args[1] )
+      if isinstance(nbits, type) and issubclass( nbits, Bits ):
+        nbits = nbits.nbits
+      if not isinstance( nbits, int ):
+        raise PyMTLSyntaxError( s.blk, node,
+          'the 2nd argument of zext {nbits} is not a constant int or BitsN type!' )
+
+      ret = bir.ZeroExt( nbits, s.visit( node.args[0] ) )
 
     # sext method
     elif obj is sext:
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to sext!' )
-      nbits = s.visit( node.args[1] )
-      value = s.visit( node.args[0] )
-      ret = bir.SignExt( nbits, value )
-      ret.ast = node
-      return ret
+
+      nbits = s.const_extractor.enter( node.args[1] )
+      if isinstance(nbits, type) and issubclass( nbits, Bits ):
+        nbits = nbits.nbits
+      if not isinstance( nbits, int ):
+        raise PyMTLSyntaxError( s.blk, node,
+          'the 2nd argument of sext {nbits} is not a constant int or BitsN type!' )
+
+      ret = bir.SignExt( nbits, s.visit( node.args[0] ) )
+
+    # trunc method
+    elif obj is trunc:
+      if len( node.args ) != 2:
+        raise PyMTLSyntaxError( s.blk, node,
+          'exactly two arguments should be given to trunc!' )
+
+      nbits = s.const_extractor.enter( node.args[1] )
+      if isinstance(nbits, type) and issubclass( nbits, Bits ):
+        nbits = nbits.nbits
+      if not isinstance( nbits, int ):
+        raise PyMTLSyntaxError( s.blk, node,
+          'the 2nd argument of trunc {nbits} is not a constant int or BitsN type!' )
+
+      ret = bir.Truncate( nbits, s.visit( node.args[0] ) )
 
     # reduce methods
     elif obj is reduce_and or obj is reduce_or or obj is reduce_xor:
@@ -219,24 +305,33 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         op = bir.BitXor()
       if len( node.args ) != 1:
         raise PyMTLSyntaxError( s.blk, node,
-          'exactly two arguments should be given to reduce {} methods!'. \
-              format( op ) )
-      value = s.visit( node.args[0] )
-      ret = bir.Reduce( op, value )
-      ret.ast = node
-      return ret
+          f'exactly two arguments should be given to reduce {op} methods!' )
+
+      ret = bir.Reduce( op, s.visit( node.args[0] ) )
 
     else:
       # Only Bits class instantiation is supported at L1
-      raise PyMTLSyntaxError( s.blk, node,
-        'Unrecognized method call {}!' + obj.__name__ )
+      raise PyMTLSyntaxError( s.blk, node, f'Unrecognized method call {obj.__name__}!' )
+
+    ret.ast = node
+    return ret
 
   def visit_Attribute( s, node ):
+    obj = s.const_extractor.enter( node )
+    ret = s.handle_constant( node, obj )
+    if ret:
+      return ret
+
     ret = bir.Attribute( s.visit( node.value ), node.attr )
     ret.ast = node
     return ret
 
   def visit_Subscript( s, node ):
+    obj = s.const_extractor.enter( node )
+    ret = s.handle_constant( node, obj )
+    if ret:
+      return ret
+
     value = s.visit( node.value )
     if isinstance( node.slice, ast.Slice ):
       if node.slice.step is not None:
@@ -259,7 +354,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
             'Slice with steps is not supported!' )
         assert isinstance( slice_obj.start, int ) and \
                isinstance( slice_obj.stop, int ), \
-            "start and stop of slice object {} must be integers!".format( slice_obj )
+            f"start and stop of slice object {slice_obj} must be integers!"
         ret = bir.Slice( value,
               bir.Number(slice_obj.start), bir.Number(slice_obj.stop) )
       # Else this is a real index
@@ -285,19 +380,24 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         # Component freevars are an L1 thing.
         if obj is not s.component:
           raise PyMTLSyntaxError( s.blk, node,
-            'Component {} is not a sub-component of {}!'.format(obj, s.component))
+            f'Component {obj} is not a sub-component of {s.component}!' )
         ret = bir.Base( obj )
       else:
-        ret =  bir.FreeVar( node.id, obj )
+        # A closure variable could be a loop index. We need to
+        # generate per-function closure variable instead of assuming
+        # they will have the same value.
+        ret = bir.FreeVar( f"{node.id}_at_{s.blk.__name__}", obj )
       ret.ast = node
       return ret
     elif node.id in s.globals:
       # free var from the global name space
+      # For now we can still safely assume all upblks will see the same
+      # value for a free var from the global space?
       ret = bir.FreeVar( node.id, s.globals[ node.id ] )
       ret.ast = node
       return ret
     raise PyMTLSyntaxError( s.blk, node,
-      'Temporary variable {} is not supported at L1!'.format(node.id))
+      f'Temporary variable {node.id} is not supported at L1!' )
 
   def visit_Num( s, node ):
     ret = bir.Number( node.n )
@@ -334,11 +434,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     a non-returning function.
     """
     raise PyMTLSyntaxError(
-      s.blk, node, 'Stand-alone expression is not supported yet!'
-    )
-
-  def visit_AugAssign( s, node ):
-    raise PyMTLSyntaxError( s.blk, node, 'invalid operation: augmented assignment' )
+      s.blk, node, 'Stand-alone expression is not supported yet!' )
 
   def visit_Lambda( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: lambda function' )
@@ -420,3 +516,83 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
   def visit_ExtSlice( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: extslice' )
+
+class ConstantExtractor( ast.NodeVisitor ):
+  def __init__( s, blk, global_ns, closure_ns ):
+    s.blk = blk
+    s.globals = global_ns
+    s.cache = {}
+    s.closure = closure_ns
+    s.pymtl_functions = { concat, sext, zext, trunc,
+                          reduce_or, reduce_and, reduce_xor,
+                          copy.copy, copy.deepcopy }
+
+  def generic_visit( s, node ):
+    return None
+
+  def enter( s, node ):
+    ret = s.visit( node )
+    # Constant objects that are recognized
+    # 1. int, BitsN( X )
+    # 2. BitsN
+    # 3. BitStruct, BitStruct()
+    # 4. Functions, including concat, zext, sext, etc.
+    is_value = isinstance(ret, (int, Bits)) or is_bitstruct_inst(ret)
+    is_type = isinstance(ret, type) and (issubclass(ret, Bits) or is_bitstruct_class(ret))
+    try:
+      is_function = ret in s.pymtl_functions
+    except:
+      is_function = False
+
+    if is_value or is_type or is_function:
+      return ret
+    else:
+      return None
+
+  def visit_Attribute( s, node ):
+    if node in s.cache:
+      return s.cache[node]
+    value = s.visit( node.value )
+    try:
+      ret = getattr( value, node.attr )
+    except AttributeError:
+      ret = None
+    s.cache[node] = ret
+    return ret
+
+  def visit_Subscript( s, node ):
+    if node in s.cache:
+      return s.cache[node]
+    ret = None
+    if isinstance( node.slice, ast.Index ):
+      value = s.visit( node.value )
+      idx = s.visit( node.slice )
+      if value is not None and idx is not None:
+        try:
+          ret = value[idx]
+        except:
+          ret = None
+    s.cache[node] = ret
+    return ret
+
+  def visit_Index( s, node ):
+    if node in s.cache:
+      return s.cache[node]
+    ret = s.visit( node.value )
+    s.cache[node] = ret
+    return ret
+
+  def visit_Name( s, node ):
+    name = node.id
+    if name in s.closure:
+      # free var from closure
+      obj = s.closure[ name ]
+    elif name in s.globals:
+      # free var from the global name space
+      obj = s.globals[ name ]
+    else:
+      obj = None
+    return obj
+
+  def visit_Num( s, node ):
+    return node.n

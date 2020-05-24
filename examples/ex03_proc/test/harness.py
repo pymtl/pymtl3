@@ -14,11 +14,9 @@ import struct
 from examples.ex03_proc.NullXcel import NullXcelRTL
 from examples.ex03_proc.tinyrv0_encoding import assemble
 from pymtl3 import *
-from pymtl3.passes import DynamicSim
-from pymtl3.stdlib.cl.MemoryCL import MemoryCL
+from pymtl3.stdlib.mem.MagicMemoryCL import MagicMemoryCL, mk_mem_msg
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.ifcs import mk_mem_msg
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 
 #=========================================================================
 # TestHarness
@@ -67,7 +65,7 @@ class TestHarness(Component):
     s.proc = proc_cls()
     s.xcel = xcel_cls()
 
-    s.mem  = MemoryCL(2, latency = mem_latency)
+    s.mem  = MagicMemoryCL(2, latency = mem_latency)
 
     connect_pairs(
       s.proc.commit_inst, s.commit_inst,
@@ -124,58 +122,3 @@ class TestHarness(Component):
     return s.src.line_trace()  + " > " + \
            s.proc.line_trace() + " > " + \
            s.sink.line_trace()
-
-#=========================================================================
-# run_test
-#=========================================================================
-
-def run_test( ProcModel, gen_test, dump_vcd=None,
-              src_delay=0, sink_delay=0,
-              mem_stall_prob=0, mem_latency=1,
-              max_cycles=10000 ):
-
-  # Instantiate and elaborate the model
-
-  th = TestHarness( ProcModel, NullXcelRTL, dump_vcd,
-                    src_delay, sink_delay,
-                    mem_stall_prob, mem_latency )
-
-  th.elaborate()
-
-  # Assemble the test program
-
-  mem_image = assemble( gen_test() )
-
-  # Load the program into the model
-
-  th.load( mem_image )
-
-  # Run the simulation
-
-  # from pymtl3.passes.yosys import TranslationPass, ImportPass
-
-  # th.elaborate()
-  # th.proc.yosys_translate = True
-  # th.proc.yosys_import = True
-  # th.apply( TranslationPass() )
-  # th = ImportPass()( th )
-  th.apply( DynamicSim )
-  th.sim_reset()
-
-  print()
-
-  T = 0
-  while not th.done() and T < max_cycles:
-    th.tick()
-    print("{:3}: {}".format( T, th.line_trace() ))
-    T += 1
-
-  # Force a test failure if we timed out
-
-  assert T < max_cycles
-
-  # Add a couple extra ticks so that the VCD dump is nicer
-
-  th.tick()
-  th.tick()
-  th.tick()

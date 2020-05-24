@@ -8,7 +8,9 @@ Date   : Jan 1, 2018
 """
 from collections import deque
 
-from pymtl3.datatypes import Bits1, Bits8, Bits128
+from pymtl3.datatypes import Bits1, Bits8, Bits128, trunc
+from pymtl3.dsl.ComponentLevel1 import update
+from pymtl3.dsl.ComponentLevel2 import update_ff
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, Interface, OutPort, Wire
 
@@ -29,7 +31,7 @@ def _test_model( cls ):
 
 def valrdy_to_str( msg, val, rdy ):
 
-  str_   = "{}".format( msg )
+  str_   = f"{msg}"
   nchars = max( len( str_ ), 15 )
 
   if       val and not rdy:
@@ -46,8 +48,8 @@ class InValRdyIfc( Interface ):
   def construct( s, Type ):
 
     s.msg = InPort( Type )
-    s.val = InPort( int if Type is int else Bits1 )
-    s.rdy = OutPort( int if Type is int else Bits1 )
+    s.val = InPort()
+    s.rdy = OutPort()
 
   def line_trace( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy )
@@ -57,8 +59,8 @@ class OutValRdyIfc( Interface ):
   def construct( s, Type ):
 
     s.msg = OutPort( Type )
-    s.val = OutPort( int if Type is int else Bits1 )
-    s.rdy = InPort( int if Type is int else Bits1 )
+    s.val = OutPort()
+    s.rdy = InPort()
 
   def line_trace( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy )
@@ -73,12 +75,12 @@ class TestSourceValRdy( ComponentLevel3 ):
     s.default = Type()
     s.out     = OutValRdyIfc( Type )
 
-    @s.update_on_edge
+    @update_ff
     def up_src():
       if (s.out.rdy & s.out.val) and s.src_msgs:
         s.src_msgs.popleft()
-      s.out.val = Bits1( len(s.src_msgs) > 0 )
-      s.out.msg = s.default if not s.src_msgs else s.src_msgs[0]
+      s.out.val <<= Bits1( len(s.src_msgs) > 0 )
+      s.out.msg <<= s.default if not s.src_msgs else Type(s.src_msgs[0])
 
   def done( s ):
     return not s.src_msgs
@@ -96,9 +98,9 @@ class TestSinkValRdy( ComponentLevel3 ):
 
     s.in_ = InValRdyIfc( Type )
 
-    @s.update_on_edge
+    @update_ff
     def up_sink():
-      s.in_.rdy = Bits1( len(s.sink_msgs) > 0 )
+      s.in_.rdy <<= Bits1( len(s.sink_msgs) > 0 )
 
       if s.in_.val and s.in_.rdy:
         ref = s.sink_msgs.popleft()
@@ -118,8 +120,9 @@ def test_simple():
 
     def construct( s ):
 
-      s.src  = TestSourceValRdy( int, [ 0, 1, 2 ] )
-      s.sink = TestSinkValRdy  ( int, [ 0, 1, 2 ] )( in_ = s.src.out )
+      s.src  = TestSourceValRdy( Bits8, [ 0, 1, 2 ] )
+      s.sink = TestSinkValRdy  ( Bits8, [ 0, 1, 2 ] )
+      s.sink.in_ //= s.src.out
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -134,7 +137,7 @@ def test_nested_port_bundle():
 
   class ValRdyBundle( Interface ):
 
-    def construct( s, Type=int ):
+    def construct( s, Type ):
       s.msg = Wire( Type )
       s.val = Wire( Bits1 )
       s.rdy = Wire( Bits1 )
@@ -144,19 +147,19 @@ def test_nested_port_bundle():
 
   class SuperBundle( Interface ):
 
-    def construct( s ):
-      s.req  = [ [ ValRdyBundle() for i in range(4) ] for j in range(4) ]
+    def construct( s, Type ):
+      s.req  = [ [ ValRdyBundle(Type) for i in range(4) ] for j in range(4) ]
 
   class Top( ComponentLevel3 ):
 
     def construct( s ):
 
-      s.src  = [ TestSourceValRdy( int, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in range(4) ]
+      s.src  = [ TestSourceValRdy( Bits8, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in range(4) ]
       # (0+1+2+3)*4=24, (1+2+3+4)*4=40, (2+3+4+5)*5=56
-      s.sink = TestSinkValRdy  ( int, [ 24, 40, 56, 24, 40, 56] )
+      s.sink = TestSinkValRdy  ( Bits8, [ 24, 40, 56, 24, 40, 56] )
 
-      s.sb = SuperBundle()
-      s.wire = [ [ Wire(int) for i in range(4) ] for j in range(4) ]
+      s.sb = SuperBundle( Bits8 )
+      s.wire = [ [ Wire(Bits8) for i in range(4) ] for j in range(4) ]
 
       for i in range(4):
         connect( s.src[i].out.rdy, s.sink.in_.rdy )
@@ -164,13 +167,13 @@ def test_nested_port_bundle():
           connect( s.sb.req[i][j].msg, s.src[i].out.msg )
           connect( s.wire[i][j],       s.sb.req[i][j].msg )
 
-      @s.update
+      @update
       def up_from_req():
-        s.sink.in_.val = 1
-        s.sink.in_.msg = 0
+        s.sink.in_.val @= 1
+        s.sink.in_.msg @= 0
         for i in range(4):
           for j in range(4):
-            s.sink.in_.msg += s.wire[i][j]
+            s.sink.in_.msg @= s.sink.in_.msg + s.wire[i][j]
 
     def done( s ):
       return s.sink.done() and any( src.done() for src in s.src )
@@ -213,16 +216,16 @@ def test_customized_connect():
     def construct( s ):
       s.send = MockSendIfc()
 
-      @s.update
+      @update
       def up_send():
-        s.send.send_msg = Bits1( 1 )
-        s.send.send_val = Bits1( 1 )
+        s.send.send_msg @= 1
+        s.send.send_val @= 1
 
   class B( ComponentLevel3 ):
     def construct( s ):
       s.recv = MockRecvIfc()
 
-      @s.update
+      @update
       def up_recv():
         print("recv_msg", s.recv.recv_msg, "recv_val", s.recv.recv_val)
 
@@ -256,9 +259,15 @@ def test_customized_connect_adapter():
       s.in_ = InPort ( InType  )
       s.out = OutPort( OutType )
 
-      @s.update
-      def adapter_incr():
-        s.out = s.in_ + OutType( 1 )
+      if InType.nbits > OutType.nbits:
+        @update
+        def adapter_incr_zext():
+          s.out @= zext( s.in_ + 1, InType )
+      else:
+        @update
+        def adapter_incr_trunc():
+          s.out @= trunc( s.in_ + 1, OutType )
+
 
   class MockRecvIfc( Interface ):
 
@@ -301,17 +310,17 @@ def test_customized_connect_adapter():
     def construct( s ):
       s.send = [ MockSendIfc( Bits8 ) for _ in range( 10 ) ]
 
-      @s.update
+      @update
       def up_send():
         for i in range( 10 ):
-          s.send[i].send_msg = Bits1( 1 )
-          s.send[i].send_val = Bits1( 1 )
+          s.send[i].send_msg @= 1
+          s.send[i].send_val @= 1
 
   class B( ComponentLevel3 ):
     def construct( s ):
       s.recv = [ MockRecvIfc( Bits128 ) for _ in range( 10 ) ]
 
-      @s.update
+      @update
       def up_recv():
         for i in range( 10 ):
           print("recv_msg", i, s.recv[i].recv_msg, "recv_val", s.recv[i].recv_val)

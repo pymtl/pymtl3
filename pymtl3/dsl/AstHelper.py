@@ -13,24 +13,21 @@ import ast
 
 class DetectVarNames( ast.NodeVisitor ):
 
-  def __init__( self, upblk ):
-    self.upblk   = upblk
-    self.closure = {}
-    for i, var in enumerate( upblk.__code__.co_freevars ):
-      try:  self.closure[ var ] = upblk.__closure__[i].cell_contents
-      except ValueError: pass
+  def __init__( self, upblk, obj ):
+    self.upblk = upblk
+    self.obj = obj
+    self.globals = upblk.__globals__
+    self.closure = { *upblk.__code__.co_freevars }
 
   # Helper function to get the full name containing "s"
 
   def _get_full_name( self, node ):
 
-    # We store the name/index linearly, and store the corresponding ast
-    # nodes linearly for annotation purpose
+    # Store the name/index linearly, and store the corresponding ast nodes linearly
     obj_name = []
     nodelist = []
 
-    # First strip off all slices
-    # s.x[1][2].y[i][3]
+    # First strip off all slices -- s.x[1][2].y[i][3][2:3]
     slices = []
     while isinstance( node, ast.Subscript ) and isinstance( node.slice, ast.Slice ):
       lower = node.slice.lower
@@ -38,25 +35,24 @@ class DetectVarNames( ast.NodeVisitor ):
       # If the slice looks like a[i:i+1] where i is variable, I assume it
       # would access the whole variable
 
+      # Shunning: since the closure/global variables can vary across
+      # different instances of the same class, we need to cache the name.
+
       low = up = None
 
       if isinstance( lower, ast.Num ):
         low = node.slice.lower.n
       elif isinstance( lower, ast.Name ):
         x = lower.id
-        if   x in self.upblk.__globals__:
-          low = self.upblk.__globals__[ x ] # TODO check low is int
-        elif x in self.closure:
-          low = self.closure[ x ]
+        if   x in self.globals: low = (False, x)
+        elif x in self.closure: low = (True, x)
 
       if isinstance( upper, ast.Num ):
         up = node.slice.upper.n
       elif isinstance( upper, ast.Name ):
         x = upper.id
-        if   x in self.upblk.__globals__:
-          up = self.upblk.__globals__[ x ] # TODO check low is int
-        elif x in self.closure:
-          up = self.closure[ x ]
+        if   x in self.globals: up = (False, x)
+        elif x in self.closure: up = (True, x)
 
       if low is not None and up is not None:
         slices.append( slice(low, up) )
@@ -66,24 +62,21 @@ class DetectVarNames( ast.NodeVisitor ):
       nodelist.append( node )
       node = node.value
 
-    # s.x[1][2].y[i]
+    # Then do the rests.x[1][2].y[i]
     while True:
       num = []
-      while isinstance( node, ast.Subscript ) and \
-            isinstance( node.slice, ast.Index ):
+      while isinstance( node, ast.Subscript ) and isinstance( node.slice, ast.Index ):
         v = node.slice.value
         n = "*"
 
-        if   isinstance( v, ast.Num ):
+        if isinstance( v, ast.Attribute ): # s.sel, may be constant
+          self.visit( v )
+        elif isinstance( v, ast.Num ):
           n = v.n
         elif isinstance( v, ast.Name ):
           x = v.id
-          if   x in self.upblk.__globals__: # Only support global const indexing for now
-            n = self.upblk.__globals__[ x ]
-          elif x in self.closure:
-            n = self.closure[ x ]
-        elif isinstance( v, ast.Attribute ): # s.sel, may be constant
-          self.visit( v )
+          if   x in self.globals: n = (False, x)
+          elif x in self.closure: n = (True, x)
         elif isinstance( v, ast.Call ): # int(x)
           for x in v.args:
             self.visit(x)
@@ -112,8 +105,8 @@ class DetectVarNames( ast.NodeVisitor ):
 
     if slices:
       assert len(slices) == 1, "Multiple slices at the end of s.%s in update block %s" % \
-        ( ".".join( [ obj_name[i][0] + "".join(["[%s]" % x for x in obj_name[i][1]]) for i in range(len(obj_name)) ] ) \
-        +  "[%d:%d]" % (x[0], x[1]), self.upblk.__name__ )
+        ( ".".join( [ obj_name[i][0] + "".join([f"[{x}]" for x in obj_name[i][1]]) for i in range(len(obj_name)) ] ) \
+        +  f"[{x[0]}:{x[1]}]", self.upblk.__name__ )
 
       obj_name[0][1].append( slices[0] )
 
@@ -124,39 +117,49 @@ class DetectVarNames( ast.NodeVisitor ):
 class DetectReadsWritesCalls( DetectVarNames ):
 
   def enter( self, node, read, write, calls ):
-    self.read = []
-    self.write = []
-    self.calls = []
+
+    self.read = read
+    self.write = write
+    self.calls = calls
+    self.current_op = None
     self.visit( node )
-    read.extend ( self.read )
-    write.extend( self.write )
-    calls.extend( self.calls )
+
+  def visit_Assign( self, node ):
+    for x in node.targets:
+      self.visit( x )
+    self.visit( node.value )
+
+  def visit_AugAssign( self, node ):
+    self.current_op = node.op
+    self.visit( node.target )
+    self.current_op = None
+    self.visit( node.value  )
 
   def visit_Attribute( self, node ): # s.a.b
     obj_name, nodelist = self._get_full_name( node )
     if not obj_name:  return
 
-    pair = (obj_name, nodelist)
+    pair = (obj_name, nodelist, self.current_op)
 
     if   isinstance( node.ctx, ast.Load ):
       self.read.append( pair )
     elif isinstance( node.ctx, ast.Store ):
       self.write.append( pair )
     else:
-      assert False, type( node.ctx )
+      raise TypeError( f"Wrong ast node context {type( node.ctx )}" )
 
   def visit_Subscript( self, node ): # s.a.b[0:3] or s.a.b[0]
     obj_name, nodelist = self._get_full_name( node )
     if not obj_name:  return
 
-    pair = (obj_name, nodelist)
+    pair = (obj_name, nodelist, self.current_op)
 
     if   isinstance( node.ctx, ast.Load ):
       self.read.append( pair )
     elif isinstance( node.ctx, ast.Store ):
       self.write.append( pair )
     else:
-      assert False, type( node.ctx )
+      raise TypeError( f"Wrong ast node context {type( node.ctx )}" )
 
     self.visit( node.slice )
 
@@ -164,17 +167,27 @@ class DetectReadsWritesCalls( DetectVarNames ):
     obj_name, nodelist = self._get_full_name( node.func )
     if not obj_name:  return
 
-    self.calls.append( (obj_name, nodelist) )
+    self.calls.append( (obj_name, nodelist, None) )
 
     for x in node.args:
       self.visit( x )
 
+  def visit_For( self, node ):
+    self.current_op = 'for'
+    self.visit( node.target )
+    self.current_op = None
+
+    self.visit( node.iter )
+    for stmt in node.body:
+      self.visit( stmt )
+    for stmt in node.orelse:
+      self.visit( stmt )
+
 class DetectMethodCalls( DetectVarNames ):
 
   def enter( self, node, methods ):
-    self.methods = []
+    self.methods = methods
     self.visit( node )
-    methods.extend( self.methods )
 
   def visit_Call( self, node ):
     obj_name = self.get_full_name( node.func )
@@ -187,16 +200,17 @@ class DetectMethodCalls( DetectVarNames ):
     for x in node.args:
       self.visit( x )
 
-def extract_reads_writes_calls( f, tree, read, write, calls ):
+def extract_reads_writes_calls( hostobj, f, tree, read, write, calls ):
 
   # Traverse the ast to extract variable writes and reads
-  # First check and remove @s.update and empty arguments
+  # First check and remove @update and empty arguments
   assert isinstance(tree, ast.Module)
   tree = tree.body[0]
   assert isinstance(tree, ast.FunctionDef)
 
+  visitor = DetectReadsWritesCalls( f, hostobj )
   for stmt in tree.body:
-    DetectReadsWritesCalls( f ).enter( stmt, read, write, calls )
+    visitor.enter( stmt, read, write, calls )
 
 def get_method_calls( tree, upblk, methods ):
-  DetectMethodCalls( upblk ).enter( tree, methods )
+  DetectMethodCalls( upblk, hostobj ).enter( tree, methods )

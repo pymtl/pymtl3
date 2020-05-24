@@ -1,3 +1,5 @@
-from .rtl import *
+from .basic_rtl import *
 from .ifcs import *
-from .test import *
+from .mem import *
+from .queues import *
+from .test_utils import *
