@@ -121,7 +121,7 @@ class Incrementer( Component, Generic[T_IncrementerDataType] ):
 
     @update
     def up_incrementer():
-      s.out @= s.in_ + Const[T_IncrementerDataType](amount)
+      s.out @= s.in_ + amount
 
 # Adder
 
