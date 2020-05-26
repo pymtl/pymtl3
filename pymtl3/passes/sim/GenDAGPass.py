@@ -189,53 +189,53 @@ class GenDAGPass( BasePass ):
       # For vanilla version of pymtl3.0, run-time type checking
       # is a no-op.
 
-      # r_is_static = [ x.is_static for x in readers ]
+      r_is_static = [ x.is_static for x in readers ]
 
-      # w_is_static = hasattr(writer, "is_static") and writer.is_static
-      # if '[' in repr(writer):
-      #   _w = writer.get_parent_object()
-      #   w_is_static = hasattr(_w, "is_static") and _w.is_static
+      w_is_static = hasattr(writer, "is_static") and writer.is_static
+      if '[' in repr(writer):
+        _w = writer.get_parent_object()
+        w_is_static = hasattr(_w, "is_static") and _w.is_static
 
-      # is_boundary = not isinstance(writer, Const) and not w_is_static and any(r_is_static)
+      is_boundary = not isinstance(writer, Const) and not w_is_static and any(r_is_static)
 
-      # # IF this generated block is at the boundary
-      # if is_boundary:
-      #   # find out the type of the statically typed signal
-      #   static_type = None
-      #   static_signal = None
-      #   for x in readers:
-      #     if x.is_static:
-      #       assert static_type is None or static_type == x.static_type
-      #       static_type = x.static_type
-      #       static_signal = x
-      #   # rt_type_check = "assert s.{} == s.{}.static_type".format(
-      #   #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
+      # IF this generated block is at the boundary
+      if is_boundary:
+        # find out the type of the statically typed signal
+        static_type = None
+        static_signal = None
+        for x in readers:
+          if x.is_static:
+            assert static_type is None or static_type == x.static_type
+            static_type = x.static_type
+            static_signal = x
+        # rt_type_check = "assert s.{} == s.{}.static_type".format(
+        #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
 
-      #   # rt_type_check = "print('wr:s.{} = {{}}, rd:s.{} = {{}}'.format(s.{}, s.{}))\n  ".format(
-      #   #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:],
-      #   #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
+        # rt_type_check = "print('wr:s.{} = {{}}, rd:s.{} = {{}}'.format(s.{}, s.{}))\n  ".format(
+        #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:],
+        #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
 
-      #   # rt_type_check += "assert isinstance(s.{}, type(s.{})) or \
-      #   #                   s.{}._dsl.Type == type(s.{})".format(
-      #   #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:],
-      #   #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
+        # rt_type_check += "assert isinstance(s.{}, type(s.{})) or \
+        #                   s.{}._dsl.Type == type(s.{})".format(
+        #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:],
+        #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
 
-      #   rt_type_check = "assert s.{}.nbits == s.{}.nbits".format(
-      #       repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
-      # else:
-      #   rt_type_check = ""
+        rt_type_check = "assert s.{}.nbits == s.{}.nbits".format(
+            repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
+      else:
+        rt_type_check = ""
 
       gen_src = """
 def {}():
   # PP: Vanilla GT-HDL implementation aka no-op
   # global _upblk_total_rt_check_time
   # _upblk_start_time = time.time()
-  # {{}}
+  # {}
   # print(f'sim_time: rt_check: {{time.time() - _upblk_start_time}}')
   # _upblk_total_rt_check_time[0] += time.time() - _upblk_start_time
 
   x = {}
-  {}""".format( genblk_name, wstr, '\n  '.join([ f"{rstr} @= x" for rstr in rstrs ]) )
+  {}""".format( genblk_name, rt_type_check, wstr, '\n  '.join([ f"{rstr} @= x" for rstr in rstrs ]) )
 
       #----------------------------------------------------
       # End of gradual typing implementation
