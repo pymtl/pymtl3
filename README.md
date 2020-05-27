@@ -18,18 +18,6 @@ User Forum
 ----------
 We recommend the user to post on https://groups.google.com/forum/#!forum/pymtl-users to ask questions about using PyMTL 3. The github issues are reserved for development purposes, e.g., bug reports and feature requests.
 
-Tutorials
----------
-We recently hold a very high quality PyMTL 3 tutorial at FCRC 2019 with 40+
-researchers attended.
-The code for tutorial is here https://github.com/cornell-brg/pymtl-tutorial-isca2019.
-The website with all slides and link to VM is here https://www.csl.cornell.edu/pymtl2019/.
-This 32-bit CentOS 7 virtualbox image includes pymtl3 and all the
-open-source EDA toolchains required to complete the tutorial. Note that this
-tutorial is based on an older alpha release of PyMTL 3 that only works on Python 2.7. We
-are working on better documentations and tutorials.
-
-
 Related publications
 --------------------------------------------------------------------------
 
@@ -38,7 +26,6 @@ Related publications
 - Shunning Jiang, Berkin Ilbeyi, and Christopher Batten. _"Mamba: Closing the Performance Gap in Productive Hardware Development Frameworks."_ 55th ACM/IEEE Design Automation Conf. (DAC-55), June 2018. 
 
 - Derek Lockhart, Gary Zibrat, and Christopher Batten. _"PyMTL: A Unified Framework for Vertically Integrated Computer Architecture Research."_ 47th ACM/IEEE Int'l Symp. on Microarchitecture (MICRO-47), Dec. 2014.
-
 
 License
 --------------------------------------------------------------------------
