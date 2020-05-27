@@ -142,6 +142,7 @@ class Const( Connectable, Generic[T_ConstDataType] ):
     # in an upblk
     s.nbits = Type.nbits
     s.value = Type( sext( args[0], s.nbits ) if kwargs.get( 'sext', False ) else args[0] )
+    s._uint = s.value._uint
 
     s._dsl = DSLMetadata()
     s._dsl.Type = Type
@@ -149,6 +150,9 @@ class Const( Connectable, Generic[T_ConstDataType] ):
     s._dsl.parent_obj = None
 
     # print(f"Type = {Type}, const = {s.value}")
+
+  def to_bits( s ):
+    return s.value
 
   def __hash__( s ):
     return id(s)
