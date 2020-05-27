@@ -28,11 +28,13 @@ class RegisterFile( Component, Generic[T_RFDpath, T_RFAddr] ):
         s.rdata[i] @= s.regs[ s.raddr[i] ]
 
     if const_zero:
-      closure_T_RFAddr = T_RFAddr
+      Const_T_RFAddr_0 = Const[T_RFAddr](0)
+      # closure_T_RFAddr = T_RFAddr
       @update_ff
       def up_rf_write_constzero():
         for i in range( wr_ports ):
-          if s.wen[i] & (s.waddr[i] != Const[closure_T_RFAddr](0)):
+          # if s.wen[i] & (s.waddr[i] != Const[closure_T_RFAddr](0)):
+          if s.wen[i] & (s.waddr[i] != Const_T_RFAddr_0):
             s.regs[ s.waddr[i] ] <<= s.wdata[i]
 
     else:
