@@ -221,21 +221,25 @@ class GenDAGPass( BasePass ):
 
         rt_type_check = "assert s.{}.nbits == s.{}.nbits".format(
             repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
+
+        # PP: GT-HDL implementation
+        # global _upblk_total_rt_check_time
+        # _upblk_start_time = time.time()
+        # {}
+        # print(f'sim_time: rt_check: {{time.time() - _upblk_start_time}}')
+        # _upblk_total_rt_check_time[0] += time.time() - _upblk_start_time
+
+        gen_src = """
+def {}():
+  {}
+  x = {}
+  {}""".format( genblk_name, rt_type_check, wstr, '\n  '.join([ f"{rstr} @= x" for rstr in rstrs ]) )
+
       else:
-        rt_type_check = ""
-
-      # PP: GT-HDL implementation
-      # global _upblk_total_rt_check_time
-      # _upblk_start_time = time.time()
-      # {}
-      # print(f'sim_time: rt_check: {{time.time() - _upblk_start_time}}')
-      # _upblk_total_rt_check_time[0] += time.time() - _upblk_start_time
-
-      gen_src = """
+        gen_src = """
 def {}():
   x = {}
   {}""".format( genblk_name, wstr, '\n  '.join([ f"{rstr} @= x" for rstr in rstrs ]) )
-  # {}""".format( genblk_name, rt_type_check, wstr, '\n  '.join([ f"{rstr} @= x" for rstr in rstrs ]) )
 
       #----------------------------------------------------
       # End of gradual typing implementation
