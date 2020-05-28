@@ -154,8 +154,8 @@ class NamedObject:
         if name in fields:
           if getattr( s, name ) is obj:
             return
-          raise FieldReassignError(f"The attempt to assign hardware construct to field {name} is illegal:\n"
-                                   f" - top{repr(s)[1:]} already has field {name} with type {type(getattr( s, name ))}.")
+          # raise FieldReassignError(f"The attempt to assign hardware construct to field {name} is illegal:\n"
+          #                          f" - top{repr(s)[1:]} already has field {name} with type {type(getattr( s, name ))}.")
         fields.add( name )
 
         ud = obj._dsl
