@@ -26,18 +26,18 @@ class SimpleSimPass( BasePass ):
     PrepareSimPass(print_line_trace=True)( top )
 
 class DefaultPassGroup( BasePass ):
-  def __init__( s, *, vcd_file_name=None, textwave=False,
+  def __init__( s, *, vcdwave=None, textwave=False,
                       print_line_trace=True, reset_active_high=True ):
 
-    s.vcd_file_name = vcd_file_name
+    s.vcdwave = vcdwave
     s.textwave = textwave
     s.print_line_trace = print_line_trace
     s.reset_active_high = reset_active_high
 
   def __call__( s, top ):
 
-    if s.vcd_file_name:
-      top.set_metadata( VcdGenerationPass.vcd_file_name, dump_vcd )
+    if s.vcdwave:
+      top.set_metadata( VcdGenerationPass.vcdwave, s.vcdwave )
 
     if s.textwave:
       top.set_metadata( PrintTextWavePass.enable, True )
