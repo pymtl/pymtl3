@@ -97,7 +97,7 @@ class {component_name}( Component ):
     verilator_vcd_file = ""
     if {dump_vcd}:
       if {has_vl_trace_filename}:
-        verilator_vcd_file = "{vl_trace_filename}.vcd"
+        verilator_vcd_file = "{vl_trace_filename}.verilator1.vcd"
       else:
         verilator_vcd_file = "{component_name}.verilator1.vcd"
 

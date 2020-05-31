@@ -108,3 +108,13 @@ class VerilogPlaceholderConfigs( PlaceholderConfigs ):
     assert cfg not in checkers,\
       f'config {cfg} is duplicated between PlaceholderConfigs!'
     checkers[cfg] = chk
+
+  # override to avoid deepcopying ports
+  def collect_all_pass_configs( s, m ):
+    c = s.__class__
+    for opt, default in c.Options.items():
+      assert not hasattr( s, opt ), f"There is already a field in config called '{opt}'. What happened?"
+      if not m.has_metadata( getattr( c.Pass, opt ) ):
+        setattr( s, opt, default )
+      else:
+        setattr( s, opt, m.get_metadata( getattr( c.Pass, opt ) ) )

@@ -127,7 +127,7 @@ def get_rtype( _rtype ):
 # gen_mapped_ports
 #-----------------------------------------------------------------------
 
-def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True, sep='__' ):
+def gen_mapped_ports( m, raw_port_map, has_clk=True, has_reset=True, sep='__' ):
   """Return a list of (pname, vname, rt.Port/rt.Array ) that has all ports
   of `rtype`. This method performs SystemVerilog backend-specific name
   mangling and returns all ports that appear in the interface of component
@@ -140,7 +140,13 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True, sep='__' ):
      element is mapped in port_map, or _all_ of the elements are mapped.
   """
 
-  port_map = {p._dsl._my_name:n for p, n in port_map.items()}
+  # Shunning: this handles the case where the port is in interface since
+  # we need to actually extract 'minion.req.en' from 's.x.y.minion.req.en'
+  port_map = {}
+  l = len(repr(m))
+  for p, mapped_name in raw_port_map.items():
+    assert p.get_host_component() is m
+    port_map[ repr(p)[l+1:] ] = mapped_name
 
   # [pnames], vname, rtype, port_idx
 
