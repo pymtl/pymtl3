@@ -6,3 +6,4 @@ from .test_helpers import (
 )
 from .test_sinks import TestSinkCL
 from .test_srcs import TestSrcCL
+from .test_masters import TestMasterCL

@@ -10,7 +10,7 @@ from greenlet import greenlet
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.ifcs import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
+from pymtl3.stdlib.ifcs import MasterIfcCL, MinionIfcCL, MasterIfcRTL, MinionIfcRTL
 
 from .MemMsg import MemMsgType, mk_mem_msg
 
@@ -107,51 +107,13 @@ class MemMinionIfcFL( Interface ):
 
     return False
 
-class MemMasterIfcCL( Interface ):
-  def construct( s, ReqType, RespType, resp=None, resp_rdy=None ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = CallerIfcCL( Type=ReqType )
-    s.resp = CalleeIfcCL( Type=RespType, method=resp, rdy=resp_rdy )
+class MemMasterIfcCL( MasterIfcCL ): pass
 
-  def line_trace( s ):
-    return "{} > {}".format( s.req, s.resp )
+class MemMinionIfcCL( MinionIfcCL ): pass
 
-  def connect( s, other, parent ):
-    if isinstance( other, MemMinionIfcCL ):
-      assert s.ReqType is other.ReqType and s.RespType is other.RespType
-    return False
+class MemMasterIfcRTL( MasterIfcRTL ): pass
 
-class MemMinionIfcCL( Interface ):
-  def construct( s, ReqType, RespType, req=None, req_rdy=None ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = CalleeIfcCL( Type=ReqType, method=req, rdy=req_rdy )
-    s.resp = CallerIfcCL( Type=RespType )
-
-  def line_trace( s ):
-    return "{} > {}".format( s.req, s.resp )
-
-class MemMasterIfcRTL( Interface ):
-
-  def construct( s, ReqType, RespType ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = SendIfcRTL( ReqType  )
-    s.resp = RecvIfcRTL( RespType )
-
-  def __str__( s ):
-    return "{},{}".format( s.req, s.resp )
-
-class MemMinionIfcRTL( Interface ):
-  def construct( s, ReqType, RespType ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = RecvIfcRTL( ReqType  )
-    s.resp = SendIfcRTL( RespType )
-
-  def __str__( s ):
-    return "{},{}".format( s.req, s.resp )
+class MemMinionIfcRTL( Interface ): pass
 
 class MemIfcCL2FLAdapter( Component ):
 

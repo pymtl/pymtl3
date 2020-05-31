@@ -22,6 +22,7 @@ class RightLogicalShifter( Component ):
     s.in_   = InPort( Type )
     s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )
+    assert shamt_nbits == Type.nbits
 
     @update
     def up_rshifter():

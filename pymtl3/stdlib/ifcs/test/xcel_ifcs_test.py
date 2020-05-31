@@ -144,7 +144,7 @@ class SomeMasterCL( Component ):
     return s.count == s.nregs
 
   def line_trace( s ):
-    return "{}".format( s.xcel )
+    return str( s.xcel )
 
 class SomeMinionCL( Component ):
 
@@ -188,7 +188,7 @@ class SomeMinionCL( Component ):
     s.add_constraints( U(up_process) < M(s.xcel.req) ) # pipeline behavior
 
   def line_trace( s ):
-    return "{}".format( s.xcel )
+    return str(s.xcel)
 
 #-------------------------------------------------------------------------
 # RTL master/minion
@@ -294,7 +294,7 @@ class SomeMinionRTL( Component ):
       s.req_q.deq.en @= s.req_q.deq.rdy & s.xcel.resp.rdy
 
   def line_trace( s ):
-    return "{}".format( s.xcel )
+    return str(s.xcel)
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -329,7 +329,7 @@ def test_xcel_fl_fl_blocking():
     MinionType = SomeMinionFL,
     nregs      = 16,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
 
 def test_xcel_fl_fl_nonblocking():
   th = TestHarness()
@@ -338,7 +338,7 @@ def test_xcel_fl_fl_nonblocking():
     MinionType = SomeMinionFL,
     nregs      = 16,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
 
 #-------------------------------------------------------------------------
 # FL-CL composition
@@ -351,7 +351,7 @@ def test_xcel_fl_cl_blocking():
     MinionType = SomeMinionCL,
     nregs      = 16,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
 
 def test_xcel_fl_cl_nonblocking():
   th = TestHarness()
@@ -360,7 +360,7 @@ def test_xcel_fl_cl_nonblocking():
     MinionType = SomeMinionCL,
     nregs      = 16,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
 
 #-------------------------------------------------------------------------
 # FL-RTL composition
@@ -373,7 +373,7 @@ def test_xcel_fl_rtl_blocking():
     MinionType = SomeMinionRTL,
     nregs      = 16,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
 
 def test_xcel_fl_rtl_nonblocking():
   th = TestHarness()
@@ -382,7 +382,7 @@ def test_xcel_fl_rtl_nonblocking():
     MinionType = SomeMinionRTL,
     nregs      = 16,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
 
 #-------------------------------------------------------------------------
 # CL-CL composition
@@ -395,7 +395,7 @@ def test_xcel_cl_cl():
     MinionType = SomeMinionCL,
     nregs      = 8,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
 
 #-------------------------------------------------------------------------
 # CL-RTL composition
@@ -408,7 +408,7 @@ def test_xcel_cl_rtl():
     MinionType = SomeMinionRTL,
     nregs      = 8,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
 
 #-------------------------------------------------------------------------
 # CL-FL composition
@@ -421,7 +421,7 @@ def test_xcel_cl_fl():
     MinionType = SomeMinionFL,
     nregs      = 8,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
 
 #-------------------------------------------------------------------------
 # RTL-RTL composition
@@ -434,7 +434,7 @@ def test_xcel_rtl_rtl():
     MinionType = SomeMinionRTL,
     nregs      = 8,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
 
 #-------------------------------------------------------------------------
 # RTL-CL composition
@@ -447,7 +447,7 @@ def test_xcel_rtl_cl():
     MinionType = SomeMinionCL,
     nregs      = 8,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
 
 #-------------------------------------------------------------------------
 # RTL-FL composition
@@ -460,4 +460,4 @@ def test_xcel_rtl_fl():
     MinionType = SomeMinionFL,
     nregs      = 8,
   )
-  run_sim( th, max_cycles=1000 )
+  run_sim( th )
