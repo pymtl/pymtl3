@@ -80,6 +80,7 @@ def checksum_rtl( words ):
 
 from .ChecksumCL_test import ChecksumCL_Tests as BaseTests
 
+@pytest.mark.usefixtures("cmdline_opts")
 class ChecksumRTL_Tests( BaseTests ):
 
   def cksum_func( s, words ):
@@ -116,14 +117,15 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
   def teardown_method( s, method ):
     s.current_test_method_name = ""
 
-  def run_sim( s, th, max_cycles=1000 ):
+  def run_sim( s, th ):
 
-    s.vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
+    vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
+    max_cycles = s.__class__.cmdline_opts["max_cycles"]
 
     # Check for vcd dumping
-    if s.vcd_file_name:
-      s.set_metadata( VcdGenerationPass.vcd_file_name, s.vcd_file_name )
-      s.set_metadata( PrintTextWavePass.enable, True )
+    if vcd_file_name:
+      th.set_metadata( VcdGenerationPass.vcd_file_name, vcd_file_name )
+      th.set_metadata( PrintTextWavePass.enable, True )
 
     # Create a simulator
     th.apply( DefaultPassGroup() )
@@ -132,7 +134,7 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
     while not th.done() and th.sim_cycle_count() < max_cycles:
       th.sim_tick()
 
-    if s.vcd_file_name:
+    if vcd_file_name:
       th.print_textwave()
 
     # Check timeout

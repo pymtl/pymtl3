@@ -12,7 +12,7 @@ from greenlet import greenlet
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
 
-from .master_minion_ifcs import MasterIfcCL, MinionIfcCL, MasterIfcRTL, MinionIfcRTL
+from .master_minion_ifcs import MasterIfcCL, MasterIfcRTL, MinionIfcCL, MinionIfcRTL
 from .send_recv_ifcs import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
 from .XcelMsg import XcelMsgType, mk_xcel_msg
 

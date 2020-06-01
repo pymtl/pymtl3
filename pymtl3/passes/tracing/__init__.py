@@ -1,2 +1,2 @@
-from .VcdGenerationPass import VcdGenerationPass
 from .PrintTextWavePass import PrintTextWavePass
+from .VcdGenerationPass import VcdGenerationPass

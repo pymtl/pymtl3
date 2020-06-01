@@ -13,6 +13,8 @@ import pytest
 
 from examples.ex03_proc.ProcRTL import ProcRTL
 from pymtl3 import *
+from pymtl3.passes.backends.yosys import *
+from pymtl3.passes.tracing import *
 
 from .harness import asm_test, assemble
 
@@ -27,9 +29,10 @@ random.seed(0xdeadbeef)
 
 from .ProcRTL_test import ProcRTL_Tests as BaseTests
 
+@pytest.mark.usefixtures("cmdline_opts")
 class ProcVRTL_Tests( BaseTests ):
 
-  def run_sim( s, th, gen_test, max_cycles=10000 ):
+  def run_sim( s, th, gen_test ):
 
     th.elaborate()
 
@@ -39,9 +42,15 @@ class ProcVRTL_Tests( BaseTests ):
     # Load the program into memory
     th.load( mem_image )
 
-    # Translate the processor and import it back in
-    from pymtl3.passes.backends.yosys import YosysTranslationImportPass
-    th.proc.set_metadata( YosysTranslationImportPass.enable, True )
+    # Check command line arguments for vcd dumping
+    if vcd_file_name:
+      th.set_metadata( VcdGenerationPass.vcd_file_name, vcd_file_name )
+      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace, True )
+      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace_filename, vcd_file_name )
+
+    # Translate the DUT and import it back in using the yosys backend.
+    th.dut.set_metadata( YosysTranslationImportPass.enable, True )
+
     th = YosysTranslationImportPass()( th )
 
     # Create a simulator and run simulation

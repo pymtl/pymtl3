@@ -10,7 +10,7 @@ from greenlet import greenlet
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.ifcs import MasterIfcCL, MinionIfcCL, MasterIfcRTL, MinionIfcRTL
+from pymtl3.stdlib.ifcs import MasterIfcCL, MasterIfcRTL, MinionIfcCL, MinionIfcRTL
 
 from .MemMsg import MemMsgType, mk_mem_msg
 

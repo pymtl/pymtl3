@@ -4,6 +4,6 @@ from .test_helpers import (
     run_sim,
     run_test_vector_sim,
 )
+from .test_masters import TestMasterCL
 from .test_sinks import TestSinkCL
 from .test_srcs import TestSrcCL
-from .test_masters import TestMasterCL

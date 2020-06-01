@@ -8,7 +8,8 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 from pymtl3 import *
-from pymtl3.passes.backends.yosys import YosysTranslationImportPass
+from pymtl3.passes.backends.yosys import *
+from pymtl3.passes.tracing import *
 from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum
@@ -82,23 +83,26 @@ class ChecksumVRTL_Tests( BaseTests ):
 
 from .ChecksumRTL_test import ChecksumRTLSrcSink_Tests as BaseSrcSinkTests
 
-class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
+class ChecksumVRTLSrcSink_Tests( BaseSrcSinkTests ):
 
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumRTL
 
-  def run_sim( s, th, max_cycles=1000 ):
+  def run_sim( s, th ):
 
-    s.vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
+    vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
+    max_cycles = s.__class__.cmdline_opts["max_cycles"]
+
+    th.elaborate()
 
     # Check command line arguments for vcd dumping
-    if s.vcd_file_name:
-      th.dump_vcd = True
-      th.vcd_file_name = "translated."+s.vcd_file_name
+    if vcd_file_name:
+      th.set_metadata( VcdGenerationPass.vcd_file_name, vcd_file_name )
+      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace, True )
+      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace_filename, vcd_file_name )
 
     # Translate the DUT and import it back in using the yosys backend.
-    th.elaborate()
     th.dut.set_metadata( YosysTranslationImportPass.enable, True )
 
     # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -106,7 +110,7 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
     th = YosysTranslationImportPass()( th )
-    th.apply( DefaultPassGroup() )
+    th.apply( DefaultPassGroup(print_line_trace=False) )
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
