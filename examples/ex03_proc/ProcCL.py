@@ -84,6 +84,7 @@ class ProcCL( Component ):
         if s.redirected_pc_DXM >= 0:
           s.imem.req( memreq_cls( MemMsgType.READ, 0, s.redirected_pc_DXM ) )
           s.pc = s.redirected_pc_DXM
+          s.redirected_pc_DXM = -1
         else:
           s.imem.req( memreq_cls( MemMsgType.READ, 0, s.pc ) )
 
@@ -99,10 +100,12 @@ class ProcCL( Component ):
 
     @update_once
     def DXM():
-      s.redirected_pc_DXM = -1
       s.DXM_status = PipelineStatus.idle
 
-      if s.F_DXM_queue.deq.rdy() and s.imemresp_q.deq.rdy():
+      if s.redirected_pc_DXM >= 0:
+        s.DXM_status = PipelineStatus.stall
+
+      elif s.F_DXM_queue.deq.rdy() and s.imemresp_q.deq.rdy():
 
         if not s.DXM_W_queue.enq.rdy():
           s.DXM_status = PipelineStatus.stall
@@ -195,6 +198,7 @@ class ProcCL( Component ):
 
     @update_once
     def W():
+      s.rd = b5(0)
       s.commit_inst @= 0
       s.W_status = PipelineStatus.idle
 

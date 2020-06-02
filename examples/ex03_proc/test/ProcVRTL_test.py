@@ -34,6 +34,9 @@ class ProcVRTL_Tests( BaseTests ):
 
   def run_sim( s, th, gen_test ):
 
+    vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
+    max_cycles = s.__class__.cmdline_opts["max_cycles"]
+
     th.elaborate()
 
     # Assemble the program
@@ -45,11 +48,11 @@ class ProcVRTL_Tests( BaseTests ):
     # Check command line arguments for vcd dumping
     if vcd_file_name:
       th.set_metadata( VcdGenerationPass.vcd_file_name, vcd_file_name )
-      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace, True )
-      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace_filename, vcd_file_name )
+      th.proc.set_metadata( YosysVerilatorImportPass.vl_trace, True )
+      th.proc.set_metadata( YosysVerilatorImportPass.vl_trace_filename, vcd_file_name )
 
     # Translate the DUT and import it back in using the yosys backend.
-    th.dut.set_metadata( YosysTranslationImportPass.enable, True )
+    th.proc.set_metadata( YosysTranslationImportPass.enable, True )
 
     th = YosysTranslationImportPass()( th )
 
