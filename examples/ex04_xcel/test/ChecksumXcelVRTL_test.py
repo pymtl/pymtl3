@@ -7,6 +7,8 @@ Test cases for translated RTL checksum accelerator.
 Author : Yanghui Ou
   Date : June 14, 2019
 """
+import pytest
+
 from pymtl3 import *
 from pymtl3.passes.backends.yosys import YosysTranslationImportPass
 
@@ -82,13 +84,25 @@ class ChecksumXcelVRTL_Tests( BaseTests ):
 # need to overwrite the [run_sim] function to apply translation and import
 # pass to the DUT.
 
+@pytest.mark.usefixtures("cmdline_opts")
 class ChecksumXcelVRTLSrcSink_Tests( BaseTests ):
 
-  def run_sim( s, th, max_cycles=1000 ):
+  def run_sim( s, th ):
+    vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
+    max_cycles = s.__class__.cmdline_opts["max_cycles"]
 
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()
+
+    # Check command line arguments for vcd dumping
+    if vcd_file_name:
+      th.set_metadata( VcdGenerationPass.vcd_file_name, vcd_file_name )
+      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace, True )
+      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace_filename, vcd_file_name )
+
+    # Translate the DUT and import it back in using the yosys backend.
     th.dut.set_metadata( YosysTranslationImportPass.enable, True )
+
     th = YosysTranslationImportPass()( th )
 
     # Create a simulator

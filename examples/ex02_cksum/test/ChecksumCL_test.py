@@ -258,19 +258,19 @@ class ChecksumCLSrcSink_Tests:
   # This hypothesis test not only generates a sequence of input to the
   # the checksum unit but it also configure the test source and sink with
   # different initial and interval delays.
-  # @hypothesis.given(
-    # input_msgs = st.lists( st.lists( pm_st.bits(16), min_size=8, max_size=8 ) ),
-    # src_init   = st.integers( 0, 10 ),
-    # src_intv   = st.integers( 0, 3  ),
-    # sink_init  = st.integers( 0, 10 ),
-    # sink_intv  = st.integers( 0, 3  ),
-  # )
-  # @hypothesis.settings( deadline=None, max_examples=50 )
-  # def test_srcsink_hypothesis( s, input_msgs, src_init, src_intv, sink_init, sink_intv ):
-    # src_msgs  = [ words_to_b128( words ) for words in input_msgs ]
-    # sink_msgs = [ checksum( words ) for words in input_msgs ]
+  @hypothesis.given(
+    input_msgs = st.lists( st.lists( pm_st.bits(16), min_size=8, max_size=8 ) ),
+    src_init   = st.integers( 0, 10 ),
+    src_intv   = st.integers( 0, 3  ),
+    sink_init  = st.integers( 0, 10 ),
+    sink_intv  = st.integers( 0, 3  ),
+  )
+  @hypothesis.settings( deadline=None, max_examples=50 )
+  def test_srcsink_hypothesis( s, input_msgs, src_init, src_intv, sink_init, sink_intv ):
+    src_msgs  = [ words_to_b128( words ) for words in input_msgs ]
+    sink_msgs = [ checksum( words ) for words in input_msgs ]
 
-    # th = TestHarness( s.DutType, src_msgs, sink_msgs  )
-    # th.set_param( "top.src.construct", initial_delay = src_init, interval_delay = src_intv )
-    # th.set_param( "top.sink.construct", initial_delay = sink_init, interval_delay = sink_intv )
-    # s.run_sim( th )
+    th = TestHarness( s.DutType, src_msgs, sink_msgs  )
+    th.set_param( "top.src.construct", initial_delay = src_init, interval_delay = src_intv )
+    th.set_param( "top.sink.construct", initial_delay = sink_init, interval_delay = sink_intv )
+    s.run_sim( th )
