@@ -24,7 +24,7 @@ from pymtl3.extra.pypy import custom_exec
 
 if os.getenv("PYMTL_BITS") == "1":
   from .PythonBits import Bits
-  # print "[env: PYMTL_BITS=1] Use Python Bits"
+  # print("[env: PYMTL_BITS=1] Use Python Bits")
   bits_template = """
 class Bits{0}(Bits):
   __slots__ = ( "_nbits", "_uint", "_next" )
@@ -36,7 +36,7 @@ _bits_types[{0}] = b{0} = Bits{0}
 else:
   try:
     from mamba import Bits
-    # print "[default w/  Mamba] Use Mamba Bits"
+    # print("[default w/  Mamba] Use Mamba Bits")
     bits_template = """
 class Bits{0}(Bits):
   nbits = {0}
@@ -46,7 +46,7 @@ _bits_types[{0}] = b{0} = Bits{0}
 """
   except ImportError:
     from .PythonBits import Bits
-    # print "[default w/o Mamba] Use Python Bits"
+    # print("[default w/o Mamba] Use Python Bits")
     # The action of a __slots__ declaration is limited to the class where it is defined.
     # As a result, subclasses will have a __dict__ unless they also define __slots__.
     bits_template = """
