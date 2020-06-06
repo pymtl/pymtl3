@@ -57,6 +57,10 @@ from pymtl3.passes.testcases import (
     CaseUpdateffMixAssignComp,
     CaseWiresDrivenComp,
     set_attributes,
+    Bits32x5Foo,
+    Bits32Foo,
+    NestedBits32Foo,
+    NestedStructPackedArray
 )
 
 CaseTwoUpblksSliceComp = set_attributes( CaseTwoUpblksSliceComp,
@@ -1157,7 +1161,7 @@ CaseStructPortOnly = set_attributes( CaseStructPortOnly,
         endcomponent
     ''',
     'REF_STRUCT',
-    [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo__foo_32')]
+    [(rdt.Struct(Bits32Foo, {'foo':rdt.Vector(32)}), 'Bits32Foo__foo_32')]
 )
 
 CaseStructWireDrivenComp = set_attributes( CaseStructWireDrivenComp,
@@ -1195,7 +1199,7 @@ CaseStructWireDrivenComp = set_attributes( CaseStructWireDrivenComp,
         endcomponent
     ''',
     'REF_STRUCT',
-    [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo__foo_32')]
+    [(rdt.Struct(Bits32Foo, {'foo':rdt.Vector(32)}), 'Bits32Foo__foo_32')]
 )
 
 CaseStructConstComp = set_attributes( CaseStructConstComp,
@@ -1230,7 +1234,7 @@ CaseStructConstComp = set_attributes( CaseStructConstComp,
         endcomponent
     ''',
     'REF_STRUCT',
-    [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo__foo_32')]
+    [(rdt.Struct(Bits32Foo, {'foo':rdt.Vector(32)}), 'Bits32Foo__foo_32')]
 )
 
 CaseStructx5PortOnly = set_attributes( CaseStructx5PortOnly,
@@ -1267,7 +1271,7 @@ CaseStructx5PortOnly = set_attributes( CaseStructx5PortOnly,
         endcomponent
     ''',
     'REF_STRUCT',
-    [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo__foo_32')]
+    [(rdt.Struct(Bits32Foo, {'foo':rdt.Vector(32)}), 'Bits32Foo__foo_32')]
 )
 
 CaseNestedStructPortOnly = set_attributes( CaseNestedStructPortOnly,
@@ -1306,8 +1310,8 @@ CaseNestedStructPortOnly = set_attributes( CaseNestedStructPortOnly,
     ''',
     'REF_STRUCT',
     [
-      (rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo__foo_32'),
-      (rdt.Struct('NestedBits32Foo', {'foo':rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)})}), 'NestedBits32Foo__foo_Bits32Foo__foo_32'),
+      (rdt.Struct(Bits32Foo, {'foo':rdt.Vector(32)}), 'Bits32Foo__foo_32'),
+      (rdt.Struct(NestedBits32Foo, {'foo':rdt.Struct(Bits32Foo, {'foo':rdt.Vector(32)})}), 'NestedBits32Foo__foo_Bits32Foo__foo_32'),
     ]
 )
 
@@ -1353,8 +1357,8 @@ CaseNestedPackedArrayStructComp = set_attributes( CaseNestedPackedArrayStructCom
     ''',
     'REF_STRUCT',
     [
-      (rdt.Struct('Bits32x5Foo', {'foo':rdt.PackedArray([5], rdt.Vector(32))}), 'Bits32x5Foo__foo_32x5'),
-      (rdt.Struct('NestedStructPackedArray', {'foo':rdt.PackedArray([5], rdt.Struct('Bits32x5Foo', {'foo':rdt.PackedArray([5], rdt.Vector(32))}))}), 'NestedStructPackedArray__foo_Bits32x5Foo__foo_32x5x5'),
+      (rdt.Struct(Bits32x5Foo, {'foo':rdt.PackedArray([5], rdt.Vector(32))}), 'Bits32x5Foo__foo_32x5'),
+      (rdt.Struct(NestedStructPackedArray, {'foo':rdt.PackedArray([5], rdt.Struct(Bits32x5Foo, {'foo':rdt.PackedArray([5], rdt.Vector(32))}))}), 'NestedStructPackedArray__foo_Bits32x5Foo__foo_32x5x5'),
     ]
 )
 

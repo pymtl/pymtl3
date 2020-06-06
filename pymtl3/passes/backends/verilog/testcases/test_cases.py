@@ -2030,7 +2030,7 @@ CaseConnectConstStructAttrToOutComp = set_attributes( CaseConnectConstStructAttr
     ''',
     'REF_STRUCT',
     (
-        rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}),
+        rdt.Struct(Bits32Foo, {'foo':rdt.Vector(32)}),
         dedent('''\
                   typedef struct packed {
                     logic [31:0] foo;
@@ -2069,10 +2069,10 @@ CaseConnectLiteralStructComp = set_attributes( CaseConnectLiteralStructComp,
     ''',
     'REF_STRUCT',
     (
-        rdt.Struct('NestedStructPackedPlusScalar', {
+        rdt.Struct(NestedStructPackedPlusScalar, {
           'foo':rdt.Vector(32),
           'bar':rdt.PackedArray([2], rdt.Vector(32)),
-          'woo':rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}),
+          'woo':rdt.Struct(Bits32Foo, {'foo':rdt.Vector(32)}),
         }),
         dedent('''\
                   typedef struct packed {
@@ -2123,7 +2123,7 @@ CaseConnectArrayStructAttrToOutComp = set_attributes( CaseConnectArrayStructAttr
     ''',
     'REF_STRUCT',
     (
-        rdt.Struct('Bits32x5Foo', {'foo':rdt.PackedArray([5], rdt.Vector(32))}),
+        rdt.Struct(Bits32x5Foo, {'foo':rdt.PackedArray([5], rdt.Vector(32))}),
         dedent('''\
                   typedef struct packed {
                     logic [4:0][31:0] foo;
@@ -2168,10 +2168,10 @@ CaseConnectNestedStructPackedArrayComp = set_attributes( CaseConnectNestedStruct
     ''',
     'REF_STRUCT',
     (
-        rdt.Struct('NestedStructPackedPlusScalar', {
+        rdt.Struct(NestedStructPackedPlusScalar, {
           'foo':rdt.Vector(32),
           'bar':rdt.PackedArray([2], rdt.Vector(32)),
-          'woo':rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}),
+          'woo':rdt.Struct(Bits32Foo, {'foo':rdt.Vector(32)}),
         }),
         dedent('''\
                   typedef struct packed {

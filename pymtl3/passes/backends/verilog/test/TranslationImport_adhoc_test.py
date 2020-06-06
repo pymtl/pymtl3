@@ -7,6 +7,8 @@
 
 import pytest
 
+from pymtl3.datatypes import bitstruct, Bits16, Bits32, concat
+from pymtl3.dsl import Component, InPort, OutPort, update, Interface
 from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
 from pymtl3.stdlib.test_utils import TestVectorSimulator
@@ -91,3 +93,49 @@ def test_pymtl_top_multi_placeholder():
   m = VerilogTranslationImportPass()( m )
   sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
   sim.run_test()
+
+def test_bitstruct_same_name_different_fields():
+  class A:
+    @bitstruct
+    class A:
+      a: Bits32
+
+  class B:
+    @bitstruct
+    class A:
+      a: Bits16
+
+  class InIfc( Interface ):
+    def construct( s, Type ):
+      s.in_ = InPort( Type )
+
+  class OutIfc( Interface ):
+    def construct( s, Type ):
+      s.out = OutPort( Type )
+
+  class DUT( Component ):
+    def construct( s ):
+      s.in1 = InIfc(A.A)
+      s.in2 = InIfc(B.A)
+      s.out2 = OutPort(Bits16)
+
+      s.out2 //= s.in2.in_.a
+
+  class TMP( Component ):
+    def construct( s ):
+      s.out = OutPort(B.A)
+      @update
+      def drive():
+        s.out @= 0
+
+  class Top( Component ):
+    def construct( s ):
+      s.dut = DUT()
+      s.tmp = TMP()
+      s.tmp.out //= s.dut.in2.in_
+
+  m = Top()
+  m.elaborate()
+  m.dut.set_metadata( VerilogTranslationImportPass.enable, True )
+  m.apply( VerilogPlaceholderPass() )
+  m = VerilogTranslationImportPass()( m )

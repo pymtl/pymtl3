@@ -19,6 +19,7 @@ from pymtl3.passes.testcases import (
     CaseBits32ClosureGlobal,
     CaseStructClosureGlobal,
     pymtl_Bits_global_freevar,
+    Bits32Foo
 )
 
 
@@ -49,5 +50,5 @@ def test_pymtl_Bits_global( do_test ):
 def test_pymtl_struct_closure( do_test ):
   a = CaseStructClosureGlobal.DUT()
   a.elaborate()
-  a._rtlir_freevar_ref = { 'foo_at_upblk' : ( a._foo, rt.Port( "input", rdt.Struct( "Bits32Foo", {"foo": rdt.Vector(32)} ) ) ) }
+  a._rtlir_freevar_ref = { 'foo_at_upblk' : ( a._foo, rt.Port( "input", rdt.Struct( Bits32Foo, {"foo": rdt.Vector(32)} ) ) ) }
   do_test( a )

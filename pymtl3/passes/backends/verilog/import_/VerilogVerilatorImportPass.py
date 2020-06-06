@@ -26,6 +26,7 @@ from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRGetter
 from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.rtlir.rtype.RTLIRDataType import _get_rtlir_dtype_struct
 
 from ..errors import VerilogImportError
 from ..util.utility import (
@@ -754,10 +755,21 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
         def _get_arg_str( name, obj ):
           # Support common python types and Bits/BitStruct
+
           if isinstance( obj, (int, bool, str) ):
             return str(obj)
-          elif obj == None:
+
+          elif obj is None:
             return 'None'
+
+          elif isinstance( obj, type ) and issubclass( obj, Bits ):
+            nbits = obj.nbits
+            Bits_name = f"Bits{nbits}"
+            if Bits_name not in symbols and nbits >= 256:
+              Bits_class = mk_bits( nbits )
+              symbols.update( { Bits_name : Bits_class } )
+            return Bits_name
+
           elif isinstance( obj, Bits ):
             nbits = obj.nbits
             value = int(obj)
@@ -767,6 +779,23 @@ m->{name}{sub} = {deference}model->{name}{sub};
               Bits_class = mk_bits( nbits )
               symbols.update( { Bits_name : Bits_class } )
             return Bits_arg_str
+
+          elif is_bitstruct_class(obj):
+            # Shunning: get the unique name of bitstruct class
+            BitStruct_name = _get_rtlir_dtype_struct( obj() ).get_name()
+
+            if BitStruct_name in symbols:
+              assert symbols[BitStruct_name] is obj, "Same bitstruct name but different classes!"
+            else:
+              symbols.update( { BitStruct_name : obj } )
+
+            return BitStruct_name
+
+          # FIXME formalize this
+          elif isinstance( obj, type ) and hasattr( obj, 'req' ) and hasattr( obj, 'resp' ):
+            symbols.update( { obj.__name__ : obj } )
+            return obj.__name__
+
           elif is_bitstruct_inst( obj ):
             raise TypeError("Do you really want to pass in an instance of "
                             "a BitStruct? Contact PyMTL developers!")
@@ -781,22 +810,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
             # if bs_name not in symbols:
               # symbols.update( { bs_name : obj } )
             # return bs_name
-          elif isinstance( obj, type ) and issubclass( obj, Bits ):
-            nbits = obj.nbits
-            Bits_name = f"Bits{nbits}"
-            if Bits_name not in symbols and nbits >= 256:
-              Bits_class = mk_bits( nbits )
-              symbols.update( { Bits_name : Bits_class } )
-            return Bits_name
-          elif is_bitstruct_class(obj):
-            BitStruct_name = obj.__name__
-            if BitStruct_name not in symbols:
-              symbols.update( { BitStruct_name : obj } )
-            return BitStruct_name
-          # FIXME formalize this
-          elif isinstance( obj, type ) and hasattr( obj, 'req' ) and hasattr( obj, 'resp' ):
-            symbols.update( { obj.__name__ : obj } )
-            return obj.__name__
+
           raise TypeError( f"Interface constructor argument {obj} is not an int/Bits/BitStruct/TypeTuple!" )
 
         name, cls = ifc.get_name(), ifc.get_class()
@@ -998,7 +1012,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
   def gen_port_struct_output( s, lhs, mangled_lhs, rhs, dtype, symbols ):
     dtype_nbits = dtype.get_length()
     # If the top-level signal is a struct, we add the datatype to symbol?
-    dtype_name = dtype.get_class().__name__
+    dtype_name = dtype.get_name()
     if dtype_name not in symbols:
       symbols[dtype_name] = dtype.get_class()
 

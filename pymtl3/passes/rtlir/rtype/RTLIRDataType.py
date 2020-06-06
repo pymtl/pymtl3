@@ -69,12 +69,12 @@ class Vector( BaseRTLIRDataType ):
 
 class Struct( BaseRTLIRDataType ):
   """RTLIR data type class for struct type."""
-  def __init__( s, name, properties, cls = None ):
+  def __init__( s, cls, properties ):
+    s.cls = cls
     # As of Python 3.7, dict always preserves insertion order
     assert len(properties) > 0, 'struct has no fields!'
-    s.name = name
     s.properties = properties
-    s.cls = cls
+
     # if cls is not None:
       # try:
       #   file_name = inspect.getsourcefile( cls )
@@ -92,20 +92,26 @@ class Struct( BaseRTLIRDataType ):
     return isinstance(u, Struct) and s.get_full_name() == u.get_full_name()
 
   def __hash__( s ):
-    return hash((type(s), s.name))
+    return hash((type(s), s.get_full_name()))
 
-  def get_name( s ):
-    class_name = s.name
-    field_str  = '__'.join(f'{field_name}_{field_type.get_full_name()}' \
-                           for field_name, field_type in s.properties.items())
-    return get_hashed_name( class_name, field_str )
+  def get_field_str( s ):
+    try:
+      return s._field_str
+    except AttributeError:
+      s._field_str = '__'.join(f'{field_name}_{field_type.get_full_name()}' \
+                      for field_name, field_type in s.properties.items())
+      return s._field_str
 
   def get_full_name( s ):
-    # Derive the name of BitStruct from both the class name and its fields
-    class_name = s.name
-    field_str  = '__'.join(f'{field_name}_{field_type.get_full_name()}' \
-                           for field_name, field_type in s.properties.items())
-    return f'{class_name}__{field_str}'
+    try:
+      return s._full_name
+    except AttributeError:
+      # Derive the name of BitStruct from both the class name and its fields
+      s._full_name = f'{s.cls.__name__}__{s.get_field_str()}'
+      return s._full_name
+
+  def get_name( s ):
+    return get_hashed_name( s.cls.__name__, s.get_field_str() )
 
   # def get_file_info( s ):
     # return s.file_info
@@ -246,7 +252,7 @@ def _get_rtlir_dtype_struct( obj ):
     properties = { name: _get_rtlir_dtype_struct( getattr(obj, name) )
                     for name in cls.__bitstruct_fields__.keys() }
 
-    return Struct(cls.__name__, properties, cls)
+    return Struct( cls, properties )
 
   else:
     assert False, str(obj) + ' is not allowed as a field of struct!'
