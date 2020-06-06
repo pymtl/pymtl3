@@ -113,7 +113,7 @@ class MemMinionIfcCL( MinionIfcCL ): pass
 
 class MemMasterIfcRTL( MasterIfcRTL ): pass
 
-class MemMinionIfcRTL( Interface ): pass
+class MemMinionIfcRTL( MinionIfcRTL ): pass
 
 class MemIfcCL2FLAdapter( Component ):
 
@@ -172,7 +172,7 @@ class MemIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.ReqType( MemMsgType.READ, 0, addr, b2(nbytes, trunc_int=True) ) )
+    s.right.req( s.create_req( MemMsgType.READ, 0, addr, nbytes ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -186,7 +186,7 @@ class MemIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.ReqType( MemMsgType.WRITE, 0, addr, b2(nbytes, trunc_int=True), data ) )
+    s.right.req( s.create_req( MemMsgType.WRITE, 0, addr, nbytes, data ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -198,7 +198,7 @@ class MemIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.ReqType( amo, 0, addr, b2(nbytes, trunc_int=True), data ) )
+    s.right.req( s.ReqType( amo, 0, addr, nbytes, data ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -219,6 +219,11 @@ class MemIfcFL2CLAdapter( Component ):
 
     s.ReqType  = ReqType
     s.RespType = RespType
+
+    Tlen  = ReqType.get_field_type('len')
+    Tdata = ReqType.get_field_type('data')
+    # Use create_req to handle type mismatch
+    s.create_req = lambda a,b,c,d,e=0: ReqType( a, b, c, Tlen(d, trunc_int=True), Tdata(int(e)) )
 
     s.left  = MemMinionIfcFL( read=s.read, write=s.write, amo=s.amo )
     s.right = MemMasterIfcCL( ReqType, RespType, s.recv, s.recv_rdy )

@@ -130,3 +130,16 @@ class LEComparator( Component ):
     @update
     def up_lecomp():
       s.out @= s.in0 <= s.in1
+
+# EqComparator
+
+class EqComparator( Component ):
+
+  def construct( s, Type ):
+    s.in0 = InPort( Type )
+    s.in1 = InPort( Type )
+    s.out = OutPort()
+
+    @update
+    def up_lecomp():
+      s.out @= s.in0 == s.in1
