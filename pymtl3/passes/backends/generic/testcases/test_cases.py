@@ -10,6 +10,8 @@ Date   : Dec 12, 2019
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.testcases import (
+    Bits32Foo,
+    Bits32x5Foo,
     CaseArrayBits32IfcInComp,
     CaseBits32ArrayClosureConstruct,
     CaseBits32ClosureConstruct,
@@ -56,11 +58,9 @@ from pymtl3.passes.testcases import (
     CaseTwoUpblksStructTmpWireComp,
     CaseUpdateffMixAssignComp,
     CaseWiresDrivenComp,
-    set_attributes,
-    Bits32x5Foo,
-    Bits32Foo,
     NestedBits32Foo,
-    NestedStructPackedArray
+    NestedStructPackedArray,
+    set_attributes,
 )
 
 CaseTwoUpblksSliceComp = set_attributes( CaseTwoUpblksSliceComp,

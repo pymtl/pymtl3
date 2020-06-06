@@ -15,11 +15,11 @@ from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 from pymtl3.passes.testcases import (
+    Bits32Foo,
     CaseBits32ClosureConstruct,
     CaseBits32ClosureGlobal,
     CaseStructClosureGlobal,
     pymtl_Bits_global_freevar,
-    Bits32Foo
 )
 
 

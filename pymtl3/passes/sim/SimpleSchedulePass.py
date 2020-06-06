@@ -10,7 +10,6 @@ Date   : Dec 26, 2018
 """
 
 import linecache
-
 from collections import defaultdict
 
 from pymtl3.dsl.errors import UpblkCyclicError

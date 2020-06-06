@@ -81,7 +81,7 @@ def test_struct_port_single( do_test ):
     def construct( s ):
       s.in_ = InPort( struct )
   a = A()
-  st = rdt.Struct('struct', {'bar':rdt.Vector(32), 'foo':rdt.Vector(32)})
+  st = rdt.Struct(struct, {'bar':rdt.Vector(32), 'foo':rdt.Vector(32)})
   a._ref_ports = [
     ( ['clk'], 'clk', rt.Port('input', rdt.Vector(1)), 0 ),
     ( ['in_'], 'in_', rt.Port('input', st ), 0 ),
@@ -104,7 +104,7 @@ def test_struct_port_array( do_test ):
     def construct( s ):
       s.in_ = [ InPort( struct ) for _ in range(2) ]
   a = A()
-  st = rdt.Struct('struct', {'bar':rdt.Vector(32), 'foo':rdt.Vector(32)})
+  st = rdt.Struct(struct, {'bar':rdt.Vector(32), 'foo':rdt.Vector(32)})
   a._ref_ports = [
     ( ['clk'], 'clk', rt.Port('input', rdt.Vector(1)), 0 ),
     ( ['in_'], 'in_', rt.Array([2], rt.Port('input', st)), 0 ),
@@ -130,7 +130,7 @@ def test_packed_array_port_array( do_test ):
       s.in_ = [ InPort( struct ) for _ in range(2) ]
   a = A()
   foo = rdt.PackedArray([3,2], rdt.Vector(32))
-  st = rdt.Struct('struct', {'bar':rdt.Vector(32), 'foo':foo})
+  st = rdt.Struct(struct, {'bar':rdt.Vector(32), 'foo':foo})
   a._ref_ports = [
     ( ['clk'], 'clk', rt.Port('input', rdt.Vector(1)), 0 ),
     ( ['in_'], 'in_', rt.Array([2], rt.Port('input', st)), 0),
@@ -168,8 +168,8 @@ def test_nested_struct( do_test ):
     def construct( s ):
       s.in_ = [ InPort( struct ) for _ in range(2) ]
   a = A()
-  inner = rdt.Struct('inner_struct', {'foo':rdt.Vector(32)})
-  st = rdt.Struct('struct', {'bar':rdt.Vector(32), 'inner':inner})
+  inner = rdt.Struct(inner_struct, {'foo':rdt.Vector(32)})
+  st = rdt.Struct(struct, {'bar':rdt.Vector(32), 'inner':inner})
   a._ref_ports = [
     ( ['clk'], 'clk', rt.Port('input', rdt.Vector(1)), 0 ),
     ( ['in_'], 'in_', rt.Array([2], rt.Port('input', st )), 0 ),

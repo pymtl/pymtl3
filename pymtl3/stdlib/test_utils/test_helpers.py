@@ -43,6 +43,16 @@ def mk_test_case_table( raw_test_case_table ):
     'argvalues' : test_cases,
   }
 
+def _recursive_set_vl_trace( m, dump_vcd ):
+  if ( m.has_metadata( VerilogTranslationImportPass.enable ) and \
+       m.get_metadata( VerilogTranslationImportPass.enable ) ) or \
+      isinstance( m, VerilogPlaceholder ):
+    m.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
+    m.set_metadata( VerilogVerilatorImportPass.vl_trace_filename, dump_vcd )
+  else:
+    for child in m.get_child_components():
+      _recursive_set_vl_trace( child, dump_vcd )
+
 #------------------------------------------------------------------------------
 # TestVectorSimulator
 #------------------------------------------------------------------------------
@@ -60,7 +70,28 @@ class TestVectorSimulator:
     self.test_vectors        = test_vectors
     self.wait_cycles         = wait_cycles
 
-  def run_test( self ):
+  def run_test( self, cmdline_opts=None ):
+
+    cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'max_cycles': 10000}
+
+    # Setup the model
+
+    self.model.elaborate()
+
+    if cmdline_opts['test_verilog']:
+      self.model.set_metadata( VerilogVerilatorImportPass.vl_xinit, cmdline_opts['test_verilog'] )
+      self.model.set_metadata( VerilogTranslationImportPass.enable, True )
+
+    if cmdline_opts['dump_vcd']:
+      _recursive_set_vl_trace( self.model, cmdline_opts['dump_vcd'] )
+
+    self.model.apply( VerilogPlaceholderPass() )
+    self.model = VerilogTranslationImportPass()( self.model )
+
+    # FIXME we currently have to set dump_vcd after applying translationimport pass
+    # Need to transfer metadata from the new DUT
+    if cmdline_opts['dump_vcd']:
+      self.model.set_metadata( VcdGenerationPass.vcd_file_name, cmdline_opts['dump_vcd'] )
 
     self.model.apply( DefaultPassGroup(print_line_trace=True) )
 
@@ -81,16 +112,6 @@ class TestVectorSimulator:
         raise e
 
       self.model.sim_tick()
-
-def _recursive_set_vl_trace( m, dump_vcd ):
-  if ( m.has_metadata( VerilogTranslationImportPass.enable ) and \
-       m.get_metadata( VerilogTranslationImportPass.enable ) ) or \
-      isinstance( m, VerilogPlaceholder ):
-    m.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
-    m.set_metadata( VerilogVerilatorImportPass.vl_trace_filename, dump_vcd )
-  else:
-    for child in m.get_child_components():
-      _recursive_set_vl_trace( child, dump_vcd )
 
 def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
 
@@ -189,7 +210,7 @@ def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True
 
   # Create a simulator
 
-  model.apply( DefaultPassGroup(print_line_trace=True) )
+  model.apply( DefaultPassGroup(print_line_trace=line_trace) )
 
   # Reset model
 

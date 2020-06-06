@@ -7,8 +7,8 @@
 
 import pytest
 
-from pymtl3.datatypes import bitstruct, Bits16, Bits32, concat
-from pymtl3.dsl import Component, InPort, OutPort, update, Interface
+from pymtl3.datatypes import Bits16, Bits32, bitstruct, concat
+from pymtl3.dsl import Component, InPort, Interface, OutPort, update
 from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
 from pymtl3.stdlib.test_utils import TestVectorSimulator

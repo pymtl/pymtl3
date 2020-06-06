@@ -13,11 +13,11 @@ from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
 from pymtl3.passes.testcases import (
+    Bits32Foo,
+    Bits32x5Foo,
     CaseBits32PortOnly,
     CasePackedArrayStructPortOnly,
     CaseStructPortOnly,
-    Bits32x5Foo,
-    Bits32Foo
 )
 
 
