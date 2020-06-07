@@ -15,6 +15,7 @@ from examples.ex03_proc.ProcRTL import ProcRTL
 from pymtl3 import *
 from pymtl3.passes.backends.yosys import *
 from pymtl3.passes.tracing import *
+from pymtl3.stdlib.test_utils.test_helpers import _finalize
 
 from .harness import asm_test, assemble
 
@@ -65,6 +66,8 @@ class ProcVRTL_Tests( BaseTests ):
 
     # Force a test failure if we timed out
     assert th.sim_cycle_count() < max_cycles
+
+    _finalize( th )
 
 #-------------------------------------------------------------------------
 # Test translation script

@@ -11,6 +11,7 @@ from pymtl3 import *
 from pymtl3.passes.backends.yosys import *
 from pymtl3.passes.tracing import *
 from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.test_utils.test_helpers import _finalize
 
 from ..ChecksumFL import checksum
 from ..ChecksumRTL import ChecksumRTL, StepUnit
@@ -122,6 +123,8 @@ class ChecksumVRTLSrcSink_Tests( BaseSrcSinkTests ):
 
     # Check timeout
     assert th.sim_cycle_count() < max_cycles
+
+    _finalize( th )
 
 #-------------------------------------------------------------------------
 # Test translation script

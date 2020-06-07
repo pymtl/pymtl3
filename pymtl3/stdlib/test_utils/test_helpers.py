@@ -43,6 +43,13 @@ def mk_test_case_table( raw_test_case_table ):
     'argvalues' : test_cases,
   }
 
+
+def _finalize( model ):
+  for child in model.get_child_components():
+    _finalize( child )
+  if hasattr( model, 'finalize' ):
+    model.finalize()
+
 def _recursive_set_vl_trace( m, dump_vcd ):
   if ( m.has_metadata( VerilogTranslationImportPass.enable ) and \
        m.get_metadata( VerilogTranslationImportPass.enable ) ) or \
@@ -52,6 +59,60 @@ def _recursive_set_vl_trace( m, dump_vcd ):
   else:
     for child in m.get_child_components():
       _recursive_set_vl_trace( child, dump_vcd )
+
+def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
+
+  test_verilog = cmdline_opts[ 'test_verilog' ]
+  dump_vcd     = cmdline_opts[ 'dump_vcd'     ]
+  dump_vtb     = cmdline_opts[ 'dump_vtb'     ]
+
+  # Setup the model
+
+  top.elaborate()
+
+  if dump_vcd:
+    _recursive_set_vl_trace( top, dump_vcd )
+
+  if duts:
+    dut_objs = []
+    for i, dut in enumerate(duts):
+      dut_objs.append( eval(f'top.{dut}') )
+  else:
+    dut_objs = [ top ]
+
+  for dut in dut_objs:
+    if test_verilog:
+      dut.set_metadata( VerilogTranslationImportPass.enable, True )
+      dut.set_metadata( VerilogVerilatorImportPass.vl_xinit, test_verilog )
+
+      if dump_vcd:
+        dut.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
+        dut.set_metadata( VerilogVerilatorImportPass.vl_trace_filename, dump_vcd )
+
+  top.apply( VerilogPlaceholderPass() )
+  top = VerilogTranslationImportPass()( top )
+
+  # Access dut object again because those dut_objs can be replaced by
+  # import passes
+  if duts:
+    dut_objs = []
+    for i, dut in enumerate(duts):
+      dut_objs.append( eval(f'top.{dut}') )
+  else:
+    dut_objs = [ top ]
+
+  if dump_vtb:
+    for dut in dut_objs:
+      dut.set_metadata( VerilogTBGenPass.case_name, dump_vtb )
+
+  top.apply( VerilogTBGenPass() )
+
+  # FIXME we currently have to set dump_vcd after applying translationimport pass
+  # Need to transfer metadata from the new DUT
+  if dump_vcd:
+    top.set_metadata( VcdGenerationPass.vcd_file_name, dump_vcd )
+
+  return top
 
 #------------------------------------------------------------------------------
 # TestVectorSimulator
@@ -72,26 +133,10 @@ class TestVectorSimulator:
 
   def run_test( self, cmdline_opts=None ):
 
-    cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'max_cycles': 10000}
+    cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'dump_vtb': ''}
 
     # Setup the model
-
-    self.model.elaborate()
-
-    if cmdline_opts['test_verilog']:
-      self.model.set_metadata( VerilogVerilatorImportPass.vl_xinit, cmdline_opts['test_verilog'] )
-      self.model.set_metadata( VerilogTranslationImportPass.enable, True )
-
-    if cmdline_opts['dump_vcd']:
-      _recursive_set_vl_trace( self.model, cmdline_opts['dump_vcd'] )
-
-    self.model.apply( VerilogPlaceholderPass() )
-    self.model = VerilogTranslationImportPass()( self.model )
-
-    # FIXME we currently have to set dump_vcd after applying translationimport pass
-    # Need to transfer metadata from the new DUT
-    if cmdline_opts['dump_vcd']:
-      self.model.set_metadata( VcdGenerationPass.vcd_file_name, cmdline_opts['dump_vcd'] )
+    self.model = config_model_with_cmdline_opts( self.model, cmdline_opts, [] )
 
     self.model.apply( DefaultPassGroup(print_line_trace=True) )
 
@@ -113,41 +158,17 @@ class TestVectorSimulator:
 
       self.model.sim_tick()
 
+    _finalize( self.model )
+
 def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
 
-  cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'max_cycles': 10000}
+  cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'max_cycles': 10000, 'dump_vtb': ''}
 
   max_cycles = cmdline_opts['max_cycles']
 
   # Setup the model
 
-  model.elaborate()
-
-  if cmdline_opts['dump_vcd']:
-    _recursive_set_vl_trace( model, cmdline_opts['dump_vcd'] )
-
-  if duts:
-    for i, dut in enumerate(duts):
-      duts[i] = eval(f'model.{dut}')
-  else:
-    duts = [ model ]
-
-  for dut in duts:
-    if cmdline_opts['test_verilog']:
-      dut.set_metadata( VerilogTranslationImportPass.enable, True )
-      dut.set_metadata( VerilogVerilatorImportPass.vl_xinit, cmdline_opts['test_verilog'] )
-
-      if cmdline_opts['dump_vcd']:
-        dut.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
-        dut.set_metadata( VerilogVerilatorImportPass.vl_trace_filename, cmdline_opts['dump_vcd'] )
-
-  model.apply( VerilogPlaceholderPass() )
-  model = VerilogTranslationImportPass()( model )
-
-  # FIXME we currently have to set dump_vcd after applying translationimport pass
-  # Need to transfer metadata from the new DUT
-  if cmdline_opts['dump_vcd']:
-    model.set_metadata( VcdGenerationPass.vcd_file_name, cmdline_opts['dump_vcd'] )
+  model = config_model_with_cmdline_opts( model, cmdline_opts, duts )
 
   # Create a simulator
 
@@ -172,11 +193,13 @@ def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
   model.sim_tick()
   model.sim_tick()
 
+  _finalize( model )
+
 class RunTestVectorSimError( Exception ):
   pass
 
 def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True ):
-  cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False}
+  cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'dump_vtb': ''}
 
   # First row in test vectors contains port names
 
@@ -191,22 +214,7 @@ def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True
 
   # Setup the model
 
-  model.elaborate()
-
-  if cmdline_opts['test_verilog']:
-    model.set_metadata( VerilogVerilatorImportPass.vl_xinit, cmdline_opts['test_verilog'] )
-    model.set_metadata( VerilogTranslationImportPass.enable, True )
-
-  if cmdline_opts['dump_vcd']:
-    _recursive_set_vl_trace( model, cmdline_opts['dump_vcd'] )
-
-  model.apply( VerilogPlaceholderPass() )
-  model = VerilogTranslationImportPass()( model )
-
-  # FIXME we currently have to set dump_vcd after applying translationimport pass
-  # Need to transfer metadata from the new DUT
-  if cmdline_opts['dump_vcd']:
-    model.set_metadata( VcdGenerationPass.vcd_file_name, cmdline_opts['dump_vcd'] )
+  model = config_model_with_cmdline_opts( model, cmdline_opts, [] )
 
   # Create a simulator
 
@@ -322,3 +330,5 @@ run_test_vector_sim received an incorrect value!
   model.sim_tick()
   model.sim_tick()
   model.sim_tick()
+
+  _finalize( model )

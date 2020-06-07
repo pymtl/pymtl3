@@ -11,6 +11,7 @@ import pytest
 
 from pymtl3 import *
 from pymtl3.passes.backends.yosys import YosysTranslationImportPass
+from pymtl3.stdlib.test_utils.test_helpers import _finalize
 
 from ..ChecksumXcelRTL import ChecksumXcelRTL
 from .ChecksumXcelCL_test import mk_xcel_transaction
@@ -114,6 +115,8 @@ class ChecksumXcelVRTLSrcSink_Tests( BaseTests ):
 
     # Check timeout
     assert th.sim_cycle_count() < max_cycles
+
+    _finalize( th )
 
 #-------------------------------------------------------------------------
 # Test translation script
