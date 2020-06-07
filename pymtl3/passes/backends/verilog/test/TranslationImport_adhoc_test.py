@@ -132,4 +132,4 @@ def test_bitstruct_same_name_different_fields():
   m.dut.set_metadata( VerilogTranslationImportPass.enable, True )
   m.apply( VerilogPlaceholderPass() )
   m = VerilogTranslationImportPass()( m )
-  m.finalize()
+  m.dut.finalize()
