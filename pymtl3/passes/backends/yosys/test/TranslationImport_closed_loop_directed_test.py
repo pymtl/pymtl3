@@ -33,10 +33,11 @@ from ..YosysTranslationImportPass import YosysTranslationImportPass
 #-------------------------------------------------------------------------
 
 def yosys_run_sim( _th ):
+  _th.elaborate()
+  _th.q.set_metadata( YosysTranslationImportPass.enable, True )
+  th = YosysTranslationImportPass()( _th )
+
   try:
-    _th.elaborate()
-    _th.q.set_metadata( YosysTranslationImportPass.enable, True )
-    th = YosysTranslationImportPass()( _th )
     th.apply( DefaultPassGroup() )
     th.sim_reset()
 
@@ -49,11 +50,7 @@ def yosys_run_sim( _th ):
     th.sim_tick()
     th.sim_tick()
   finally:
-    try:
-      th.q.finalize()
-    except UnboundLocalError:
-      # This test fails due to translation errors
-      pass
+    th.q.finalize()
 
 def test_normal_queue():
   _run_queue_test_replace_run_sim( yosys_run_sim, _normal_queue )

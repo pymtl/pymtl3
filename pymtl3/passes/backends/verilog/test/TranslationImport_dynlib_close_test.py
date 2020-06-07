@@ -15,19 +15,12 @@ from ..util.utility import get_file_hash
 
 
 def run_test( _m ):
-  try:
-    _m.elaborate()
-    _m.set_metadata( VerilogTranslationImportPass.enable, True )
-    _m.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
-    m = VerilogTranslationImportPass()( _m )
-    sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
-    sim.run_test()
-  finally:
-    try:
-      m.finalize()
-    except UnboundLocalError:
-      # This test fails due to translation errors
-      pass
+  _m.elaborate()
+  _m.set_metadata( VerilogTranslationImportPass.enable, True )
+  _m.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
+  m = VerilogTranslationImportPass()( _m )
+  sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
+  sim.run_test()
 
 def test_dynlib_close():
   class Comb:

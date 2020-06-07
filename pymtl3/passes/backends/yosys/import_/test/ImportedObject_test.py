@@ -7,7 +7,6 @@
 
 from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 from pymtl3.passes.backends.verilog.import_.test.ImportedObject_test import (
-    finalize,
     test_adder,
     test_normal_queue_implicit_top_module,
     test_normal_queue_interface,
@@ -31,4 +30,3 @@ def local_do_test( _m ):
   m = YosysTranslationImportPass()( _m )
   sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
   sim.run_test()
-  finalize(m)

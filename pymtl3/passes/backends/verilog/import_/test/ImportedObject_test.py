@@ -23,14 +23,6 @@ from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 
-def finalize( m ):
-  for child in m.get_child_components():
-    finalize(child)
-  if hasattr( m, 'finalize' ):
-    m.finalize()
-    # NOTE: see if a full collection solves the cached shared lib issue
-    gc.collect()
-
 def local_do_test( _m ):
   _m.elaborate()
   if not hasattr( _m, "_no_trans_import" ):
@@ -39,7 +31,6 @@ def local_do_test( _m ):
   m = VerilogTranslationImportPass()( _m )
   sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
   sim.run_test()
-  finalize(m)
 
 def test_reg( do_test ):
   # General trans-import test
@@ -464,7 +455,7 @@ def test_reg_external_trace( do_test ):
   # 0xFFFFFFFF unsigned
   assert a.line_trace() == 'q = 4294967295'
   a.sim_tick()
-  finalize(a)
+  a.finalize()
 
 def test_reg_infer_external_trace( do_test ):
   # Test Verilog line trace
@@ -494,4 +485,4 @@ def test_reg_infer_external_trace( do_test ):
   # 0xFFFFFFFF unsigned
   assert a.line_trace() == 'q = 4294967295'
   a.sim_tick()
-  finalize(a)
+  a.finalize()

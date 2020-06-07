@@ -51,20 +51,13 @@ from ..translation.structural.test.VStructuralTranslatorL4_test import (
 
 
 def run_test( case ):
-  try:
-    _m = case.DUT()
-    _m.elaborate()
-    _m.set_metadata( VerilogTranslationImportPass.enable, True )
-    _m.apply( VerilogPlaceholderPass() )
-    m = VerilogTranslationImportPass()( _m )
-    sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
-    sim.run_test()
-  finally:
-    try:
-      m.finalize()
-    except UnboundLocalError:
-      # This test fails due to translation errors
-      pass
+  _m = case.DUT()
+  _m.elaborate()
+  _m.set_metadata( VerilogTranslationImportPass.enable, True )
+  _m.apply( VerilogPlaceholderPass() )
+  m = VerilogTranslationImportPass()( _m )
+  sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
+  sim.run_test()
 
 @pytest.mark.parametrize(
   'case', get_parameter('case', test_verilog_behavioral_L1) + \
@@ -139,3 +132,4 @@ def test_bitstruct_same_name_different_fields():
   m.dut.set_metadata( VerilogTranslationImportPass.enable, True )
   m.apply( VerilogPlaceholderPass() )
   m = VerilogTranslationImportPass()( m )
+  m.finalize()
