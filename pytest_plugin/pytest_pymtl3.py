@@ -33,7 +33,7 @@ def pytest_addoption(parser):
   group.addoption( "--dump-vtb", dest="dump_vtb", action="store_true",
                     default=None, help="dump verilog test bench for each test" )
   group.addoption( "--max-cycles", dest="max_cycles", action="store",
-                    default=10000, help="max cycles of simulation" )
+                    default=None, help="max cycles of simulation" )
 
 @pytest.fixture
 def cmdline_opts( request ):
@@ -79,7 +79,7 @@ def _any_opts_present( config ):
       ( 'test_verilog', ''    ),
       ( 'dump_vcd',     None ),
       ( 'dump_vtb',     None ),
-      ( 'max_cycles',   10000 ),
+      ( 'max_cycles',   None ),
   ]
   return any([config.getoption(opt) != val for opt, val in opt_default_pairs])
 
@@ -118,10 +118,11 @@ def _parse_opts_from_request( request ):
 
   # max_cycles
   max_cycles = request.config.getoption("max_cycles")
-  try:
-    max_cycles = int(max_cycles)
-  except ValueError:
-    raise Exception("command line option `--max-cycles` should have integer value!")
+  if max_cycles is not None:
+    try:
+      max_cycles = int(max_cycles)
+    except ValueError:
+      raise Exception("command line option `--max-cycles` should have integer value!")
   opts['max_cycles'] = max_cycles
 
   return opts

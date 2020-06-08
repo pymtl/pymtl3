@@ -138,6 +138,23 @@ class SendIfcFL( CallerIfcFL ):
       parent.RecvFL2SendCL_count += 1
       return True
 
+    elif isinstance( other, SendIfcRTL ):
+      m = RecvFL2SendRTL( other.MsgType )
+
+      if hasattr( parent, "RecvFL2SendRTL_count" ):
+        count = parent.RecvFL2SendRTL_count
+        setattr( parent, "RecvFL2SendRTL_" + str( count ), m )
+      else:
+        parent.RecvFL2SendRTL_count = 0
+        parent.RecvFL2SendRTL_0 = m
+
+      connect_pairs(
+        s,      m.recv,
+        m.send, other,
+      )
+      parent.RecvFL2SendRTL_count += 1
+      return True
+
     return False
 
 class RecvIfcFL( CalleeIfcFL ):
@@ -251,6 +268,45 @@ class RecvFL2SendCL( Component ):
     s.send = CallerIfcCL()
 
     s.add_constraints( M( s.recv ) == M( s.send ) )
+
+  def line_trace( s ):
+    return "{}(){}".format( s.recv, s.send )
+
+#-------------------------------------------------------------------------
+# RecvFL2SendRTL
+#-------------------------------------------------------------------------
+
+class RecvFL2SendRTL( Component ):
+
+  def recv( s, msg ):
+    while s.entry is not None:
+      greenlet.getcurrent().parent.switch(0)
+    s.entry = msg
+
+  def construct( s, MsgType ):
+
+    # Interface
+
+    s.recv = RecvIfcFL( method=s.recv )
+    s.send = SendIfcRTL( MsgType )
+
+    s.entry = None
+
+    @update
+    def up_clear():
+      if s.send.en and s.entry is not None:
+        s.entry = None
+
+    @update
+    def up_fl_send_rtl():
+      if s.send.rdy and s.entry is not None:
+        s.send.en  @= 1
+        s.send.msg @= s.entry
+      else:
+        s.send.en  @= 0
+
+    s.add_constraints( M( s.recv )   < U(up_fl_send_rtl),
+                       U( up_clear ) < WR( s.send.en ) )
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )

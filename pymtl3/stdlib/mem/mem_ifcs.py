@@ -16,7 +16,7 @@ from .MemMsg import MemMsgType, mk_mem_msg
 
 
 class MemMasterIfcFL( Interface ):
-  def construct( s ):
+  def construct( s, ReqType=None, RespType=None ):
     s.read  = CallerIfcFL()
     s.write = CallerIfcFL()
     s.amo   = CallerIfcFL()

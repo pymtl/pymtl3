@@ -164,6 +164,8 @@ def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
   cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'max_cycles': 10000, 'dump_vtb': ''}
 
   max_cycles = cmdline_opts['max_cycles']
+  if max_cycles is None:
+    max_cycles = 10000
 
   # Setup the model
 
