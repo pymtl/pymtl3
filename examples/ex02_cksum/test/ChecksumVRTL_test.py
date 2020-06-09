@@ -93,7 +93,7 @@ class ChecksumVRTLSrcSink_Tests( BaseSrcSinkTests ):
   def run_sim( s, th ):
 
     vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
-    max_cycles = s.__class__.cmdline_opts["max_cycles"]
+    max_cycles = s.__class__.cmdline_opts["max_cycles"] or 10000
 
     th.elaborate()
 
