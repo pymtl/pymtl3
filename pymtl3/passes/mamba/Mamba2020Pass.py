@@ -25,8 +25,8 @@ from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from .HeuristicTopoPass import CountBranchesLoops
 from .UnrollSimPass import UnrollSimPass
 
-_DEBUG = True
-# _DEBUG = False
+# _DEBUG = True
+_DEBUG = False
 
 class Mamba2020Pass( UnrollSimPass ):
 
