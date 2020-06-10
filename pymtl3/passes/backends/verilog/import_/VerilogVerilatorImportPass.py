@@ -1183,7 +1183,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def _gen_ref_read( s, lhs, rhs, nbits, equal='=' ):
     if nbits <= 64:
-      return [ f"{lhs} {equal} Bits{nbits}({rhs}[0])" ]
+      return [ f"{lhs} {equal} {rhs}[0]" ]
     else:
       ret = []
       ITEM_BITWIDTH = 32
@@ -1192,7 +1192,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         l = ITEM_BITWIDTH*idx
         r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
         _nbits = r - l
-        ret.append( f"{lhs}[{l}:{r}] {equal} Bits{_nbits}({rhs}[{idx}])" )
+        ret.append( f"{lhs}[{l}:{r}] {equal} {rhs}[{idx}]" )
       return ret
 
   def _gen_bits_decl( s, nbits ):
