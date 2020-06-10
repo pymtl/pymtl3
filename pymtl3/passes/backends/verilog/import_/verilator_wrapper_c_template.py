@@ -53,7 +53,8 @@ extern "C" {{
   // Exposed methods
   V{component_name}_t * create_model( const char * );
   void destroy_model( V{component_name}_t *);
-  void eval( V{component_name}_t * );
+  void comb_eval( V{component_name}_t * );
+  void seq_eval( V{component_name}_t * );
   void assert_en( bool en );
 
   #if VLINETRACE
@@ -153,15 +154,40 @@ void destroy_model( V{component_name}_t * m ) {{
 }}
 
 //------------------------------------------------------------------------
-// eval()
+// comb_eval()
 //------------------------------------------------------------------------
 // Simulate one time-step in the Verilated model.
 
-void eval( V{component_name}_t * m ) {{
+void comb_eval( V{component_name}_t * m ) {{
 
   V{component_name} * model = (V{component_name} *) m->model;
 
   // evaluate one time step
+  model->eval();
+
+  #if DUMP_VCD
+  if ( m->_vcd_en ) {{
+    // dump current signal values
+    VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
+    tfp->dump( m->trace_time );
+    tfp->flush();
+  }}
+  #endif
+
+}}
+
+//------------------------------------------------------------------------
+// seq_eval()
+//------------------------------------------------------------------------
+// Simulate the positive clock edge in the Verilated model.
+
+void seq_eval( V{component_name}_t * m ) {{
+
+  V{component_name} * model = (V{component_name} *) m->model;
+
+  // evaluate one time cycle
+
+  model->clk = 0;
   model->eval();
 
   #if DUMP_VCD
@@ -182,6 +208,26 @@ void eval( V{component_name}_t * m ) {{
   }}
   #endif
 
+  model->clk = 1;
+  model->eval();
+
+  #if DUMP_VCD
+  if ( m->_vcd_en ) {{
+
+    // update simulation time only on clock toggle
+    if (m->prev_clk != model->clk) {{
+      m->trace_time += {half_cycle_time};
+      g_main_time += {half_cycle_time};
+    }}
+    m->prev_clk = model->clk;
+
+    // dump current signal values
+    VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
+    tfp->dump( m->trace_time );
+    tfp->flush();
+
+  }}
+  #endif
 }}
 
 //------------------------------------------------------------------------

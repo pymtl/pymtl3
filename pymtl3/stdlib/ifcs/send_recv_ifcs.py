@@ -229,7 +229,7 @@ class RecvRTL2SendCL( Component ):
 
     @update_once
     def up_recv_rtl_rdy():
-      s.send_rdy = s.send.rdy() and not s.reset
+      s.send_rdy = s.send.rdy() & ~s.reset
       s.recv.rdy @= s.send_rdy
 
     @update_once
@@ -293,12 +293,12 @@ class RecvFL2SendRTL( Component ):
 
     @update
     def up_clear():
-      if s.send.en and s.entry is not None:
+      if s.send.en & (s.entry is not None):
         s.entry = None
 
     @update
     def up_fl_send_rtl():
-      if s.send.rdy and s.entry is not None:
+      if s.send.rdy & (s.entry is not None):
         s.send.en  @= 1
         s.send.msg @= s.entry
       else:

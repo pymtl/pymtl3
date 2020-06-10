@@ -904,7 +904,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_port_vector_input( s, lhs, rhs, mangled_rhs, dtype, symbols ):
     dtype_nbits = dtype.get_length()
-    blocks   = [ f's.{mangled_rhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
+    blocks   = [ '',
+                 f's.{mangled_rhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  '@update',
                  f'def isignal_{mangled_rhs}():',
                  f'  s.{mangled_rhs} @= {rhs}' ]
@@ -918,15 +919,11 @@ m->{name}{sub} = {deference}model->{name}{sub};
     if dtype_name not in symbols:
       symbols[dtype_name] = dtype.get_class()
 
-    blocks   = [ f's.{mangled_rhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
+    blocks   = [ '',
+                 f's.{mangled_rhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  '@update',
-                 f'def istruct_{mangled_rhs}():' ]
-
-    # We write each struct field to tmp
-    upblk_content, pos = s._gen_struct_write( 'i', rhs, 's.'+mangled_rhs, dtype, 0 )
-    assert pos == dtype_nbits
-    make_indent( upblk_content, 1 )
-    blocks += upblk_content
+                 f'def istruct_{mangled_rhs}():',
+                 f'  s.{mangled_rhs} @= {rhs}' ]
 
     # We don't create a new struct if we are copying values from pymtl
     # land to verilator, i.e. this port is the input to the imported
@@ -1001,7 +998,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_port_vector_output( s, lhs, mangled_lhs, rhs, dtype, symbols ):
     dtype_nbits = dtype.get_length()
-    blocks   = [ f's.{mangled_lhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
+    blocks   = [ '',
+                 f's.{mangled_lhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  '@update',
                  f'def osignal_{mangled_lhs}():',
                  f'  {lhs} @= s.{mangled_lhs}' ]
@@ -1016,7 +1014,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
     if dtype_name not in symbols:
       symbols[dtype_name] = dtype.get_class()
 
-    blocks   = [ f's.{mangled_lhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
+    blocks   = [ '',
+                 f's.{mangled_lhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  '@update',
                  f'def ostruct_{mangled_lhs}():' ]
 
@@ -1026,11 +1025,10 @@ m->{name}{sub} = {deference}model->{name}{sub};
     # We create a new struct if we are copying values from verilator
     # world to pymtl land and send it out through the output of this
     # component
-    upblk_content = [ f"{lhs} @= {dtype_name}()" ]
     body, pos = s._gen_struct_write( 'o', lhs, 's.'+mangled_lhs, dtype, 0 )
     assert pos == dtype.get_length()
 
-    upblk_content += body
+    upblk_content = body
     make_indent( upblk_content, 1 )
 
     blocks += upblk_content
@@ -1170,29 +1168,29 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def _gen_ref_write( s, lhs, rhs, nbits, equal='=' ):
     if nbits <= 64:
-      return [ f"{lhs}[0] {equal} int({rhs})" ]
+      return [ '', f"{lhs}[0] {equal} int({rhs})" ]
     else:
-      ret = []
+      ret = [ '', f'x = {lhs}' ]
       ITEM_BITWIDTH = 32
       num_assigns = (nbits-1)//ITEM_BITWIDTH+1
       for idx in range(num_assigns):
         l = ITEM_BITWIDTH*idx
         r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
-        ret.append( f"{lhs}[{idx}] {equal} int({rhs}[{l}:{r}])" )
+        ret.append( f"x[{idx}] {equal} int({rhs}[{l}:{r}])" )
       return ret
 
   def _gen_ref_read( s, lhs, rhs, nbits, equal='=' ):
     if nbits <= 64:
-      return [ f"{lhs} {equal} {rhs}[0]" ]
+      return [ '', f"{lhs} {equal} {rhs}[0]" ]
     else:
-      ret = []
+      ret = [ '', f'x = {rhs}' ]
       ITEM_BITWIDTH = 32
       num_assigns = (nbits-1)//ITEM_BITWIDTH+1
       for idx in range(num_assigns):
         l = ITEM_BITWIDTH*idx
         r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
         _nbits = r - l
-        ret.append( f"{lhs}[{l}:{r}] {equal} {rhs}[{idx}]" )
+        ret.append( f"{lhs}[{l}:{r}] @= x[{idx}]" )
       return ret
 
   def _gen_bits_decl( s, nbits ):
