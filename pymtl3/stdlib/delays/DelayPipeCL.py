@@ -7,9 +7,9 @@
 # Date   : May 7, 2018
 
 from collections import deque
-from copy import deepcopy
 
 from pymtl3 import *
+from pymtl3.extra import clone_deepcopy
 
 # This delay pipe is for cycle-level performance modeling purpose
 
@@ -18,7 +18,7 @@ class DelayPipeDeqCL( Component ):
   @non_blocking( lambda s: s.pipeline[0] is None )
   def enq( s, msg ):
     assert s.pipeline[0] is None
-    s.pipeline[0] = deepcopy(msg)
+    s.pipeline[0] = clone_deepcopy(msg)
 
   @non_blocking( lambda s: s.pipeline[-1] is not None )
   def deq( s ):
@@ -74,7 +74,7 @@ class DelayPipeSendCL( Component ):
 
   def enq_pipe( s, msg ):
     assert s.pipeline[0] is None
-    s.pipeline[0] = deepcopy(msg)
+    s.pipeline[0] = clone_deepcopy(msg)
 
   def enq_rdy_pipe( s ):
     return s.pipeline[0] is None

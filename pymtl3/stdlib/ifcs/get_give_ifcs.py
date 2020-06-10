@@ -11,6 +11,7 @@ import greenlet
 
 from pymtl3 import *
 from pymtl3.dsl.errors import InvalidConnectionError
+from pymtl3.extra import clone_deepcopy
 from pymtl3.stdlib.connects import connect_pairs
 
 from .send_recv_ifcs import RecvIfcRTL
@@ -154,14 +155,14 @@ class GetRTL2GiveCL( Component ):
     @update
     def up_get_rtl():
       if s.entry is None and s.get.rdy:
-        s.get.en @= b1(1)
+        s.get.en @= 1
       else:
-        s.get.en @= b1(0)
+        s.get.en @= 0
 
     @update
     def up_entry():
       if s.get.en:
-        s.entry = deepcopy( s.get.msg )
+        s.entry = clone_deepcopy( s.get.msg )
 
     s.add_constraints(
       U( up_get_rtl ) < M( s.give     ),
@@ -172,7 +173,7 @@ class GetRTL2GiveCL( Component ):
 
   @non_blocking( lambda s : s.entry is not None )
   def give( s ):
-    tmp = deepcopy( s.entry )
+    tmp = s.entry
     s.entry = None
     return tmp
 

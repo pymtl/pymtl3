@@ -7,12 +7,11 @@ RTL implementation of en/rdy micro-protocol.
 Author: Yanghui Ou, Shunning Jiang
   Date: May 5, 2019
 """
-from copy import deepcopy
-
 import greenlet
 
 from pymtl3 import *
 from pymtl3.dsl.errors import InvalidConnectionError
+from pymtl3.extra import clone_deepcopy
 from pymtl3.stdlib.connects import connect_pairs
 
 #-------------------------------------------------------------------------
@@ -207,7 +206,7 @@ class RecvCL2SendRTL( Component ):
 
   @non_blocking( lambda s : s.entry is None )
   def recv( s, msg ):
-    s.entry = deepcopy(msg)
+    s.entry = clone_deepcopy( msg )
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )
