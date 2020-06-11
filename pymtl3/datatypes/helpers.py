@@ -16,14 +16,14 @@ try:
   from mamba import concat
 except:
   def concat( *args ):
-    end = sum( x.nbits for x in args )
-    concat_bits = Bits( end, 0 )
-    for x in args:
-      x_nbits = x.nbits
-      concat_bits[ end - x_nbits : end ] = x
-      end -= x_nbits
+    value = nbits = 0
 
-    return concat_bits
+    for x in args:
+      xnb = x.nbits
+      nbits += xnb
+      value = (value << xnb) | x.uint()
+
+    return Bits( nbits, value )
 
 def trunc( value, new_width ):
   if isinstance( new_width, int ):
