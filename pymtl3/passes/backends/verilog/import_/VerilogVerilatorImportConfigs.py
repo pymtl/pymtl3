@@ -284,7 +284,16 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     return f"verilator --cc {' '.join(opt for opt in all_opts if opt)}"
 
   def create_cc_cmd( s ):
-    c_flags = "-O0 -fPIC -fno-gnu-unique -shared" + \
+    # Shunning: GCC has a family of optimizations on the SSA tree -ftree-***.
+    # It belongs to -O1, and takes a lot of time to execute when I compile the verilated C++.
+    # However, the compiled code has worse performance after applying those tree optimizations.
+    # I guess it's because verilator already emits very regular and low-level code in the form of C++.
+    # Also gcc -O1, -O2, -O3 result in the same compilation time after all optimization flags are turned off
+    # gcc -O0 still has shorter compilation time than O1-3 with all flags off
+    # My guess is that -O1 has some hidden optimization that the user cannot turn off, and -O2-3 inherit that part
+    # the difference between O1-3 is just flags
+    # so right now I'm using "-O1 with all options off" to get the fastest compilation time and good performance
+    c_flags = "-O1 -fno-guess-branch-probability -fno-reorder-blocks -fno-if-conversion -fno-if-conversion2 -fno-dce -fno-delayed-branch -fno-dse -fno-auto-inc-dec -fno-branch-count-reg -fno-combine-stack-adjustments  -fno-cprop-registers -fno-forward-propagate -fno-inline-functions-called-once -fno-ipa-profile -fno-ipa-pure-const -fno-ipa-reference -fno-move-loop-invariants -fno-omit-frame-pointer -fno-split-wide-types -fno-tree-bit-ccp -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-forwprop -fno-tree-fre -fno-tree-phiprop -fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-reassoc -fPIC -fno-gnu-unique -shared" + \
              ("" if s.is_default("c_flags") else f" {expand(s.c_flags)}")
     c_include_path = " ".join("-I"+p for p in s._get_all_includes() if p)
     out_file = s.get_shared_lib_path()
