@@ -367,36 +367,41 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     return includes
 
   def _get_c_src_files( s ):
-    srcs = copy.copy(s.c_srcs)
     top_module = s.translated_top_module
     vl_mk_dir = s.vl_mk_dir
     vl_class_mk = f"{vl_mk_dir}/V{top_module}_classes.mk"
 
     # Add C wrapper
-    srcs.append(s.get_c_wrapper_path())
+    fast = copy.copy(s.c_srcs)
+    fast.append(s.get_c_wrapper_path())
+    slow = []
 
     # Add files listed in class makefile
     with open(vl_class_mk) as class_mk:
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_CLASSES_FAST")
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_CLASSES_SLOW")
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_SUPPORT_FAST")
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_SUPPORT_SLOW")
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, s.vl_include_dir, "VM_GLOBAL_FAST")
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, s.vl_include_dir, "VM_GLOBAL_SLOW")
+      all_lines = class_mk.readlines()
+      fast += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_FAST")
+      fast += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_FAST")
+      fast += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_FAST")
+      slow += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_SLOW")
+      slow += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_SLOW")
+      slow += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_SLOW")
 
-    return srcs
+    with open(f"{top_module}_v__ALL_pickled.cpp", 'w') as out:
+      out.write('\n'.join( [ f'#include "{x}"' for x in fast ]))
 
-  def _get_srcs_from_vl_class_mk( s, mk, path, label ):
+      # Apply no optimization for SLOW files
+      if slow:
+        out.write('\n#pragma GCC push_options')
+        out.write('\n#pragma GCC optimize ("O0")\n')
+        out.write('\n'.join( [ f'#include "{x}"' for x in slow ]))
+        out.write('\n#pragma GCC pop_options\n')
+
+    return [ f"{top_module}_v__ALL_pickled.cpp" ]
+
+  def _get_srcs_from_vl_class_mk( s, all_lines, path, label ):
     """Return all files under `path` directory in `label` section of `mk`."""
     srcs, found = [], False
-    mk.seek(0)
-    for line in mk:
+    for line in all_lines:
       if line.startswith(label):
         found = True
       elif found:
