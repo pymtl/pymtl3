@@ -57,14 +57,14 @@ class BehavioralRTLIRGenL1Pass( RTLIRPass ):
 
     visitor = s.get_rtlir_generator_class()( m )
     upblks = {
-      'CombUpblk' : get_ordered_upblks(m),
-      'SeqUpblk'  : get_ordered_update_ff(m),
+      bir.CombUpblk : get_ordered_upblks(m),
+      bir.SeqUpblk  : get_ordered_update_ff(m),
     }
     # Sort the upblks by their name
-    upblks['CombUpblk'].sort( key = lambda x: x.__name__ )
-    upblks['SeqUpblk'].sort( key = lambda x: x.__name__ )
+    upblks[bir.CombUpblk].sort( key = lambda x: x.__name__ )
+    upblks[bir.SeqUpblk ].sort( key = lambda x: x.__name__ )
 
-    for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
+    for upblk_type in ( bir.CombUpblk, bir.SeqUpblk ):
       for blk in upblks[ upblk_type ]:
         visitor._upblk_type = upblk_type
         upblk_info = m.get_update_block_info( blk )
@@ -152,43 +152,28 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # Save the name of the upblk
     s._upblk_name = node.name
 
-    # Get the type of upblk from ._upblk_type variable
-    ret = eval( 'bir.' + s._upblk_type + '( node.name, [] )' )
+    # Construct the node using the type of upblk
+    ret = s._upblk_type( node.name, [] )
+
     for stmt in node.body:
       ret.body.append( s.visit( stmt ) )
     ret.ast = node
     return ret
 
   def visit_Assign( s, node ):
-    blocking = {
-      'CombUpblk' : True,
-      'SeqUpblk'  : False,
-    }
 
     if len( node.targets ) < 1:
       raise PyMTLSyntaxError( s.blk, node,
         'At least one assignment target should be provided!' )
 
-    if s._upblk_type not in blocking:
-      raise PyMTLSyntaxError( s.blk, node,
-        'Assignment should be in either a combinational or a sequential update block!' )
-
     value = s.visit( node.value )
     targets = [ s.visit( target ) for target in node.targets ]
-    ret = bir.Assign( targets, value, blocking = False )
 
     # Determine if this is a blocking/non-blocking assignment
-    ret.blocking = s.get_blocking(node, ret)
+    ret = bir.Assign( targets, value, s._upblk_type is bir.CombUpblk )
 
     ret.ast = node
     return ret
-
-  def get_blocking( s, node, bir_node ):
-    blocking = {
-      'CombUpblk' : True,
-      'SeqUpblk'  : False,
-    }
-    return blocking[s._upblk_type]
 
   def visit_AugAssign( s, node ):
     """Return the behavioral RTLIR of a non-blocking assignment
@@ -212,9 +197,11 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     Example: Bits4(2)
     These are converted to different RTLIR nodes in different contexts.
     """
+    num_args = len( node.args )
+
     obj = s.get_call_obj( node )
     if ( obj == copy.copy ) or ( obj == copy.deepcopy ):
-      if len( node.args ) != 1:
+      if num_args != 1:
         raise PyMTLSyntaxError( s.blk, node,
           f'copy method {obj} takes exactly 1 argument!')
       ret = s.visit( node.args[0] )
@@ -234,17 +221,17 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # Deal with Bits type cast
     if isinstance(obj, type) and issubclass( obj, Bits ):
       nbits = obj.nbits
-      if len( node.args ) > 1:
+      if num_args > 1:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly one or zero argument should be given to Bits!' )
-      if len( node.args ) == 0:
+      if num_args == 0:
         ret = bir.SizeCast( nbits, bir.Number( 0 ) )
       else:
         ret = bir.SizeCast( nbits, s.visit( node.args[0] ) )
 
     # concat method
     elif obj is concat:
-      if len( node.args ) < 1:
+      if num_args < 1:
         raise PyMTLSyntaxError( s.blk, node,
           'at least one argument should be given to concat!' )
       values = [s.visit(c) for c in node.args]
@@ -252,7 +239,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     # zext method
     elif obj is zext:
-      if len( node.args ) != 2:
+      if num_args != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to zext!' )
 
@@ -267,7 +254,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     # sext method
     elif obj is sext:
-      if len( node.args ) != 2:
+      if num_args != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to sext!' )
 
@@ -282,7 +269,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     # trunc method
     elif obj is trunc:
-      if len( node.args ) != 2:
+      if num_args != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to trunc!' )
 
@@ -303,7 +290,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         op = bir.BitOr()
       elif obj is reduce_xor:
         op = bir.BitXor()
-      if len( node.args ) != 1:
+      if num_args != 1:
         raise PyMTLSyntaxError( s.blk, node,
           f'exactly two arguments should be given to reduce {op} methods!' )
 
