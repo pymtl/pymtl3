@@ -1,5 +1,5 @@
 # Minimal dependencies required for using pip-installed PyMTL
-pytest >= 4.4
-hypothesis >= 4.18.3
+pytest
+hypothesis
 cffi
 greenlet

@@ -36,7 +36,7 @@ install:
 
  # Install Python requirements
  - pip install --upgrade pip setuptools twine
- - pip install --requirement requirements/CI.txt
+ - pip install --upgrade --requirement requirements/CI.txt
  - pip install .
  - pip list
 
