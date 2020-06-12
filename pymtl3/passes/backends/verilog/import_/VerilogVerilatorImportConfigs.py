@@ -293,7 +293,23 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     # My guess is that -O1 has some hidden optimization that the user cannot turn off, and -O2-3 inherit that part
     # the difference between O1-3 is just flags
     # so right now I'm using "-O1 with all options off" to get the fastest compilation time and good performance
-    c_flags = "-O1 -fno-guess-branch-probability -fno-reorder-blocks -fno-if-conversion -fno-if-conversion2 -fno-dce -fno-delayed-branch -fno-dse -fno-auto-inc-dec -fno-branch-count-reg -fno-combine-stack-adjustments  -fno-cprop-registers -fno-forward-propagate -fno-inline-functions-called-once -fno-ipa-profile -fno-ipa-pure-const -fno-ipa-reference -fno-move-loop-invariants -fno-omit-frame-pointer -fno-split-wide-types -fno-tree-bit-ccp -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-forwprop -fno-tree-fre -fno-tree-phiprop -fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-reassoc -fPIC -fno-gnu-unique -shared" + \
+    # !!! -fno-tree-forwprop is removed due to:
+    # In file included from /usr/include/fcntl.h:290:0,
+    #                   from /usr/local/share/verilator/include/verilated_vcd_c.cpp:29:
+    # In function ‘int open(const char*, int, ...)’,
+    #     inlined from ‘virtual bool VerilatedVcdFile::open(const string&)’ at
+    # /usr/local/share/verilator/include/verilated_vcd_c.cpp:116:18:
+    # /usr/include/x86_64-linux-gnu/bits/fcntl2.h:44:26: error: call to
+    # ‘__open_too_many_args’ declared with attribute error: open can be called either
+    # with 2 or 3 arguments, not more
+    #       __open_too_many_args ();
+    #       ~~~~~~~~~~~~~~~~~~~~~^~
+    # /usr/include/x86_64-linux-gnu/bits/fcntl2.h:50:24: error: call to
+    # ‘__open_missing_mode’ declared with attribute error: open with O_CREAT or
+    # O_TMPFILE in second argument needs 3 arguments
+    #     __open_missing_mode ();
+    #     ~~~~~~~~~~~~~~~~~~~~^~
+    c_flags = "-O1 -fno-guess-branch-probability -fno-reorder-blocks -fno-if-conversion -fno-if-conversion2 -fno-dce -fno-delayed-branch -fno-dse -fno-auto-inc-dec -fno-branch-count-reg -fno-combine-stack-adjustments  -fno-cprop-registers -fno-forward-propagate -fno-inline-functions-called-once -fno-ipa-profile -fno-ipa-pure-const -fno-ipa-reference -fno-move-loop-invariants -fno-omit-frame-pointer -fno-split-wide-types -fno-tree-bit-ccp -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse  -fno-tree-fre -fno-tree-phiprop -fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-reassoc -fPIC -fno-gnu-unique -shared" + \
              ("" if s.is_default("c_flags") else f" {expand(s.c_flags)}")
     c_include_path = " ".join("-I"+p for p in s._get_all_includes() if p)
     out_file = s.get_shared_lib_path()
