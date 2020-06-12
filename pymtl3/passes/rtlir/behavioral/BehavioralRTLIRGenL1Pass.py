@@ -168,12 +168,16 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     value = s.visit( node.value )
     targets = [ s.visit( target ) for target in node.targets ]
+    ret = bir.Assign( targets, value, False ) # Need a handle to bir node
 
     # Determine if this is a blocking/non-blocking assignment
-    ret = bir.Assign( targets, value, s._upblk_type is bir.CombUpblk )
+    ret.blocking = s.get_blocking(node, ret)
 
     ret.ast = node
     return ret
+
+  def get_blocking( s, node, bir_node ):
+    return s._upblk_type is bir.CombUpblk
 
   def visit_AugAssign( s, node ):
     """Return the behavioral RTLIR of a non-blocking assignment

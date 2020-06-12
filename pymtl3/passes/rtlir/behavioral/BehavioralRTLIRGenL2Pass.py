@@ -52,7 +52,13 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       ast.Gt     : bir.Gt(),        ast.GtE    : bir.GtE()
     }
 
+  # Override
   def get_blocking( s, node, bir_node ):
+    if len(bir_node.targets) == 1:
+      if isinstance(bir_node.targets[0], bir.TmpVar):
+        return True
+      return s._upblk_type is bir.CombUpblk
+
     has_tmpvar = any(isinstance(n, bir.TmpVar) for n in bir_node.targets)
     all_tmpvar = all(isinstance(n, bir.TmpVar) for n in bir_node.targets)
     if has_tmpvar and not all_tmpvar:
