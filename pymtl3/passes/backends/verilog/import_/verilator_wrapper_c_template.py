@@ -165,14 +165,16 @@ void comb_eval( V{component_name}_t * m ) {{
   // evaluate one time step
   model->eval();
 
-  #if DUMP_VCD
-  if ( m->_vcd_en ) {{
-    // dump current signal values
-    VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
-    tfp->dump( m->trace_time );
-    tfp->flush();
-  }}
-  #endif
+  // Shunning: calling dump multiple times leads to unsuppressable warning
+  //           under verilator 4.036
+  // #if DUMP_VCD
+  // if ( m->_vcd_en ) {{
+  //   // dump current signal values
+  //   VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
+  //   tfp->dump( m->trace_time );
+  //   tfp->flush();
+  // }}
+  // #endif
 
 }}
 
