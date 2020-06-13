@@ -12,7 +12,7 @@ import pytest
 from pymtl3 import *
 from pymtl3.passes.tracing import VcdGenerationPass, PrintTextWavePass
 from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
-from pymtl3.stdlib.test_utils.test_helpers import _finalize
+from pymtl3.stdlib.test_utils.test_helpers import finalize_verilator
 
 from ..ChecksumFL import checksum
 from ..ChecksumRTL import ChecksumRTL, StepUnit
@@ -141,4 +141,4 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
     # Check timeout
     assert th.sim_cycle_count() < max_cycles
 
-    _finalize( th )
+    finalize_verilator( th )

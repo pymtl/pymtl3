@@ -44,9 +44,9 @@ def mk_test_case_table( raw_test_case_table ):
   }
 
 
-def _finalize( model ):
+def finalize_verilator( model ):
   for child in model.get_child_components():
-    _finalize( child )
+    finalize_verilator( child )
   if hasattr( model, 'finalize' ):
     model.finalize()
 
@@ -157,7 +157,7 @@ class TestVectorSimulator:
 
         self.model.sim_tick()
     finally:
-      _finalize( self.model )
+      finalize_verilator( self.model )
 
 def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
 
@@ -188,7 +188,7 @@ def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
     model.sim_tick()
 
   finally:
-    _finalize( model )
+    finalize_verilator( model )
 
 class RunTestVectorSimError( Exception ):
   pass
@@ -307,4 +307,4 @@ run_test_vector_sim received an incorrect value!
     model.sim_tick()
 
   finally:
-    _finalize( model )
+    finalize_verilator( model )
