@@ -7,15 +7,15 @@ Author : Shunning Jiang
 Date   : Dec 29, 2019
 """
 
-from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.dsl import MetadataKey
+from pymtl3.passes.BasePass import BasePass
 
 
 class CheckUnusedSignalPass( BasePass ):
 
-  def __call__( self, top ):
-    if not hasattr( top, "_linting" ):
-      top._linting = PassMetadata()
+  result = MetadataKey(list)
 
+  def __call__( self, top ):
     used_signals = set()
     # check all components and connectables
     for writer, net in top.get_all_value_nets():
@@ -33,6 +33,6 @@ class CheckUnusedSignalPass( BasePass ):
 
     unused = sorted( top.get_all_signals() - used_signals, key=repr )
 
-    top._linting.unused_signals = unused
+    top.set_metadata( self.result, unused )
     print("\n[CheckUnusedSignalPass] These signals are NEVER used and can be removed from source code: \n  - ",end="")
     print("\n  - ".join( [ f"{x!r} of class {x.__class__.__name__}" for x in unused ] ) )
