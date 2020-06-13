@@ -89,21 +89,25 @@ class ComponentLevel2( ComponentLevel1 ):
 
     name = func.__name__
 
-    if name not in name_info:
-      if given is None:
-        _src, _line = inspect.getsourcelines( func )
-        _src = "".join( _src )
-        _ast = ast.parse( compiled_re.sub( r'\2', _src ) )
+    # Always override lambda
+    if given is not None:
+      _src, _ast, _line, _file = given
 
-        name_info[ name ] = (False, _src, _line, inspect.getsourcefile( func ), _ast )
-      else:
-        _src, _ast, _line, _file = given
+      name_info[ name ] = ( True, _src, _line, _file, _ast )
+      name_rd[ name ]   = _rd = []
+      name_wr[ name ]   = _wr = []
+      name_fc[ name ]   = _fc = []
+      AstHelper.extract_reads_writes_calls( s, func, _ast, _rd, _wr, _fc )
 
-        name_info[ name ] = ( True, _src, _line, _file, _ast )
+    elif name not in name_info:
+      _src, _line = inspect.getsourcelines( func )
+      _src = "".join( _src )
+      _ast = ast.parse( compiled_re.sub( r'\2', _src ) )
 
-      name_rd[ name ]  = _rd   = []
-      name_wr[ name ]  = _wr   = []
-      name_fc[ name ]  = _fc   = []
+      name_info[ name ] = (False, _src, _line, inspect.getsourcefile( func ), _ast )
+      name_rd[ name ]   = _rd   = []
+      name_wr[ name ]   = _wr   = []
+      name_fc[ name ]   = _fc   = []
       AstHelper.extract_reads_writes_calls( s, func, _ast, _rd, _wr, _fc )
 
   def _elaborate_read_write_func( s ):
