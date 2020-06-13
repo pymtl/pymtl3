@@ -26,7 +26,9 @@ class CheckSignalNamePass( BasePass ):
       if not self.func( obj ):
         violated.append( obj )
 
-    violated = sorted(violated, key=repr)
-    top.set_metadata( self.result, violated)
-    print("\n[CheckSignalNamePass] These signals violate the provided signal name rule: \n  - ",end="")
-    print("\n  - ".join( [ f"{x!r} of class {x.__class__.__name__}" for x in violated ] ) )
+    if violated:
+      violated = sorted(violated, key=repr)
+      top.set_metadata( self.result, violated )
+      print("[CheckSignalNamePass] These signals violate the provided signal name rule: \n  - ",end="")
+      print("\n  - ".join( [ f"{x!r} ({x.__class__.__name__})" for x in violated ] ) )
+      print("")

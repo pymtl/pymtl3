@@ -1134,7 +1134,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     return name.replace('__', '___05F').replace('$', '__024')
 
   def _pymtl_name_mangle( s, name ):
-    return name.replace('.', '_DOT_').replace('[', '_LB_').replace(']', '_RB_')
+    return name.replace('.', '_dot_').replace('[', '_lb_').replace(']', '_rb_')
 
   def _get_direction( s, port ):
     if isinstance( port, rt.Port ):

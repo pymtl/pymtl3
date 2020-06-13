@@ -10,7 +10,8 @@ from .tracing.CLLineTracePass import CLLineTracePass
 from .tracing.LineTraceParamPass import LineTraceParamPass
 from .tracing.PrintTextWavePass import PrintTextWavePass
 from .tracing.VcdGenerationPass import VcdGenerationPass
-
+from .linting.CheckUnusedSignalPass import CheckUnusedSignalPass
+from .linting.CheckSignalNamePass import CheckSignalNamePass
 
 # SimpleSim can be used when the UDG is a DAG
 class SimpleSimPass( BasePass ):
@@ -26,15 +27,20 @@ class SimpleSimPass( BasePass ):
     PrepareSimPass(print_line_trace=True)( top )
 
 class DefaultPassGroup( BasePass ):
-  def __init__( s, *, vcdwave=None, textwave=False,
+  def __init__( s, *, linting=False, vcdwave=None, textwave=False,
                       print_line_trace=True, reset_active_high=True ):
 
+    s.linting = linting
     s.vcdwave = vcdwave
     s.textwave = textwave
     s.print_line_trace = print_line_trace
     s.reset_active_high = reset_active_high
 
   def __call__( s, top ):
+
+    if s.linting:
+      CheckSignalNamePass()( top )
+      CheckUnusedSignalPass()( top )
 
     if s.vcdwave:
       top.set_metadata( VcdGenerationPass.vcdwave, s.vcdwave )
