@@ -110,7 +110,7 @@ def test_mem_fl_cl_adapter():
       s.add_constraints( U(up_process) < M(s.mem.req) ) # definite pipe behavior
 
     def line_trace( s ):
-      return s.mem.line_trace()
+      return str(s.mem)
 
   class TestHarness( Component ):
     def construct( s ):
@@ -128,4 +128,4 @@ def test_mem_fl_cl_adapter():
 
   # Run simulation
 
-  run_sim( TestHarness(), max_cycles=1000 )
+  run_sim( TestHarness() )

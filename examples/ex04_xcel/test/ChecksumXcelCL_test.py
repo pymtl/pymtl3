@@ -7,13 +7,15 @@ Tests for cycle level checksum accelerator.
 Author : Yanghui Ou
   Date : June 14, 2019
 """
+import pytest
+
 from examples.ex02_cksum.ChecksumFL import checksum
 from examples.ex02_cksum.utils import words_to_b128
 from pymtl3 import *
 from pymtl3.stdlib.queues import BypassQueueCL
 from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
-from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL, run_sim
 
 from ..ChecksumXcelCL import ChecksumXcelCL
 
@@ -160,6 +162,7 @@ class TestHarness( Component ):
 #-------------------------------------------------------------------------
 # More adavanced testsing that uses test source and test sink.
 
+@pytest.mark.usefixtures("cmdline_opts")
 class ChecksumXcelCLSrcSink_Tests:
 
   # [setup_class] will be called by pytest before running all the tests in
@@ -175,19 +178,8 @@ class ChecksumXcelCLSrcSink_Tests:
   # [run_sim] is a helper function in the test suite that creates a
   # simulator and runs test. We can overwrite this function when
   # inheriting from the test class to apply different passes to the DUT.
-  def run_sim( s, th, max_cycles=1000 ):
-
-    # Create a simulator
-    th.elaborate()
-    th.apply( DefaultPassGroup() )
-    th.sim_reset()
-
-    # Tick the simulator
-    while not th.done() and th.sim_cycle_count() < max_cycles:
-      th.sim_tick()
-
-    # Check timeout
-    assert th.sim_cycle_count() < max_cycles
+  def run_sim( s, th ):
+    run_sim( th, s.__class__.cmdline_opts )
 
   #-----------------------------------------------------------------------
   # test_xcel_srcsink_simple

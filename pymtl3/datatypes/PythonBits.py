@@ -478,7 +478,7 @@ class Bits:
     return self._uint != 0
 
   def __int__( self ):
-    return self._uint
+    return int(self._uint)
 
   def int( self ):
     if self._uint >> (self._nbits - 1):

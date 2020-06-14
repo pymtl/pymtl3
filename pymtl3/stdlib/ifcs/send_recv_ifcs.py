@@ -7,12 +7,11 @@ RTL implementation of en/rdy micro-protocol.
 Author: Yanghui Ou, Shunning Jiang
   Date: May 5, 2019
 """
-from copy import deepcopy
-
 import greenlet
 
 from pymtl3 import *
 from pymtl3.dsl.errors import InvalidConnectionError
+from pymtl3.extra import clone_deepcopy
 from pymtl3.stdlib.connects import connect_pairs
 
 #-------------------------------------------------------------------------
@@ -138,6 +137,23 @@ class SendIfcFL( CallerIfcFL ):
       parent.RecvFL2SendCL_count += 1
       return True
 
+    elif isinstance( other, SendIfcRTL ):
+      m = RecvFL2SendRTL( other.MsgType )
+
+      if hasattr( parent, "RecvFL2SendRTL_count" ):
+        count = parent.RecvFL2SendRTL_count
+        setattr( parent, "RecvFL2SendRTL_" + str( count ), m )
+      else:
+        parent.RecvFL2SendRTL_count = 0
+        parent.RecvFL2SendRTL_0 = m
+
+      connect_pairs(
+        s,      m.recv,
+        m.send, other,
+      )
+      parent.RecvFL2SendRTL_count += 1
+      return True
+
     return False
 
 class RecvIfcFL( CalleeIfcFL ):
@@ -190,7 +206,7 @@ class RecvCL2SendRTL( Component ):
 
   @non_blocking( lambda s : s.entry is None )
   def recv( s, msg ):
-    s.entry = deepcopy(msg)
+    s.entry = clone_deepcopy( msg )
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )
@@ -213,7 +229,7 @@ class RecvRTL2SendCL( Component ):
 
     @update_once
     def up_recv_rtl_rdy():
-      s.send_rdy = s.send.rdy() and not s.reset
+      s.send_rdy = s.send.rdy() & ~s.reset
       s.recv.rdy @= s.send_rdy
 
     @update_once
@@ -251,6 +267,45 @@ class RecvFL2SendCL( Component ):
     s.send = CallerIfcCL()
 
     s.add_constraints( M( s.recv ) == M( s.send ) )
+
+  def line_trace( s ):
+    return "{}(){}".format( s.recv, s.send )
+
+#-------------------------------------------------------------------------
+# RecvFL2SendRTL
+#-------------------------------------------------------------------------
+
+class RecvFL2SendRTL( Component ):
+
+  def recv( s, msg ):
+    while s.entry is not None:
+      greenlet.getcurrent().parent.switch(0)
+    s.entry = msg
+
+  def construct( s, MsgType ):
+
+    # Interface
+
+    s.recv = RecvIfcFL( method=s.recv )
+    s.send = SendIfcRTL( MsgType )
+
+    s.entry = None
+
+    @update
+    def up_clear():
+      if s.send.en & (s.entry is not None):
+        s.entry = None
+
+    @update
+    def up_fl_send_rtl():
+      if s.send.rdy & (s.entry is not None):
+        s.send.en  @= 1
+        s.send.msg @= s.entry
+      else:
+        s.send.en  @= 0
+
+    s.add_constraints( M( s.recv )   < U(up_fl_send_rtl),
+                       U( up_clear ) < WR( s.send.en ) )
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )

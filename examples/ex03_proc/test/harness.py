@@ -53,11 +53,11 @@ class TestHarness(Component):
   # constructor
   #-----------------------------------------------------------------------
 
-  def construct( s, proc_cls, xcel_cls=NullXcelRTL, dump_vcd=False,
+  def construct( s, proc_cls, xcel_cls=NullXcelRTL,
                  src_delay=0, sink_delay=0,
                  mem_stall_prob=0, mem_latency=1 ):
 
-    s.commit_inst = OutPort( Bits1 )
+    s.commit_inst = OutPort()
     req, resp = mk_mem_msg( 8, 32, 32 )
 
     s.src  = TestSrcCL ( Bits32, [], src_delay, src_delay  )
@@ -65,7 +65,7 @@ class TestHarness(Component):
     s.proc = proc_cls()
     s.xcel = xcel_cls()
 
-    s.mem  = MagicMemoryCL(2, latency = mem_latency)
+    s.mem  = MagicMemoryCL(2, stall_prob=mem_stall_prob, latency = mem_latency)
 
     connect_pairs(
       s.proc.commit_inst, s.commit_inst,

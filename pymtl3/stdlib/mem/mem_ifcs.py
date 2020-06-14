@@ -10,13 +10,13 @@ from greenlet import greenlet
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.ifcs import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
+from pymtl3.stdlib.ifcs import MasterIfcCL, MasterIfcRTL, MinionIfcCL, MinionIfcRTL
 
 from .MemMsg import MemMsgType, mk_mem_msg
 
 
 class MemMasterIfcFL( Interface ):
-  def construct( s ):
+  def construct( s, ReqType=None, RespType=None ):
     s.read  = CallerIfcFL()
     s.write = CallerIfcFL()
     s.amo   = CallerIfcFL()
@@ -107,51 +107,13 @@ class MemMinionIfcFL( Interface ):
 
     return False
 
-class MemMasterIfcCL( Interface ):
-  def construct( s, ReqType, RespType, resp=None, resp_rdy=None ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = CallerIfcCL( Type=ReqType )
-    s.resp = CalleeIfcCL( Type=RespType, method=resp, rdy=resp_rdy )
+class MemMasterIfcCL( MasterIfcCL ): pass
 
-  def line_trace( s ):
-    return "{} > {}".format( s.req, s.resp )
+class MemMinionIfcCL( MinionIfcCL ): pass
 
-  def connect( s, other, parent ):
-    if isinstance( other, MemMinionIfcCL ):
-      assert s.ReqType is other.ReqType and s.RespType is other.RespType
-    return False
+class MemMasterIfcRTL( MasterIfcRTL ): pass
 
-class MemMinionIfcCL( Interface ):
-  def construct( s, ReqType, RespType, req=None, req_rdy=None ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = CalleeIfcCL( Type=ReqType, method=req, rdy=req_rdy )
-    s.resp = CallerIfcCL( Type=RespType )
-
-  def line_trace( s ):
-    return "{} > {}".format( s.req, s.resp )
-
-class MemMasterIfcRTL( Interface ):
-
-  def construct( s, ReqType, RespType ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = SendIfcRTL( ReqType  )
-    s.resp = RecvIfcRTL( RespType )
-
-  def __str__( s ):
-    return "{},{}".format( s.req, s.resp )
-
-class MemMinionIfcRTL( Interface ):
-  def construct( s, ReqType, RespType ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = RecvIfcRTL( ReqType  )
-    s.resp = SendIfcRTL( RespType )
-
-  def __str__( s ):
-    return "{},{}".format( s.req, s.resp )
+class MemMinionIfcRTL( MinionIfcRTL ): pass
 
 class MemIfcCL2FLAdapter( Component ):
 
@@ -210,7 +172,7 @@ class MemIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.ReqType( MemMsgType.READ, 0, addr, b2(nbytes, trunc_int=True) ) )
+    s.right.req( s.create_req( MemMsgType.READ, 0, addr, nbytes ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -224,7 +186,7 @@ class MemIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.ReqType( MemMsgType.WRITE, 0, addr, b2(nbytes, trunc_int=True), data ) )
+    s.right.req( s.create_req( MemMsgType.WRITE, 0, addr, nbytes, data ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -236,7 +198,7 @@ class MemIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.ReqType( amo, 0, addr, b2(nbytes, trunc_int=True), data ) )
+    s.right.req( s.ReqType( amo, 0, addr, nbytes, data ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -257,6 +219,11 @@ class MemIfcFL2CLAdapter( Component ):
 
     s.ReqType  = ReqType
     s.RespType = RespType
+
+    Tlen  = ReqType.get_field_type('len')
+    Tdata = ReqType.get_field_type('data')
+    # Use create_req to handle type mismatch
+    s.create_req = lambda a,b,c,d,e=0: ReqType( a, b, c, Tlen(d, trunc_int=True), Tdata(int(e)) )
 
     s.left  = MemMinionIfcFL( read=s.read, write=s.write, amo=s.amo )
     s.right = MemMasterIfcCL( ReqType, RespType, s.recv, s.recv_rdy )

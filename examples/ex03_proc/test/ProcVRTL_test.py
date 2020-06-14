@@ -13,6 +13,9 @@ import pytest
 
 from examples.ex03_proc.ProcRTL import ProcRTL
 from pymtl3 import *
+from pymtl3.passes.backends.yosys import *
+from pymtl3.passes.tracing import *
+from pymtl3.stdlib.test_utils.test_helpers import finalize_verilator
 
 from .harness import asm_test, assemble
 
@@ -27,9 +30,13 @@ random.seed(0xdeadbeef)
 
 from .ProcRTL_test import ProcRTL_Tests as BaseTests
 
+@pytest.mark.usefixtures("cmdline_opts")
 class ProcVRTL_Tests( BaseTests ):
 
-  def run_sim( s, th, gen_test, max_cycles=10000 ):
+  def run_sim( s, th, gen_test ):
+
+    vcd_file_name = s.__class__.cmdline_opts["dump_vcd"]
+    max_cycles = s.__class__.cmdline_opts["max_cycles"] or 10000
 
     th.elaborate()
 
@@ -39,9 +46,15 @@ class ProcVRTL_Tests( BaseTests ):
     # Load the program into memory
     th.load( mem_image )
 
-    # Translate the processor and import it back in
-    from pymtl3.passes.backends.yosys import YosysTranslationImportPass
+    # Check command line arguments for vcd dumping
+    if vcd_file_name:
+      th.set_metadata( VcdGenerationPass.vcd_file_name, vcd_file_name )
+      th.proc.set_metadata( YosysVerilatorImportPass.vl_trace, True )
+      th.proc.set_metadata( YosysVerilatorImportPass.vl_trace_filename, vcd_file_name )
+
+    # Translate the DUT and import it back in using the yosys backend.
     th.proc.set_metadata( YosysTranslationImportPass.enable, True )
+
     th = YosysTranslationImportPass()( th )
 
     # Create a simulator and run simulation
@@ -53,6 +66,8 @@ class ProcVRTL_Tests( BaseTests ):
 
     # Force a test failure if we timed out
     assert th.sim_cycle_count() < max_cycles
+
+    finalize_verilator( th )
 
 #-------------------------------------------------------------------------
 # Test translation script

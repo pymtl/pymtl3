@@ -33,7 +33,7 @@ def pytest_addoption(parser):
   group.addoption( "--dump-vtb", dest="dump_vtb", action="store_true",
                     default=None, help="dump verilog test bench for each test" )
   group.addoption( "--max-cycles", dest="max_cycles", action="store",
-                    default="inf", help="max cycles of simulation" )
+                    default=None, help="max cycles of simulation" )
 
 @pytest.fixture
 def cmdline_opts( request ):
@@ -79,7 +79,7 @@ def _any_opts_present( config ):
       ( 'test_verilog', ''    ),
       ( 'dump_vcd',     None ),
       ( 'dump_vtb',     None ),
-      ( 'max_cycles',   "inf" ),
+      ( 'max_cycles',   None ),
   ]
   return any([config.getoption(opt) != val for opt, val in opt_default_pairs])
 
@@ -100,7 +100,7 @@ def _parse_opts_from_request( request ):
   if dump_vcd:
     test_module = request.module.__name__
     test_name   = request.node.name.replace('-', '_').replace( '[', '_' ).replace( ']', '' )
-    dump_vcd = f'{test_module}_{test_name}'
+    dump_vcd = f'{test_module}__{test_name}'
   else:
     dump_vcd = ''
   opts['dump_vcd'] = dump_vcd
@@ -118,11 +118,11 @@ def _parse_opts_from_request( request ):
 
   # max_cycles
   max_cycles = request.config.getoption("max_cycles")
-  if max_cycles != 'inf':
+  if max_cycles is not None:
     try:
       max_cycles = int(max_cycles)
     except ValueError:
-      raise Exception("command line option `--max-cycles` should have integer value or 'inf'!")
+      raise Exception("command line option `--max-cycles` should have integer value!")
   opts['max_cycles'] = max_cycles
 
   return opts

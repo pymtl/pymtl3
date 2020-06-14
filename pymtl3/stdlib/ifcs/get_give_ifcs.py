@@ -11,6 +11,7 @@ import greenlet
 
 from pymtl3 import *
 from pymtl3.dsl.errors import InvalidConnectionError
+from pymtl3.extra import clone_deepcopy
 from pymtl3.stdlib.connects import connect_pairs
 
 from .send_recv_ifcs import RecvIfcRTL
@@ -117,6 +118,23 @@ class GetIfcFL( CallerIfcFL ):
       parent.RecvCL2GiveFL_count += 1
       return True
 
+    elif isinstance( other, RecvIfcRTL ):
+      m = RecvRTL2GiveFL(other.MsgType)
+
+      if hasattr( parent, "RecvRTL2GiveFL_count" ):
+        count = parent.RecvRTL2GiveFL_count
+        setattr( parent, "RecvRTL2GiveFL_" + str( count ), m )
+      else:
+        parent.RecvRTL2GiveFL_count = 0
+        parent.RecvRTL2GiveFL_0 = m
+
+      connect_pairs(
+        other,  m.recv,
+        m.give, s
+      )
+      parent.RecvRTL2GiveFL_count += 1
+      return True
+
     return False
 
 class GiveIfcFL( CalleeIfcFL ):
@@ -137,14 +155,14 @@ class GetRTL2GiveCL( Component ):
     @update
     def up_get_rtl():
       if s.entry is None and s.get.rdy:
-        s.get.en @= b1(1)
+        s.get.en @= 1
       else:
-        s.get.en @= b1(0)
+        s.get.en @= 0
 
     @update
     def up_entry():
       if s.get.en:
-        s.entry = deepcopy( s.get.msg )
+        s.entry = clone_deepcopy( s.get.msg )
 
     s.add_constraints(
       U( up_get_rtl ) < M( s.give     ),
@@ -155,7 +173,7 @@ class GetRTL2GiveCL( Component ):
 
   @non_blocking( lambda s : s.entry is not None )
   def give( s ):
-    tmp = deepcopy( s.entry )
+    tmp = s.entry
     s.entry = None
     return tmp
 
@@ -190,3 +208,41 @@ class RecvCL2GiveFL( Component ):
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.give )
+
+#-------------------------------------------------------------------------
+# RecvRTL2GiveFL
+#-------------------------------------------------------------------------
+
+class RecvRTL2GiveFL( Component ):
+
+  @blocking
+  def give( s ):
+    while s.entry is None:
+      greenlet.getcurrent().parent.switch(0)
+    ret = s.entry
+    s.entry = None
+    return ret
+
+  def construct( s, MsgType ):
+
+    # Interface
+
+    s.recv = RecvIfcRTL( MsgType )
+
+    s.entry = None
+
+    @update_once
+    def up_recv_rtl_rdy():
+      s.recv.rdy @= s.entry is not None
+
+    @update_once
+    def up_recv_cl():
+      s.entry = None
+      if s.recv.en:
+        assert s.entry is None
+        s.entry = deepcopy( s.recv.msg )
+
+    s.add_constraints( U( up_recv_cl ) < M(s.give) ) # bypass
+
+  def line_trace( s ):
+    return "{}(){}".format( s.recv, s.send )

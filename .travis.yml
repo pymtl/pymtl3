@@ -27,8 +27,8 @@ install:
  - sudo apt-get install -y graphviz
 
  # Install verilator
- - wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.026.tar.gz
- - tar -C ${HOME} -xzf verilator-travis-4.026.tar.gz
+ - wget https://github.com/pymtl/verilator-travisci-cache/raw/master/verilator-travis-4.036.tar.gz
+ - tar -C ${HOME} -xzf verilator-travis-4.036.tar.gz
  - export VERILATOR_ROOT=${HOME}/verilator
  - export PATH=${VERILATOR_ROOT}/bin:${PATH}
  - export PYMTL_VERILATOR_INCLUDE_DIR=${VERILATOR_ROOT}/share/verilator/include
@@ -36,7 +36,7 @@ install:
 
  # Install Python requirements
  - pip install --upgrade pip setuptools twine
- - pip install --requirement requirements/CI.txt
+ - pip install --upgrade --requirement requirements/CI.txt
  - pip install .
  - pip list
 

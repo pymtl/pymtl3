@@ -308,26 +308,18 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "verilo
   reference_sim.run_test()
   dut.unlock_simulation()
 
-  try:
-    # If it simulates correctly, translate it and import it back
-    dut.elaborate()
-    if backend == "verilog":
-      dut.set_metadata( VerilogTranslationImportPass.enable, True )
-      imported_obj = VerilogTranslationImportPass()( dut )
-    elif backend == "yosys":
-      dut.set_metadata( YosysTranslationImportPass.enable, True )
-      imported_obj = YosysTranslationImportPass()( dut )
-    # Run another vector simulator spin
-    imported_sim = TestVectorSimulator( imported_obj, test_vector, tv_in, tv_out )
-    imported_sim.run_test()
-  finally:
-    try:
-      # Explicitly finalize the imported object because the shared lib may have
-      # name collison
-      imported_obj.finalize()
-    except UnboundLocalError:
-      # This test fails before the object is imported back
-      pass
+  # If it simulates correctly, translate it and import it back
+  dut.elaborate()
+  if backend == "verilog":
+    dut.set_metadata( VerilogTranslationImportPass.enable, True )
+    imported_obj = VerilogTranslationImportPass()( dut )
+  elif backend == "yosys":
+    dut.set_metadata( YosysTranslationImportPass.enable, True )
+    imported_obj = YosysTranslationImportPass()( dut )
+
+  # Run another vector simulator spin
+  imported_sim = TestVectorSimulator( imported_obj, test_vector, tv_in, tv_out )
+  imported_sim.run_test()
 
 #-------------------------------------------------------------------------
 # closed_loop_component_test

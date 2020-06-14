@@ -287,7 +287,7 @@ def wrapped_SCC_{0}():
     {1}
     {3}
     {2}
-    # print( "SCC block{0} is executed", num_iters, "times" )
+    # print( "SCC block{0} is executed", N, "times" )
     break
 generated_block = wrapped_SCC_{0}
 """

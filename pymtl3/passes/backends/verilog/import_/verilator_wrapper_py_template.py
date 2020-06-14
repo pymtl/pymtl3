@@ -41,7 +41,8 @@ class {component_name}( Component ):
 
       V{component_name}_t * create_model( const char * );
       void destroy_model( V{component_name}_t *);
-      void eval( V{component_name}_t * );
+      void comb_eval( V{component_name}_t * );
+      void seq_eval( V{component_name}_t * );
       void assert_en( bool en );
       {trace_c_def}
 
@@ -97,7 +98,7 @@ class {component_name}( Component ):
     verilator_vcd_file = ""
     if {dump_vcd}:
       if {has_vl_trace_filename}:
-        verilator_vcd_file = "{vl_trace_filename}.vcd"
+        verilator_vcd_file = "{vl_trace_filename}.verilator1.vcd"
       else:
         verilator_vcd_file = "{component_name}.verilator1.vcd"
 
@@ -124,10 +125,11 @@ class {component_name}( Component ):
 
     @update
     def comb_upblk():
+
       # Set inputs
 {set_comb_input}
 
-      _ffi_inst.eval( _ffi_m )
+      _ffi_inst.comb_eval( _ffi_m )
 
       # Write all outputs
 {set_comb_output}
@@ -135,11 +137,8 @@ class {component_name}( Component ):
     if {has_clk}:
       @update_ff
       def seq_upblk():
-        # Advance the clock
-        _ffi_m.{clk}[0] = 0
-        _ffi_inst.eval( _ffi_m )
-        _ffi_m.{clk}[0] = 1
-        _ffi_inst.eval( _ffi_m )
+        # seq_eval will automatically tick clock
+        _ffi_inst.seq_eval( _ffi_m )
 
   def assert_en( s, en ):
     # TODO: for verilator, any assertion failure will cause the C simulator

@@ -174,7 +174,6 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   def check_valid( s, m, cfg, irepr ):
     pmap, src, flist, include = \
         cfg.port_map, cfg.src_file, cfg.v_flist, cfg.v_include
-    pmap = {p._dsl._my_name:n for p, n in pmap.items()}
 
     # Check params
     for param_name, value in cfg.params.items():
@@ -184,12 +183,10 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     # Check port map
     # TODO: this should be based on RTLIR
-    for name in pmap.keys():
-      try:
-        eval(f'm.{name}')
-      except:
+    for port in pmap.keys():
+      if port.get_host_component() is not m:
         raise InvalidPassOptionValue("port_map", pmap, cfg.Pass.__name__,
-          f"Port {name} does not exist in component {irepr.get_name()}!")
+          f"Port {port} does not exist in component {irepr.get_name()}!")
 
     # Check src_file
     if cfg.src_file and not os.path.isfile(expand(cfg.src_file)):

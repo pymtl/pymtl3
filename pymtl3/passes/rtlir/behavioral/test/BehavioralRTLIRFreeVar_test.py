@@ -15,6 +15,7 @@ from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 from pymtl3.passes.testcases import (
+    Bits32Foo,
     CaseBits32ClosureConstruct,
     CaseBits32ClosureGlobal,
     CaseStructClosureGlobal,
@@ -49,5 +50,5 @@ def test_pymtl_Bits_global( do_test ):
 def test_pymtl_struct_closure( do_test ):
   a = CaseStructClosureGlobal.DUT()
   a.elaborate()
-  a._rtlir_freevar_ref = { 'foo_at_upblk' : ( a._foo, rt.Port( "input", rdt.Struct( "Bits32Foo", {"foo": rdt.Vector(32)} ) ) ) }
+  a._rtlir_freevar_ref = { 'foo_at_upblk' : ( a._foo, rt.Port( "input", rdt.Struct( Bits32Foo, {"foo": rdt.Vector(32)} ) ) ) }
   do_test( a )

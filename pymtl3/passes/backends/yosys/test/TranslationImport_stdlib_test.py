@@ -30,17 +30,9 @@ from ..YosysTranslationImportPass import YosysTranslationImportPass
 
 
 def local_do_test( _m ):
-  try:
-    _m.elaborate()
-    # Mark component `_m` as to be translated and imported
-    _m.set_metadata( YosysTranslationImportPass.enable, True )
-    m = YosysTranslationImportPass()( _m )
-    sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
-    sim.run_test()
-  finally:
-    try:
-      # Explicitly finalize imported component to avoid shared lib name aliasing
-      m.finalize()
-    except UnboundLocalError:
-      # This test fails due to translation errors
-      pass
+  _m.elaborate()
+  # Mark component `_m` as to be translated and imported
+  _m.set_metadata( YosysTranslationImportPass.enable, True )
+  m = YosysTranslationImportPass()( _m )
+  sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
+  sim.run_test()

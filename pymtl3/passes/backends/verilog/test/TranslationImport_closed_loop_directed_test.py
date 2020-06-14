@@ -33,10 +33,11 @@ from ..util.test_utility import closed_loop_component_input_test
 #-------------------------------------------------------------------------
 
 def run_sim( _th ):
+  _th.elaborate()
+  _th.q.set_metadata( VerilogTranslationImportPass.enable, True )
+  th = VerilogTranslationImportPass()( _th )
+
   try:
-    _th.elaborate()
-    _th.q.set_metadata( VerilogTranslationImportPass.enable, True )
-    th = VerilogTranslationImportPass()( _th )
     th.apply( DefaultPassGroup() )
     th.sim_reset()
 
@@ -49,11 +50,7 @@ def run_sim( _th ):
     th.sim_tick()
     th.sim_tick()
   finally:
-    try:
-      th.q.finalize()
-    except UnboundLocalError:
-      # This test fails due to translation errors
-      pass
+    th.q.finalize()
 
 def _run_queue_test_replace_run_sim( run_sim, test_func ):
   original_run_sim = test_func.__globals__['run_sim']

@@ -11,6 +11,9 @@ Author : Yanghui Ou
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import RecvIfcRTL, RecvRTL2SendCL
 
+
+class PyMTLTestSinkError( Exception ): pass
+
 #-------------------------------------------------------------------------
 # TestSinkCL
 #-------------------------------------------------------------------------
@@ -46,7 +49,7 @@ class TestSinkCL( Component ):
       # Raise exception at the start of next cycle so that the errored
       # line trace gets printed out
       if s.error_msg:
-        raise Exception( s.error_msg )
+        raise PyMTLTestSinkError( s.error_msg )
 
       # Tick one more cycle after all message is received so that the
       # exception gets thrown

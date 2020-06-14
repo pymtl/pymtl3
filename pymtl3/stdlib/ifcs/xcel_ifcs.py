@@ -12,6 +12,7 @@ from greenlet import greenlet
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
 
+from .master_minion_ifcs import MasterIfcCL, MasterIfcRTL, MinionIfcCL, MinionIfcRTL
 from .send_recv_ifcs import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
 from .XcelMsg import XcelMsgType, mk_xcel_msg
 
@@ -124,27 +125,9 @@ class XcelMinionIfcFL( Interface ):
 # to connect by name and leverage the custom connect method of the nested
 # Send/RecvIfc. The CL-FL and FL-CL has been implemented in the FL ifc.
 
-class XcelMasterIfcCL( Interface ):
+class XcelMasterIfcCL( MasterIfcCL ): pass
 
-  def construct( s, ReqType, RespType, resp=None, resp_rdy=None ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = CallerIfcCL( Type=ReqType )
-    s.resp = CalleeIfcCL( Type=RespType, method=resp, rdy=resp_rdy )
-
-  def __str__( s ):
-    return "{},{}".format( s.req, s.resp )
-
-class XcelMinionIfcCL( Interface ):
-
-  def construct( s, ReqType, RespType, req=None, req_rdy=None ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = CalleeIfcCL( Type=ReqType, method=req, rdy=req_rdy )
-    s.resp = CallerIfcCL( Type=RespType )
-
-  def __str__( s ):
-    return "{},{}".format( s.req, s.resp )
+class XcelMinionIfcCL( MinionIfcCL ): pass
 
 #-------------------------------------------------------------------------
 # RTL interfaces
@@ -154,26 +137,9 @@ class XcelMinionIfcCL( Interface ):
 # to connect by name and leverage the custom connect method of the nested
 # Send/RecvIfc. The RTL-FL and FL-RTL has been implemented in the FL ifc.
 
-class XcelMasterIfcRTL( Interface ):
+class XcelMasterIfcRTL( MasterIfcRTL ): pass
 
-  def construct( s, ReqType, RespType ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = SendIfcRTL( ReqType  )
-    s.resp = RecvIfcRTL( RespType )
-
-  def __str__( s ):
-    return "{},{}".format( s.req, s.resp )
-
-class XcelMinionIfcRTL( Interface ):
-  def construct( s, ReqType, RespType ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.req  = RecvIfcRTL( ReqType  )
-    s.resp = SendIfcRTL( RespType )
-
-  def __str__( s ):
-    return "{},{}".format( s.req, s.resp )
+class XcelMinionIfcRTL( MinionIfcRTL ): pass
 
 #-------------------------------------------------------------------------
 # CL/FL adapters

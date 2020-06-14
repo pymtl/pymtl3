@@ -15,6 +15,7 @@ from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 from pymtl3.passes.testcases import (
+    Bits32Foo,
     CaseBits32TmpWireComp,
     CaseScopeTmpWireOverwriteConflictComp,
     CaseStructTmpWireComp,
@@ -44,7 +45,7 @@ def test_tmp_wire_struct( do_test ):
   a = CaseStructTmpWireComp.DUT()
   a.elaborate()
   a._rtlir_tmpvar_ref = \
-    {('u', 'upblk') : rt.Wire(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}))}
+    {('u', 'upblk') : rt.Wire(rdt.Struct(Bits32Foo, {'foo':rdt.Vector(32)}))}
   do_test( a )
 
 def test_tmp_wire_overwrite_conflict_type( do_test ):

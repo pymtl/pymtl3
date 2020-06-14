@@ -22,6 +22,7 @@ class RightLogicalShifter( Component ):
     s.in_   = InPort( Type )
     s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )
+    assert shamt_nbits == Type.nbits
 
     @update
     def up_rshifter():
@@ -129,3 +130,16 @@ class LEComparator( Component ):
     @update
     def up_lecomp():
       s.out @= s.in0 <= s.in1
+
+# EqComparator
+
+class EqComparator( Component ):
+
+  def construct( s, Type ):
+    s.in0 = InPort( Type )
+    s.in1 = InPort( Type )
+    s.out = OutPort()
+
+    @update
+    def up_lecomp():
+      s.out @= s.in0 == s.in1

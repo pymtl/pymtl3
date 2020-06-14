@@ -47,19 +47,12 @@ XFAILED_TESTS = [
 ]
 
 def run_test( case ):
-  try:
-    _m = case.DUT()
-    _m.elaborate()
-    _m.set_metadata( YosysTranslationImportPass.enable, True )
-    m = YosysTranslationImportPass()( _m )
-    sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
-    sim.run_test()
-  finally:
-    try:
-      m.finalize()
-    except UnboundLocalError:
-      # This test fails due to translation errors
-      pass
+  _m = case.DUT()
+  _m.elaborate()
+  _m.set_metadata( YosysTranslationImportPass.enable, True )
+  m = YosysTranslationImportPass()( _m )
+  sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
+  sim.run_test()
 
 @pytest.mark.parametrize(
   'case', list(filter(lambda x: x.__name__ not in XFAILED_TESTS,

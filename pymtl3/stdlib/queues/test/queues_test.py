@@ -108,49 +108,49 @@ def test_normal1_simple():
   th = TestHarness( Bits16, NormalQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", arrival_time = arrival_normal )
   th.set_param( "top.dut.construct", num_entries = 1 )
-  run_sim( th, max_cycles=500 )
+  run_sim( th )
 
 def test_normal2_simple():
   th = TestHarness( Bits16, NormalQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", arrival_time = arrival_pipe )
   th.set_param( "top.dut.construct", num_entries = 2 )
-  run_sim( th, max_cycles=500 )
+  run_sim( th )
 
 def test_pipe1_simple():
   th = TestHarness( Bits16, PipeQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", arrival_time = arrival_pipe )
   th.set_param( "top.dut.construct", num_entries = 1 )
-  run_sim( th, max_cycles=500 )
+  run_sim( th )
 
 def test_pipe1_backpressure():
   th = TestHarness( Bits16, PipeQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", initial_delay = 20 )
   th.set_param( "top.dut.construct", num_entries = 1 )
-  run_sim( th, max_cycles=500 )
+  run_sim( th )
 
 def test_pipe2_backpressure():
   th = TestHarness( Bits16, PipeQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", initial_delay = 20 )
   th.set_param( "top.dut.construct", num_entries = 2 )
-  run_sim( th, max_cycles=500 )
+  run_sim( th )
 
 def test_bypass1_simple():
   th = TestHarness( Bits16, BypassQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", arrival_time = arrival_bypass )
   th.set_param( "top.dut.construct", num_entries = 1 )
-  run_sim( th, max_cycles=500 )
+  run_sim( th )
 
 def test_bypass1_backpressure():
   th = TestHarness( Bits16, BypassQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", initial_delay = 20 )
   th.set_param( "top.dut.construct", num_entries = 1 )
-  run_sim( th, max_cycles=500 )
+  run_sim( th )
 
 def test_bypass2_sparse():
   th = TestHarness( Bits16, BypassQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.src.construct", interval_delay = 3 )
   th.set_param( "top.dut.construct", num_entries = 2 )
-  run_sim( th, max_cycles=500 )
+  run_sim( th )
 
 @pytest.mark.parametrize(
   'QType, num_entries',
@@ -161,14 +161,14 @@ def test_large_backpressure( QType, num_entries ):
   th = TestHarness( Bits16, QType, msgs, msgs )
   th.set_param( "top.sink.construct", initial_delay = 20 )
   th.set_param( "top.dut.construct", num_entries = 16 )
-  run_sim( th, max_cycles=500 )
+  run_sim( th )
 
 @pytest.mark.parametrize(
   'QType', [ NormalQueue1EntryRTL, PipeQueue1EntryRTL, BypassQueue1EntryRTL ]
 )
 def test_single_simple( QType ):
   th = TestHarness( Bits16, QType, test_msgs, test_msgs )
-  run_sim( th, max_cycles=500 )
+  run_sim( th )
 
 @pytest.mark.parametrize(
   'QType', [ NormalQueue1EntryRTL, PipeQueue1EntryRTL, BypassQueue1EntryRTL ]
@@ -176,4 +176,4 @@ def test_single_simple( QType ):
 def test_single_backpressure( QType ):
   th = TestHarness( Bits16, QType, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", initial_delay = 10, interval_delay=2 )
-  run_sim( th, max_cycles=500 )
+  run_sim( th )

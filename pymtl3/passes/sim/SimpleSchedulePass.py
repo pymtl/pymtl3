@@ -9,6 +9,7 @@ Author : Shunning Jiang
 Date   : Dec 26, 2018
 """
 
+import linecache
 from collections import defaultdict
 
 from pymtl3.dsl.errors import UpblkCyclicError
@@ -113,16 +114,17 @@ class SimpleSchedulePass( BasePass ):
     strs = []
     for x,y in hostobj_signals.items():
       if len(y) == 1:
-        strs.append( f"{repr(y[0])}._flip()" )
+        strs.append( f"    {repr(y[0])}._flip()" )
       elif x is top:
         for z in sorted(y, key=repr):
-          strs.append(f"{repr(z)}._flip()")
+          strs.append(f"    {repr(z)}._flip()")
       else:
-        pos = len(repr(x)) + 1
-        strs.append( f"x = {repr(x)}" )
+        repr_x = repr(x)
+        pos = len(repr_x) + 1
+        strs.append( f"    x = {repr_x}" )
 
         for z in sorted(y, key=repr):
-          strs.append(f"x.{repr(z)[pos:]}._flip()")
+          strs.append(f"    x.{repr(z)[pos:]}._flip()")
 
     if not strs:
       def no_double_buffer():
@@ -130,18 +132,19 @@ class SimpleSchedulePass( BasePass ):
       top._sched.schedule_posedge_flip = [ no_double_buffer ]
 
     else:
-      src = """
-      def compile_double_buffer( s ):
-        def double_buffer():
-          {}
-        return double_buffer
-      """.format( "\n          ".join(strs) )
+      lines = ['def compile_double_buffer( s ):'] + \
+              ['  def double_buffer():'] + \
+                strs + \
+              ['  return double_buffer']
 
-      import py
-      # print(src)
+      # Shunning: The reason why we replace py.code.Source with exec(compile()) + linecache
+      # is because py.code.Source takes a full source code and divide them into
+      # a list of lines by newline character which scales very very poorly
+      # when the source code is huge. For some designs with 10K+ flip-flops
+      # the performance overhead becomes huge.
       l = locals()
-      custom_exec(py.code.Source( src ).compile(), globals(), l)
-
+      custom_exec( compile( '\n'.join(lines), filename='ff_flips', mode='exec' ), globals(), l)
+      linecache.cache['ff_flips'] = (1, None, lines, 'ff_flips')
       top._sched.schedule_posedge_flip = [ l['compile_double_buffer']( top ) ]
 
 def dump_dag( top, V, E ):

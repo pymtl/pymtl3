@@ -284,7 +284,32 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     return f"verilator --cc {' '.join(opt for opt in all_opts if opt)}"
 
   def create_cc_cmd( s ):
-    c_flags = "-O0 -fPIC -fno-gnu-unique -shared" + \
+    # Shunning: GCC has a family of optimizations on the SSA tree -ftree-***.
+    # It belongs to -O1, and takes a lot of time to execute when I compile the verilated C++.
+    # However, the compiled code has worse performance after applying those tree optimizations.
+    # I guess it's because verilator already emits very regular and low-level code in the form of C++.
+    # Also gcc -O1, -O2, -O3 result in the same compilation time after all optimization flags are turned off
+    # gcc -O0 still has shorter compilation time than O1-3 with all flags off
+    # My guess is that -O1 has some hidden optimization that the user cannot turn off, and -O2-3 inherit that part
+    # the difference between O1-3 is just flags
+    # so right now I'm using "-O1 with all options off" to get the fastest compilation time and good performance
+    # !!! -fno-tree-forwprop is removed due to:
+    # In file included from /usr/include/fcntl.h:290:0,
+    #                   from /usr/local/share/verilator/include/verilated_vcd_c.cpp:29:
+    # In function ‘int open(const char*, int, ...)’,
+    #     inlined from ‘virtual bool VerilatedVcdFile::open(const string&)’ at
+    # /usr/local/share/verilator/include/verilated_vcd_c.cpp:116:18:
+    # /usr/include/x86_64-linux-gnu/bits/fcntl2.h:44:26: error: call to
+    # ‘__open_too_many_args’ declared with attribute error: open can be called either
+    # with 2 or 3 arguments, not more
+    #       __open_too_many_args ();
+    #       ~~~~~~~~~~~~~~~~~~~~~^~
+    # /usr/include/x86_64-linux-gnu/bits/fcntl2.h:50:24: error: call to
+    # ‘__open_missing_mode’ declared with attribute error: open with O_CREAT or
+    # O_TMPFILE in second argument needs 3 arguments
+    #     __open_missing_mode ();
+    #     ~~~~~~~~~~~~~~~~~~~~^~
+    c_flags = "-O1 -fno-guess-branch-probability -fno-reorder-blocks -fno-if-conversion -fno-if-conversion2 -fno-dce -fno-delayed-branch -fno-dse -fno-auto-inc-dec -fno-branch-count-reg -fno-combine-stack-adjustments  -fno-cprop-registers -fno-forward-propagate -fno-inline-functions-called-once -fno-ipa-profile -fno-ipa-pure-const -fno-ipa-reference -fno-move-loop-invariants -fno-omit-frame-pointer -fno-split-wide-types -fno-tree-bit-ccp -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse  -fno-tree-fre -fno-tree-phiprop -fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-reassoc -fPIC -fno-gnu-unique -shared" + \
              ("" if s.is_default("c_flags") else f" {expand(s.c_flags)}")
     c_include_path = " ".join("-I"+p for p in s._get_all_includes() if p)
     out_file = s.get_shared_lib_path()
@@ -342,36 +367,41 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     return includes
 
   def _get_c_src_files( s ):
-    srcs = copy.copy(s.c_srcs)
     top_module = s.translated_top_module
     vl_mk_dir = s.vl_mk_dir
     vl_class_mk = f"{vl_mk_dir}/V{top_module}_classes.mk"
 
     # Add C wrapper
-    srcs.append(s.get_c_wrapper_path())
+    fast = copy.copy(s.c_srcs)
+    fast.append(s.get_c_wrapper_path())
+    slow = []
 
     # Add files listed in class makefile
     with open(vl_class_mk) as class_mk:
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_CLASSES_FAST")
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_CLASSES_SLOW")
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_SUPPORT_FAST")
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_SUPPORT_SLOW")
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, s.vl_include_dir, "VM_GLOBAL_FAST")
-      srcs += s._get_srcs_from_vl_class_mk(
-          class_mk, s.vl_include_dir, "VM_GLOBAL_SLOW")
+      all_lines = class_mk.readlines()
+      fast += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_FAST")
+      fast += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_FAST")
+      fast += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_FAST")
+      slow += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_SLOW")
+      slow += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_SLOW")
+      slow += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_SLOW")
 
-    return srcs
+    with open(f"{top_module}_v__ALL_pickled.cpp", 'w') as out:
+      out.write('\n'.join( [ f'#include "{x}"' for x in fast ]))
 
-  def _get_srcs_from_vl_class_mk( s, mk, path, label ):
+      # Apply no optimization for SLOW files
+      if slow:
+        out.write('\n#pragma GCC push_options')
+        out.write('\n#pragma GCC optimize ("O0")\n')
+        out.write('\n'.join( [ f'#include "{x}"' for x in slow ]))
+        out.write('\n#pragma GCC pop_options\n')
+
+    return [ f"{top_module}_v__ALL_pickled.cpp" ]
+
+  def _get_srcs_from_vl_class_mk( s, all_lines, path, label ):
     """Return all files under `path` directory in `label` section of `mk`."""
     srcs, found = [], False
-    mk.seek(0)
-    for line in mk:
+    for line in all_lines:
       if line.startswith(label):
         found = True
       elif found:

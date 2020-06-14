@@ -11,7 +11,8 @@ import pytest
 
 from pymtl3 import *
 
-from ..test_sinks import TestSinkCL, TestSinkRTL
+from ..test_helpers import run_sim
+from ..test_sinks import PyMTLTestSinkError, TestSinkCL, TestSinkRTL
 from ..test_srcs import TestSrcCL, TestSrcRTL
 
 #-------------------------------------------------------------------------
@@ -34,16 +35,6 @@ class TestHarnessSimple( Component ):
   def line_trace( s ):
     return "{} > {}".format( s.src.line_trace(), s.sink.line_trace() )
 
-  def run_sim( s, max_cycles=100 ):
-    s.apply( DefaultPassGroup() )
-    s.sim_reset()
-
-    while not s.done() and s.sim_cycle_count() < max_cycles:
-      s.sim_tick()
-
-    # Check timeout
-    assert s.sim_cycle_count() < max_cycles
-
 #-------------------------------------------------------------------------
 # Test cases
 #-------------------------------------------------------------------------
@@ -51,7 +42,7 @@ class TestHarnessSimple( Component ):
 def test_cl_no_delay():
   msgs  = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
   th = TestHarnessSimple( Bits16, TestSrcCL, TestSinkCL, msgs, msgs )
-  th.run_sim()
+  run_sim( th )
 
 # int_msgs = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
 bit_msgs = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ),
@@ -87,7 +78,7 @@ def test_src_sink_cl( Type, msgs, src_init,  src_intv,
     interval_delay = sink_intv,
     arrival_time   = arrival_time,
   )
-  th.run_sim()
+  run_sim( th )
 
 @pytest.mark.parametrize(
   ('Type', 'msgs', 'src_init',  'src_intv',
@@ -112,7 +103,7 @@ def test_src_sink_rtl( Type, msgs, src_init,  src_intv,
     interval_delay = sink_intv,
     arrival_time   = arrival_time,
   )
-  th.run_sim()
+  run_sim( th )
 
 #-------------------------------------------------------------------------
 # Adaptive composition test
@@ -161,16 +152,6 @@ class TestHarness( Component ):
     return "{} >>> {}".format( "|".join( [ x.line_trace() for x in s.srcs ] ),
                                "|".join( [ x.line_trace() for x in s.sinks ] ) )
 
-  def run_sim( s, max_cycles=100 ):
-    s.apply( DefaultPassGroup() )
-    s.sim_reset()
-
-    while not s.done() and s.sim_cycle_count() < max_cycles:
-      s.sim_tick()
-
-    # Check timeout
-    assert s.sim_cycle_count() < max_cycles
-
 test_case_table = []
 for src in ['cl', 'rtl']:
   for sink in ['cl', 'rtl']:
@@ -192,7 +173,7 @@ def test_adaptive( src_level, sink_level, msgs, src_init,  src_intv,
   th = TestHarness( src_level, sink_level, Bits16, msgs, msgs,
                     src_init,  src_intv, sink_init,
                     sink_intv, arrival_time )
-  th.run_sim()
+  run_sim( th )
 
 #-------------------------------------------------------------------------
 # Error message test
@@ -205,8 +186,8 @@ def test_error_more_msg():
       src_msgs  = [ b16(0xface), b16(0xface) ],
       sink_msgs = [ b16(0xface) ],
     )
-    th.run_sim()
-  except Exception as e:
+    run_sim( th )
+  except PyMTLTestSinkError as e:
     return
   raise Exception( 'Failed to detect error!' )
 
@@ -217,8 +198,8 @@ def test_error_wrong_msg():
       src_msgs  = [ b16(0xface), b16(0xface) ],
       sink_msgs = [ b16(0xface), b16(0xdead) ],
     )
-    th.run_sim()
-  except Exception as e:
+    run_sim( th )
+  except PyMTLTestSinkError as e:
     return
   raise Exception( 'Fail to detect error!' )
 
@@ -231,8 +212,8 @@ def test_error_late_msg():
     )
     th.set_param( 'top.src.construct', initial_delay=5 )
     th.set_param( 'top.sink.construct', arrival_time=[1,2] )
-    th.run_sim()
-  except Exception as e:
+    run_sim( th )
+  except PyMTLTestSinkError as e:
     return
   raise Exception( 'Fail to detect error!')
 
@@ -247,4 +228,4 @@ def test_customized_cmp():
     sink_msgs = [ b4(0b0010), b4(0b0011) ],
   )
   th.set_param( 'top.sink.construct', cmp_fn=lambda a, b: a[0:2] == b[0:2] )
-  th.run_sim()
+  run_sim( th )

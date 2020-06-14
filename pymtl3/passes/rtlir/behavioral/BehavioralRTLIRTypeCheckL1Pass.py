@@ -149,20 +149,30 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # not node._is_explicit: is the parent node allowed to re-interpret this
     # node's bitwidth without truncation?
     node_name = node.__class__.__name__
-    method = 'visit_' + node_name
-    func = getattr( s, method, s.generic_visit )
+    func = getattr( s, f'visit_{node_name}', s.generic_visit )
 
-    # First visit (type check) all child nodes
-    for field, value in vars(node).items():
-      # Special case For because we use context depedent types
-      # for the loop index
-      if node_name == 'For' and field == 'body': continue
-      if isinstance( value, list ):
-        for item in value:
-          if isinstance( item, BaseBehavioralRTLIR ):
-            s.visit( item )
-      elif isinstance( value, BaseBehavioralRTLIR ):
-        s.visit( value )
+    if node_name == 'For':
+      # First visit (type check) all child nodes
+      for field, value in vars(node).items():
+        # Special case For because we use context depedent types
+        # for the loop index
+        if field == 'body': continue
+
+        if isinstance( value, BaseBehavioralRTLIR ):
+          s.visit( value )
+        elif isinstance( value, list ):
+          for item in value:
+            if isinstance( item, BaseBehavioralRTLIR ):
+              s.visit( item )
+    else:
+      # First visit (type check) all child nodes
+      for field, value in vars(node).items():
+        if isinstance( value, BaseBehavioralRTLIR ):
+          s.visit( value )
+        elif isinstance( value, list ):
+          for item in value:
+            if isinstance( item, BaseBehavioralRTLIR ):
+              s.visit( item )
 
     # Then verify that all child nodes have desired types
     try:
@@ -195,12 +205,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # Has this node re-interpreted the type of its child node?
     node._has_reinterpreted = False
 
-  def is_same( s, u, v ):
-    """Return if the sub-AST at u and v are the same."""
-    if type(u) is not type(v):
-      return False
-    return u == v
-
   def _visit_Assign_single_target( s, node, target, i ):
     lhs_type = target.Type.get_dtype()
     rhs_type = node.value.Type.get_dtype()
@@ -211,7 +215,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       s.enforcer.enter( s.blk, target.Type, node.value )
 
     rhs_type = node.value.Type.get_dtype()
-
     # Weak type checking (agreeable types)
     if not lhs_type( rhs_type ):
       raise PyMTLTypeError( s.blk, node.ast,
@@ -240,7 +243,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     if isinstance( t, rt.Const ) and isinstance( t.get_dtype(), rdt.Vector ):
       node._value = int(node.obj)
     node.Type = t
-    node._is_explicit = False if isinstance(node.obj, int) else True
+    node._is_explicit = not isinstance(node.obj, int)
 
     if node.name not in s.freevars:
       s.freevars[ node.name ] = ( node.obj, t )
@@ -452,7 +455,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         assert isinstance( node.upper.op, bir.Add )
         nbits = node.upper.right
         slice_size = nbits._value
-        assert s.is_same( node.lower, node.upper.left )
+        assert node.lower == node.upper.left
         node.Type = rt.NetWire( rdt.Vector( slice_size ) )
         node._is_explicit = True
         # Add new fields that might help translation

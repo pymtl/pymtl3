@@ -1,5 +1,6 @@
 # from .EnqDeqIfc import DeqIfcFL, DeqIfcRTL, EnqIfcFL, EnqIfcRTL
 from .get_give_ifcs import GetIfcFL, GetIfcRTL, GiveIfcFL, GiveIfcRTL
+from .master_minion_ifcs import MasterIfcCL, MasterIfcRTL, MinionIfcCL, MinionIfcRTL
 from .send_recv_ifcs import (
     RecvCL2SendRTL,
     RecvIfcFL,
