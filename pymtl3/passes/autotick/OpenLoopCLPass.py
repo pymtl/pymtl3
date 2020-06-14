@@ -21,19 +21,21 @@ from pymtl3.dsl.errors import UpblkCyclicError
 from ..BasePass import BasePass, PassMetadata
 from ..errors import PassOrderError
 from ..sim.PrepareSimPass import PrepareSimPass
-from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag
+from ..sim.SimpleSchedulePass import SimpleSchedulePass
 from ..sim.SimpleTickPass import SimpleTickPass
 from ..tracing.CLLineTracePass import CLLineTracePass
 from ..tracing.PrintTextWavePass import PrintTextWavePass
 from ..tracing.VcdGenerationPass import VcdGenerationPass
+from ..stats.DumpUDGPass import DumpUDGPass
 
 
 class OpenLoopCLPass( BasePass ):
-  def __init__( self, print_line_trace=True ):
+  def __init__( self, dump_udg=False, print_line_trace=True ):
+    self.dump_udg = dump_udg
     self.print_line_trace = print_line_trace
 
   def __call__( self, top ):
-    if not hasattr( top._dag, "all_constraints" ):
+    if not hasattr( top._udg, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
 
     top._sched = PassMetadata()
@@ -46,7 +48,7 @@ class OpenLoopCLPass( BasePass ):
   def schedule_with_top_level_callee( self, top ):
 
     # Construct the graph with top level callee port
-    V = top._dag.final_upblks - top.get_all_update_ff()
+    V = top._udg.final_upblks - top.get_all_update_ff()
     E = set()
 
     # We collect all top level callee ports/nonblocking callee interfaces
@@ -92,7 +94,7 @@ class OpenLoopCLPass( BasePass ):
     G   = { v: [] for v in V }
     G_T = { v: [] for v in V }
 
-    for (u, v) in top._dag.all_constraints:
+    for (u, v) in top._udg.all_constraints:
       if u in V and v in V:
         E.add( (u, v) )
         G  [u].append( v )
@@ -101,11 +103,11 @@ class OpenLoopCLPass( BasePass ):
     # In addition to existing constraints, we process the constraints that
     # involve top level callee ports. NOTE THAT we assume the user never
     # set the constraint on the actual method object inside the CalleePort
-    # In GenDAGPass we already collect those constraints between update
+    # In GenUDGPass we already collect those constraints between update
     # blocks and ACTUAL METHODs. We use the ACTUAL METHOD to callee
     # mapping we set up above to avoid missing constraints.
 
-    for (xx, yy) in top._dag.top_level_callee_constraints:
+    for (xx, yy) in top._udg.top_level_callee_constraints:
 
       if xx in method_callee_mapping:
         xx = method_callee_mapping[ xx ]
@@ -122,8 +124,8 @@ class OpenLoopCLPass( BasePass ):
         G  [xx].append( yy )
         G_T[yy].append( xx )
 
-    if 'MAMBA_DAG' in os.environ:
-      dump_dag( top, V, E )
+    if self.dump_udg:
+      DumpUDGPass().dump_udg( V, top.get_update_ff(), E )
 
     #---------------------------------------------------------------------
     # Run Kosaraju's algorithm to shrink all strongly connected components
@@ -224,7 +226,7 @@ class OpenLoopCLPass( BasePass ):
     # Now we generate super blocks for each SCC and produce final schedule
     #---------------------------------------------------------------------
 
-    constraint_objs = top._dag.constraint_objs
+    constraint_objs = top._udg.constraint_objs
 
     update_schedule = []
 

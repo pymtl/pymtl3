@@ -17,18 +17,18 @@ from pymtl3.passes.errors import PassOrderError
 
 class WrapGreenletPass( BasePass ):
   def __call__( self, top ):
-    if not hasattr( top, "_dag" ):
-      raise PassOrderError( "_dag" )
+    if not hasattr( top, "_udg" ):
+      raise PassOrderError( "_udg" )
 
     self.wrap_greenlet( top )
 
   def wrap_greenlet( self, top ):
 
-    all_upblks      = top._dag.final_upblks
-    all_constraints = top._dag.all_constraints
-    greenlet_upblks = top._dag.greenlet_upblks
+    all_upblks      = top._udg.final_upblks
+    all_constraints = top._udg.all_constraints
+    greenlet_upblks = top._udg.greenlet_upblks
 
-    top._dag.blk_greenlet_mapping = blk_greenlet_mapping = {}
+    top._udg.blk_greenlet_mapping = blk_greenlet_mapping = {}
 
     if not greenlet_upblks:
       return
@@ -70,6 +70,6 @@ class WrapGreenletPass( BasePass ):
 
       new_constraints.add( (x, y) )
 
-    top._dag.final_upblks    = new_upblks
-    top._dag.all_constraints = new_constraints
-    top._dag.blk_greenlet_mapping = blk_greenlet_mapping
+    top._udg.final_upblks    = new_upblks
+    top._udg.all_constraints = new_constraints
+    top._udg.blk_greenlet_mapping = blk_greenlet_mapping

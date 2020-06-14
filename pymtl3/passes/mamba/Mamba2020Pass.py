@@ -21,7 +21,7 @@ from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 
 from ..sim.DynamicSchedulePass import kosaraju_scc
-from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag
+from ..sim.SimpleSchedulePass import SimpleSchedulePass
 from .HeuristicTopoPass import CountBranchesLoops
 from .UnrollSimPass import UnrollSimPass
 
@@ -31,7 +31,7 @@ _DEBUG = False
 class Mamba2020Pass( UnrollSimPass ):
 
   def __call__( self, top ):
-    if not hasattr( top._dag, "all_constraints" ):
+    if not hasattr( top._udg, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
 
     if hasattr( top, "_sched" ):
@@ -43,8 +43,8 @@ class Mamba2020Pass( UnrollSimPass ):
     # Initialize all generated net block to 0 branchiness
 
     self.meta_block_id = 0
-    self.branchiness = { x: 0 for x in top._dag.genblks }
-    self.only_loop_at_top = { x: False for x in top._dag.genblks }
+    self.branchiness = { x: 0 for x in top._udg.genblks }
+    self.only_loop_at_top = { x: False for x in top._udg.genblks }
     v = CountBranchesLoops()
 
     # Shunning: since each loop turns into call_assembler_r, a pure-loop
@@ -57,8 +57,8 @@ class Mamba2020Pass( UnrollSimPass ):
 
     for blk in top.get_all_update_blocks():
       hostobj = top.get_update_block_host_component( blk )
-      if blk in top._dag.blk_greenlet_mapping:
-        gblk = top._dag.blk_greenlet_mapping[ blk ]
+      if blk in top._udg.blk_greenlet_mapping:
+        gblk = top._udg.blk_greenlet_mapping[ blk ]
         self.branchiness[ gblk ], self.only_loop_at_top[ gblk ] = 0, 0
       else:
         self.branchiness[ blk ], self.only_loop_at_top[ blk ] = v.enter( hostobj.get_update_block_info( blk )[-1] )
@@ -179,20 +179,17 @@ class Mamba2020Pass( UnrollSimPass ):
 
     # Construct the intra-cycle graph based on normal update blocks
 
-    V   = top._dag.final_upblks - top.get_all_update_ff()
+    V   = top._udg.final_upblks - top.get_all_update_ff()
 
     G   = { v: [] for v in V }
     G_T = { v: [] for v in V } # transpose graph
 
     E = set()
-    for (u, v) in top._dag.all_constraints: # u -> v
+    for (u, v) in top._udg.all_constraints: # u -> v
       if u in V and v in V:
         G  [u].append( v )
         G_T[v].append( u )
         E.add( (u, v) )
-
-    if 'MAMBA_DAG' in os.environ:
-      dump_dag( top, V, E )
 
     # Compute SCC using Kosaraju's algorithm
 
@@ -438,7 +435,7 @@ generated_block = wrapped_SCC_{0}
 
     # Now we generate meta blocks for each SCC and produce final schedule
 
-    constraint_objs = top._dag.constraint_objs
+    constraint_objs = top._udg.constraint_objs
 
     # Perform topological sort on SCCs
 

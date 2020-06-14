@@ -1,6 +1,6 @@
 """
 ========================================================================
-GenDAGPass.py
+GenUDGPass.py
 ========================================================================
 Generate a DAG of update blocks (including net connection blocks) from
 a model.
@@ -19,11 +19,11 @@ from pymtl3.extra.pypy import custom_exec
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 
-class GenDAGPass( BasePass ):
+class GenUDGPass( BasePass ):
 
   def __call__( self, top ):
     top.check()
-    top._dag = PassMetadata()
+    top._udg = PassMetadata()
 
     placeholders = [ x for x in top._dsl.all_named_objects
                      if isinstance( x, Placeholder ) ]
@@ -41,11 +41,11 @@ class GenDAGPass( BasePass ):
       >>> s.net_reader1 = s.net_writer
       >>> s.net_reader2 = s.net_writer """
 
-    top._dag.genblks = set()
-    top._dag.genblk_hostobj = {}
-    top._dag.genblk_reads   = {}
-    top._dag.genblk_writes  = {}
-    # top._dag.genblk_src     = {}
+    top._udg.genblks = set()
+    top._udg.genblk_hostobj = {}
+    top._udg.genblk_reads   = {}
+    top._udg.genblk_writes  = {}
+    # top._udg.genblk_src     = {}
 
     # Fall back to compiling one block at a time
     # This is currently because there might be different structs with
@@ -122,10 +122,10 @@ class GenDAGPass( BasePass ):
       if fanout == 0:
         blk = compile_net_blk( {}, f"""def {genblk_name}(): pass""", writer )
 
-        top._dag.genblks.add( blk )
+        top._udg.genblks.add( blk )
         if writer.is_signal():
-          top._dag.genblk_reads[ blk ] = [ writer ]
-        top._dag.genblk_writes[ blk ] = all_readers
+          top._udg.genblk_reads[ blk ] = [ writer ]
+        top._udg.genblk_writes[ blk ] = all_readers
         continue
       # readers = all_readers
       # fanout  = all_fanout
@@ -188,13 +188,13 @@ def {}():
 
       blk = compile_net_blk( _globals, gen_src, writer )
 
-      top._dag.genblks.add( blk )
+      top._udg.genblks.add( blk )
       if writer.is_signal():
-        top._dag.genblk_reads[ blk ] = [ writer ]
-      top._dag.genblk_writes[ blk ] = all_readers
+        top._udg.genblk_reads[ blk ] = [ writer ]
+      top._udg.genblk_writes[ blk ] = all_readers
 
     # Get the final list of update blocks
-    top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks
+    top._udg.final_upblks = top.get_all_update_blocks() | top._udg.genblks
 
   def _process_value_constraints( self, top ):
 
@@ -202,7 +202,7 @@ def {}():
 
     update_ff                    = top.get_all_update_ff()
     upblk_reads, upblk_writes, _ = top.get_all_upblk_metadata()
-    genblk_reads, genblk_writes  = top._dag.genblk_reads, top._dag.genblk_writes
+    genblk_reads, genblk_writes  = top._udg.genblk_reads, top._udg.genblk_writes
     U_U, RD_U, WR_U, U_M         = top.get_all_explicit_constraints()
 
     #---------------------------------------------------------------------
@@ -330,11 +330,11 @@ def {}():
                   impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
                   constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
-    top._dag.constraint_objs = constraint_objs
-    top._dag.all_constraints = { *U_U }
+    top._udg.constraint_objs = constraint_objs
+    top._udg.all_constraints = { *U_U }
     for (x, y) in impl_constraints:
       if (y, x) not in U_U: # no conflicting expl
-        top._dag.all_constraints.add( (x, y) )
+        top._udg.all_constraints.add( (x, y) )
 
   #-----------------------------------------------------------------------
   # Process methods
@@ -396,7 +396,7 @@ def {}():
     pred = defaultdict(set)
     succ = defaultdict(set)
 
-    top._dag.top_level_callee_constraints = set()
+    top._udg.top_level_callee_constraints = set()
 
     # We pre-process M(x) == M(y) constraints into per-method equivalence
     # sets. We have to do it here for potential open-loop constraints
@@ -470,19 +470,19 @@ def {}():
       if xx in equiv: # xx is in a equivalence class
         for zz in equiv[xx]:
           if zz in method_is_top_level_callee:
-            top._dag.top_level_callee_constraints.add( (zz, yy) )
+            top._udg.top_level_callee_constraints.add( (zz, yy) )
       else:
         if xx in method_is_top_level_callee:
-          top._dag.top_level_callee_constraints.add( (xx, yy) )
+          top._udg.top_level_callee_constraints.add( (xx, yy) )
 
       if yy in equiv: # yy is in a equivalence class
         for zz in equiv[yy]:
           if zz in method_is_top_level_callee:
-            top._dag.top_level_callee_constraints.add( (xx, zz) )
+            top._udg.top_level_callee_constraints.add( (xx, zz) )
 
       else:
         if yy in method_is_top_level_callee:
-          top._dag.top_level_callee_constraints.add( (xx, yy) )
+          top._udg.top_level_callee_constraints.add( (xx, yy) )
 
     verbose = False
 
@@ -516,7 +516,7 @@ def {}():
                     if verbose: print("w<=0, v is blk".center(10),v, blk)
                     if verbose: print(v.__name__.center(25)," < ", \
                                 blk.__name__.center(25))
-                    top._dag.all_constraints.add( (v, blk) )
+                    top._udg.all_constraints.add( (v, blk) )
 
             else:
               if v in method_blks:
@@ -535,7 +535,7 @@ def {}():
                           if verbose: print("w<=0, v is method".center(10),v, blk)
                           if verbose: print(vb.__name__.center(25)," < ", \
                                       blk.__name__.center(25))
-                          top._dag.all_constraints.add( (vb, blk) )
+                          top._udg.all_constraints.add( (vb, blk) )
 
               if (v, -1) not in visited:
                 visited.add( (v, -1) )
@@ -554,7 +554,7 @@ def {}():
                     if verbose: print("w>=0, v is blk".center(10),blk, v)
                     if verbose: print(blk.__name__.center(25)," < ", \
                                       v.__name__.center(25))
-                    top._dag.all_constraints.add( (blk, v) )
+                    top._udg.all_constraints.add( (blk, v) )
 
             else:
               if v in method_blks:
@@ -574,7 +574,7 @@ def {}():
                           if verbose: print("w>=0, v is method".center(10), blk, v)
                           if verbose: print(blk.__name__.center(25)," < ", \
                                             vb.__name__.center(25))
-                          top._dag.all_constraints.add( (blk, vb) )
+                          top._udg.all_constraints.add( (blk, vb) )
 
               if (v, 1) not in visited:
                 visited.add( (v, 1) )
@@ -585,8 +585,8 @@ def {}():
 
     blocking_ifcs = top.get_all_object_filter( lambda x: isinstance( x, (CalleeIfcFL, CallerIfcFL) ) )
 
-    top._dag.greenlet_upblks = set()
+    top._udg.greenlet_upblks = set()
 
     for blocking_method in blocking_ifcs:
       for blk in method_blks[ blocking_method.method.method ]:
-        top._dag.greenlet_upblks.add( blk )
+        top._udg.greenlet_upblks.add( blk )

@@ -9,7 +9,7 @@
 from pymtl3.datatypes import Bits32
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import UpblkCyclicError
-from pymtl3.passes.sim.GenDAGPass import GenDAGPass
+from pymtl3.passes.sim.GenUDGPass import GenUDGPass
 from pymtl3.passes.tracing.PrintTextWavePass import PrintTextWavePass
 
 from ..OpenLoopCLPass import OpenLoopCLPass
@@ -69,7 +69,7 @@ def test_top_level_method_tracing():
   # Turn on textwave
   A.set_metadata( PrintTextWavePass.enable, True )
 
-  A.apply( GenDAGPass() )
+  A.apply( GenUDGPass() )
   A.apply( OpenLoopCLPass() )
 
   print("- push!")
@@ -143,7 +143,7 @@ def _test_TestModuleNonBlockingIfc( cls ):
 
   A = cls()
   A.elaborate()
-  A.apply( GenDAGPass() )
+  A.apply( GenUDGPass() )
   A.apply( OpenLoopCLPass() )
   A.sim_reset()
 

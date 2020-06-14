@@ -12,7 +12,7 @@ from queue import PriorityQueue
 
 from ..BasePass import BasePass, PassMetadata
 from ..errors import PassOrderError
-from ..sim.SimpleSchedulePass import SimpleSchedulePass, check_schedule
+from ..sim.SimpleSchedulePass import SimpleSchedulePass
 from .UnrollSimPass import UnrollSimPass
 
 # FIXME also apply branchiness to all update_ff blocks
@@ -95,7 +95,7 @@ class CountBranchesLoops( ast.NodeVisitor ):
 
 class HeuristicTopoPass( UnrollSimPass ):
   def __call__( self, top ):
-    if not hasattr( top._dag, "all_constraints" ):
+    if not hasattr( top._udg, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
 
     if hasattr( top, "_sched" ):
@@ -125,12 +125,12 @@ class HeuristicTopoPass( UnrollSimPass ):
 
     # Construct the intra-cycle graph based on normal update blocks
 
-    V   = top._dag.final_upblks - top.get_all_update_ff()
+    V   = top._udg.final_upblks - top.get_all_update_ff()
     E   = set()
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }
 
-    for (u, v) in top._dag.all_constraints: # u -> v
+    for (u, v) in top._udg.all_constraints: # u -> v
       if u in V and v in V:
         InD[v] += 1
         Es[u].append( v )
@@ -139,7 +139,7 @@ class HeuristicTopoPass( UnrollSimPass ):
     # Extract branchiness
 
     # Initialize all generated net block to 0 branchiness
-    branchiness = { x: 0 for x in top._dag.genblks }
+    branchiness = { x: 0 for x in top._udg.genblks }
 
     visitor = CountBranchesLoops()
     # FIXME use the pure-loop info
@@ -169,4 +169,10 @@ class HeuristicTopoPass( UnrollSimPass ):
         if not InD[v]:
           Q.put( (branchiness[ v ], id(v)) )
 
-    check_schedule( top, update_schedule, V, E, InD )
+    if len(update_schedule) != len(V):
+      # V_leftovers = { v for v in V if in_degree[v] }
+      # E_leftovers = { (x,y) for (x,y) in E if x in V_leftovers and y in V_leftovers  }
+      raise UpblkCyclicError( """
+  Update blocks have cyclic dependencies.
+  * Please apply DumpUDGPass to consult update dependency graph for details.
+      """)

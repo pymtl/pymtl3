@@ -10,7 +10,7 @@ from pymtl3.dsl import *
 from pymtl3.dsl.errors import UpblkCyclicError
 
 from ..DynamicSchedulePass import DynamicSchedulePass
-from ..GenDAGPass import GenDAGPass
+from ..GenUDGPass import GenUDGPass
 from ..PrepareSimPass import PrepareSimPass
 from ..SimpleSchedulePass import SimpleSchedulePass
 
@@ -18,7 +18,7 @@ from ..SimpleSchedulePass import SimpleSchedulePass
 def _test_model( cls ):
   A = cls()
   A.elaborate()
-  A.apply( GenDAGPass() )
+  A.apply( GenUDGPass() )
   A.apply( DynamicSchedulePass() )
   A.apply( PrepareSimPass() )
 
@@ -214,7 +214,7 @@ def test_const_connect_nested_struct_signal_to_struct():
 
   x = Top()
   x.elaborate()
-  x.apply( GenDAGPass() )
+  x.apply( GenUDGPass() )
   x.apply( DynamicSchedulePass() )
   x.apply( PrepareSimPass(print_line_trace=False) )
   x.sim_reset()
@@ -252,7 +252,7 @@ def test_const_connect_cannot_handle_same_name_nested_struct():
   x = Top()
   x.elaborate()
   try:
-    x.apply( GenDAGPass() )
+    x.apply( GenUDGPass() )
   except AssertionError as e:
     print(e)
     assert str(e).startswith("Cannot handle two subfields with the same struct name but different structs")
@@ -267,7 +267,7 @@ def test_equal_top_level():
         print(1)
 
   a = A()
-  a.apply( GenDAGPass() )
+  a.apply( GenUDGPass() )
   a.apply( DynamicSchedulePass() )
   a.apply( PrepareSimPass() )
   a.sim_reset()
@@ -308,7 +308,7 @@ def test_update_once():
 
   t = Top()
   t.elaborate()
-  t.apply( GenDAGPass() )
+  t.apply( GenUDGPass() )
   try:
     t.apply( DynamicSchedulePass() )
   except UpblkCyclicError as e:

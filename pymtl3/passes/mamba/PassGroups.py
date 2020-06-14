@@ -1,5 +1,5 @@
 from ..BasePass import BasePass
-from ..sim.GenDAGPass import GenDAGPass
+from ..sim.GenUDGPass import GenUDGPass
 from ..sim.PrepareSimPass import PrepareSimPass
 from ..sim.SimpleSchedulePass import SimpleSchedulePass
 from ..sim.WrapGreenletPass import WrapGreenletPass
@@ -7,6 +7,7 @@ from ..tracing.CLLineTracePass import CLLineTracePass
 from ..tracing.LineTraceParamPass import LineTraceParamPass
 from ..linting.CheckUnusedSignalPass import CheckUnusedSignalPass
 from ..linting.CheckSignalNamePass import CheckSignalNamePass
+from ..stats.DumpUDGPass import DumpUDGPass
 from .HeuristicTopoPass import HeuristicTopoPass
 from .Mamba2020Pass import Mamba2020Pass
 from .UnrollSimPass import UnrollSimPass
@@ -20,7 +21,7 @@ class UnrollSim( BasePass ):
 
   def __call__( s, top ):
     top.elaborate()
-    GenDAGPass()( top )
+    GenUDGPass()( top )
     WrapGreenletPass()( top )
     SimpleSchedulePass()( top )
     UnrollSimPass(print_line_trace=s.print_line_trace,
@@ -34,13 +35,14 @@ class HeuTopoUnrollSim( BasePass ):
 
   def __call__( s, top ):
     top.elaborate()
-    GenDAGPass()( top )
+    GenUDGPass()( top )
     WrapGreenletPass()( top )
     HeuristicTopoPass(print_line_trace=s.print_line_trace,
                       reset_active_high=s.reset_active_high)( top )
 
 class Mamba2020( BasePass ):
-  def __init__( s, *, linting=False, waveform=None, print_line_trace=True, reset_active_high=True ):
+  def __init__( s, *, dump_udg=False, linting=False, waveform=None, print_line_trace=True, reset_active_high=True ):
+    s.dump_udg = dump_udg
     s.linting = linting
     s.waveform = waveform
     s.print_line_trace = print_line_trace
@@ -51,7 +53,11 @@ class Mamba2020( BasePass ):
       CheckSignalNamePass()( top )
       CheckUnusedSignalPass()( top )
 
-    GenDAGPass()( top )
+    GenUDGPass()( top )
+
+    if s.dump_udg:
+      DumpUDGPass()( top )
+
     WrapGreenletPass()( top )
     if s.print_line_trace:
       CLLineTracePass()( top )

@@ -17,13 +17,13 @@ from pymtl3.extra.pypy import custom_exec
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 
-from .SimpleSchedulePass import SimpleSchedulePass, dump_dag
+from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
 
 
 class DynamicSchedulePass( BasePass ):
   def __call__( self, top ):
-    if not hasattr( top._dag, "all_constraints" ):
+    if not hasattr( top._udg, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
 
     if hasattr( top, "_sched" ):
@@ -42,20 +42,17 @@ class DynamicSchedulePass( BasePass ):
 
     # Construct the intra-cycle graph based on normal update blocks
 
-    V   = top._dag.final_upblks - top.get_all_update_ff()
+    V   = top._udg.final_upblks - top.get_all_update_ff()
 
     G   = { v: [] for v in V }
     G_T = { v: [] for v in V } # transpose graph
 
     E = set()
-    for (u, v) in top._dag.all_constraints: # u -> v
+    for (u, v) in top._udg.all_constraints: # u -> v
       if u in V and v in V:
         G  [u].append( v )
         G_T[v].append( u )
         E.add( (u, v) )
-
-    if 'MAMBA_DAG' in os.environ:
-      dump_dag( top, V, E )
 
     # Compute SCC using Kosaraju's algorithm
 
@@ -90,7 +87,7 @@ class DynamicSchedulePass( BasePass ):
     # Now we generate super blocks for each SCC and produce final schedule
     #---------------------------------------------------------------------
 
-    constraint_objs = top._dag.constraint_objs
+    constraint_objs = top._udg.constraint_objs
     onces = top.get_all_update_once()
 
     # Put the graph schedule to _sched

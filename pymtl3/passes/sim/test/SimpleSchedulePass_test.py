@@ -9,7 +9,7 @@ from pymtl3.datatypes import Bits8, Bits32, bitstruct
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import UpblkCyclicError
 
-from ..GenDAGPass import GenDAGPass
+from ..GenUDGPass import GenUDGPass
 from ..PrepareSimPass import PrepareSimPass
 from ..SimpleSchedulePass import SimpleSchedulePass
 
@@ -17,7 +17,7 @@ from ..SimpleSchedulePass import SimpleSchedulePass
 def _test_model( cls ):
   A = cls()
   A.elaborate()
-  A.apply( GenDAGPass() )
+  A.apply( GenUDGPass() )
   A.apply( SimpleSchedulePass() )
   A.apply( PrepareSimPass() )
 
@@ -232,7 +232,7 @@ def test_const_connect_nested_struct_signal_to_struct():
 
   x = Top()
   x.elaborate()
-  x.apply( GenDAGPass() )
+  x.apply( GenUDGPass() )
   x.apply( SimpleSchedulePass() )
   x.apply( PrepareSimPass() )
 
@@ -249,7 +249,7 @@ def test_equal_top_level():
         print(1)
 
   a = A()
-  a.apply( GenDAGPass() )
+  a.apply( GenUDGPass() )
   a.apply( SimpleSchedulePass() )
   a.apply( PrepareSimPass() )
   a.sim_reset()
