@@ -7,25 +7,27 @@ Author : Shunning Jiang
 Date   : June 15, 2020
 """
 from graphviz import Digraph
+
 from pymtl3.dsl import CalleePort
 
 from ..BasePass import BasePass
 
+
 class DumpUDGPass( BasePass ):
 
   def __call__( self, top ):
-    V = top.get_all_update_blocks()
-    ff = top.get_all_update_ff()
-
     if not hasattr(top, "_udg"):
       raise PassOrderError( "_udg" )
     if not hasattr( top._udg, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
 
+    V = top.get_all_update_blocks()
+    ff = top.get_all_update_ff()
     E = top._udg.all_constraints
     self.dump_udg( top, V, ff, E )
 
   def dump_udg( self, top, V, ff, E ):
+    print("[DumpUDGPass] Making plots ...\n")
     dot = Digraph()
     dot.graph_attr["rank"] = "same"
     dot.graph_attr["ratio"] = "compress"

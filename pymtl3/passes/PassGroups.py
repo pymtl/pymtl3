@@ -1,18 +1,19 @@
 from .autotick.OpenLoopCLPass import OpenLoopCLPass
 from .BasePass import BasePass
+from .linting.CheckSignalNamePass import CheckSignalNamePass
+from .linting.CheckUnusedSignalPass import CheckUnusedSignalPass
 from .sim.DynamicSchedulePass import DynamicSchedulePass
 from .sim.GenUDGPass import GenUDGPass
 from .sim.PrepareSimPass import PrepareSimPass
 from .sim.SimpleSchedulePass import SimpleSchedulePass
 from .sim.SimpleTickPass import SimpleTickPass
 from .sim.WrapGreenletPass import WrapGreenletPass
+from .stats.DumpUDGPass import DumpUDGPass
 from .tracing.CLLineTracePass import CLLineTracePass
 from .tracing.LineTraceParamPass import LineTraceParamPass
 from .tracing.PrintTextWavePass import PrintTextWavePass
 from .tracing.VcdGenerationPass import VcdGenerationPass
-from .linting.CheckUnusedSignalPass import CheckUnusedSignalPass
-from .linting.CheckSignalNamePass import CheckSignalNamePass
-from .stats.DumpUDGPass import DumpUDGPass
+
 
 # SimpleSim can be used when the UDG is a DAG
 class SimpleSimPass( BasePass ):

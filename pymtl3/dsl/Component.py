@@ -534,10 +534,10 @@ class Component( ComponentLevel7 ):
   def get_child_components( s, sort_key = None ):
     return s._collect_objects_local( lambda x: isinstance( x, Component ), sort_key )
 
-  def get_input_value_ports( s, sort_key = None ):
+  def get_input_ports( s, sort_key = None ):
     return s._collect_objects_local( lambda x: isinstance( x, InPort ), sort_key )
 
-  def get_output_value_ports( s , sort_key = None ):
+  def get_output_ports( s , sort_key = None ):
     return s._collect_objects_local( lambda x: isinstance( x, OutPort ), sort_key )
 
   def get_wires( s , sort_key = None ):

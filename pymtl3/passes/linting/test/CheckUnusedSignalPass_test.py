@@ -9,6 +9,7 @@ Date   : Dec 29, 2019
 
 from pymtl3.datatypes import Bits1, Bits2
 from pymtl3.dsl import *
+
 from ..CheckUnusedSignalPass import CheckUnusedSignalPass
 
 

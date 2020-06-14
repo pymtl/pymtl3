@@ -8,7 +8,6 @@
 # Author : Shunning Jiang
 # Date   : Apr 20, 2019
 """
-import os
 import random
 from collections import deque
 
@@ -23,10 +22,10 @@ from ..errors import PassOrderError
 from ..sim.PrepareSimPass import PrepareSimPass
 from ..sim.SimpleSchedulePass import SimpleSchedulePass
 from ..sim.SimpleTickPass import SimpleTickPass
+from ..stats.DumpUDGPass import DumpUDGPass
 from ..tracing.CLLineTracePass import CLLineTracePass
 from ..tracing.PrintTextWavePass import PrintTextWavePass
 from ..tracing.VcdGenerationPass import VcdGenerationPass
-from ..stats.DumpUDGPass import DumpUDGPass
 
 
 class OpenLoopCLPass( BasePass ):

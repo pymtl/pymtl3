@@ -8,7 +8,6 @@
 # Author : Shunning Jiang
 # Date   : Feb 14, 2020
 
-import os
 from collections import defaultdict, deque
 
 import py

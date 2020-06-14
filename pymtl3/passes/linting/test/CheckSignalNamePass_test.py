@@ -9,7 +9,9 @@ Date   : Dec 29, 2019
 
 from pymtl3.datatypes import Bits1
 from pymtl3.dsl import *
+
 from ..CheckSignalNamePass import CheckSignalNamePass
+
 
 class Inner(Component):
   def construct( s, bad=True ):
@@ -54,4 +56,3 @@ def test_signal_name_custom_function():
   # full name.
   a.apply( CheckSignalNamePass(lambda x: '[' not in repr(x)) )
   assert len(a.get_metadata( CheckSignalNamePass.result )) == 40
-

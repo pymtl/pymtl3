@@ -5,7 +5,6 @@
 # Author : Shunning Jiang
 # Date   : Apr 19, 2019
 
-import os
 from collections import defaultdict, deque
 from copy import deepcopy
 

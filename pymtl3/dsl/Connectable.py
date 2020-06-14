@@ -158,6 +158,9 @@ class Signal( NamedObject, Connectable ):
 
     s._dsl.needs_double_buffer = False
 
+  def get_type( s ):
+    return s._dsl.Type
+
   def inverse( s ):
     pass
 

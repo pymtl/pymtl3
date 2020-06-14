@@ -28,9 +28,7 @@ def run_test( dut, tv, tv_in, tv_out ):
     tv_out( dut, v )
   with open(vcd_file_name+".vcd") as fd:
     file_str = ''.join( fd.readlines() )
-    all_signals = dut.get_input_value_ports() + \
-                  dut.get_output_value_ports() + \
-                  dut.get_wires()
+    all_signals = dut.get_input_ports() + dut.get_output_ports() + dut.get_wires()
     for signal in all_signals:
       assert signal._dsl.my_name in file_str
 
