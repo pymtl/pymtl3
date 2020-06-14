@@ -7,9 +7,6 @@ Author : Shunning Jiang
 Date   : June 15, 2020
 """
 
-
-import matplotlib.pyplot as plt
-
 from pymtl3 import *
 
 from ..BasePass import BasePass
@@ -33,6 +30,7 @@ class RefactoringAnalysisPass( BasePass ):
         tot_out += out.get_type().nbits
       bw.append( (tot_in, tot_out, repr(c)) )
 
+    import matplotlib.pyplot as plt
     plt.scatter( [ i for (i,o,n) in bw ], [ o for (i,o,n) in bw ],
                  s=[ 1.5 for _ in range(len(bw))])
     plt.xlabel( 'total input bitwidth' )
@@ -58,8 +56,7 @@ class RefactoringAnalysisPass( BasePass ):
         else:
           histo.append( len(lines) )
 
-    if not histo:
-      return
+    import matplotlib.pyplot as plt
     plt.hist( histo, bins=range(max(histo)) )
     plt.xlabel( 'number of lines in update block' )
     plt.ylabel( 'update block count' )
