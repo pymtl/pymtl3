@@ -22,7 +22,7 @@ class CheckUnusedSignalPass( BasePass ):
     # check all components and connectables
     for writer, net in top.get_all_value_nets():
       for x in net:
-        if x in all_signals:
+        if x.is_signal():
           used_signals.add( x.get_top_level_signal() )
 
     upblk_reads, upblk_writes, _ = top.get_all_upblk_metadata()

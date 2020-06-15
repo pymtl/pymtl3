@@ -37,5 +37,5 @@ def test_signal_name_default_function():
   top.elaborate()
   top.apply( CheckUnusedSignalPass() )
 
-  assert top.get_metadata( CheckUnusedSignalPass.result) == [ top.inners[0].xx, top.inners[0].xx2,
-                                                              top.inners[1].xx, top.inners[1].xx2, top.wire ]
+  assert set(top.get_metadata( CheckUnusedSignalPass.result )) == { top.inners[0].xx, top.inners[0].xx2,
+                                                               top.inners[1].xx, top.inners[1].xx2, top.wire }
