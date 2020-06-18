@@ -11,13 +11,13 @@ is a data type object or simply a data type. RTLIR instance type Signal
 can be parameterized by the generated type objects.
 """
 from functools import reduce
+from hashlib import blake2b
 from math import ceil, log2
 
 import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst
 
 from ..errors import RTLIRConversionError
-from ..util.utility import collect_objs, get_hashed_name
 
 
 class BaseRTLIRDataType:
@@ -111,7 +111,12 @@ class Struct( BaseRTLIRDataType ):
       return s._full_name
 
   def get_name( s ):
-    return get_hashed_name( s.cls.__name__, s.get_field_str() )
+    full_name = s.get_full_name()
+    if len(full_name) < 64:
+      return full_name
+    param_hash = blake2b(digest_size = 8)
+    param_hash.update(s.get_field_str().encode('ascii'))
+    return f'{s.cls.__name__}__{param_hash.hexdigest()}'
 
   # def get_file_info( s ):
     # return s.file_info

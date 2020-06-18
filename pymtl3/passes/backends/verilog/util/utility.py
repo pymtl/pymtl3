@@ -36,11 +36,6 @@ def get_component_unique_name( c_rtype ):
   param_name = param_hash.hexdigest()
   return comp_name + "__" + param_name
 
-  def get_string( obj ):
-    """Return the string that identifies `obj`"""
-    if isinstance(obj, type): return obj.__name__
-    return str( obj )
-
 def wrap( s ):
   col = shutil.get_terminal_size().columns
   return "\n".join(sum((textwrap.wrap(line, col) for line in s.split("\n")), []))
