@@ -215,7 +215,6 @@ class Bits:
                           f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( nbits, (self._uint + other) & up )
 
-  # TODO can we assume other is not Bits?
   def __radd__( self, other ):
     return self.__add__( other )
 
