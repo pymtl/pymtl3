@@ -5,7 +5,9 @@
 # Date   : Feb 13, 2019
 """Helper methods for RTLIR."""
 
-from hashlib import blake2b
+from pymtl3.datatypes import is_bitstruct_class
+
+from ..rtype.RTLIRDataType import get_rtlir_dtype
 
 
 def collect_objs( m, Type ):
@@ -29,7 +31,10 @@ def get_component_full_name( c_rtype ):
 
   def get_string( obj ):
     """Return the string that identifies `obj`"""
-    if isinstance(obj, type): return obj.__name__
+    if isinstance(obj, type):
+      if is_bitstruct_class(obj):
+        return get_rtlir_dtype( obj() ).get_name()
+      return obj.__name__
     return str( obj )
 
   comp_name = c_rtype.get_name()
@@ -52,10 +57,3 @@ def get_ordered_update_ff( m ):
   """Return a list of update-ff update blocks that have deterministic order"""
 
   return [ x for x in m.get_update_block_order() if x in m.get_update_ff() ]
-
-def get_hashed_name( obj_name, param_name ):
-  if len(f'{obj_name}__{param_name}') >= 64:
-    param_hash = blake2b(digest_size = 8)
-    param_hash.update(param_name.encode('ascii'))
-    param_name = param_hash.hexdigest()
-  return f'{obj_name}__{param_name}'

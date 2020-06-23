@@ -327,7 +327,7 @@ CaseConnectPassThroughLongNameComp = set_attributes( CaseConnectPassThroughLongN
     ''',
     'REF_SRC',
     '''\
-        module DUT__a840bd1c84c05ea2
+        module DUT__2ae3b6d12e9855d1
         (
           input logic [0:0] clk,
           input logic [31:0] in_,
