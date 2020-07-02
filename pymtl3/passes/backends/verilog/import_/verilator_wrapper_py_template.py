@@ -114,7 +114,8 @@ class {component_name}( Component ):
 
     # Use non-attribute varialbe to reduce CPython bytecode count
     _ffi_m = s._ffi_m
-    _ffi_inst = s._ffi_inst
+    _ffi_inst_comb_eval = s._ffi_inst.comb_eval
+    _ffi_inst_seq_eval  = s._ffi_inst.seq_eval
 
     # declare the port interface
 {port_defs}
@@ -129,16 +130,15 @@ class {component_name}( Component ):
       # Set inputs
 {set_comb_input}
 
-      _ffi_inst.comb_eval( _ffi_m )
+      _ffi_inst_comb_eval( _ffi_m )
 
       # Write all outputs
 {set_comb_output}
 
-    if {has_clk}:
-      @update_ff
-      def seq_upblk():
-        # seq_eval will automatically tick clock
-        _ffi_inst.seq_eval( _ffi_m )
+    @update_ff
+    def seq_upblk():
+      # seq_eval will automatically tick clock in C land
+      _ffi_inst_seq_eval( _ffi_m )
 
   def assert_en( s, en ):
     # TODO: for verilator, any assertion failure will cause the C simulator

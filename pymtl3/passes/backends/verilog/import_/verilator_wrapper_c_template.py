@@ -13,6 +13,9 @@ template = \
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
+// set to true if the model has clk signal
+#define HAS_CLK {has_clk}
+
 // set to true when VCD tracing is enabled in Verilator
 #define DUMP_VCD {dump_vcd}
 
@@ -45,7 +48,6 @@ extern "C" {{
     #if DUMP_VCD
     void *        tfp;
     unsigned int  trace_time;
-    unsigned char prev_clk;
     #endif
 
   }} V{component_name}_t;
@@ -114,7 +116,6 @@ V{component_name}_t * create_model( const char *vcd_filename ) {{
 
     m->tfp        = (void *) tfp;
     m->trace_time = 0;
-    m->prev_clk   = 0;
   }}
   #endif
 
@@ -189,18 +190,18 @@ void seq_eval( V{component_name}_t * m ) {{
 
   // evaluate one time cycle
 
+  #if HAS_CLK
   model->clk = 0;
+  #endif
+
   model->eval();
 
   #if DUMP_VCD
   if ( m->_vcd_en ) {{
 
     // update simulation time only on clock toggle
-    if (m->prev_clk != model->clk) {{
-      m->trace_time += {half_cycle_time};
-      g_main_time += {half_cycle_time};
-    }}
-    m->prev_clk = model->clk;
+    m->trace_time += {half_cycle_time};
+    g_main_time   += {half_cycle_time};
 
     // dump current signal values
     VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
@@ -210,18 +211,18 @@ void seq_eval( V{component_name}_t * m ) {{
   }}
   #endif
 
+  #if HAS_CLK
   model->clk = 1;
+  #endif
+
   model->eval();
 
   #if DUMP_VCD
   if ( m->_vcd_en ) {{
 
     // update simulation time only on clock toggle
-    if (m->prev_clk != model->clk) {{
-      m->trace_time += {half_cycle_time};
-      g_main_time += {half_cycle_time};
-    }}
-    m->prev_clk = model->clk;
+    m->trace_time += {half_cycle_time};
+    g_main_time += {half_cycle_time};
 
     // dump current signal values
     VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
