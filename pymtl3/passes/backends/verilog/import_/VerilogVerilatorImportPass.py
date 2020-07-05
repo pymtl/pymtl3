@@ -426,6 +426,8 @@ class VerilogVerilatorImportPass( BasePass ):
     wrapper_name = ip_cfg.get_c_wrapper_path()
     verilator_xinit_value = ip_cfg.get_vl_xinit_value()
     verilator_xinit_seed = ip_cfg.get_vl_xinit_seed()
+    has_clk = int(ph_cfg.has_clk)
+
     ip_cfg.vprint("\n=====Generate C wrapper=====")
 
     # Generate port declarations for the verilated model in C

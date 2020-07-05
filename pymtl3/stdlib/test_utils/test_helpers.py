@@ -55,7 +55,8 @@ def _recursive_set_vl_trace( m, dump_vcd ):
        m.get_metadata( VerilogTranslationImportPass.enable ) ) or \
       isinstance( m, VerilogPlaceholder ):
     m.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
-    m.set_metadata( VerilogVerilatorImportPass.vl_trace_filename, dump_vcd )
+    vl_trace_filename = f"top{repr(m)[1:]}".replace('.','_')
+    m.set_metadata( VerilogVerilatorImportPass.vl_trace_filename, dump_vcd+"_"+vl_trace_filename )
   else:
     for child in m.get_child_components():
       _recursive_set_vl_trace( child, dump_vcd )
