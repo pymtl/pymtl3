@@ -4,11 +4,10 @@
 # Author : Peitian Pan
 # Date   : Jun 5, 2019
 """Provide utility methods for testing."""
-
 import copy
 from collections import deque
 
-import hypothesis.strategies as st
+from hypothesis import strategies as st
 
 from pymtl3.datatypes import Bits1, mk_bits
 from pymtl3.dsl import OutPort

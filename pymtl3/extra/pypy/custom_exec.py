@@ -14,7 +14,7 @@ try:
     # Credit: Lin Cheng
     # return the original dictionary if not running on PyPy
     try:
-      from __pypy__ import strategy, newdict
+      from __pypy__ import newdict, strategy
     except Exception:
       return _dict
 

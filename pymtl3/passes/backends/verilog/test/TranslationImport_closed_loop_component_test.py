@@ -4,10 +4,9 @@
 # Author : Peitian Pan
 # Date   : June 6, 2019
 """Closed-loop test cases for translation-import with component."""
-
-import hypothesis.strategies as st
 import pytest
 from hypothesis import HealthCheck, given, reproduce_failure, settings
+from hypothesis import strategies as st
 
 from pymtl3.datatypes import Bits1, Bits16, Bits32, bitstruct, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire, connect

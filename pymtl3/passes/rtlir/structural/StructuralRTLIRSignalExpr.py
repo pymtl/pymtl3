@@ -2,9 +2,7 @@
 # StructuralRTLIRSignalExpr.py
 #=========================================================================
 """RTLIR signal expression class definitions and generation method."""
-
-
-import pymtl3.dsl as dsl
+from pymtl3 import dsl
 from pymtl3.datatypes import Bits, is_bitstruct_inst
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
