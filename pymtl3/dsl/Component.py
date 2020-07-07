@@ -10,7 +10,16 @@ Author : Yanghui Ou
 
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
-from .Connectable import Const, InPort, Interface, MethodPort, OutPort, Signal, Wire
+from .Connectable import (
+    Connectable,
+    Const,
+    InPort,
+    Interface,
+    MethodPort,
+    OutPort,
+    Signal,
+    Wire,
+)
 from .errors import (
     InvalidAPICallError,
     InvalidConnectionError,
@@ -714,19 +723,113 @@ class Component( ComponentLevel7 ):
     if check:
       top.check()
 
-  def add_connection( s, o1, o2 ):
-    try:
-      top = s._dsl.elaborate_top
-    except AttributeError:
-      raise NotElaboratedError()
+  def add_value_port( top, parent, name, o ):
+    top._check_called_at_elaborate_top( "add_port" )
 
-    try:
-      s._connect( o1, o2, internal=False )
-    except AssertionError as e:
-      raise InvalidConnectionError( "\n{}".format(e) )
+    assert isinstance( o, (InPort, OutPort) )
+    # If we are adding field parent.x, we simply reuse the setattr hook
+    assert not hasattr( parent, name ), f"Invalid add_value_port call: {parent} already has field {name}!"
 
-    for x, adjs in s._dsl.adjacency.items():
-      top._dsl.all_adjacency[x].update( adjs )
+    NamedObject._elaborate_stack = [ parent ]
+    NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
+    setattr( parent, name, o )
+    del NamedObject.__setattr__
+    del NamedObject._elaborate_stack
+
+    top._dsl.all_signals.add( o )
+    top._dsl.all_named_objects.add( o )
+
+  def add_connection( top, o1, o2 ):
+
+    # Currently only support connecting signals
+
+    top._check_called_at_elaborate_top( "add_connection" )
+    if isinstance( o2, Connectable ): o1, o2 = o2, o1
+
+    assert isinstance( o1, Connectable ), "Cannot connect two non-connectable objects"
+
+    assert isinstance( o1, Signal ), "Currently only support connecting signals/constants"
+
+    assert o1._dsl.elaborate_top is top
+
+    # Add the connection to the correct component
+    host1   = o1.get_host_component()
+    parent1 = host1.get_parent_object()
+
+    real_host = host1
+
+    if isinstance( o2, Signal ):
+      assert o2._dsl.elaborate_top is top
+
+      host2   = o2.get_host_component()
+      parent2 = host2.get_parent_object()
+
+      if isinstance( o1, InPort ):
+        if isinstance( o2, InPort ):
+          if host1 is parent2:
+            host1._connect_signal_signal( o1, o2 )
+          elif host2 is parent1:
+            host2._connect_signal_signal( o1, o2 )
+            real_host = host2
+          else:
+            assert False
+
+        # OutPort-Wire -> same host or wire is out's parent
+        elif isinstance( o2, Wire ):
+          assert host1 is host2 or host2 is parent1
+          host2._connect_signal_signal( o1, o2 )
+          real_host = host2
+
+        # InPort-OutPort: enforce same host. it doesn't make much sense
+        # to have outport in inport's parent
+        elif isinstance( o2, OutPort ):
+          assert host1 is host2
+          host1._connect_signal_signal( o1, o2 )
+
+        else:
+          assert False
+
+      elif isinstance( o1, OutPort ):
+        if isinstance( o2, OutPort ):
+          if host1 is parent2:
+            host1._connect_signal_signal( o1, o2 )
+          elif host2 is parent1:
+            host2._connect_signal_signal( o1, o2 )
+            real_host = host2
+          else:
+            assert False
+
+        # OutPort-InPort: enforce same host. it doesn't make much sense
+        # to have outport in inport's parent
+        elif isinstance( o2, InPort ):
+          assert host1 is host2
+          host1._connect_signal_signal( o1, o2 )
+
+        # OutPort-Wire -> same host or wire is out's parent
+        elif isinstance( o2, Wire ):
+          assert host1 is host2 or host2 is parent1
+          host2._connect_signal_signal( o1, o2 )
+          real_host = host2
+
+        else:
+          assert False
+
+      elif isinstance( o1, Wire ):
+        # Wire-Wire -> same host
+        if isinstance( o2, Wire ):
+          assert host1 is host2
+          host1._connect_signal_signal( o1, o2 )
+        # Wire-InPort/OutPort -> same host or wire is in/out's parent
+        else:
+          assert host1 is host2 or host1 is parent2
+          host1._connect_signal_signal( o1, o2 )
+
+      else:
+        assert False
+
+      top._dsl.all_adjacency[o1].add(o2)
+      top._dsl.all_adjacency[o2].add(o1)
+      top._dsl._has_pending_value_connections = True
 
   def add_connections( s, *args ):
     try:
