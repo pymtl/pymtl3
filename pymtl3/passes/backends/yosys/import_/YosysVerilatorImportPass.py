@@ -21,7 +21,7 @@ class YosysVerilatorImportPass( VerilogVerilatorImportPass ):
   @staticmethod
   def get_translation_pass():
     from pymtl3.passes.backends.yosys.translation.YosysTranslationPass import (
-        importYosysTranslationPass,
+        YosysTranslationPass,
     )
     return YosysTranslationPass
 
