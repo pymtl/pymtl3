@@ -13,6 +13,7 @@ import os
 import shutil
 import subprocess
 import sys
+import timeit
 from functools import reduce
 from importlib import reload
 from itertools import cycle
@@ -389,8 +390,10 @@ class VerilogVerilatorImportPass( BasePass ):
       try:
         ip_cfg.vprint(f"Verilating {ip_cfg.translated_top_module} with command:", 2)
         ip_cfg.vprint(f"{cmd}", 4)
+        t0 = timeit.default_timer()
         subprocess.check_output(
             cmd, stderr = subprocess.STDOUT, shell = True )
+        ip_cfg.vprint(f"verilate time: {timeit.default_timer()-t0}")
       except subprocess.CalledProcessError as e:
         succeeds = False
         err_msg = e.output if not isinstance(e.output, bytes) else \
@@ -474,12 +477,14 @@ class VerilogVerilatorImportPass( BasePass ):
       try:
         ip_cfg.vprint("Compiling shared library with command:", 2)
         ip_cfg.vprint(f"{cmd}", 4)
+        t0 = timeit.default_timer()
         subprocess.check_output(
             cmd,
             stderr = subprocess.STDOUT,
             shell = True,
             universal_newlines = True
         )
+        ip_cfg.vprint(f"shared library compilation time: {timeit.default_timer()-t0}")
       except subprocess.CalledProcessError as e:
         succeeds = False
         err_msg = e.output if not isinstance(e.output, bytes) else \

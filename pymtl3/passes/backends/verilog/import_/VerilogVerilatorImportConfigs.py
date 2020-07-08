@@ -309,7 +309,12 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     # O_TMPFILE in second argument needs 3 arguments
     #     __open_missing_mode ();
     #     ~~~~~~~~~~~~~~~~~~~~^~
-    c_flags = "-O1 -fno-guess-branch-probability -fno-reorder-blocks -fno-if-conversion -fno-if-conversion2 -fno-dce -fno-delayed-branch -fno-dse -fno-auto-inc-dec -fno-branch-count-reg -fno-combine-stack-adjustments  -fno-cprop-registers -fno-forward-propagate -fno-inline-functions-called-once -fno-ipa-profile -fno-ipa-pure-const -fno-ipa-reference -fno-move-loop-invariants -fno-omit-frame-pointer -fno-split-wide-types -fno-tree-bit-ccp -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse  -fno-tree-fre -fno-tree-phiprop -fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-reassoc -fPIC -fno-gnu-unique -shared" + \
+    # Shunning (7/7/2020): Use O0 here because O1 will lead to corruptions
+    # in the CFFI-managed shared library pools. Basically what happened
+    # is if we run two tests with the same component name but different
+    # contents in a row, the second one uses the first library instead
+    # of the second ...
+    c_flags = "-O0 -fno-guess-branch-probability -fno-reorder-blocks -fno-if-conversion -fno-if-conversion2 -fno-dce -fno-delayed-branch -fno-dse -fno-auto-inc-dec -fno-branch-count-reg -fno-combine-stack-adjustments -fno-cprop-registers -fno-forward-propagate -fno-inline-functions-called-once -fno-ipa-profile -fno-ipa-pure-const -fno-ipa-reference -fno-move-loop-invariants -fno-omit-frame-pointer -fno-split-wide-types -fno-tree-bit-ccp -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-fre -fno-tree-phiprop -fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-reassoc -fPIC -fno-gnu-unique -shared" + \
              ("" if s.is_default("c_flags") else f" {expand(s.c_flags)}")
     c_include_path = " ".join("-I"+p for p in s._get_all_includes() if p)
     out_file = s.get_shared_lib_path()
@@ -372,28 +377,32 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     vl_class_mk = f"{vl_mk_dir}/V{top_module}_classes.mk"
 
     # Add C wrapper
-    fast = copy.copy(s.c_srcs)
-    fast.append(s.get_c_wrapper_path())
-    slow = []
+    o0 = []
+    o1 = copy.copy(s.c_srcs) + [ s.get_c_wrapper_path() ]
 
     # Add files listed in class makefile
     with open(vl_class_mk) as class_mk:
       all_lines = class_mk.readlines()
-      fast += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_FAST")
-      fast += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_FAST")
-      fast += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_FAST")
-      slow += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_SLOW")
-      slow += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_SLOW")
-      slow += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_SLOW")
+      o1 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_FAST")
+      o1 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_FAST")
+      o1 += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_FAST")
+
+      o0 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_SLOW")
+      o0 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_SLOW")
+      o0 += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_SLOW")
 
     with open(f"{top_module}_v__ALL_pickled.cpp", 'w') as out:
-      out.write('\n'.join( [ f'#include "{x}"' for x in fast ]))
+      if o1:
+        out.write('#pragma GCC push_options')
+        out.write('\n#pragma GCC optimize ("O1,no-guess-branch-probability,no-reorder-blocks,no-if-conversion,no-if-conversion2,no-dce,no-delayed-branch,no-dse,no-auto-inc-dec,no-branch-count-reg,no-combine-stack-adjustments,no-cprop-registers,no-forward-propagate,no-inline-functions-called-once,no-ipa-profile,no-ipa-pure-const,no-ipa-reference,no-move-loop-invariants,no-omit-frame-pointer,no-split-wide-types,no-tree-bit-ccp,no-tree-ccp,no-tree-ch,no-tree-coalesce-vars,no-tree-copy-prop,no-tree-dce,no-tree-dominator-opts,no-tree-dse,no-tree-fre,no-tree-phiprop,no-tree-pta,no-tree-scev-cprop,no-tree-sink,no-tree-slsr,no-tree-sra,no-tree-ter,no-tree-reassoc")\n')
+        out.write('\n'.join( [ f'#include "{x}"' for x in o1 ]))
+        out.write('\n#pragma GCC pop_options\n')
 
       # Apply no optimization for SLOW files
-      if slow:
+      if o0:
         out.write('\n#pragma GCC push_options')
         out.write('\n#pragma GCC optimize ("O0")\n')
-        out.write('\n'.join( [ f'#include "{x}"' for x in slow ]))
+        out.write('\n'.join( [ f'#include "{x}"' for x in o0 ]))
         out.write('\n#pragma GCC pop_options\n')
 
     return [ f"{top_module}_v__ALL_pickled.cpp" ]
