@@ -255,8 +255,8 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     # Always verilator -O3 and unroll because -O0 may lead to this error:
     # -Info: Command Line disabled gate optimization with -Og/-O0.  This may cause ordering problems
     opt_level   = "-O3"
-    loop_unroll = f"--unroll-count 1000000"
-    stmt_unroll = f"--unroll-stmts 1000000"
+    loop_unroll = "--unroll-count 1000000"
+    stmt_unroll = "--unroll-stmts 1000000"
     trace       = "--trace" if s.vl_trace else ""
     coverage    = "--coverage" if s.vl_coverage else ""
     line_cov    = "--coverage-line" if s.vl_line_coverage else ""
@@ -391,7 +391,7 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     with open(f"{top_module}_v__ALL_pickled.cpp", 'w') as out:
 
       if not s.fast:
-        out.write('\n'.join( [ f'#include "{x}"' for x in o0 + o1 ]))
+        out.write('\n'.join( [ f'#include "{x}"' for x in o1 + o0 ]))
 
       else:
         if o1:
