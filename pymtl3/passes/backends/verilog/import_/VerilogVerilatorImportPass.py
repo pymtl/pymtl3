@@ -62,6 +62,13 @@ class VerilogVerilatorImportPass( BasePass ):
   #: Default value: ``False``
   verbose             = MetadataKey(bool)
 
+  #: Spend more time on compilation for faster simulation performance
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
+  fast                = MetadataKey(bool)
+
   #: Use Verilog ``line_trace`` output as the Python line_trace return value.
   #:
   #: Type: ``bool``; input
@@ -622,8 +629,7 @@ class VerilogVerilatorImportPass( BasePass ):
     d = {}
     s._volatile_configs = [
       'vl_line_trace', 'vl_coverage', 'vl_line_coverage', 'vl_toggle_coverage',
-      'vl_mk_dir', 'vl_enable_assert', 'vl_opt_level',
-      'vl_unroll_count', 'vl_unroll_stmts',
+      'vl_mk_dir', 'vl_enable_assert',
       'vl_W_lint', 'vl_W_style', 'vl_W_fatal', 'vl_Wno_list',
       'vl_xinit', 'vl_trace',
       'vl_trace_timescale', 'vl_trace_cycle_time',
