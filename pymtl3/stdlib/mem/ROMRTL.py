@@ -1,6 +1,6 @@
 """
 ========================================================================
-ROM.py
+ROMRTL.py
 ========================================================================
 Multiported ROM
 
@@ -10,7 +10,7 @@ Date   : June 18, 2020
 
 from pymtl3 import *
 
-class ROM( Component ):
+class ROMRTL( Component ):
 
   def construct( s, Type, num_entries, data, num_ports=1 ):
     assert len(data) == num_entries
