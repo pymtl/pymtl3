@@ -14,7 +14,7 @@ from pymtl3.passes.backends.verilog import *
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test_utils import TestVectorSimulator
 
-from ...testcases import CaseConnectArrayBits32FooIfcComp
+from ...testcases import CaseConnectArrayBits32FooIfcComp, CaseConnectInToWireComp
 
 
 def local_do_test( _m ):
@@ -69,6 +69,18 @@ def test_normal_queue( do_test ):
 
 def test_CaseConnectArrayBits32FooIfcComp():
   case = CaseConnectArrayBits32FooIfcComp
+  _m = case.DUT()
+  _m.elaborate()
+  _m.set_metadata( VerilogTranslationImportPass.enable, True )
+  _m.apply( VerilogPlaceholderPass() )
+  m = VerilogTranslationImportPass()( _m )
+  m.set_metadata( VerilogTBGenPass.case_name, 'sb' )
+  m.apply( VerilogTBGenPass() )
+  sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
+  sim.run_test()
+
+def test_CaseConnectInToWireComp():
+  case = CaseConnectInToWireComp
   _m = case.DUT()
   _m.elaborate()
   _m.set_metadata( VerilogTranslationImportPass.enable, True )
