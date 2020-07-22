@@ -13,6 +13,7 @@ import os
 import shutil
 import subprocess
 import sys
+import timeit
 from functools import reduce
 from importlib import reload
 from itertools import cycle
@@ -60,6 +61,13 @@ class VerilogVerilatorImportPass( BasePass ):
   #:
   #: Default value: ``False``
   verbose             = MetadataKey(bool)
+
+  #: Spend more time on compilation for faster simulation performance
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
+  fast                = MetadataKey(bool)
 
   #: Use Verilog ``line_trace`` output as the Python line_trace return value.
   #:
@@ -389,8 +397,10 @@ class VerilogVerilatorImportPass( BasePass ):
       try:
         ip_cfg.vprint(f"Verilating {ip_cfg.translated_top_module} with command:", 2)
         ip_cfg.vprint(f"{cmd}", 4)
+        t0 = timeit.default_timer()
         subprocess.check_output(
             cmd, stderr = subprocess.STDOUT, shell = True )
+        ip_cfg.vprint(f"verilate time: {timeit.default_timer()-t0}")
       except subprocess.CalledProcessError as e:
         succeeds = False
         err_msg = e.output if not isinstance(e.output, bytes) else \
@@ -474,12 +484,14 @@ class VerilogVerilatorImportPass( BasePass ):
       try:
         ip_cfg.vprint("Compiling shared library with command:", 2)
         ip_cfg.vprint(f"{cmd}", 4)
+        t0 = timeit.default_timer()
         subprocess.check_output(
             cmd,
             stderr = subprocess.STDOUT,
             shell = True,
             universal_newlines = True
         )
+        ip_cfg.vprint(f"shared library compilation time: {timeit.default_timer()-t0}")
       except subprocess.CalledProcessError as e:
         succeeds = False
         err_msg = e.output if not isinstance(e.output, bytes) else \
@@ -617,8 +629,7 @@ class VerilogVerilatorImportPass( BasePass ):
     d = {}
     s._volatile_configs = [
       'vl_line_trace', 'vl_coverage', 'vl_line_coverage', 'vl_toggle_coverage',
-      'vl_mk_dir', 'vl_enable_assert', 'vl_opt_level',
-      'vl_unroll_count', 'vl_unroll_stmts',
+      'vl_mk_dir', 'vl_enable_assert',
       'vl_W_lint', 'vl_W_style', 'vl_W_fatal', 'vl_Wno_list',
       'vl_xinit', 'vl_trace',
       'vl_trace_timescale', 'vl_trace_cycle_time',

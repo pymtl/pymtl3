@@ -14,7 +14,7 @@ from functools import reduce
 from hashlib import blake2b
 from math import ceil, log2
 
-import pymtl3.dsl as dsl
+from pymtl3 import dsl
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst
 
 from ..errors import RTLIRConversionError

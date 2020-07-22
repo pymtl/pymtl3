@@ -7,13 +7,12 @@ Centralized test case repository for the SystemVerilog backend.
 Author : Peitian Pan
 Date   : Dec 16, 2019
 """
-
 from os.path import dirname
 from textwrap import dedent
 
-import pymtl3.passes.rtlir.rtype.RTLIRDataType as rdt
 from pymtl3 import *
 from pymtl3.passes.backends.verilog import *
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.testcases import (
     Bits32Foo,
     Bits32x5Foo,

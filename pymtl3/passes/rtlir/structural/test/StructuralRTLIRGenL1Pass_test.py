@@ -4,10 +4,9 @@
 # Author : Peitian Pan
 # Date   : May 19, 2019
 """Test the generation of level 1 structural RTLIR."""
-
 from collections import defaultdict, deque
 
-import pymtl3.dsl as dsl
+from pymtl3 import dsl
 from pymtl3.datatypes import Bits1, Bits4, Bits32
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt

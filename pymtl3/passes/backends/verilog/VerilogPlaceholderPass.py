@@ -7,7 +7,6 @@
 #
 # Author : Peitian Pan
 # Date   : Jan 27, 2020
-
 import configparser
 import inspect
 import os
@@ -92,7 +91,9 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
   @staticmethod
   def get_placeholder_config():
-    from pymtl3.passes.backends.verilog.VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
+    from pymtl3.passes.backends.verilog.VerilogPlaceholderConfigs import (
+        VerilogPlaceholderConfigs,
+    )
     return VerilogPlaceholderConfigs
 
   # Override

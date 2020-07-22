@@ -4,12 +4,10 @@
 # Author : Peitian Pan
 # Date   : Oct 20, 2018
 """Provide L1 behavioral RTLIR generation pass."""
-
 import ast
 import copy
 
-import pymtl3.dsl as dsl
-from pymtl3 import MetadataKey
+from pymtl3 import MetadataKey, dsl
 from pymtl3.datatypes import (
     Bits,
     concat,

@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 12, 2019
 """Translate a PyMTL component hierarhcy into SystemVerilog source code."""
-
 import filecmp
 import os
 
@@ -111,8 +110,9 @@ class VerilogTranslationPass( BasePass ):
     s.traverse_hierarchy( top )
 
   def get_translation_config( s ):
-    from pymtl3.passes.backends.verilog.translation.VerilogTranslationConfigs \
-        import VerilogTranslationConfigs
+    from pymtl3.passes.backends.verilog.translation.VerilogTranslationConfigs import (
+        VerilogTranslationConfigs,
+    )
     return VerilogTranslationConfigs
 
   def gen_tr_cfgs( s, m ):
