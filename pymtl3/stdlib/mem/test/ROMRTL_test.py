@@ -7,6 +7,7 @@ from pymtl3.stdlib.test_utils import run_test_vector_sim
 
 from ..ROMRTL import CombinationalROMRTL, SequentialROMRTL
 
+
 def test_combinational_rom_rtl():
   run_test_vector_sim( CombinationalROMRTL(Bits32, 8, [8,7,6,5,4,3,2,1], num_ports=2), [
     ('raddr[0]', 'rdata[0]*', 'raddr[1]', 'rdata[1]*'),
