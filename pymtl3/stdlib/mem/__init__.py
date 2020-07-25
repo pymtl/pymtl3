@@ -9,3 +9,4 @@ from .mem_ifcs import (
     MemMinionIfcRTL,
 )
 from .MemMsg import MemMsgType, mk_mem_msg, mk_mem_req_msg, mk_mem_resp_msg
+from .ROMRTL import CombinationalROMRTL, SequentialROMRTL

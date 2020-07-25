@@ -263,6 +263,13 @@ def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True
       # Apply test inputs
       for i in in_ids:
         in_value = row[i]
+        if in_value == '?':
+          raise RunTestVectorSimError(f"""
+Invalid input value in row {row_num} ({row}:
+- '?' can only appear in output values (labeled with '*' in the port name specifications).
+
+Please double check the provided values.
+""" )
         t = types[i]
         if t: in_value = t( in_value )
         g = groups[i]
