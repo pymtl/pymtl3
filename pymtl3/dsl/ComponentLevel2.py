@@ -104,7 +104,8 @@ class ComponentLevel2( ComponentLevel1 ):
       _src = "".join( _src )
       _ast = ast.parse( compiled_re.sub( r'\2', _src ) )
 
-      name_info[ name ] = (False, _src, _line, inspect.getsourcefile( func ), _ast )
+      assert inspect.getsourcefile(cls) == inspect.getsourcefile(func)
+      name_info[ name ] = (False, _src, _line, inspect.getsourcefile( cls ), _ast )
       name_rd[ name ]   = _rd   = []
       name_wr[ name ]   = _wr   = []
       name_fc[ name ]   = _fc   = []
