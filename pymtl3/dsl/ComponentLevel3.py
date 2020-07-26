@@ -73,10 +73,25 @@ class ComponentLevel3( ComponentLevel2 ):
 
   # The following three methods should only be called when types are
   # already checked
+  #
+  # lamb can either be a string or a lambda function
   def _create_assign_lambda( s, o, lamb ):
     assert isinstance( o, Signal ), "You can only assign(//=) a lambda function to a Wire/InPort/OutPort."
 
-    srcs, line = inspect.getsourcelines( lamb )
+    # Preprocess cell contents variables
+    if isinstance( lamb, str ):
+      srcs, line = lamb, 0
+      lamb_file = inspect.getsourcefile( s.__class__ )
+      lamb_freevars = ( 's' )
+      lamb_globals  = {}
+      lamb_closure  = [ s ]
+    else:
+      srcs, line = inspect.getsourcelines( lamb )
+      lamb_file = inspect.getsourcefile( lamb )
+      assert inspect.getsourcefile( s.__class__ ) == lamb_file
+      lamb_freevars = lamb.__code__.co_freevars
+      lamb_globals  = lamb.__globals__
+      lamb_closure  = [ x.cell_contents for x in lamb.__closure__ ]
 
     src  = compiled_re.sub( r'\2', ''.join(srcs) ).lstrip(' ')
     root = ast.parse(src)
@@ -122,10 +137,10 @@ class ComponentLevel3( ComponentLevel2 ):
     # update block.
     #
     # def closure( lambda_closure ):
-    #   <FreeVarName1> = lambda_closure[<Idx1>].cell_contents
-    #   <FreeVarName2> = lambda_closure[<Idx2>].cell_contents
+    #   <FreeVarName1> = lambda_closure[<Idx1>]
+    #   <FreeVarName2> = lambda_closure[<Idx2>]
     #   ...
-    #   <FreeVarNameN> = lambda_closure[<IdxN>].cell_contents
+    #   <FreeVarNameN> = lambda_closure[<IdxN>]
     #   def _lambda__<lambda_blk_name>():
     #     # the assignment statement appears here
     #   return _lambda__<lambda_blk_name>
@@ -138,36 +153,31 @@ class ComponentLevel3( ComponentLevel2 ):
           body=[
             ast.Assign(
               targets=[ast.Name(id=var, ctx=ast.Store(), lineno=1+idx, col_offset=2)],
-              value=ast.Attribute(
-                value=ast.Subscript(
-                  value=ast.Name(
-                    id='lambda_closure',
-                    ctx=ast.Load(),
-                    lineno=1+idx, col_offset=5+len(var),
-                  ),
-                  slice=ast.Index(
-                    value=ast.Num(
-                      n=idx,
-                      lineno=1+idx, col_offset=19+len(var),
-                    ),
-                  ),
+              value=ast.Subscript(
+                value=ast.Name(
+                  id='lambda_closure',
                   ctx=ast.Load(),
                   lineno=1+idx, col_offset=5+len(var),
                 ),
-                attr='cell_contents',
+                slice=ast.Index(
+                  value=ast.Num(
+                    n=idx,
+                    lineno=1+idx, col_offset=19+len(var),
+                  ),
+                ),
                 ctx=ast.Load(),
                 lineno=1+idx, col_offset=5+len(var),
               ),
               lineno=1+idx, col_offset=2,
-            ) for idx, var in enumerate(lamb.__code__.co_freevars)
+            ) for idx, var in enumerate(lamb_freevars)
           ] + [ lambda_upblk ] + [
             ast.Return(
               value=ast.Name(
                 id=blk_name,
                 ctx=ast.Load(),
-                lineno=4+len(lamb.__code__.co_freevars), col_offset=9,
+                lineno=4+len(lamb_freevars), col_offset=9,
               ),
-              lineno=4+len(lamb.__code__.co_freevars), col_offset=2,
+              lineno=4+len(lamb_freevars), col_offset=2,
             )
           ],
           decorator_list=[],
@@ -182,8 +192,8 @@ class ComponentLevel3( ComponentLevel2 ):
     # the correct free variables in its closure.
 
     dict_local = {}
-    custom_exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
-    blk = dict_local[ 'closure' ]( lamb.__closure__ )
+    custom_exec( compile(new_root, blk_name, "exec"), lamb_globals, dict_local )
+    blk = dict_local[ 'closure' ]( lamb_closure )
 
     # Add the source code to linecache for the compiled function
 
@@ -203,7 +213,7 @@ class ComponentLevel3( ComponentLevel2 ):
     # register the AST/src of the generated block for elaborate or passes
     # to use.
     s._cache_func_meta( blk, is_update_ff=False,
-      given=("".join(srcs), lambda_upblk_module, line, inspect.getsourcefile( lamb )) )
+      given=("".join(srcs), lambda_upblk_module, line, lamb_file) )
     return blk
 
   def _connect_signal_const( s, o1, o2 ):
@@ -252,8 +262,14 @@ class ComponentLevel3( ComponentLevel2 ):
     s._dsl.connect_order.append( (o1, o2) )
 
   def _connect_signal_signal( s, o1, o2 ):
-    if not (o1._dsl.Type is o2._dsl.Type):
-      raise InvalidConnectionError( f"Bitwidth mismatch {o1._dsl.Type.__name__} != {o2._dsl.Type.__name__}\n"
+    T1, T2 = o1._dsl.Type, o2._dsl.Type
+    if T1 is not T2:
+      # connecting two Bitstructs/Bits -- adding a lambda block @=
+      if T1.nbits == T2.nbits:
+        s._create_assign_lambda( o1, f"s.{repr(o1)[2:]} //= lambda: s.{repr(o2)[2:]}" )
+        return
+
+      raise InvalidConnectionError( f"Bitwidth mismatch {T1.__name__} != {T2.__name__}\n"
                                     f"- In class {type(s)}\n- When connecting {o1} <-> {o2}\n"
                                     f"Suggestion: make sure both sides of connection have matching bitwidth")
 

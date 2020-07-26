@@ -944,6 +944,29 @@ def test_loop_with_temp_name_lambda():
   x.tick()
   assert x.out == [ 10, 11, 12, 13, 14 ]
 
+def test_connect_bits_to_bitstruct_creates_lambda():
+
+  @bitstruct
+  class T:
+    a: mk_bits(24)
+    b: Bits8
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.in_ = InPort(32)
+      s.out = OutPort(8)
+      s.wire = Wire( T )
+
+      s.wire //= s.in_
+      s.out //= s.wire.b
+
+  x = Top()
+  x.elaborate()
+  simple_sim_pass(x)
+  x.in_ = Bits32(0x12345678)
+  x.tick()
+  assert x.out == 0x78
+
 def test_invalid_in_out_loopback_at_self():
 
   class Comp( ComponentLevel3 ):
