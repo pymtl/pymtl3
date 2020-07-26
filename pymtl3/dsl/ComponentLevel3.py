@@ -81,14 +81,11 @@ class ComponentLevel3( ComponentLevel2 ):
     # Preprocess cell contents variables
     if isinstance( lamb, str ):
       srcs, line = lamb, 0
-      lamb_file = inspect.getsourcefile( s.__class__ )
       lamb_freevars = ( 's' )
       lamb_globals  = {}
       lamb_closure  = [ s ]
     else:
       srcs, line = inspect.getsourcelines( lamb )
-      lamb_file = inspect.getsourcefile( lamb )
-      assert inspect.getsourcefile( s.__class__ ) == lamb_file
       lamb_freevars = lamb.__code__.co_freevars
       lamb_globals  = lamb.__globals__
       lamb_closure  = [ x.cell_contents for x in lamb.__closure__ ]
@@ -212,8 +209,9 @@ class ComponentLevel3( ComponentLevel2 ):
     # So the cache call here is just to reuse the existing interface to
     # register the AST/src of the generated block for elaborate or passes
     # to use.
+    # Shunning: the file of the class should be the file of the compiled function
     s._cache_func_meta( blk, is_update_ff=False,
-      given=("".join(srcs), lambda_upblk_module, line, lamb_file) )
+      given=("".join(srcs), lambda_upblk_module, line, inspect.getsourcefile( s.__class__ )) )
     return blk
 
   def _connect_signal_const( s, o1, o2 ):
