@@ -967,6 +967,20 @@ def test_connect_bits_to_bitstruct_creates_lambda():
   x.tick()
   assert x.out == 0x78
 
+  class T0p( ComponentLevel3 ):
+    def construct( s ):
+      s.in_ = InPort( T )
+      s.out = OutPort(32)
+
+      s.out //= s.in_
+
+  x = T0p()
+  x.elaborate()
+  simple_sim_pass(x)
+  x.in_ = T(0x123456, 0x78)
+  x.tick()
+  assert x.out == 0x12345678
+
 def test_invalid_in_out_loopback_at_self():
 
   class Comp( ComponentLevel3 ):
