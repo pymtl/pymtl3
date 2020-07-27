@@ -2,6 +2,7 @@ from .arbiters import RoundRobinArbiter, RoundRobinArbiterEn
 from .arithmetics import (
     Adder,
     And,
+    Demux,
     EqComparator,
     Incrementer,
     LEComparator,

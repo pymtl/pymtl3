@@ -14,6 +14,24 @@ class Mux( Component ):
     def up_mux():
       s.out @= s.in_[ s.sel ]
 
+# N-output Demux
+
+class Demux( Component ):
+
+  def construct( s, Type, noutputs ):
+    assert noutputs > 0
+    s.in_ = InPort( Type )
+    s.out = [ OutPort( Type ) for _ in range(noutputs) ]
+    s.sel = InPort( max(1, clog2(noutputs)) ) # allow 1-input
+
+    default_value = Type()
+
+    @update
+    def up_mux():
+      for i in range(noutputs):
+        s.out[i] @= default_value
+      s.out[ s.sel ] @= s.in_
+
 # Rshifter
 
 class RightLogicalShifter( Component ):
