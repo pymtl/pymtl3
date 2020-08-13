@@ -58,6 +58,7 @@ from pymtl3.passes.testcases import (
     CaseDefaultBitsComp,
     CaseElifBranchComp,
     CaseFixedSizeSliceComp,
+    CaseForLoopEmptySequenceComp,
     CaseForRangeLowerUpperStepPassThroughComp,
     CaseHeteroCompArrayComp,
     CaseIfBasicComp,
@@ -1163,6 +1164,34 @@ CaseNestedIfComp = set_attributes( CaseNestedIfComp,
             end
             else
               out = in_1;
+          end
+
+        endmodule
+    '''
+)
+
+CaseForLoopEmptySequenceComp = set_attributes( CaseForLoopEmptySequenceComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = 4'd15;
+          for ( int unsigned i = 1'd0; i < 1'd0; i += 1'd1 )
+            out[2'(i)] = 1'd0;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT_noparam
+        (
+          input logic [0:0] clk,
+          output logic [3:0] out,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out = 4'd15;
+            for ( int unsigned i = 1'd0; i < 1'd0; i += 1'd1 )
+              out[2'(i)] = 1'd0;
           end
 
         endmodule

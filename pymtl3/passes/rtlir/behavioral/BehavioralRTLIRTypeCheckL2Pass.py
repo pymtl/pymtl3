@@ -177,8 +177,11 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     if hasattr(node.start, '_value') and hasattr(node.end, '_value') and \
        hasattr(node.step, '_value'):
-      lvar_nbits = s._get_nbits_from_value(
-          max(range(node.start._value, node.end._value, node.step._value)) )
+      loop_range = list(range(node.start._value, node.end._value, node.step._value))
+      if len(loop_range) > 0:
+        lvar_nbits = s._get_nbits_from_value(max(loop_range))
+      else:
+        lvar_nbits = s._get_nbits_from_value(max([node.start._value, node.end._value, node.step._value]))
       s.loopvar_is_explicit[node.var.name] = False
     else:
       lvar_nbits = max([x.Type.get_dtype().get_length() for x in [node.start, node.end, node.step]])
