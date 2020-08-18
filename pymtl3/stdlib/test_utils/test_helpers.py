@@ -301,7 +301,7 @@ run_test_vector_sim received an incorrect value!
 """
           raise RunTestVectorSimError( error_msg.format(
             row_number   = row_num,
-            port_name    = port_name,
+            port_name    = port_names[i],
             expected_msg = ref_value,
             actual_msg   = out_value
           ))
