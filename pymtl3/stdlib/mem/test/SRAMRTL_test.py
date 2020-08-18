@@ -5,7 +5,7 @@
 from pymtl3 import *
 from pymtl3.stdlib.test_utils import run_test_vector_sim
 
-from ..SRAMRTL import SRAM1rwRTL, SRAM1r1wRTL
+from ..SRAMRTL import SRAM1r1wRTL, SRAM1rwRTL
 
 
 def test_SRAM1rwRTL():
