@@ -4,12 +4,12 @@
 # Author : Peitian Pan
 # Date   : March 12, 2019
 """Translate a PyMTL component hierarhcy into SystemVerilog source code."""
-import filecmp
 import os
 
 from pymtl3 import MetadataKey
 from pymtl3.passes.BasePass import BasePass
 
+from ..util.utility import verilog_cmp
 from .VTranslator import VTranslator
 
 
@@ -160,7 +160,7 @@ class VerilogTranslationPass( BasePass ):
         # `is_same` is set if there exists a file that has the same filename as
         # `output_file`, and that file is the same as the temporary file
         if ( os.path.exists(output_file) ):
-          is_same = filecmp.cmp( temporary_file, output_file )
+          is_same = verilog_cmp( temporary_file, output_file )
 
         # Rename the temporary file to the output file
         os.rename( temporary_file, output_file )
@@ -189,7 +189,7 @@ class VerilogTranslationPass( BasePass ):
       # `is_same` is set if there exists a file that has the same filename as
       # `output_file`, and that file is the same as the temporary file
       if ( os.path.exists(output_file) ):
-        is_same = filecmp.cmp( temporary_file, output_file )
+        is_same = verilog_cmp( temporary_file, output_file )
 
       # Rename the temporary file to the output file
       os.rename( temporary_file, output_file )

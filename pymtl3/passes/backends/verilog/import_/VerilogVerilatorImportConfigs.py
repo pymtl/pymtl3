@@ -14,6 +14,7 @@ from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 from pymtl3.passes.PlaceholderConfigs import expand
 
+from ..util.utility import get_hash_of_lean_verilog
 from .VerilogVerilatorImportPass import VerilogVerilatorImportPass
 
 
@@ -188,6 +189,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     s.translated_source_file = m.get_metadata( tr_pass.translated_filename )
 
     ph_cfg = m.get_metadata( ph_pass.placeholder_config )
+    s.verilog_hash = get_hash_of_lean_verilog( s.translated_source_file )
     s.v_include = ph_cfg.v_include
     s.v_libs = ph_cfg.v_libs
     s.src_file = ph_cfg.src_file

@@ -628,6 +628,7 @@ class VerilogVerilatorImportPass( BasePass ):
   def serialize_cfg( s, ip_cfg ):
     d = {}
     s._volatile_configs = [
+      'verilog_hash',
       'vl_line_trace', 'vl_coverage', 'vl_line_coverage', 'vl_toggle_coverage',
       'vl_mk_dir', 'vl_enable_assert',
       'vl_W_lint', 'vl_W_style', 'vl_W_fatal', 'vl_Wno_list',
@@ -645,6 +646,8 @@ class VerilogVerilatorImportPass( BasePass ):
   def is_same_cfg( s, prev, new ):
     _volatile_configs = copy.copy(s._volatile_configs)
     _volatile_configs.append('ImportPassName')
+    if not all(cfg in prev and cfg in new for cfg in _volatile_configs):
+      return False
     return all(prev[cfg] == new[cfg] for cfg in _volatile_configs)
 
   #-------------------------------------------------------------------------

@@ -61,6 +61,26 @@ def get_file_hash( file_path ):
     hash_inst.update(string)
     return hash_inst.hexdigest()
 
+def get_lean_verilog_file( file_path ):
+  with open(file_path) as fd:
+    file_v = [x for x in fd.readlines() if x != '\n' and not x.startswith('//')]
+  return file_v
+
+def get_hash_of_lean_verilog( file_path ):
+  hash_inst = blake2b()
+  v = get_lean_verilog_file( file_path )
+  string = ''.join(v).encode( 'ascii' )
+  hash_inst.update(string)
+  return hash_inst.hexdigest()
+
+def verilog_cmp( tmp, out ):
+  tmp_v, out_v = get_lean_verilog_file(tmp), get_lean_verilog_file(out)
+  is_same_len = len(tmp_v) == len(out_v)
+  for i in range(len(out_v)):
+    if out_v[i] != tmp_v[i]:
+      return False
+  return is_same_len
+
 verilog_keyword = [
   # Verilog-1995 reserved keywords
   "always", "and", "assign", "begin", "buf", "bufif0", "bufif1", "case",
