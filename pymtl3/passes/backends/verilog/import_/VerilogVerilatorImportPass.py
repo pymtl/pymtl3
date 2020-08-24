@@ -1207,7 +1207,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       return ret
 
   def _gen_bits_decl( s, nbits ):
-    if nbits <= 256:
+    if nbits < 256:
       return f'Bits{nbits}'
     else:
       return f'mk_bits({nbits})'

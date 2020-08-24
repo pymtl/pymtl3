@@ -859,6 +859,23 @@ class CaseForRangeLowerUpperStepPassThroughComp:
       [   -1,    -2,  -1,  -2,  -1,   -1,    -2,  -1,  -2,  -1, ],
   ]
 
+class CaseForLoopEmptySequenceComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits4 )
+      @update
+      def upblk():
+        s.out @= Bits4( 0b1111 )
+        for i in range(0, 0):
+          s.out[i] @= Bits1( 0 )
+  TV_IN = _set()
+  TV_OUT = _check( 'out', Bits4, 0 )
+  TV =\
+  [
+      [0xF],
+      [0xF],
+  ]
+
 class CaseIfExpBothImplicitComp:
   class DUT( Component ):
     def construct( s ):
