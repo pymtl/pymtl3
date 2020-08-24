@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 12, 2019
 """Translate a PyMTL component hierarhcy into SystemVerilog source code."""
-import filecmp
 import os
 
 from pymtl3 import MetadataKey
