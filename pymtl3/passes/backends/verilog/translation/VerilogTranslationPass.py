@@ -9,6 +9,7 @@ import os
 from pymtl3 import MetadataKey
 from pymtl3.passes.BasePass import BasePass
 
+from ..util.utility import verilog_cmp
 from .VTranslator import VTranslator
 
 
@@ -159,7 +160,7 @@ class VerilogTranslationPass( BasePass ):
         # `is_same` is set if there exists a file that has the same filename as
         # `output_file`, and that file is the same as the temporary file
         if ( os.path.exists(output_file) ):
-          is_same = s.verilog_cmp( temporary_file, output_file )
+          is_same = verilog_cmp( temporary_file, output_file )
 
         # Rename the temporary file to the output file
         os.rename( temporary_file, output_file )
@@ -188,7 +189,7 @@ class VerilogTranslationPass( BasePass ):
       # `is_same` is set if there exists a file that has the same filename as
       # `output_file`, and that file is the same as the temporary file
       if ( os.path.exists(output_file) ):
-        is_same = s.verilog_cmp( temporary_file, output_file )
+        is_same = verilog_cmp( temporary_file, output_file )
 
       # Rename the temporary file to the output file
       os.rename( temporary_file, output_file )
@@ -203,14 +204,3 @@ class VerilogTranslationPass( BasePass ):
     else:
       for child in m.get_child_components(repr):
         s.traverse_hierarchy( child )
-
-  def verilog_cmp( s, tmp, out ):
-    with open(tmp) as fd:
-      tmp_v = [x for x in fd.readlines() if x != '\n' and not x.startswith('//')]
-    with open(out) as fd:
-      out_v = [x for x in fd.readlines() if x != '\n' and not x.startswith('//')]
-    is_same_len = len(tmp_v) == len(out_v)
-    for i in range(len(out_v)):
-      if out_v[i] != tmp_v[i]:
-        return False
-    return is_same_len
