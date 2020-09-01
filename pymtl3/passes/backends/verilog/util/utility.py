@@ -76,9 +76,10 @@ def get_hash_of_lean_verilog( file_path ):
 def verilog_cmp( tmp, out ):
   tmp_v, out_v = get_lean_verilog_file(tmp), get_lean_verilog_file(out)
   is_same_len = len(tmp_v) == len(out_v)
-  for i in range(len(out_v)):
-    if out_v[i] != tmp_v[i]:
-      return False
+  if is_same_len:
+    for i in range(len(out_v)):
+      if out_v[i] != tmp_v[i]:
+        return False
   return is_same_len
 
 verilog_keyword = [
