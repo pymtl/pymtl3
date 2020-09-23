@@ -31,6 +31,8 @@ class VerilogTBGenPass( BasePass ):
   #: Default value: ""
   case_name = MetadataKey(str)
 
+  reset_low_high = MetadataKey(bool)
+
   vtbgen_hooks = MetadataKey(list)
 
   def __call__( self, top ):
@@ -119,7 +121,7 @@ class VerilogTBGenPass( BasePass ):
           signal_decls      = ";\n  ".join(signal_decls), # logic [31:0] xxx [0:3]; -- unpacked array
           task_signal_decls = ",\n    ".join(task_signal_decls), # input logic [31:0] in__x;input logic [31:0] ref_y; -- unpacked ports
           task_assign_strs  = ";\n    ".join(task_assign_strs), # x = in__x; -- unpacked
-          task_check_strs   = ";\n    ".join(task_check_strs), # ERR( lineno, 'x', x, ref_x ) -- unpacked
+          task_check_strs   = ";\n      ".join(task_check_strs), # ERR( lineno, 'x', x, ref_x ) -- unpacked
           dut_name          = dut_name,
           dut_clk_decl      = '.clk(clk)' if x._ph_cfg.has_clk else '',
           dut_reset_decl    = '.reset(reset)' if x._ph_cfg.has_reset else '',
@@ -132,13 +134,27 @@ class VerilogTBGenPass( BasePass ):
 
   @staticmethod
   def gen_hook_func( top, x, ports, case_file ):
-    port_srcs = [ f"'h{{str(x.{p}.to_bits())}}" for p in ports ]
+    port_srcs = ",".join( [ f"'h{{str(x.{p}.to_bits())}}" for p in ports ] )
 
-    src =  """
+    src = f"""
 def dump_case():
-  if top.sim_cycle_count() > 2: # skip the 2 cycles of reset
-    print(f"`T({});", file=case_file, flush=True)
-""".format( ",".join(port_srcs) )
+  cycle_count = top.sim_cycle_count()
+  if cycle_count > 2: # skip the 2 cycles of reset
+    print(f"`T({port_srcs});", file=case_file, flush=True)
+  else:
+    if cycle_count == 0:
+      print(f"reset = 1'b1; // TODO reset active low/high", file=case_file)
+      print(f"#(`CYCLE_TIME/2);", file=case_file)
+      print(f"#`VTB_INPUT_DELAY;")
+      print(f"reset = 1'b1; // TODO reset active low/high", file=case_file, flush=True)
+    elif cycle_count == 1:
+      print(f"`T({port_srcs});", file=case_file, flush=True)
+    elif cycle_count == 2:
+      print(f"`T({port_srcs});", file=case_file)
+      print(f"reset = 1'b0;'", file=case_file, flush=True)
+
+      top.sim_cycle_count == 2
+"""
     _locals = {}
     custom_exec( py.code.Source(src).compile(), {'top': top, 'x': x, 'case_file': case_file}, _locals)
     return _locals['dump_case']

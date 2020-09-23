@@ -47,7 +47,8 @@ module {harness_name};
   begin
     {task_assign_strs};
     #`INTRA_CYCLE_TIME;
-    {task_check_strs};
+    if (cycle_count >= 2) begin
+      {task_check_strs};
     #(`CYCLE_TIME-`INTRA_CYCLE_TIME);
     cycle_count += 1;
   end
@@ -75,17 +76,6 @@ module {harness_name};
 
     cycle_count = 0;
     clk   = 1'b0; // NEED TO DO THIS TO HAVE FALLING EDGE AT TIME 0
-    reset = 1'b1; // TODO reset active low/high
-    #(`CYCLE_TIME/2);
-
-    // Now we are talking
-    #`VTB_INPUT_DELAY;
-    #`CYCLE_TIME;
-    cycle_count = 1;
-    #`CYCLE_TIME;
-    cycle_count = 2;
-    // 2 cycles plus input delay
-    reset = 1'b0;
 
     `include "{cases_file_name}"
 
