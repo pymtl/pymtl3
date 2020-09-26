@@ -49,6 +49,7 @@ module {harness_name};
     #`INTRA_CYCLE_TIME;
     if (cycle_count >= 2) begin
       {task_check_strs};
+    end
     #(`CYCLE_TIME-`INTRA_CYCLE_TIME);
     cycle_count += 1;
   end

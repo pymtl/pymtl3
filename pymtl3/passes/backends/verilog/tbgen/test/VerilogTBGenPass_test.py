@@ -9,7 +9,7 @@ import pytest
 
 from pymtl3 import DefaultPassGroup
 from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
-from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
+from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect, update_ff
 from pymtl3.passes.backends.verilog import *
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test_utils import TestVectorSimulator
@@ -78,3 +78,30 @@ def test_CaseConnectArrayBits32FooIfcComp():
   m.apply( VerilogTBGenPass() )
   sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
   sim.run_test()
+
+def test_input_port_constant():
+  class TUT(Component):
+    def construct( s ):
+      s.reset_var = InPort(32)
+      s.out = OutPort(32)
+
+      @update_ff
+      def ff():
+        if s.reset:
+          s.out <<= s.reset_var
+
+  class TH(Component):
+    def construct( s ):
+      s.dut = TUT()
+      s.dut.reset_var //= 42
+
+  th = TH()
+  th.elaborate()
+  th.dut.set_metadata( VerilogTranslationImportPass.enable, True )
+  th.apply( VerilogTranslationImportPass() )
+  th.dut.set_metadata( VerilogTBGenPass.case_name, 'sb' )
+  th.apply( VerilogTBGenPass() )
+
+  th.apply( DefaultPassGroup() )
+  th.sim_reset()
+  th.sim_tick()

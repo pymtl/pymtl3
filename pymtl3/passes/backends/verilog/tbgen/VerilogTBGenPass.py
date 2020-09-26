@@ -139,19 +139,18 @@ class VerilogTBGenPass( BasePass ):
     src = f"""
 def dump_case():
   cycle_count = top.sim_cycle_count()
-  if cycle_count > 2: # skip the 2 cycles of reset
+  if cycle_count > 2: # after reset
     print(f"`T({port_srcs});", file=case_file, flush=True)
   else:
     if cycle_count == 0:
       print(f"reset = 1'b1; // TODO reset active low/high", file=case_file)
       print(f"#(`CYCLE_TIME/2);", file=case_file)
-      print(f"#`VTB_INPUT_DELAY;")
-      print(f"reset = 1'b1; // TODO reset active low/high", file=case_file, flush=True)
+      print(f"#`VTB_INPUT_DELAY;", file=case_file, flush=True)
     elif cycle_count == 1:
       print(f"`T({port_srcs});", file=case_file, flush=True)
     elif cycle_count == 2:
       print(f"`T({port_srcs});", file=case_file)
-      print(f"reset = 1'b0;'", file=case_file, flush=True)
+      print(f"reset = 1'b0;", file=case_file, flush=True)
 
       top.sim_cycle_count == 2
 """
