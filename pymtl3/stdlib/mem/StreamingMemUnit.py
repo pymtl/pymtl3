@@ -15,7 +15,7 @@
 # 8. Destination base address
 # 9. Destination ack address
 #
-# The padding register indicates the sides for which the SMU pads zeros
+# The padding register indicates the sides to which the SMU pads zeros
 # LSB 0: west (left column)
 #     1: east (right column)
 #     2: north (top row)
@@ -160,16 +160,17 @@ class StreamingMemUnitCtrl( Component ):
 
 class StreamingMemUnitDpath( Component ):
 
-  def construct( s, DataType, AddrType, StrideType, CountType ):
+  def construct( s, DataType, AddrType, StrideType, CountType, OpaqueType ):
 
     data_width   = DataType.nbits
     addr_width   = AddrType.nbits
     stride_width = StrideType.nbits
     count_width  = CountType.nbits
+    opaque_nbits = OpaqueType.nbits
 
     CfgReq, CfgResp = mk_xcel_msg( addr_width, data_width )
-    RemoteReq, RemoteResp = mk_mem_msg( 1, addr_width, data_width )
-    LocalReq, LocalResp = mk_mem_msg( 1, addr_width, data_width )
+    RemoteReq, RemoteResp = mk_mem_msg( opaque_nbits, addr_width, data_width )
+    LocalReq, LocalResp = mk_mem_msg( opaque_nbits, addr_width, data_width )
 
     #---------------------------------------------------------------------
     # Interfaces
@@ -362,6 +363,10 @@ class StreamingMemUnitDpath( Component ):
         s.local_addr_n @= s.local_addr_n + 4
 
     #---------------------------------------------------------------------
+    # Padding
+    #---------------------------------------------------------------------
+
+    #---------------------------------------------------------------------
     # Msg
     #---------------------------------------------------------------------
 
@@ -435,7 +440,7 @@ class StreamingMemUnit( Component ):
     return ['matrix-gather']
 
   def construct( s, DataType=Bits32, AddrType=Bits20, StrideType=Bits10,
-                 CountType=Bits10, mode='matrix-gather' ):
+                 CountType=Bits10, OpaqueType=Bits5, mode='matrix-gather' ):
 
     #---------------------------------------------------------------------
     # Sanity checks
@@ -453,10 +458,11 @@ class StreamingMemUnit( Component ):
     data_nbits = DataType.nbits
     stride_nbits = StrideType.nbits
     count_nbits = CountType.nbits
+    opaque_nbits = OpaqueType.nbits
 
     CfgReq, CfgResp = mk_xcel_msg( addr_nbits, data_nbits )
-    RemoteReq, RemoteResp = mk_mem_msg( 1, addr_nbits, data_nbits )
-    LocalReq, LocalResp = mk_mem_msg( 1, addr_nbits, data_nbits )
+    RemoteReq, RemoteResp = mk_mem_msg( opaque_nbits, addr_nbits, data_nbits )
+    LocalReq, LocalResp = mk_mem_msg( opaque_nbits, addr_nbits, data_nbits )
 
     # Configuration interface
     s.cfg = XcelMinionIfcRTL( CfgReq, CfgResp )
@@ -472,7 +478,8 @@ class StreamingMemUnit( Component ):
     #---------------------------------------------------------------------
 
     s.ctrl  = StreamingMemUnitCtrl()
-    s.dpath = StreamingMemUnitDpath( DataType, AddrType, StrideType, CountType )
+    s.dpath = StreamingMemUnitDpath(
+                  DataType, AddrType, StrideType, CountType, OpaqueType )
 
     connect_pairs(
         s.ctrl.cfg_req_en,      s.cfg.req.en,

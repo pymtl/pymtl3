@@ -17,7 +17,7 @@ from ..StreamingMemUnit import StreamingMemUnit
 
 class TestHarness( Component ):
 
-  def construct( s, DataType, AddrType, StrideType, CountType,
+  def construct( s, DataType, AddrType, StrideType, CountType, OpaqueType,
                  src_base_addr, src_x_stride, src_x_count,
                  src_y_stride, src_y_count, dst_base_addr, dst_ack_addr,
                  sink_msgs, mem_image ):
@@ -27,7 +27,7 @@ class TestHarness( Component ):
     s.addr_nbits = AddrType.nbits
     ReqMsgType, RespMsgType = mk_mem_msg( 1, AddrType.nbits, DataType.nbits )
 
-    s.dut = StreamingMemUnit( DataType, AddrType, StrideType, CountType )
+    s.dut = StreamingMemUnit( DataType, AddrType, StrideType, CountType, OpaqueType )
     s.mem = MagicMemoryCL( 1, [(ReqMsgType, RespMsgType)] )
     s.host = StreamingMemUnitHost( DataType, AddrType, StrideType, CountType,
                                    src_base_addr, src_x_stride,
@@ -166,7 +166,7 @@ def test_simple_byte_increment( cmdline_opts ):
 
 def test_simple_word_increment( cmdline_opts ):
   O, D, A, S, C = Bits1, Bits32, Bits20, Bits10, Bits10
-  Types = [ D, A, S, C ]
+  Types = [ D, A, S, C, O ]
 
   src_base_addr = 0
   src_x_stride = 4
