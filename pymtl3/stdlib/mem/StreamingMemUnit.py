@@ -3,16 +3,23 @@
 #=========================================================================
 # Configurable DMA unit that streams data from source to destination.
 #
-# Registers (currently supporting square gather operation):
+# Registers (currently supporting matrix gather operation):
 # 0. Go
 # 1. Status
-# 2. Source base address
-# 3. Source x address stride
-# 4. Source x access count
-# 5. Source y address stride
-# 6. Source y access count
-# 7. Destination base address
-# 8. Destination ack address
+# 2. Padding
+# 3. Source base address
+# 4. Source x address stride
+# 5. Source x access count
+# 6. Source y address stride
+# 7. Source y access count
+# 8. Destination base address
+# 9. Destination ack address
+#
+# The padding register indicates the sides for which the SMU pads zeros
+# LSB 0: west (left column)
+#     1: east (right column)
+#     2: north (top row)
+# MSB 3: south (bottom row)
 #
 # Author : Peitian Pan
 # Date   : Oct 28, 2020
@@ -23,16 +30,24 @@ from pymtl3.stdlib.ifcs import mk_xcel_msg, XcelMinionIfcRTL
 from pymtl3.stdlib.mem import mk_mem_msg, MemMasterIfcRTL
 from pymtl3.stdlib.connects import connect_pairs
 
+# Padding Directions
+W = 0
+E = 1
+N = 2
+S = 3
+
+# Registers
 GO              = 0
 STATUS          = 1
-SRC_BASE_ADDR   = 2
-SRC_X_STRIDE    = 3
-SRC_X_COUNT     = 4
-SRC_Y_STRIDE    = 5
-SRC_Y_COUNT     = 6
-DST_BASE_ADDR   = 7
-DST_ACK_ADDR    = 8
-NUM_REGISTERS   = 9
+PADDING         = 2
+SRC_BASE_ADDR   = 3
+SRC_X_STRIDE    = 4
+SRC_X_COUNT     = 5
+SRC_Y_STRIDE    = 6
+SRC_Y_COUNT     = 7
+DST_BASE_ADDR   = 8
+DST_ACK_ADDR    = 9
+NUM_REGISTERS   = 10
 
 #=========================================================================
 # Control unit
@@ -185,6 +200,7 @@ class StreamingMemUnitDpath( Component ):
     # NUM_REGISTERS   = 10
     s.go_r              = RegEnRst( Bits1 )
     s.status_r          = RegEnRst( Bits1 )
+    s.padding_r         = RegEnRst( Bits4 )
     s.src_base_addr_r   = RegEnRst( AddrType )
     s.src_x_stride_r    = RegEnRst( StrideType )
     s.src_x_count_r     = RegEnRst( CountType )
@@ -213,6 +229,8 @@ class StreamingMemUnitDpath( Component ):
         s.register_read_n @= zext( s.go_r.out, data_width )
       elif s.cfg_read_addr_r == STATUS:
         s.register_read_n @= zext( s.status_r.out, data_width )
+      elif s.cfg_read_addr_r == PADDING:
+        s.register_read_n @= zext( s.padding_r.out, data_width )
       elif s.cfg_read_addr_r == SRC_BASE_ADDR:
         s.register_read_n @= zext( s.src_base_addr_r.out, data_width )
       elif s.cfg_read_addr_r == SRC_X_STRIDE:
@@ -232,6 +250,7 @@ class StreamingMemUnitDpath( Component ):
     def smu_dpath_register_in_ports():
       s.go_r.in_              @= s.cfg_req_msg.data[0:1]
       s.status_r.in_          @= s.cfg_req_msg.data[0:1]
+      s.padding_r.in_         @= s.cfg_req_msg.data[0:4]
       s.src_base_addr_r.in_   @= s.cfg_req_msg.data[0:addr_width]
       s.src_x_stride_r.in_    @= s.cfg_req_msg.data[0:stride_width]
       s.src_x_count_r.in_     @= s.cfg_req_msg.data[0:count_width]
@@ -242,6 +261,7 @@ class StreamingMemUnitDpath( Component ):
 
       s.go_r.en              @= s.cfg_go & (s.cfg_req_msg.addr == GO)
       s.status_r.en          @= s.cfg_go & (s.cfg_req_msg.addr == STATUS)
+      s.padding_r.en         @= s.cfg_go & (s.cfg_req_msg.addr == PADDING)
       s.src_base_addr_r.en   @= s.cfg_go & (s.cfg_req_msg.addr == SRC_BASE_ADDR)
       s.src_x_stride_r.en    @= s.cfg_go & (s.cfg_req_msg.addr == SRC_X_STRIDE)
       s.src_x_count_r.en     @= s.cfg_go & (s.cfg_req_msg.addr == SRC_X_COUNT)
@@ -356,7 +376,7 @@ class StreamingMemUnitDpath( Component ):
       s.remote_req_msg.data @= 0
       s.remote_req_msg.addr @= s.remote_addr
 
-      # TODO: currently only supports square-gather mode
+      # TODO: currently only supports matrix-gather mode
       s.local_req_msg.type_ @= 1
       s.local_req_msg.opaque @= 0
       s.local_req_msg.len @= 0
@@ -412,10 +432,10 @@ class StreamingMemUnit( Component ):
 
   @staticmethod
   def get_available_modes():
-    return ['square-gather']
+    return ['matrix-gather']
 
   def construct( s, DataType=Bits32, AddrType=Bits20, StrideType=Bits10,
-                 CountType=Bits10, mode='square-gather' ):
+                 CountType=Bits10, mode='matrix-gather' ):
 
     #---------------------------------------------------------------------
     # Sanity checks

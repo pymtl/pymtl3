@@ -20,7 +20,9 @@ class TestHarness( Component ):
   def construct( s, DataType, AddrType, StrideType, CountType,
                  src_base_addr, src_x_stride, src_x_count,
                  src_y_stride, src_y_count, dst_base_addr, dst_ack_addr,
-                 sink_msgs ):
+                 sink_msgs, mem_image ):
+
+    s.mem_image = mem_image
 
     s.addr_nbits = AddrType.nbits
     ReqMsgType, RespMsgType = mk_mem_msg( 1, AddrType.nbits, DataType.nbits )
@@ -42,7 +44,7 @@ class TestHarness( Component ):
 
   def load_mem_image( s ):
     for i in range(2**s.addr_nbits-1):
-      s.mem.write_mem( i, [i%256] )
+      s.mem.write_mem( i, [s.mem_image[i]] )
 
   def done( s ):
     return s.local_req_sink.done() and s.local_resp_src.done()
@@ -50,15 +52,35 @@ class TestHarness( Component ):
   def line_trace( s ):
     return s.dut.line_trace() + " || " + s.local_req_sink.line_trace()
 
-def get_mem_word( addr ):
+def get_mem_word( image, addr ):
+  assert addr % 4 == 0, "address has to be word-aligned!"
+  byte_arr = image[addr:addr+4]
   data = 0
-  for i in range(4):
+  for i in range(3, -1, -1):
     data = data << 8
-    data += ( addr + 4-1-i ) % 256
+    data = data | byte_arr[i]
   return Bits32(data)
 
-def gen_sink_msgs( O, A, D, s_base, x_stride, x_count, y_stride, y_count,
-                   d_base, d_ack_addr ):
+def gen_mem_image( pattern, *args ):
+  image = []
+  addr_nbits = args[0]
+  if pattern == 'word-increment':
+    num_words = 2**(addr_nbits-2)
+    for word_idx in range(num_words):
+      word = word_idx
+      for byte_idx in range(4):
+        byte = word & 0xFF
+        word = word >> 8
+        image.append(byte)
+  elif pattern == 'byte-increment':
+    for i in range(2**addr_nbits):
+      image.append( i % 256 )
+  else:
+    raise NotImplementedError
+  return image
+
+def gen_sink_msgs( image, O, A, D, s_base, x_stride, x_count, y_stride,
+                   y_count, d_base, d_ack_addr ):
   msgs = []
   dst_addr = d_base
   MsgType, _ = mk_mem_msg( O, A, D )
@@ -67,7 +89,7 @@ def gen_sink_msgs( O, A, D, s_base, x_stride, x_count, y_stride, y_count,
   for y in range(y_count):
     for x in range(x_count):
       addr = row_addr + x * x_stride
-      word = get_mem_word( addr )
+      word = get_mem_word( image, addr )
 
       msg = MsgType()
       msg.type_  = Bits4(1)
@@ -117,7 +139,7 @@ def run_test( th, cmdline_opts ):
 
   assert curT < maxT, "Time out!"
 
-def test_simple( cmdline_opts ):
+def test_simple_byte_increment( cmdline_opts ):
   O, D, A, S, C = Bits1, Bits32, Bits20, Bits10, Bits10
   Types = [ D, A, S, C ]
 
@@ -132,9 +154,37 @@ def test_simple( cmdline_opts ):
   Params = [src_base_addr, src_x_stride, src_x_count,
             src_y_stride, src_y_count, dst_base_addr, dst_ack_addr]
 
-  sink_msgs = gen_sink_msgs( O.nbits, A.nbits, D.nbits, src_base_addr,
+  image = gen_mem_image( 'byte-increment', A.nbits )
+
+  sink_msgs = gen_sink_msgs( image,
+                             O.nbits, A.nbits, D.nbits, src_base_addr,
                              src_x_stride, src_x_count,
                              src_y_stride, src_y_count,
                              dst_base_addr, dst_ack_addr )
 
-  run_test( TestHarness( *Types, *Params, sink_msgs ), cmdline_opts )
+  run_test( TestHarness( *Types, *Params, sink_msgs, image ), cmdline_opts )
+
+def test_simple_word_increment( cmdline_opts ):
+  O, D, A, S, C = Bits1, Bits32, Bits20, Bits10, Bits10
+  Types = [ D, A, S, C ]
+
+  src_base_addr = 0
+  src_x_stride = 4
+  src_x_count = 16
+  src_y_stride = 64*4
+  src_y_count = 16
+  dst_base_addr = 0
+  dst_ack_addr = 2048
+
+  Params = [src_base_addr, src_x_stride, src_x_count,
+            src_y_stride, src_y_count, dst_base_addr, dst_ack_addr]
+
+  image = gen_mem_image( 'word-increment', A.nbits )
+
+  sink_msgs = gen_sink_msgs( image,
+                             O.nbits, A.nbits, D.nbits, src_base_addr,
+                             src_x_stride, src_x_count,
+                             src_y_stride, src_y_count,
+                             dst_base_addr, dst_ack_addr )
+
+  run_test( TestHarness( *Types, *Params, sink_msgs, image ), cmdline_opts )
