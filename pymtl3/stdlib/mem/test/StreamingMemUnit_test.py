@@ -25,7 +25,8 @@ class TestHarness( Component ):
     s.mem_image = mem_image
 
     s.addr_nbits = AddrType.nbits
-    ReqMsgType, RespMsgType = mk_mem_msg( 1, AddrType.nbits, DataType.nbits )
+    s.opaque_nbits = OpaqueType.nbits
+    ReqMsgType, RespMsgType = mk_mem_msg( s.opaque_nbits, AddrType.nbits, DataType.nbits )
 
     s.dut = StreamingMemUnit( DataType, AddrType, StrideType, CountType, OpaqueType )
     s.mem = MagicMemoryCL( 1, [(ReqMsgType, RespMsgType)] )
@@ -84,8 +85,10 @@ def gen_sink_msgs( image, O, A, D, s_base, x_stride, x_count, y_stride,
   msgs = []
   dst_addr = d_base
   MsgType, _ = mk_mem_msg( O, A, D )
+  MaxOpaque = 2**O
 
   row_addr = s_base
+  cnt = 0
   for y in range(y_count):
     for x in range(x_count):
       addr = row_addr + x * x_stride
@@ -93,13 +96,14 @@ def gen_sink_msgs( image, O, A, D, s_base, x_stride, x_count, y_stride,
 
       msg = MsgType()
       msg.type_  = Bits4(1)
-      msg.opaque = mk_bits(O)(0)
+      msg.opaque = mk_bits(O)(cnt % MaxOpaque)
       msg.addr   = mk_bits(A)(dst_addr)
       msg.len    = mk_bits(clog2(D>>3))(0)
       msg.data   = mk_bits(D)(word)
 
       msgs.append( msg )
       dst_addr += 4
+      cnt += 1
 
     row_addr += y_stride
 
@@ -139,9 +143,9 @@ def run_test( th, cmdline_opts ):
 
   assert curT < maxT, "Time out!"
 
-def test_simple_byte_increment( cmdline_opts ):
-  O, D, A, S, C = Bits1, Bits32, Bits20, Bits10, Bits10
-  Types = [ D, A, S, C ]
+def test_simple_byte_increment_no_padding( cmdline_opts ):
+  O, D, A, S, C = Bits5, Bits32, Bits20, Bits10, Bits10
+  Types = [ D, A, S, C, O ]
 
   src_base_addr = 0
   src_x_stride = 4
@@ -164,8 +168,8 @@ def test_simple_byte_increment( cmdline_opts ):
 
   run_test( TestHarness( *Types, *Params, sink_msgs, image ), cmdline_opts )
 
-def test_simple_word_increment( cmdline_opts ):
-  O, D, A, S, C = Bits1, Bits32, Bits20, Bits10, Bits10
+def test_simple_word_increment_no_padding( cmdline_opts ):
+  O, D, A, S, C = Bits5, Bits32, Bits20, Bits10, Bits10
   Types = [ D, A, S, C, O ]
 
   src_base_addr = 0

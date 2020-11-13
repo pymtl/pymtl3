@@ -86,34 +86,34 @@ class StreamingMemUnitHost( Component ):
       s.cfg.req.msg.type_ @= 1
       s.cfg.req.msg.addr @= 0
       s.cfg.req.msg.data @= 0
+      s.cfg.req.en @= 0
+
+      if s.state_r != IDLE:
+        s.cfg.req.en @= s.cfg.req.rdy
 
       if s.state_r == WR_SRC_BASE_ADDR:
-        s.cfg.req.en @= s.cfg.req.rdy
         s.cfg.req.msg.addr @= SRC_BASE_ADDR
         s.cfg.req.msg.data @= src_base_addr
       elif s.state_r == WR_SRC_X_STRIDE:
-        s.cfg.req.en @= s.cfg.req.rdy
         s.cfg.req.msg.addr @= SRC_X_STRIDE
         s.cfg.req.msg.data @= src_x_stride
       elif s.state_r == WR_SRC_X_COUNT:
-        s.cfg.req.en @= s.cfg.req.rdy
         s.cfg.req.msg.addr @= SRC_X_COUNT
         s.cfg.req.msg.data @= src_x_count
       elif s.state_r == WR_SRC_Y_STRIDE:
-        s.cfg.req.en @= s.cfg.req.rdy
         s.cfg.req.msg.addr @= SRC_Y_STRIDE
         s.cfg.req.msg.data @= src_y_stride
       elif s.state_r == WR_SRC_Y_COUNT:
-        s.cfg.req.en @= s.cfg.req.rdy
         s.cfg.req.msg.addr @= SRC_Y_COUNT
         s.cfg.req.msg.data @= src_y_count
       elif s.state_r == WR_DST_BASE_ADDR:
-        s.cfg.req.en @= s.cfg.req.rdy
         s.cfg.req.msg.addr @= DST_BASE_ADDR
         s.cfg.req.msg.data @= dst_base_addr
       elif s.state_r == WR_DST_ACK_ADDR:
-        s.cfg.req.en @= s.cfg.req.rdy
         s.cfg.req.msg.addr @= DST_ACK_ADDR
         s.cfg.req.msg.data @= dst_ack_addr
+      elif s.state_r == WR_GO:
+        s.cfg.req.msg.addr @= GO
+        s.cfg.req.msg.data @= 1
 
       s.cfg.resp.rdy @= 1
