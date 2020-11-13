@@ -21,21 +21,24 @@ DST_ACK_ADDR    = 9
 NUM_REGISTERS   = 10
 
 # SMU host states
-IDLE = 0
-WR_SRC_BASE_ADDR = 1
-WR_SRC_X_STRIDE  = 2
-WR_SRC_X_COUNT   = 3
-WR_SRC_Y_STRIDE  = 4
-WR_SRC_Y_COUNT   = 5
-WR_DST_BASE_ADDR = 6
-WR_DST_ACK_ADDR  = 7
-WR_GO            = 8
+IDLE             = 0
+WR_PADDING       = 1
+WR_SRC_BASE_ADDR = 2
+WR_SRC_X_STRIDE  = 3
+WR_SRC_X_COUNT   = 4
+WR_SRC_Y_STRIDE  = 5
+WR_SRC_Y_COUNT   = 6
+WR_DST_BASE_ADDR = 7
+WR_DST_ACK_ADDR  = 8
+WR_GO            = 9
 
 class StreamingMemUnitHost( Component ):
 
   def construct( s, DataType, AddrType, StrideType, CountType,
-                 src_base_addr, src_x_stride, src_x_count,
+                 padding, src_base_addr, src_x_stride, src_x_count,
                  src_y_stride, src_y_count, dst_base_addr, dst_ack_addr ):
+
+    data_width = DataType.nbits
 
     CfgReq, CfgResp = mk_xcel_msg( AddrType.nbits, DataType.nbits )
 
@@ -57,6 +60,9 @@ class StreamingMemUnitHost( Component ):
       if s.state_r == IDLE:
         s.state_n @= WR_SRC_BASE_ADDR
       elif s.state_r == WR_SRC_BASE_ADDR:
+        if s.cfg.req.en:
+          s.state_n @= WR_PADDING
+      elif s.state_r == WR_PADDING:
         if s.cfg.req.en:
           s.state_n @= WR_SRC_X_STRIDE
       elif s.state_r == WR_SRC_X_STRIDE:
@@ -94,6 +100,9 @@ class StreamingMemUnitHost( Component ):
       if s.state_r == WR_SRC_BASE_ADDR:
         s.cfg.req.msg.addr @= SRC_BASE_ADDR
         s.cfg.req.msg.data @= src_base_addr
+      elif s.state_r == WR_PADDING:
+        s.cfg.req.msg.addr @= PADDING
+        s.cfg.req.msg.data @= zext( padding, data_width )
       elif s.state_r == WR_SRC_X_STRIDE:
         s.cfg.req.msg.addr @= SRC_X_STRIDE
         s.cfg.req.msg.data @= src_x_stride

@@ -4,6 +4,8 @@
 # Author : Peitian Pan
 # Date   : Nov 10, 2020
 
+import pytest
+
 from pymtl3 import *
 from pymtl3.stdlib.mem import mk_mem_msg, MagicMemoryCL
 
@@ -15,10 +17,16 @@ from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 from .StreamingMemUnitHost import StreamingMemUnitHost
 from ..StreamingMemUnit import StreamingMemUnit
 
+# Padding Directions
+W = 0
+E = 1
+N = 2
+S = 3
+
 class TestHarness( Component ):
 
   def construct( s, DataType, AddrType, StrideType, CountType, OpaqueType,
-                 src_base_addr, src_x_stride, src_x_count,
+                 padding, src_base_addr, src_x_stride, src_x_count,
                  src_y_stride, src_y_count, dst_base_addr, dst_ack_addr,
                  sink_msgs, mem_image ):
 
@@ -31,7 +39,7 @@ class TestHarness( Component ):
     s.dut = StreamingMemUnit( DataType, AddrType, StrideType, CountType, OpaqueType )
     s.mem = MagicMemoryCL( 1, [(ReqMsgType, RespMsgType)] )
     s.host = StreamingMemUnitHost( DataType, AddrType, StrideType, CountType,
-                                   src_base_addr, src_x_stride,
+                                   padding, src_base_addr, src_x_stride,
                                    src_x_count, src_y_stride,
                                    src_y_count, dst_base_addr, dst_ack_addr )
 
@@ -80,8 +88,8 @@ def gen_mem_image( pattern, *args ):
     raise NotImplementedError
   return image
 
-def gen_sink_msgs( image, O, A, D, s_base, x_stride, x_count, y_stride,
-                   y_count, d_base, d_ack_addr ):
+def gen_sink_msgs( image, O, A, D, padding, s_base, x_stride, x_count,
+                   y_stride, y_count, d_base, d_ack_addr ):
   msgs = []
   dst_addr = d_base
   MsgType, _ = mk_mem_msg( O, A, D )
@@ -91,6 +99,11 @@ def gen_sink_msgs( image, O, A, D, s_base, x_stride, x_count, y_stride,
   cnt = 0
   for y in range(y_count):
     for x in range(x_count):
+      is_padding = False
+      if (padding[W] & (x == 0)) | (padding[E] & (x == (x_count-1))) | \
+         (padding[N] & (y == 0)) | (padding[S] & (y == (y_count-1))):
+        is_padding = True
+
       addr = row_addr + x * x_stride
       word = get_mem_word( image, addr )
 
@@ -99,7 +112,7 @@ def gen_sink_msgs( image, O, A, D, s_base, x_stride, x_count, y_stride,
       msg.opaque = mk_bits(O)(cnt % MaxOpaque)
       msg.addr   = mk_bits(A)(dst_addr)
       msg.len    = mk_bits(clog2(D>>3))(0)
-      msg.data   = mk_bits(D)(word)
+      msg.data   = mk_bits(D)(word) if not is_padding else mk_bits(D)(0)
 
       msgs.append( msg )
       dst_addr += 4
@@ -143,7 +156,10 @@ def run_test( th, cmdline_opts ):
 
   assert curT < maxT, "Time out!"
 
-def test_simple_byte_increment_no_padding( cmdline_opts ):
+@pytest.mark.parametrize(
+    "padding", [Bits4(x) for x in range(2**4)]
+)
+def test_simple_byte_increment( cmdline_opts, padding ):
   O, D, A, S, C = Bits5, Bits32, Bits20, Bits10, Bits10
   Types = [ D, A, S, C, O ]
 
@@ -155,20 +171,24 @@ def test_simple_byte_increment_no_padding( cmdline_opts ):
   dst_base_addr = 0
   dst_ack_addr = 2048
 
-  Params = [src_base_addr, src_x_stride, src_x_count,
+  Params = [padding, src_base_addr, src_x_stride, src_x_count,
             src_y_stride, src_y_count, dst_base_addr, dst_ack_addr]
 
   image = gen_mem_image( 'byte-increment', A.nbits )
 
   sink_msgs = gen_sink_msgs( image,
-                             O.nbits, A.nbits, D.nbits, src_base_addr,
+                             O.nbits, A.nbits, D.nbits,
+                             padding, src_base_addr,
                              src_x_stride, src_x_count,
                              src_y_stride, src_y_count,
                              dst_base_addr, dst_ack_addr )
 
   run_test( TestHarness( *Types, *Params, sink_msgs, image ), cmdline_opts )
 
-def test_simple_word_increment_no_padding( cmdline_opts ):
+@pytest.mark.parametrize(
+    "padding", [Bits4(x) for x in range(2**4)]
+)
+def test_simple_word_increment( cmdline_opts, padding ):
   O, D, A, S, C = Bits5, Bits32, Bits20, Bits10, Bits10
   Types = [ D, A, S, C, O ]
 
@@ -180,13 +200,14 @@ def test_simple_word_increment_no_padding( cmdline_opts ):
   dst_base_addr = 0
   dst_ack_addr = 2048
 
-  Params = [src_base_addr, src_x_stride, src_x_count,
+  Params = [padding, src_base_addr, src_x_stride, src_x_count,
             src_y_stride, src_y_count, dst_base_addr, dst_ack_addr]
 
   image = gen_mem_image( 'word-increment', A.nbits )
 
   sink_msgs = gen_sink_msgs( image,
-                             O.nbits, A.nbits, D.nbits, src_base_addr,
+                             O.nbits, A.nbits, D.nbits,
+                             padding, src_base_addr,
                              src_x_stride, src_x_count,
                              src_y_stride, src_y_count,
                              dst_base_addr, dst_ack_addr )

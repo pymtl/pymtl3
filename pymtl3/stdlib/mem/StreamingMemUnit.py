@@ -449,11 +449,11 @@ class StreamingMemUnitDpath( Component ):
     @update
     def smu_dpath_is_padding():
       s.is_padding @= 0
-      if s.padding_r.out[W] & (s.remote_x_count_r == s.src_x_count_r):
+      if s.padding_r.out[W] & (s.remote_x_count_r == s.src_x_count_r.out):
         s.is_padding @= 1
       if s.padding_r.out[E] & (s.remote_x_count_r == 1):
         s.is_padding @= 1
-      if s.padding_r.out[N] & (s.remote_y_count_r == s.src_y_count_r):
+      if s.padding_r.out[N] & (s.remote_y_count_r == s.src_y_count_r.out):
         s.is_padding @= 1
       if s.padding_r.out[S] & (s.remote_y_count_r == 1):
         s.is_padding @= 1
@@ -489,7 +489,7 @@ class StreamingMemUnitDpath( Component ):
       s.cfg_resp_msg.type_ @= 0
       s.cfg_resp_msg.data  @= 0
 
-      s.pad_resp_msg.type_  @= 1
+      s.pad_resp_msg.type_  @= 0
       s.pad_resp_msg.opaque @= s.remote_opaque_r
       s.pad_resp_msg.test   @= 0
       s.pad_resp_msg.len    @= 0
