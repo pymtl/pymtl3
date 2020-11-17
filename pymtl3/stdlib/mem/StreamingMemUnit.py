@@ -27,7 +27,7 @@
 from pymtl3 import *
 from pymtl3.stdlib.basic_rtl import RegEnRst
 from pymtl3.stdlib.ifcs import mk_xcel_msg, XcelMinionIfcRTL, RecvIfcRTL
-from pymtl3.stdlib.mem import mk_mem_msg, MemMasterIfcRTL
+from pymtl3.stdlib.mem import MemMasterIfcRTL
 from pymtl3.stdlib.queues import ReorderQueue, SendIfcRTLArbiter
 from pymtl3.stdlib.connects import connect_pairs
 
@@ -49,6 +49,56 @@ SRC_Y_COUNT     = 7
 DST_BASE_ADDR   = 8
 DST_ACK_ADDR    = 9
 NUM_REGISTERS   = 10
+
+#=========================================================================
+# mk_smu_msg
+#=========================================================================
+
+def mk_smu_req_msg( o, a, d ):
+
+  @bitstruct
+  class SMUReqMsg:
+    wen    : Bits1
+    reg_id : mk_bits( o )
+    opaque : mk_bits( 1 )
+    addr   : mk_bits( a )
+    data   : mk_bits( d )
+
+    data_nbits = d
+
+    def __str__( self ):
+      return "{}:{}:{}:{}:{}".format(
+        'rd' if self.wen == 0 else 'wr',
+        self.reg_id,
+        self.opaque,
+        self.addr,
+        self.data if self.wen != 0 else " " * ( d//4 ),
+      )
+
+  return SMUReqMsg
+
+def mk_smu_resp_msg( o, d ):
+
+  @bitstruct
+  class SMURespMsg:
+    wen    : Bits1
+    reg_id : mk_bits( o )
+    opaque : mk_bits( 1 )
+    data   : mk_bits( d )
+
+    data_nbits = d
+
+    def __str__( self ):
+      return "{}:{}:{}:{}".format(
+        'rd' if self.wen == 0 else 'wr',
+        self.reg_id,
+        self.opaque,
+        self.data if self.wen != 1 else " " * ( d//4 ),
+      )
+  return SMURespMsg
+
+def mk_smu_msg( opq, addr, data ):
+  return mk_smu_req_msg( opq, addr, data ), mk_smu_resp_msg( opq, data )
 
 #=========================================================================
 # Control unit
@@ -228,8 +278,8 @@ class StreamingMemUnitDpath( Component ):
     opaque_nbits   = OpaqueType.nbits
 
     CfgReq, CfgResp = mk_xcel_msg( cfg_addr_width, data_width )
-    RemoteReq, RemoteResp = mk_mem_msg( opaque_nbits, addr_width, data_width )
-    LocalReq, LocalResp = mk_mem_msg( opaque_nbits, addr_width, data_width )
+    RemoteReq, RemoteResp = mk_smu_msg( opaque_nbits, addr_width, data_width )
+    LocalReq, LocalResp = mk_smu_msg( opaque_nbits, addr_width, data_width )
 
     #---------------------------------------------------------------------
     # Interfaces
@@ -474,7 +524,7 @@ class StreamingMemUnitDpath( Component ):
     # Reorder queue
     #---------------------------------------------------------------------
 
-    s.reorder_q = ReorderQueue( RemoteResp, num_elems )
+    s.reorder_q = ReorderQueue( RemoteResp, num_elems, field='reg_id' )
 
     s.reorder_q.enq //= s.arb.send
 
@@ -490,22 +540,21 @@ class StreamingMemUnitDpath( Component ):
       s.cfg_resp_msg.type_ @= 0
       s.cfg_resp_msg.data  @= 0
 
-      s.pad_resp_msg.type_  @= 0
-      s.pad_resp_msg.opaque @= s.remote_opaque_r
-      s.pad_resp_msg.test   @= 0
-      s.pad_resp_msg.len    @= 0
+      s.pad_resp_msg.wen    @= 0
+      s.pad_resp_msg.reg_id @= s.remote_opaque_r
+      s.pad_resp_msg.opaque @= 0
       s.pad_resp_msg.data   @= 0
 
-      s.remote_req_msg.type_  @= 0
-      s.remote_req_msg.opaque @= s.remote_opaque_r
-      s.remote_req_msg.len    @= 0
+      s.remote_req_msg.wen    @= 0
+      s.remote_req_msg.reg_id @= s.remote_opaque_r
+      s.remote_req_msg.opaque @= 0
       s.remote_req_msg.data   @= 0
       s.remote_req_msg.addr   @= s.remote_addr
 
       # TODO: currently only supports matrix-gather mode
-      s.local_req_msg.type_  @= 1
-      s.local_req_msg.opaque @= s.reorder_q.deq.ret.opaque
-      s.local_req_msg.len    @= 0
+      s.local_req_msg.wen    @= 1
+      s.local_req_msg.reg_id @= s.reorder_q.deq.ret.reg_id
+      s.local_req_msg.opaque @= 0
       s.local_req_msg.data   @= s.reorder_q.deq.ret.data if ~s.is_ack_state else 1
       s.local_req_msg.addr   @= s.local_addr_r if ~s.is_ack_state else s.dst_ack_addr_r.out
 
@@ -589,8 +638,8 @@ class StreamingMemUnit( Component ):
     opaque_nbits   = OpaqueType.nbits
 
     CfgReq, CfgResp = mk_xcel_msg( cfg_addr_nbits, data_nbits )
-    RemoteReq, RemoteResp = mk_mem_msg( opaque_nbits, addr_nbits, data_nbits )
-    LocalReq, LocalResp = mk_mem_msg( opaque_nbits, addr_nbits, data_nbits )
+    RemoteReq, RemoteResp = mk_smu_msg( opaque_nbits, addr_nbits, data_nbits )
+    LocalReq, LocalResp = mk_smu_msg( opaque_nbits, addr_nbits, data_nbits )
 
     # Configuration interface
     s.cfg = XcelMinionIfcRTL( CfgReq, CfgResp )

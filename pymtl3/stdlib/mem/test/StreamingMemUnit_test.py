@@ -7,7 +7,7 @@
 import pytest
 
 from pymtl3 import *
-from pymtl3.stdlib.mem import mk_mem_msg, MagicMemoryCL
+from pymtl3.stdlib.mem import mk_mem_msg, MagicMemoryRTL
 
 from pymtl3.passes.backends.verilog import VerilogTranslationImportPass, \
                                            VerilogVerilatorImportPass, \
@@ -15,7 +15,7 @@ from pymtl3.passes.backends.verilog import VerilogTranslationImportPass, \
 from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 
 from .StreamingMemUnitHost import StreamingMemUnitHost
-from ..StreamingMemUnit import StreamingMemUnit
+from ..StreamingMemUnit import StreamingMemUnit, mk_smu_msg
 
 # Padding Directions
 W = 0
@@ -34,22 +34,42 @@ class TestHarness( Component ):
 
     s.addr_nbits = AddrType.nbits
     s.opaque_nbits = OpaqueType.nbits
+
     ReqMsgType, RespMsgType = mk_mem_msg( s.opaque_nbits, AddrType.nbits, DataType.nbits )
+    SMUReqType, SMURespType = mk_smu_msg( s.opaque_nbits, AddrType.nbits, DataType.nbits )
 
     s.dut = StreamingMemUnit( DataType, AddrType, StrideType, CountType, OpaqueType )
-    s.mem = MagicMemoryCL( 1, [(ReqMsgType, RespMsgType)] )
+    s.mem = MagicMemoryRTL( 1, [(ReqMsgType, RespMsgType)] )
     s.host = StreamingMemUnitHost( DataType, AddrType, StrideType, CountType,
                                    padding, src_base_addr, src_x_stride,
                                    src_x_count, src_y_stride,
                                    src_y_count, dst_base_addr, dst_ack_addr )
 
-    s.local_req_sink = TestSinkCL( ReqMsgType, sink_msgs )
-    s.local_resp_src = TestSrcCL( RespMsgType, [] )
+    s.local_req_sink = TestSinkCL( SMUReqType, sink_msgs )
+    s.local_resp_src = TestSrcCL( SMURespType, [] )
 
     s.dut.cfg //= s.host.cfg
-    s.dut.remote //= s.mem.ifc[0]
     s.dut.local.req //= s.local_req_sink.recv
     s.dut.local.resp //= s.local_resp_src.send
+
+    @update
+    def smu_th_mem_adapter():
+      # Request
+      s.mem.ifc[0].req.en         @= s.dut.remote.req.en
+      s.dut.remote.req.rdy        @= s.mem.ifc[0].req.rdy
+      s.mem.ifc[0].req.msg.type_  @= zext( s.dut.remote.req.msg.wen, 4 )
+      s.mem.ifc[0].req.msg.opaque @= s.dut.remote.req.msg.reg_id
+      s.mem.ifc[0].req.msg.addr   @= s.dut.remote.req.msg.addr
+      s.mem.ifc[0].req.msg.len    @= 0
+      s.mem.ifc[0].req.msg.data   @= s.dut.remote.req.msg.data
+
+      # Response
+      s.dut.remote.resp.en         @= s.mem.ifc[0].resp.en
+      s.mem.ifc[0].resp.rdy        @= s.dut.remote.resp.rdy
+      s.dut.remote.resp.msg.wen    @= s.mem.ifc[0].resp.msg.type_[0]
+      s.dut.remote.resp.msg.reg_id @= s.mem.ifc[0].resp.msg.opaque
+      s.dut.remote.resp.msg.opaque @= 0
+      s.dut.remote.resp.msg.data   @= s.mem.ifc[0].resp.msg.data
 
   def load_mem_image( s ):
     for i in range(2**s.addr_nbits-1):
@@ -92,7 +112,7 @@ def gen_sink_msgs( image, O, A, D, padding, s_base, x_stride, x_count,
                    y_stride, y_count, d_base, d_ack_addr ):
   msgs = []
   dst_addr = d_base
-  MsgType, _ = mk_mem_msg( O, A, D )
+  MsgType, _ = mk_smu_msg( O, A, D )
   MaxOpaque = 2**O
 
   row_addr = s_base
@@ -107,11 +127,11 @@ def gen_sink_msgs( image, O, A, D, padding, s_base, x_stride, x_count,
       addr = row_addr + x * x_stride
       word = get_mem_word( image, addr )
 
-      msg = MsgType()
-      msg.type_  = Bits4(1)
-      msg.opaque = mk_bits(O)(cnt % MaxOpaque)
+      msg        = MsgType()
+      msg.wen    = Bits1(1)
+      msg.reg_id = mk_bits(O)(cnt % MaxOpaque)
+      msg.opaque = Bits1(0)
       msg.addr   = mk_bits(A)(dst_addr)
-      msg.len    = mk_bits(clog2(D>>3))(0)
       msg.data   = mk_bits(D)(word) if not is_padding else mk_bits(D)(0)
 
       msgs.append( msg )
@@ -122,11 +142,11 @@ def gen_sink_msgs( image, O, A, D, padding, s_base, x_stride, x_count,
 
   # Append ack message
 
-  msg = MsgType()
-  msg.type_  = Bits4(1)
-  msg.opaque = mk_bits(O)(0)
+  msg        = MsgType()
+  msg.wen    = Bits1(1)
+  msg.reg_id = mk_bits(O)(0)
+  msg.opaque = Bits1(0)
   msg.addr   = mk_bits(A)(d_ack_addr)
-  msg.len    = mk_bits(clog2(D>>3))(0)
   msg.data   = mk_bits(D)(1)
 
   msgs.append( msg )

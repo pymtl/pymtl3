@@ -84,7 +84,7 @@ class ReorderQueueCtrl( Component ):
 
 class ReorderQueueDpath( Component ):
 
-  def construct( s, MsgType, num_elems ):
+  def construct( s, MsgType, num_elems, field ):
 
     # Sanity check
 
@@ -107,7 +107,16 @@ class ReorderQueueDpath( Component ):
 
     # Connections
 
-    s.enq_ptr //= lambda: s.enq_msg.opaque[0:ptr_width]
+    if field == 'opaque':
+      @update
+      def reorder_q_dpath_opaque():
+        s.enq_ptr @= s.enq_msg.opaque[0:ptr_width]
+    elif field == 'reg_id':
+      @update
+      def reorder_q_dpath_reg_id():
+        s.enq_ptr @= s.enq_msg.reg_id[0:ptr_width]
+    else:
+      raise ValueError
 
     s.buf.raddr[0] //= s.deq_ptr
     s.buf.rdata[0] //= s.deq_msg
@@ -121,7 +130,9 @@ class ReorderQueueDpath( Component ):
 
 class ReorderQueue( Component ):
 
-  def construct( s, MsgType, num_elems=32 ):
+  def construct( s, MsgType, num_elems=32, field='opaque' ):
+
+    assert field in ['opaque', 'reg_id']
 
     # Interfaces
 
@@ -131,7 +142,7 @@ class ReorderQueue( Component ):
     # Components
 
     s.ctrl  = ReorderQueueCtrl( num_elems )
-    s.dpath = ReorderQueueDpath( MsgType, num_elems )
+    s.dpath = ReorderQueueDpath( MsgType, num_elems, field )
 
     # Connections
 

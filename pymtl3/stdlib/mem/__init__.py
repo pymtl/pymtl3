@@ -1,3 +1,4 @@
+from .MagicMemoryRTL import MagicMemoryRTL
 from .MagicMemoryCL import MagicMemoryCL
 from .MagicMemoryFL import MagicMemoryFL
 from .mem_ifcs import (
