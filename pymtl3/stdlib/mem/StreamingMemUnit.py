@@ -220,13 +220,14 @@ class StreamingMemUnitDpath( Component ):
   def construct( s, DataType, AddrType, StrideType, CountType, OpaqueType,
                  num_elems ):
 
-    data_width   = DataType.nbits
-    addr_width   = AddrType.nbits
-    stride_width = StrideType.nbits
-    count_width  = CountType.nbits
-    opaque_nbits = OpaqueType.nbits
+    data_width     = DataType.nbits
+    addr_width     = AddrType.nbits
+    cfg_addr_width = 4
+    stride_width   = StrideType.nbits
+    count_width    = CountType.nbits
+    opaque_nbits   = OpaqueType.nbits
 
-    CfgReq, CfgResp = mk_xcel_msg( addr_width, data_width )
+    CfgReq, CfgResp = mk_xcel_msg( cfg_addr_width, data_width )
     RemoteReq, RemoteResp = mk_mem_msg( opaque_nbits, addr_width, data_width )
     LocalReq, LocalResp = mk_mem_msg( opaque_nbits, addr_width, data_width )
 
@@ -278,7 +279,7 @@ class StreamingMemUnitDpath( Component ):
 
     s.register_read_r = Wire( DataType )
     s.register_read_n = Wire( DataType )
-    s.cfg_read_addr_r = Wire( AddrType )
+    s.cfg_read_addr_r = Wire( cfg_addr_width )
 
     @update_ff
     def smu_dpath_registers():
@@ -580,13 +581,14 @@ class StreamingMemUnit( Component ):
     # Interfaces
     #---------------------------------------------------------------------
 
-    addr_nbits = AddrType.nbits
-    data_nbits = DataType.nbits
-    stride_nbits = StrideType.nbits
-    count_nbits = CountType.nbits
-    opaque_nbits = OpaqueType.nbits
+    addr_nbits     = AddrType.nbits
+    cfg_addr_nbits = 4
+    data_nbits     = DataType.nbits
+    stride_nbits   = StrideType.nbits
+    count_nbits    = CountType.nbits
+    opaque_nbits   = OpaqueType.nbits
 
-    CfgReq, CfgResp = mk_xcel_msg( addr_nbits, data_nbits )
+    CfgReq, CfgResp = mk_xcel_msg( cfg_addr_nbits, data_nbits )
     RemoteReq, RemoteResp = mk_mem_msg( opaque_nbits, addr_nbits, data_nbits )
     LocalReq, LocalResp = mk_mem_msg( opaque_nbits, addr_nbits, data_nbits )
 
@@ -652,4 +654,5 @@ class StreamingMemUnit( Component ):
     input_str  = f"{s.cfg.req}|{s.remote.req}|{s.remote.resp}"
     middle_str = f"([{s.ctrl.line_trace()}]{s.dpath.line_trace()})"
     output_str = f"{s.local.req}"
-    return f"{input_str} > {middle_str} > {output_str}"
+    # return f"{input_str} > {middle_str} > {output_str}"
+    return f"{input_str} > {output_str}"

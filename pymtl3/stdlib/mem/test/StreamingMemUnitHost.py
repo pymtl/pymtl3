@@ -40,7 +40,7 @@ class StreamingMemUnitHost( Component ):
 
     data_width = DataType.nbits
 
-    CfgReq, CfgResp = mk_xcel_msg( AddrType.nbits, DataType.nbits )
+    CfgReq, CfgResp = mk_xcel_msg( 4, DataType.nbits )
 
     s.cfg = XcelMasterIfcRTL( CfgReq, CfgResp )
 
