@@ -26,9 +26,10 @@ S = 3
 class TestHarness( Component ):
 
   def construct( s, DataType, AddrType, StrideType, CountType, OpaqueType,
+                 num_elems,
                  padding, src_base_addr, src_x_stride, src_x_count,
                  src_y_stride, src_y_count, dst_base_addr, dst_ack_addr,
-                 sink_msgs, mem_image ):
+                 sink_msgs, mem_image, sink_delay=0 ):
 
     s.mem_image = mem_image
 
@@ -36,40 +37,40 @@ class TestHarness( Component ):
     s.opaque_nbits = OpaqueType.nbits
 
     ReqMsgType, RespMsgType = mk_mem_msg( s.opaque_nbits, AddrType.nbits, DataType.nbits )
-    SMUReqType, SMURespType = mk_smu_msg( s.opaque_nbits, AddrType.nbits, DataType.nbits )
+    SMUReqType, SMURespType = mk_smu_msg( s.opaque_nbits, AddrType.nbits, DataType.nbits, clog2(num_elems) )
 
-    s.dut = StreamingMemUnit( DataType, AddrType, StrideType, CountType, OpaqueType )
+    s.dut = StreamingMemUnit( DataType, AddrType, StrideType, CountType, OpaqueType, num_elems )
     s.mem = MagicMemoryRTL( 1, [(ReqMsgType, RespMsgType)] )
     s.host = StreamingMemUnitHost( DataType, AddrType, StrideType, CountType,
                                    padding, src_base_addr, src_x_stride,
                                    src_x_count, src_y_stride,
                                    src_y_count, dst_base_addr, dst_ack_addr )
 
-    s.local_req_sink = TestSinkCL( SMUReqType, sink_msgs )
+    s.local_req_sink = TestSinkCL( SMUReqType, sink_msgs, interval_delay=sink_delay )
     s.local_resp_src = TestSrcCL( SMURespType, [] )
 
     s.dut.cfg //= s.host.cfg
-    s.dut.local.req //= s.local_req_sink.recv
-    s.dut.local.resp //= s.local_resp_src.send
+    s.dut.loc.req //= s.local_req_sink.recv
+    s.dut.loc.resp //= s.local_resp_src.send
 
     @update
     def smu_th_mem_adapter():
       # Request
-      s.mem.ifc[0].req.en         @= s.dut.remote.req.en
-      s.dut.remote.req.rdy        @= s.mem.ifc[0].req.rdy
-      s.mem.ifc[0].req.msg.type_  @= zext( s.dut.remote.req.msg.wen, 4 )
-      s.mem.ifc[0].req.msg.opaque @= s.dut.remote.req.msg.reg_id
-      s.mem.ifc[0].req.msg.addr   @= s.dut.remote.req.msg.addr
+      s.mem.ifc[0].req.en         @= s.dut.rmt.req.en
+      s.dut.rmt.req.rdy           @= s.mem.ifc[0].req.rdy
+      s.mem.ifc[0].req.msg.type_  @= zext( s.dut.rmt.req.msg.wen, 4 )
+      s.mem.ifc[0].req.msg.opaque @= s.dut.rmt.req.msg.reg_id
+      s.mem.ifc[0].req.msg.addr   @= s.dut.rmt.req.msg.addr
       s.mem.ifc[0].req.msg.len    @= 0
-      s.mem.ifc[0].req.msg.data   @= s.dut.remote.req.msg.data
+      s.mem.ifc[0].req.msg.data   @= s.dut.rmt.req.msg.data
 
       # Response
-      s.dut.remote.resp.en         @= s.mem.ifc[0].resp.en
-      s.mem.ifc[0].resp.rdy        @= s.dut.remote.resp.rdy
-      s.dut.remote.resp.msg.wen    @= s.mem.ifc[0].resp.msg.type_[0]
-      s.dut.remote.resp.msg.reg_id @= s.mem.ifc[0].resp.msg.opaque
-      s.dut.remote.resp.msg.opaque @= 0
-      s.dut.remote.resp.msg.data   @= s.mem.ifc[0].resp.msg.data
+      s.dut.rmt.resp.en         @= s.mem.ifc[0].resp.en
+      s.mem.ifc[0].resp.rdy     @= s.dut.rmt.resp.rdy
+      s.dut.rmt.resp.msg.wen    @= s.mem.ifc[0].resp.msg.type_[0]
+      s.dut.rmt.resp.msg.reg_id @= s.mem.ifc[0].resp.msg.opaque
+      s.dut.rmt.resp.msg.opaque @= 0
+      s.dut.rmt.resp.msg.data   @= s.mem.ifc[0].resp.msg.data
 
   def load_mem_image( s ):
     for i in range(2**s.addr_nbits-1):
@@ -108,11 +109,12 @@ def gen_mem_image( pattern, *args ):
     raise NotImplementedError
   return image
 
-def gen_sink_msgs( image, O, A, D, padding, s_base, x_stride, x_count,
+def gen_sink_msgs( image, O, A, D, num_elem, padding, s_base, x_stride, x_count,
                    y_stride, y_count, d_base, d_ack_addr ):
   msgs = []
+  b = clog2(num_elem)
   dst_addr = d_base
-  MsgType, _ = mk_smu_msg( O, A, D )
+  MsgType, _ = mk_smu_msg( O, A, D, b )
   MaxOpaque = 2**O
 
   row_addr = s_base
@@ -129,8 +131,8 @@ def gen_sink_msgs( image, O, A, D, padding, s_base, x_stride, x_count,
 
       msg        = MsgType()
       msg.wen    = Bits1(1)
-      msg.reg_id = mk_bits(O)(cnt % MaxOpaque)
-      msg.opaque = Bits1(0)
+      msg.reg_id = mk_bits(O)(0) # no reg_id for remote_store
+      msg.opaque = mk_bits(1+b)(0)
       msg.addr   = mk_bits(A)(dst_addr)
       msg.data   = mk_bits(D)(word) if not is_padding else mk_bits(D)(0)
 
@@ -145,7 +147,7 @@ def gen_sink_msgs( image, O, A, D, padding, s_base, x_stride, x_count,
   msg        = MsgType()
   msg.wen    = Bits1(1)
   msg.reg_id = mk_bits(O)(0)
-  msg.opaque = Bits1(0)
+  msg.opaque = mk_bits(1+b)(0)
   msg.addr   = mk_bits(A)(d_ack_addr)
   msg.data   = mk_bits(D)(1)
 
@@ -166,7 +168,7 @@ def run_test( th, cmdline_opts ):
 
   th.load_mem_image()
 
-  curT, maxT = 0, 300
+  curT, maxT = 0, 10000
 
   # DUT operation
   while not th.done() and curT < maxT:
@@ -181,7 +183,7 @@ def run_test( th, cmdline_opts ):
 )
 def test_simple_byte_increment( cmdline_opts, padding ):
   O, D, A, S, C = Bits5, Bits32, Bits20, Bits10, Bits10
-  Types = [ D, A, S, C, O ]
+  Types = [ D, A, S, C, O, 32 ]
 
   src_base_addr = 0
   src_x_stride = 4
@@ -197,7 +199,7 @@ def test_simple_byte_increment( cmdline_opts, padding ):
   image = gen_mem_image( 'byte-increment', A.nbits )
 
   sink_msgs = gen_sink_msgs( image,
-                             O.nbits, A.nbits, D.nbits,
+                             O.nbits, A.nbits, D.nbits, 32,
                              padding, src_base_addr,
                              src_x_stride, src_x_count,
                              src_y_stride, src_y_count,
@@ -210,7 +212,7 @@ def test_simple_byte_increment( cmdline_opts, padding ):
 )
 def test_simple_word_increment( cmdline_opts, padding ):
   O, D, A, S, C = Bits5, Bits32, Bits20, Bits10, Bits10
-  Types = [ D, A, S, C, O ]
+  Types = [ D, A, S, C, O, 32 ]
 
   src_base_addr = 0
   src_x_stride = 4
@@ -226,10 +228,39 @@ def test_simple_word_increment( cmdline_opts, padding ):
   image = gen_mem_image( 'word-increment', A.nbits )
 
   sink_msgs = gen_sink_msgs( image,
-                             O.nbits, A.nbits, D.nbits,
+                             O.nbits, A.nbits, D.nbits, 32,
                              padding, src_base_addr,
                              src_x_stride, src_x_count,
                              src_y_stride, src_y_count,
                              dst_base_addr, dst_ack_addr )
 
   run_test( TestHarness( *Types, *Params, sink_msgs, image ), cmdline_opts )
+
+@pytest.mark.parametrize(
+    "padding", [Bits4(x) for x in range(2**4)]
+)
+def test_simple_word_increment_backpressure( cmdline_opts, padding ):
+  O, D, A, S, C = Bits5, Bits32, Bits20, Bits10, Bits10
+  Types = [ D, A, S, C, O, 32 ]
+
+  src_base_addr = 0
+  src_x_stride = 4
+  src_x_count = 16
+  src_y_stride = 64*4
+  src_y_count = 16
+  dst_base_addr = 0
+  dst_ack_addr = 2048
+
+  Params = [padding, src_base_addr, src_x_stride, src_x_count,
+            src_y_stride, src_y_count, dst_base_addr, dst_ack_addr]
+
+  image = gen_mem_image( 'word-increment', A.nbits )
+
+  sink_msgs = gen_sink_msgs( image,
+                             O.nbits, A.nbits, D.nbits, 32,
+                             padding, src_base_addr,
+                             src_x_stride, src_x_count,
+                             src_y_stride, src_y_count,
+                             dst_base_addr, dst_ack_addr )
+
+  run_test( TestHarness( *Types, *Params, sink_msgs, image, sink_delay=20 ), cmdline_opts )

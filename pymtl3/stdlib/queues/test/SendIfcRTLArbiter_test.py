@@ -16,11 +16,11 @@ seed(0xfaceb00c)
 
 class TestHarness( Component ):
 
-  def construct( s, MsgType, ninputs, src_msgs, sink_msgs ):
+  def construct( s, MsgType, ninputs, src_msgs, sink_msgs, src_delay, sink_delay ):
 
     s.dut = SendIfcRTLArbiter( MsgType, ninputs )
-    s.srcs = [ TestSrcCL( MsgType, msgs ) for msgs in src_msgs ]
-    s.sink = TestSinkCL( MsgType, sink_msgs )
+    s.srcs = [ TestSrcCL( MsgType, msgs, interval_delay=src_delay ) for msgs in src_msgs ]
+    s.sink = TestSinkCL( MsgType, sink_msgs, interval_delay=sink_delay )
 
     for i in range(ninputs):
       s.dut.recv[i] //= s.srcs[i].send
@@ -86,18 +86,18 @@ def test_simple_2( cmdline_opts ):
   ninputs = 2
   num_messages = 5
   src_msgs, sink_msgs = gen_msgs( MsgType, ninputs, num_messages )
-  run_test( TestHarness( MsgType, ninputs, src_msgs, sink_msgs ), cmdline_opts )
+  run_test( TestHarness( MsgType, ninputs, src_msgs, sink_msgs, 2, 2 ), cmdline_opts )
 
 def test_simple_4( cmdline_opts ):
   MsgType = Bits32
   ninputs = 4
   num_messages = 10
   src_msgs, sink_msgs = gen_msgs( MsgType, ninputs, num_messages )
-  run_test( TestHarness( MsgType, ninputs, src_msgs, sink_msgs ), cmdline_opts )
+  run_test( TestHarness( MsgType, ninputs, src_msgs, sink_msgs, 0, 0 ), cmdline_opts )
 
 def test_simple_8( cmdline_opts ):
   MsgType = Bits32
   ninputs = 8
   num_messages = 20
   src_msgs, sink_msgs = gen_msgs( MsgType, ninputs, num_messages )
-  run_test( TestHarness( MsgType, ninputs, src_msgs, sink_msgs ), cmdline_opts )
+  run_test( TestHarness( MsgType, ninputs, src_msgs, sink_msgs, 3, 2 ), cmdline_opts )

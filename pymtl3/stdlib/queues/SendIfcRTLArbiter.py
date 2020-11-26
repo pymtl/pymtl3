@@ -25,12 +25,12 @@ class SendIfcRTLArbiter( Component ):
 
     # Buffer
 
-    s.buf = [ NormalQueueRTL( 2, MsgType ) for _ in range(ninputs) ]
+    s.buffer = [ NormalQueueRTL( 2, MsgType ) for _ in range(ninputs) ]
 
     for i in range(ninputs):
-      s.buf[i].enq.val //= s.recv[i].en
-      s.buf[i].enq.rdy //= s.recv[i].rdy
-      s.buf[i].enq.msg //= s.recv[i].msg
+      s.buffer[i].enq.val //= s.recv[i].en
+      s.buffer[i].enq.rdy //= s.recv[i].rdy
+      s.buffer[i].enq.msg //= s.recv[i].msg
 
     # Arbiter
 
@@ -39,8 +39,8 @@ class SendIfcRTLArbiter( Component ):
     s.arb.en //= s.send.rdy
 
     for i in range(ninputs):
-      s.arb.reqs[i] //= s.buf[i].deq.val
-      s.arb.grants[i] //= s.buf[i].deq.rdy
+      s.arb.reqs[i] //= s.buffer[i].deq.val
+      s.buffer[i].deq.rdy //= lambda: s.arb.grants[i] & s.send.rdy
 
     # Grant index
 
@@ -54,8 +54,8 @@ class SendIfcRTLArbiter( Component ):
 
     @update
     def send_ifc_arb_out():
-      s.send.en @= s.arb.grants != 0
-      s.send.msg @= s.buf[s.grant_idx].deq.msg
+      s.send.en @= (s.arb.grants != 0) & s.send.rdy
+      s.send.msg @= s.buffer[s.grant_idx].deq.msg
 
   def line_trace( s ):
     recv_trace = "|".join( str(x) for x in s.recv )

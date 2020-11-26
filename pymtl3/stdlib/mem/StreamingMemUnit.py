@@ -54,15 +54,15 @@ NUM_REGISTERS   = 10
 # mk_smu_msg
 #=========================================================================
 
-def mk_smu_req_msg( o, a, d ):
+def mk_smu_req_msg( o, a, d, b ):
 
   @bitstruct
   class SMUReqMsg:
     wen    : Bits1
-    reg_id : mk_bits( o )
-    opaque : mk_bits( 1 )
-    addr   : mk_bits( a )
-    data   : mk_bits( d )
+    reg_id : mk_bits( o   )
+    opaque : mk_bits( 1+b )
+    addr   : mk_bits( a   )
+    data   : mk_bits( d   )
 
     data_nbits = d
 
@@ -77,14 +77,14 @@ def mk_smu_req_msg( o, a, d ):
 
   return SMUReqMsg
 
-def mk_smu_resp_msg( o, d ):
+def mk_smu_resp_msg( o, d, b ):
 
   @bitstruct
   class SMURespMsg:
     wen    : Bits1
-    reg_id : mk_bits( o )
-    opaque : mk_bits( 1 )
-    data   : mk_bits( d )
+    reg_id : mk_bits( o   )
+    opaque : mk_bits( 1+b )
+    data   : mk_bits( d   )
 
     data_nbits = d
 
@@ -97,8 +97,8 @@ def mk_smu_resp_msg( o, d ):
       )
   return SMURespMsg
 
-def mk_smu_msg( opq, addr, data ):
-  return mk_smu_req_msg( opq, addr, data ), mk_smu_resp_msg( opq, data )
+def mk_smu_msg( opq, addr, data, buf ):
+  return mk_smu_req_msg( opq, addr, data, buf ), mk_smu_resp_msg( opq, data, buf )
 
 #=========================================================================
 # Control unit
@@ -276,10 +276,11 @@ class StreamingMemUnitDpath( Component ):
     stride_width   = StrideType.nbits
     count_width    = CountType.nbits
     opaque_nbits   = OpaqueType.nbits
+    buf_width      = clog2( num_elems )
 
     CfgReq, CfgResp = mk_xcel_msg( cfg_addr_width, data_width )
-    RemoteReq, RemoteResp = mk_smu_msg( opaque_nbits, addr_width, data_width )
-    LocalReq, LocalResp = mk_smu_msg( opaque_nbits, addr_width, data_width )
+    RemoteReq, RemoteResp = mk_smu_msg( opaque_nbits, addr_width, data_width, buf_width )
+    LocalReq, LocalResp = mk_smu_msg( opaque_nbits, addr_width, data_width, buf_width )
 
     #---------------------------------------------------------------------
     # Interfaces
@@ -553,7 +554,7 @@ class StreamingMemUnitDpath( Component ):
 
       # TODO: currently only supports matrix-gather mode
       s.local_req_msg.wen    @= 1
-      s.local_req_msg.reg_id @= s.reorder_q.deq.ret.reg_id
+      s.local_req_msg.reg_id @= 0 # no reg_id for remote_store
       s.local_req_msg.opaque @= 0
       s.local_req_msg.data   @= s.reorder_q.deq.ret.data if ~s.is_ack_state else 1
       s.local_req_msg.addr   @= s.local_addr_r if ~s.is_ack_state else s.dst_ack_addr_r.out
@@ -636,19 +637,20 @@ class StreamingMemUnit( Component ):
     stride_nbits   = StrideType.nbits
     count_nbits    = CountType.nbits
     opaque_nbits   = OpaqueType.nbits
+    buf_width      = clog2( num_elems )
 
     CfgReq, CfgResp = mk_xcel_msg( cfg_addr_nbits, data_nbits )
-    RemoteReq, RemoteResp = mk_smu_msg( opaque_nbits, addr_nbits, data_nbits )
-    LocalReq, LocalResp = mk_smu_msg( opaque_nbits, addr_nbits, data_nbits )
+    RemoteReq, RemoteResp = mk_smu_msg( opaque_nbits, addr_nbits, data_nbits, buf_width )
+    LocalReq, LocalResp = mk_smu_msg( opaque_nbits, addr_nbits, data_nbits, buf_width)
 
     # Configuration interface
     s.cfg = XcelMinionIfcRTL( CfgReq, CfgResp )
 
     # Remote interface
-    s.remote = MemMasterIfcRTL( RemoteReq, RemoteResp )
+    s.rmt = MemMasterIfcRTL( RemoteReq, RemoteResp )
 
     # Local interface
-    s.local = MemMasterIfcRTL( LocalReq, LocalResp )
+    s.loc = MemMasterIfcRTL( LocalReq, LocalResp )
 
     #---------------------------------------------------------------------
     # Components
@@ -668,19 +670,19 @@ class StreamingMemUnit( Component ):
         s.ctrl.cfg_resp_rdy,     s.cfg.resp.rdy,
         s.dpath.cfg_resp_msg,    s.cfg.resp.msg,
 
-        s.ctrl.remote_req_en,   s.remote.req.en,
-        s.ctrl.remote_req_rdy,  s.remote.req.rdy,
-        s.dpath.remote_req_msg, s.remote.req.msg,
+        s.ctrl.remote_req_en,   s.rmt.req.en,
+        s.ctrl.remote_req_rdy,  s.rmt.req.rdy,
+        s.dpath.remote_req_msg, s.rmt.req.msg,
 
-        s.dpath.remote_resp, s.remote.resp,
+        s.dpath.remote_resp, s.rmt.resp,
 
-        s.ctrl.local_req_en,    s.local.req.en,
-        s.ctrl.local_req_rdy,   s.local.req.rdy,
-        s.dpath.local_req_msg,  s.local.req.msg,
+        s.ctrl.local_req_en,    s.loc.req.en,
+        s.ctrl.local_req_rdy,   s.loc.req.rdy,
+        s.dpath.local_req_msg,  s.loc.req.msg,
 
-        s.ctrl.local_resp_en,    s.local.resp.en,
-        s.ctrl.local_resp_rdy,   s.local.resp.rdy,
-        s.dpath.local_resp_msg,  s.local.resp.msg,
+        s.ctrl.local_resp_en,    s.loc.resp.en,
+        s.ctrl.local_resp_rdy,   s.loc.resp.rdy,
+        s.dpath.local_resp_msg,  s.loc.resp.msg,
 
         s.ctrl.is_cfg_msg_go,       s.dpath.is_cfg_msg_go,
         s.ctrl.remote_req_all_sent, s.dpath.remote_req_all_sent,
@@ -700,8 +702,8 @@ class StreamingMemUnit( Component ):
     )
 
   def line_trace( s ):
-    input_str  = f"{s.cfg.req}|{s.remote.req}|{s.remote.resp}"
+    input_str  = f"{s.cfg.req}|{s.rmt.req}|{s.rmt.resp}"
     middle_str = f"([{s.ctrl.line_trace()}]{s.dpath.line_trace()})"
-    output_str = f"{s.local.req}"
+    output_str = f"{s.loc.req}"
     # return f"{input_str} > {middle_str} > {output_str}"
     return f"{input_str} > {output_str}"

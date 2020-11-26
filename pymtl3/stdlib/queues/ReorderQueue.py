@@ -71,7 +71,10 @@ class ReorderQueueCtrl( Component ):
 
     # Control signals
 
-    s.enq_rdy //= lambda: reduce_or( ~s.buf_valid_r )
+    s.buf_invalid_r = Wire( num_elems )
+    s.buf_invalid_r //= lambda: ~s.buf_valid_r
+
+    s.enq_rdy //= lambda: reduce_or( s.buf_invalid_r )
     s.deq_rdy //= lambda: s.buf_valid_r[s.deq_ptr]
     s.enq_go  //= lambda: s.enq_en & s.enq_rdy
 
@@ -103,7 +106,7 @@ class ReorderQueueDpath( Component ):
 
     # Components
 
-    s.buf = RegisterFile( MsgType, num_elems )
+    s.buffer = RegisterFile( MsgType, num_elems )
 
     # Connections
 
@@ -118,11 +121,11 @@ class ReorderQueueDpath( Component ):
     else:
       raise ValueError
 
-    s.buf.raddr[0] //= s.deq_ptr
-    s.buf.rdata[0] //= s.deq_msg
-    s.buf.wen[0]   //= s.enq_go
-    s.buf.waddr[0] //= s.enq_ptr
-    s.buf.wdata[0] //= s.enq_msg
+    s.buffer.raddr[0] //= s.deq_ptr
+    s.buffer.rdata[0] //= s.deq_msg
+    s.buffer.wen[0]   //= s.enq_go
+    s.buffer.waddr[0] //= s.enq_ptr
+    s.buffer.wdata[0] //= s.enq_msg
 
 #=========================================================================
 # Main reorder queue
