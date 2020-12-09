@@ -8,6 +8,7 @@ from .dsl.ComponentLevel4 import update_once
 from .dsl.ComponentLevel5 import method_port
 from .dsl.ComponentLevel6 import non_blocking
 from .dsl.ComponentLevel7 import blocking
+from .dsl.ComponentLevel8 import update_delay
 from .dsl.Connectable import (
     CalleeIfcCL,
     CalleeIfcFL,
@@ -30,7 +31,7 @@ from .passes.PassGroups import DefaultPassGroup
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
-  'update', 'update_ff', 'update_once', 'connect', 'method_port',
+  'update', 'update_ff', 'update_once', 'connect', 'method_port', 'update_delay',
   'CalleeIfcRTL', 'CallerIfcRTL',
   'non_blocking', 'CalleeIfcCL', 'CallerIfcCL',
   'blocking', 'CalleeIfcFL', 'CallerIfcFL',

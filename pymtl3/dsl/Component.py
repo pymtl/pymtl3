@@ -9,7 +9,7 @@ Author : Yanghui Ou
 """
 
 from .ComponentLevel1 import ComponentLevel1
-from .ComponentLevel7 import ComponentLevel7
+from .ComponentLevel8 import ComponentLevel8
 from .Connectable import (
     Connectable,
     Const,
@@ -31,7 +31,7 @@ from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
 
-class Component( ComponentLevel7 ):
+class Component( ComponentLevel8 ):
 
   #-----------------------------------------------------------------------
   # Private methods

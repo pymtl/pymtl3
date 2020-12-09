@@ -10,6 +10,7 @@ from .ComponentLevel4 import update_once
 from .ComponentLevel5 import method_port
 from .ComponentLevel6 import non_blocking
 from .ComponentLevel7 import blocking
+from .ComponentLevel8 import update_delay
 from .Connectable import (
     BlockingIfc,
     CalleeIfcCL,

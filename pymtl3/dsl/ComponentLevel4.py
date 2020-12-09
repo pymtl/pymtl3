@@ -87,7 +87,7 @@ class ComponentLevel4( ComponentLevel3 ):
     super()._update( blk )
 
     s._dsl.update_once.add( blk )
-    s._cache_func_meta( blk, is_update_ff=True ) # add caching of src/ast
+    # s._cache_func_meta( blk, is_update_ff=False ) # add caching of src/ast
 
   # Override
   def add_constraints( s, *args ):

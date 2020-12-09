@@ -81,8 +81,10 @@ class ComponentLevel2( ComponentLevel1 ):
       name_rd   = cls._name_rd
       name_wr   = cls._name_wr
       name_fc   = cls._name_fc
+      name_ff   = cls._name_ff
     except Exception:
       name_info = cls._name_info = {}
+      name_isff = cls._name_isff = {}
       name_rd   = cls._name_rd  = {}
       name_wr   = cls._name_wr  = {}
       name_fc   = cls._name_fc  = {}
@@ -94,6 +96,7 @@ class ComponentLevel2( ComponentLevel1 ):
       _src, _ast, _line, _file = given
 
       name_info[ name ] = ( True, _src, _line, _file, _ast )
+      name_isff[ name ] = is_update_ff
       name_rd[ name ]   = _rd = []
       name_wr[ name ]   = _wr = []
       name_fc[ name ]   = _fc = []
@@ -105,6 +108,7 @@ class ComponentLevel2( ComponentLevel1 ):
       _ast = ast.parse( compiled_re.sub( r'\2', _src ) )
 
       name_info[ name ] = (False, _src, _line, inspect.getsourcefile( func ), _ast )
+      name_isff[ name ] = is_update_ff
       name_rd[ name ]   = _rd   = []
       name_wr[ name ]   = _wr   = []
       name_fc[ name ]   = _fc   = []
@@ -284,7 +288,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
     cls = s.__class__
     try:
-      name_rd, name_wr, name_fc = cls._name_rd, cls._name_wr, cls._name_fc
+      name_rd, name_wr, name_fc, name_isff = cls._name_rd, cls._name_wr, cls._name_fc, cls._name_isff
     except AttributeError: # This component doesn't have update block
       pass
 
@@ -303,8 +307,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.upblk_calls  = {}
     for name, blk in s._dsl.name_upblk.items():
       s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
-      s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ],
-                                    update_ff = blk in s._dsl.update_ff, is_write=True )
+      s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ], name_isff[ name ], is_write=True )
       s._dsl.upblk_calls [ blk ] = extract_obj_from_names( blk, name_fc[ name ] )
 
   # Override
