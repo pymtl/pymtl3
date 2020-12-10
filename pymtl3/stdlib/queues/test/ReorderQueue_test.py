@@ -34,6 +34,8 @@ class TestHarness( Component ):
 
     s.dut.deq //= s.sink.recv
 
+    s.dut.clear //= 0
+
   def done( s ):
     return s.sink.done()
 

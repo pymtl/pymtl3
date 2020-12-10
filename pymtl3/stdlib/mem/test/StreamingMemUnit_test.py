@@ -7,7 +7,7 @@
 import pytest
 
 from pymtl3 import *
-from pymtl3.stdlib.mem import mk_mem_msg, MagicMemoryRTL
+from pymtl3.stdlib.mem import mk_mem_msg, MagicMemoryRTL, MagicMemoryO3RTL
 
 from pymtl3.passes.backends.verilog import VerilogTranslationImportPass, \
                                            VerilogVerilatorImportPass, \
@@ -29,7 +29,7 @@ class TestHarness( Component ):
                  num_elems,
                  padding, src_base_addr, src_x_stride, src_x_count,
                  src_y_stride, src_y_count, dst_base_addr, dst_ack_addr,
-                 sink_msgs, mem_image, sink_delay=0 ):
+                 sink_msgs, mem_image, sink_delay=0, o3_resp=False ):
 
     s.mem_image = mem_image
 
@@ -40,7 +40,10 @@ class TestHarness( Component ):
     SMUReqType, SMURespType = mk_smu_msg( s.opaque_nbits, AddrType.nbits, DataType.nbits, clog2(num_elems) )
 
     s.dut = StreamingMemUnit( DataType, AddrType, StrideType, CountType, OpaqueType, num_elems )
-    s.mem = MagicMemoryRTL( 1, [(ReqMsgType, RespMsgType)] )
+    if not o3_resp:
+      s.mem = MagicMemoryRTL( 1, [(ReqMsgType, RespMsgType)] )
+    else:
+      s.mem = MagicMemoryO3RTL( 1, [(ReqMsgType, RespMsgType)] )
     s.host = StreamingMemUnitHost( DataType, AddrType, StrideType, CountType,
                                    padding, src_base_addr, src_x_stride,
                                    src_x_count, src_y_stride,
@@ -264,3 +267,32 @@ def test_simple_word_increment_backpressure( cmdline_opts, padding ):
                              dst_base_addr, dst_ack_addr )
 
   run_test( TestHarness( *Types, *Params, sink_msgs, image, sink_delay=20 ), cmdline_opts )
+
+@pytest.mark.parametrize(
+    "padding", [Bits4(x) for x in range(2**4)]
+)
+def test_simple_word_increment_backpressure_o3_response( cmdline_opts, padding ):
+  O, D, A, S, C = Bits5, Bits32, Bits20, Bits10, Bits10
+  Types = [ D, A, S, C, O, 32 ]
+
+  src_base_addr = 0
+  src_x_stride = 4
+  src_x_count = 16
+  src_y_stride = 64*4
+  src_y_count = 16
+  dst_base_addr = 0
+  dst_ack_addr = 2048
+
+  Params = [padding, src_base_addr, src_x_stride, src_x_count,
+            src_y_stride, src_y_count, dst_base_addr, dst_ack_addr]
+
+  image = gen_mem_image( 'word-increment', A.nbits )
+
+  sink_msgs = gen_sink_msgs( image,
+                             O.nbits, A.nbits, D.nbits, 32,
+                             padding, src_base_addr,
+                             src_x_stride, src_x_count,
+                             src_y_stride, src_y_count,
+                             dst_base_addr, dst_ack_addr )
+
+  run_test( TestHarness( *Types, *Params, sink_msgs, image, o3_resp=True, sink_delay=20 ), cmdline_opts )

@@ -1,3 +1,4 @@
+from .MagicMemoryO3RTL import MagicMemoryO3RTL
 from .MagicMemoryRTL import MagicMemoryRTL
 from .MagicMemoryCL import MagicMemoryCL
 from .MagicMemoryFL import MagicMemoryFL

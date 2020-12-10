@@ -525,7 +525,12 @@ class StreamingMemUnitDpath( Component ):
     # Reorder queue
     #---------------------------------------------------------------------
 
+    s.smu_soft_reset = Wire()
+    s.smu_soft_reset //= lambda: s.cfg_go & (s.cfg_req_msg.addr == GO)
+
     s.reorder_q = ReorderQueue( RemoteResp, num_elems, field='reg_id' )
+
+    s.reorder_q.clear //= s.smu_soft_reset
 
     s.reorder_q.enq //= s.arb.send
 

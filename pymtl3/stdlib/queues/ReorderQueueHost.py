@@ -67,7 +67,7 @@ class ReorderQueueHost( Component ):
 
     # Outward packets
 
-    s.deq.rdy //= lambda: s.credit_r != 0
+    s.deq.rdy //= lambda: (s.credit_r != 0) & (s.packets_left != 0)
 
     @update
     def reorder_q_host_packet():

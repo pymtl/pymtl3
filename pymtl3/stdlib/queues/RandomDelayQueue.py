@@ -15,7 +15,8 @@ from copy import deepcopy
 from pymtl3 import *
 from pymtl3.stdlib.queues import EnqIfcRTL, DeqIfcRTL
 
-seed(0xfaceb00c)
+# Toplevel test harness is supposed to call 
+# seed(0xfaceb00c)
 
 class RandomDelayQueue( Component ):
 
@@ -37,7 +38,7 @@ class RandomDelayQueue( Component ):
     def random_delay_q_enq():
       if ~s.reset:
         if s.enq.en & s.enq.rdy:
-          delay = randint( 0, 20 )
+          delay = randint( 0, 64 )
           msg = deepcopy( s.enq.msg )
           s.msgs_in_flight.append( [ msg, delay ] )
 
@@ -61,15 +62,18 @@ class RandomDelayQueue( Component ):
       if ~s.reset:
         s.deq.rdy @= Bits1(s.fire_msg)
         if s.msg_to_fire:
-          s.deq.ret.data   @= s.msg_to_fire.data + salt
-          s.deq.ret.type_  @= s.msg_to_fire.type_
-          s.deq.ret.addr   @= s.msg_to_fire.addr
-          s.deq.ret.opaque @= s.msg_to_fire.opaque
+          s.deq.ret @= s.msg_to_fire
+          s.deq.ret.data @= s.msg_to_fire.data + salt
+          # s.deq.ret.data   @= s.msg_to_fire.data + salt
+          # s.deq.ret.type_  @= s.msg_to_fire.type_
+          # s.deq.ret.addr   @= s.msg_to_fire.addr
+          # s.deq.ret.opaque @= s.msg_to_fire.opaque
         else:
-          s.deq.ret.data   @= 0
-          s.deq.ret.type_  @= 0
-          s.deq.ret.addr   @= 0
-          s.deq.ret.opaque @= 0
+          s.deq.ret @= MsgType()
+          # s.deq.ret.data   @= 0
+          # s.deq.ret.type_  @= 0
+          # s.deq.ret.addr   @= 0
+          # s.deq.ret.opaque @= 0
 
     # Handshake
 
