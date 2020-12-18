@@ -20,11 +20,11 @@ def test_gl():
 
       @update_delay(600)
       def up_a():
-        s.a @= Bits32(12)
+        s.a <<= Bits32(12)
 
       @update
       def up():
-        s.b @= s.a + 1
+        s.b <<= s.a + 1
 
   x = Top()
   x.elaborate()

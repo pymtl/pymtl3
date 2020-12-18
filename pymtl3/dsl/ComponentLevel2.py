@@ -81,7 +81,7 @@ class ComponentLevel2( ComponentLevel1 ):
       name_rd   = cls._name_rd
       name_wr   = cls._name_wr
       name_fc   = cls._name_fc
-      name_ff   = cls._name_ff
+      name_isff   = cls._name_isff
     except Exception:
       name_info = cls._name_info = {}
       name_isff = cls._name_isff = {}

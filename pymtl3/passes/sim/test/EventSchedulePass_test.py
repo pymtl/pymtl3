@@ -38,7 +38,7 @@ def test_gl():
 
       @update_delay(600)
       def up_a():
-        s.a @= Bits32(12)
+        s.a <<= Bits32(12)
 
       @update
       def up():
@@ -60,8 +60,6 @@ def test_clock_gen():
       s.inv1_out = Wire()
       s.out = OutPort()
 
-      # s.nand_out //= lambda delay=300: ~(s.inv1_out & s.en)
-
       @update_delay(300)
       def up_nand():
         s.nand_out <<= ~(s.inv1_out & s.en)
@@ -73,6 +71,7 @@ def test_clock_gen():
       @update_delay(100)
       def up_inv1():
         s.inv1_out <<= ~s.inv0_out
+        print(s.inv1_out)
 
       s.out //= s.inv1_out
 
@@ -81,6 +80,8 @@ def test_clock_gen():
   x.apply( GenDAGPass() )
   x.apply( EventSchedulePass() )
 
-  x.sim_tick( 10000 )
+  x.en @= 0
+  x.sim_delay( 2000 )
+  print("enable")
   x.en @= 1
-  x.sim_tick( 10000 )
+  x.sim_delay( 2000 )
