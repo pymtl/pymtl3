@@ -168,8 +168,8 @@ class VcdGenerationPass( BasePass ):
           # a signal updated in an upblk. Creating a new net for it does
           # not hurt functionality.
 
+          signal_net_mapping[signal] = len(trimmed_value_nets)
           trimmed_value_nets.append( [ signal ] )
-          signal_net_mapping[signal] = len(signal_net_mapping)
           symbol = next(vcd_symbols)
           net_symbol_mapping.append( symbol )
 

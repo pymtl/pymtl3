@@ -58,6 +58,8 @@ def test_clock_gen():
       s.nand_out = Wire()
       s.inv0_out = Wire()
       s.inv1_out = Wire()
+      s.inv2_out = Wire()
+      s.inv3_out = Wire()
       s.out = OutPort()
 
       @update_delay(300)
@@ -71,9 +73,16 @@ def test_clock_gen():
       @update_delay(100)
       def up_inv1():
         s.inv1_out <<= ~s.inv0_out
-        print(s.inv1_out)
 
-      s.out //= s.inv1_out
+      @update_delay(100)
+      def up_inv2():
+        s.inv2_out <<= ~s.inv1_out
+
+      @update_delay(100)
+      def up_inv3():
+        s.inv3_out <<= ~s.inv2_out
+
+      s.out //= s.inv3_out
 
   x = Top()
   x.elaborate()
@@ -82,6 +91,6 @@ def test_clock_gen():
 
   x.en @= 0
   x.sim_delay( 2000 )
-  print("enable")
+  print("\nenable @= 1\n")
   x.en @= 1
   x.sim_delay( 2000 )
