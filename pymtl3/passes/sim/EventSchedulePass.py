@@ -364,12 +364,25 @@ def check_top_level_inports():
         for w in writes:
           triggers[b].append( ( 0, delay, signal_flip_mapping[w]) )
 
+    for b, writes in top._dag.genblk_writes.items():
+      assert b not in top._dsl.all_update_delay
+
     for b, reads in top._dsl.all_upblk_reads.items():
       delay = top._dsl.all_update_delay.get( b, 0 )
 
       for r in reads:
         if r.is_input_value_port() and r.is_top_level_signal() and r.get_host_component() is top:
           preamble.append( ( delay, b ) )
+          # We directly use the signal object as the inport vcd event
+          event_vcd_netids[ r ] = [ signal_net_mapping[ r ] ]
+          inport_vcds.append( r )
+
+    for b, reads in top._dag.genblk_reads.items():
+      assert b not in top._dsl.all_update_delay
+
+      for r in reads:
+        if r.is_input_value_port() and r.is_top_level_signal() and r.get_host_component() is top:
+          preamble.append( ( 0, b ) )
           # We directly use the signal object as the inport vcd event
           event_vcd_netids[ r ] = [ signal_net_mapping[ r ] ]
           inport_vcds.append( r )
@@ -407,14 +420,14 @@ def check_top_level_inports():
           triggered_time = time + delay
           for p, t, e in triggers[event]:
             if (triggered_time, e) not in hashset:
-              heappush( Q, ( triggered_time, p, t, e ) )
+              heappush( Q, ( triggered_time, p, id(e), t, e ) )
               hashset.add( (triggered_time, e) )
 
         for e in inport_vcds:
           dump_vcd( time, e )
 
         while Q:
-          time, event_type, event_delay, event = Q[0]
+          time, event_type, _, event_delay, event = Q[0]
           if time > target_time:
             break
 
@@ -427,7 +440,7 @@ def check_top_level_inports():
             triggered_time = time + event_delay
             for p, t, e in triggers[event]:
               if (triggered_time, e) not in hashset:
-                heappush( Q, ( triggered_time, p, t, e ) )
+                heappush( Q, ( triggered_time, p, id(e), t, e ) )
                 hashset.add( (triggered_time, e) )
 
             if event_delay == 0:

@@ -50,7 +50,7 @@ def test_gl():
   print(x._dsl.all_update_delay)
   print(x._dsl.all_upblks)
 
-def test_clock_gen():
+def test_clock_gen_flat():
 
   class Top(Component):
     def construct( s ):
@@ -58,8 +58,6 @@ def test_clock_gen():
       s.nand_out = Wire()
       s.inv0_out = Wire()
       s.inv1_out = Wire()
-      s.inv2_out = Wire()
-      s.inv3_out = Wire()
       s.out = OutPort()
 
       @update_delay(300)
@@ -74,15 +72,7 @@ def test_clock_gen():
       def up_inv1():
         s.inv1_out <<= ~s.inv0_out
 
-      @update_delay(100)
-      def up_inv2():
-        s.inv2_out <<= ~s.inv1_out
-
-      @update_delay(100)
-      def up_inv3():
-        s.inv3_out <<= ~s.inv2_out
-
-      s.out //= s.inv3_out
+      s.out //= s.inv1_out
 
   x = Top()
   x.elaborate()
@@ -94,3 +84,51 @@ def test_clock_gen():
   print("\nenable @= 1\n")
   x.en @= 1
   x.sim_delay( 2000 )
+
+def test_clock_gen_modular():
+
+  class Inverter(Component):
+    def construct( s, delay ):
+      s.in_ = InPort()
+      s.out = OutPort()
+
+      @update_delay(delay)
+      def up_inverter():
+        s.out <<= ~s.in_
+
+  class Nand(Component):
+    def construct( s, delay ):
+      s.in0 = InPort()
+      s.in1 = InPort()
+      s.out = OutPort()
+
+      @update_delay(delay)
+      def up_nand():
+        s.out <<= ~(s.in0 & s.in1)
+
+  class Top(Component):
+    def construct( s ):
+      s.en  = InPort()
+      s.clk_out = OutPort()
+
+      s.nand = Nand( delay=500 )
+      s.invs = [ Inverter(delay=50) for _ in range(4) ]
+
+      s.nand.in0 //= s.en
+      s.nand.in1 //= s.invs[-1].out
+
+      s.invs[0].in_ //= s.nand.out
+      for i in range(3):
+        s.invs[i].out //= s.invs[i+1].in_
+      s.invs[-1].out //= s.clk_out
+
+  x = Top()
+  x.elaborate()
+  x.apply( GenDAGPass() )
+  x.apply( EventSchedulePass() )
+
+  x.en @= 0
+  x.sim_delay( 10000 )
+  print("\nenable @= 1\n")
+  x.en @= 1
+  x.sim_delay( 10000 )
