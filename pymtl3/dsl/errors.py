@@ -48,7 +48,7 @@ In file {}:{} in {}
 
 {} {}
 ^^^ Cannot Assign to {} of type {}.
-In update block, assigning values to components/interfaces/method ports is forbidden.
+In this update block, assigning values to components/interfaces/method ports is forbidden.
 (when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: check the declaration of the variables, or fix this assignment.""".format( \
@@ -60,7 +60,7 @@ Suggestion: check the declaration of the variables, or fix this assignment.""".f
 
 class UpdateBlockWriteError( Exception ):
   """ In update, raise when signal is not @= -ed """
-  def __init__( self, hostobj, blk, op, lineno, suggestion ):
+  def __init__( self, hostobj, blk, expected_op, op, lineno, suggestion ):
 
     filepath = inspect.getfile( hostobj.__class__ )
     blk_src, base_lineno  = inspect.getsourcelines( blk )
@@ -75,39 +75,12 @@ class UpdateBlockWriteError( Exception ):
 In file {}:{} in {}
 
 {} {}
-^^^ In update, only '@=' statements can assign value to signals, not {}
+^^^ In this update block, only '{}' statements can assign value to signals, not '{}'
 (when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: Line {} {}""".format( \
       filepath, error_lineno, blk.__name__,
-      error_lineno, blk_src[ lineno ].lstrip(''), op,
-      repr(hostobj), hostobj.__class__.__name__,
-      error_lineno, suggestion )
-    )
-
-class UpdateFFBlockWriteError( Exception ):
-  """ In update_ff, raise when signal is not <<= -ed"""
-  def __init__( self, hostobj, blk, op, lineno, suggestion ):
-
-    filepath = inspect.getfile( hostobj.__class__ )
-    blk_src, base_lineno  = inspect.getsourcelines( blk )
-
-    # Shunning: we need to subtract 1 from inspect's lineno when we add it
-    # to base_lineno because it starts from 1!
-    lineno -= 1
-    error_lineno = base_lineno + lineno
-
-    return super().__init__( \
-"""
-In file {}:{} in {}
-
-{} {}
-^^^ In update_ff, only '<<=' statements can assign value to signals, not {}
-(when constructing instance {} of class \"{}\" in the hierarchy)
-
-Suggestion: Line {} {}""".format( \
-      filepath, error_lineno, blk.__name__,
-      error_lineno, blk_src[ lineno ].lstrip(''), op,
+      error_lineno, blk_src[ lineno ].lstrip(''), expected_op, op,
       repr(hostobj), hostobj.__class__.__name__,
       error_lineno, suggestion )
     )

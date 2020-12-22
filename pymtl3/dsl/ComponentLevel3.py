@@ -202,7 +202,7 @@ class ComponentLevel3( ComponentLevel2 ):
     # So the cache call here is just to reuse the existing interface to
     # register the AST/src of the generated block for elaborate or passes
     # to use.
-    s._cache_func_meta( blk, is_update_ff=False,
+    s._cache_func_meta( blk, 1, ast.MatMult,
       given=("".join(srcs), lambda_upblk_module, line, inspect.getsourcefile( lamb )) )
     return blk
 

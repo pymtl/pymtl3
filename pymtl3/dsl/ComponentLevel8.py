@@ -8,6 +8,8 @@ we only need CalleePort that contains actual method
 Author : Shunning Jiang
 Date   : Dec 29, 2018
 """
+import ast
+
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
 from .NamedObject import NamedObject
@@ -45,7 +47,7 @@ class ComponentLevel8( ComponentLevel7 ):
     ComponentLevel1._update( s, blk )
 
     s._dsl.update_delay[ blk ] = delay
-    s._cache_func_meta( blk, is_update_ff=True ) # add caching of src/ast
+    s._cache_func_meta( blk, 4, ast.BitOr ) # add caching of src/ast
 
 
   #-----------------------------------------------------------------------

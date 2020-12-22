@@ -85,8 +85,49 @@ class Bits:
 
     return self
 
+  # update_delay specific
+
+  def __ior__( self, v ):
+    nbits = self._nbits
+    try:
+      # Bits/Bitstruct
+      if v.nbits != nbits:
+        if v.nbits < nbits:
+          raise ValueError( f"Bitwidth of LHS must be equal to RHS during <<= non-blocking assignment, " \
+                            f"but here LHS Bits{nbits} > RHS Bits{v.nbits}.\n"
+                            f"- Suggestion: LHS @= zext/sext(RHS, nbits/Type)" )
+        else:
+          raise ValueError( f"Bitwidth of LHS must be equal to RHS during <<= non-blocking assignment, " \
+                            f"but here LHS Bits{nbits} < RHS Bits{v.nbits}.\n"
+                            f"- Suggestion: LHS @= trunc(RHS, nbits/Type)" )
+      _next = v.to_bits()._uint
+    except AttributeError:
+      # Cast to int
+      v = int(v)
+      lo = _lower[nbits]
+      up = _upper[nbits]
+
+      if v < lo or v > up:
+        raise ValueError( f"RHS value {hex(v)} of <<= is too wide for LHS Bits{nbits}!\n" \
+                          f"(Bits{nbits} only accepts {hex(lo)} <= value <= {hex(up)})" )
+      _next = v & up
+
+    try:
+      self._nexts.append( _next )
+    except AttributeError:
+      self._nexts = deque( [ _next ] )
+
+    return self
+
   def _flip( self ):
     self._uint = self._next
+
+  def _advance( self ):
+    try:
+      self._uint = self._next.popleft()
+    except IndexError:
+      pass
+
 
   def clone( self ):
     return _new_valid_bits( self._nbits, self._uint )

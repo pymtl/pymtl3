@@ -35,7 +35,6 @@ from .errors import (
     SignalTypeError,
     UpblkFuncSameNameError,
     UpdateBlockWriteError,
-    UpdateFFBlockWriteError,
     UpdateFFNonTopLevelSignalError,
     VarNotDeclaredError,
     WriteNonSignalError,
@@ -44,6 +43,10 @@ from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
 compiled_re = re.compile('( *(@|def))')
+binops = { ast.Add: '+', ast.Sub: '-', ast.Mult: '*', ast.MatMult: '@',
+           ast.Div: '/', ast.Mod: '%', ast.LShift: '<<', ast.RShift: '>>',
+           ast.BitOr: '|', ast.BitXor: '^', ast.BitAnd: '&', ast.FloorDiv: '//' }
+
 
 def update_ff( blk ):
   NamedObject._elaborate_stack[-1]._update_ff( blk )
@@ -67,7 +70,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
     return inst
 
-  def _cache_func_meta( s, func, is_update_ff, given=None ):
+  def _cache_func_meta( s, func, upblk_type, operator, given=None ):
     """ Convention: the source of a function/update block across different
     instances should be the same. You can construct different functions
     based on the condition, but please use different names. This not only
@@ -81,10 +84,10 @@ class ComponentLevel2( ComponentLevel1 ):
       name_rd   = cls._name_rd
       name_wr   = cls._name_wr
       name_fc   = cls._name_fc
-      name_isff   = cls._name_isff
+      name_type   = cls._name_type
     except Exception:
       name_info = cls._name_info = {}
-      name_isff = cls._name_isff = {}
+      name_type = cls._name_type = {}
       name_rd   = cls._name_rd  = {}
       name_wr   = cls._name_wr  = {}
       name_fc   = cls._name_fc  = {}
@@ -96,7 +99,7 @@ class ComponentLevel2( ComponentLevel1 ):
       _src, _ast, _line, _file = given
 
       name_info[ name ] = ( True, _src, _line, _file, _ast )
-      name_isff[ name ] = is_update_ff
+      name_type[ name ] = (upblk_type, operator)
       name_rd[ name ]   = _rd = []
       name_wr[ name ]   = _wr = []
       name_fc[ name ]   = _fc = []
@@ -108,11 +111,14 @@ class ComponentLevel2( ComponentLevel1 ):
       _ast = ast.parse( compiled_re.sub( r'\2', _src ) )
 
       name_info[ name ] = (False, _src, _line, inspect.getsourcefile( func ), _ast )
-      name_isff[ name ] = is_update_ff
+      name_type[ name ] = (upblk_type, operator)
       name_rd[ name ]   = _rd   = []
       name_wr[ name ]   = _wr   = []
       name_fc[ name ]   = _fc   = []
       AstHelper.extract_reads_writes_calls( s, func, _ast, _rd, _wr, _fc )
+
+    else:
+      assert name_type[ name ] == (upblk_type, operator)
 
   def _elaborate_read_write_func( s ):
 
@@ -120,7 +126,7 @@ class ComponentLevel2( ComponentLevel1 ):
     # I refactor the process of materializing objects in this function
     # Pass in the func as well for error message
 
-    def extract_obj_from_names( func, names, update_ff=False, is_write=False ):
+    def extract_obj_from_names( func, names, is_write=False, upblk_type=None, op_cls=None ):
 
       def expand_array_index( obj, name_depth, node_depth, idx_depth, idx ):
         """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_variable """
@@ -212,7 +218,7 @@ class ComponentLevel2( ComponentLevel1 ):
       all_objs = set()
 
       # Now we turn names into actual objects
-      for obj_name, nodelist, op in names:
+      for obj_name, nodelist, this_op in names:
         if obj_name[0][0] == "s":
           objs = set()
           lookup_variable( s, 1, 1 )
@@ -228,53 +234,35 @@ class ComponentLevel2( ComponentLevel1 ):
               raise WriteNonSignalError( s, func, nodelist[0].lineno, obj )
             all_objs.add( obj )
 
-          # Check all assignments in update_ff and update
+          # Check all assignments in any kind of update block given the
+          # required operator and update block type. For example
           # - <<= in update_ff
           # - @= in update
           # - = in update/update_ff
 
-          if update_ff:
-            # - signals can only be at LHS of <<=
-            #   * only top level signals
-            # - signals cannot be at LHS of @= or =
+          # - signals can only be at LHS of <<=
+          #   * only top level signals
+          # - signals cannot be at LHS of @= or =
 
-            if op is None:
-              raise UpdateFFBlockWriteError( s, func, '=', nodelist[0].lineno,
-                "Fix the '=' assignment with '<<='")
-            elif op == 'for':
-              raise UpdateFFBlockWriteError( s, func, op, nodelist[0].lineno,
-                "Fix the loop variable in for-loop assignment")
-            elif not isinstance( op, ast.LShift ):
-              if isinstance( op, ast.MatMult ):
-                raise UpdateFFBlockWriteError( s, func, '@=', nodelist[0].lineno,
-                  "Fix the '@=' assignment with '<<='")
+          op_str = binops[op_cls]
+          this_op_str = binops.get( this_op.__class__, None )
 
-              raise UpdateFFBlockWriteError( s, func, op+'=', nodelist[0].lineno,
-                "Fix the signal assignment with '<<='")
+          if this_op is None:
+            raise UpdateBlockWriteError( s, func, f'{op_str}=', '=', nodelist[0].lineno,
+              f"Fix the '=' assignment with '{op_str}='")
+          elif this_op == 'for':
+            raise UpdateBlockWriteError( s, func, f'{op_str}=', this_op, nodelist[0].lineno,
+              "Fix the loop variable in for-loop assignment")
+          elif not isinstance( this_op, op_cls ):
+            raise UpdateBlockWriteError( s, func, f'{op_str}=', f'{this_op_str}=', nodelist[0].lineno,
+              f"Fix the '{this_op_str}=' assignment with '{op_str}='")
 
-
+          if upblk_type == 2:
             for x in objs:
               if not x.is_top_level_signal():
                 raise UpdateFFNonTopLevelSignalError( s, func, nodelist[0].lineno )
 
-              x._dsl.needs_double_buffer = True
-
-          else: # update
-            # - signals can only be at LHS of @=
-            # - signals cannot be at LHS of <<= or =
-            if op is None:
-              raise UpdateBlockWriteError( s, func, '=', nodelist[0].lineno,
-                "Fix the '=' assignment with '@='")
-            elif op == 'for':
-              raise UpdateBlockWriteError( s, func, op, nodelist[0].lineno,
-                "Fix the loop variable in for-loop assignment")
-            elif not isinstance( op, ast.MatMult ):
-              if isinstance( op, ast.LShift ):
-                raise UpdateBlockWriteError( s, func, '<<=', nodelist[0].lineno,
-                  "Fix the '<<=' assignment with '@='")
-              raise UpdateBlockWriteError( s, func, op+'=', nodelist[0].lineno,
-                "Fix the signal assignment with '@='")
-
+            x._dsl.needs_double_buffer = True
         # This is a function call without "s." prefix, check func list
         elif obj_name[0][0] in s._dsl.name_func:
           call = s._dsl.name_func[ obj_name[0][0] ]
@@ -288,7 +276,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
     cls = s.__class__
     try:
-      name_rd, name_wr, name_fc, name_isff = cls._name_rd, cls._name_wr, cls._name_fc, cls._name_isff
+      name_rd, name_wr, name_fc, name_type = cls._name_rd, cls._name_wr, cls._name_fc, cls._name_type
     except AttributeError: # This component doesn't have update block
       pass
 
@@ -307,7 +295,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.upblk_calls  = {}
     for name, blk in s._dsl.name_upblk.items():
       s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
-      s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ], name_isff[ name ], is_write=True )
+      s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ], True, *name_type[ name ] )
       s._dsl.upblk_calls [ blk ] = extract_obj_from_names( blk, name_fc[ name ] )
 
   # Override
@@ -525,24 +513,24 @@ class ComponentLevel2( ComponentLevel1 ):
       raise UpblkFuncSameNameError( name )
 
     s._dsl.name_func[ name ] = func
-    s._cache_func_meta( func, is_update_ff=False )
+    s._cache_func_meta( func, 0, ast.MatMult )
     return func
 
   # Override
   def _update( s, blk ):
-    super()._update( blk )
+    ComponentLevel1._update( s, blk )
 
-    s._cache_func_meta( blk, is_update_ff=False ) # add caching of src/ast
+    s._cache_func_meta( blk, 1, ast.MatMult ) # add caching of src/ast
 
   def update_on_edge( s, blk ):
     raise PyMTLDeprecationError("\ns.update_on_edge decorator has been deprecated! "
                                 "\n- Please use @update_ff instead.")
 
   def _update_ff( s, blk ):
-    super()._update( blk )
+    ComponentLevel1._update( s, blk )
 
     s._dsl.update_ff.add( blk )
-    s._cache_func_meta( blk, is_update_ff=True ) # add caching of src/ast
+    s._cache_func_meta( blk, 2, ast.LShift ) # add caching of src/ast
 
   # Override
   def add_constraints( s, *args ): # add RD-U/WR-U constraints

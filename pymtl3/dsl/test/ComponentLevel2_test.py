@@ -20,7 +20,6 @@ from pymtl3.dsl.errors import (
     PyMTLDeprecationError,
     UpblkCyclicError,
     UpdateBlockWriteError,
-    UpdateFFBlockWriteError,
     UpdateFFNonTopLevelSignalError,
     VarNotDeclaredError,
     WriteNonSignalError,
@@ -249,10 +248,10 @@ def test_invalid_ff_assignment1():
 
   try:
     _test_model( Top )
-  except UpdateFFBlockWriteError as e:
+  except UpdateBlockWriteError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown UpdateFFBlockWriteError.")
+  raise Exception("Should've thrown UpdateBlockWriteError.")
 
 def test_invalid_ff_assignment2():
 
@@ -271,6 +270,40 @@ def test_invalid_ff_assignment2():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown UnboundLocalError.")
+
+def test_invalid_ff_assignment3():
+
+  class Top(ComponentLevel2):
+    def construct( s ):
+      s.wire0 = Wire(Bits32)
+
+      @update_ff
+      def up_from_src():
+        s.wire0 @= s.wire0 + 1
+
+  try:
+    _test_model( Top )
+  except UpdateBlockWriteError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown UpdateBlockWriteError.")
+
+def test_invalid_update_assignment1():
+
+  class Top(ComponentLevel2):
+    def construct( s ):
+      s.wire0 = Wire(Bits32)
+
+      @update
+      def up_from_src():
+        s.wire0 |= s.wire0 + 1
+
+  try:
+    _test_model( Top )
+  except UpdateBlockWriteError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown UpdateBlockWriteError.")
 
 def test_invalid_ff_assignment_slice():
 

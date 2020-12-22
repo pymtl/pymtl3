@@ -8,6 +8,9 @@ we only need CalleePort that contains actual method
 Author : Shunning Jiang
 Date   : Dec 29, 2018
 """
+import ast
+
+from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel3 import ComponentLevel3
 from .Connectable import BlockingIfc, MethodPort, NonBlockingIfc
 from .ConstraintTypes import M, U
@@ -84,10 +87,10 @@ class ComponentLevel4( ComponentLevel3 ):
   #-----------------------------------------------------------------------
 
   def _update_once( s, blk ):
-    super()._update( blk )
+    ComponentLevel1._update( s, blk )
 
     s._dsl.update_once.add( blk )
-    # s._cache_func_meta( blk, is_update_ff=False ) # add caching of src/ast
+    s._cache_func_meta( blk, 3, ast.MatMult ) # add caching of src/ast
 
   # Override
   def add_constraints( s, *args ):

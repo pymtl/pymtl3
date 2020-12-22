@@ -11,6 +11,25 @@ from pymtl3.datatypes import Bits1, Bits16, Bits32, bitstruct, mk_bits, zext
 from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel8 import ComponentLevel8, update_delay
 from pymtl3.dsl.Connectable import InPort, Interface, OutPort, Wire
+from ..errors import UpdateBlockWriteError
+
+
+def test_invalid_delay_assignment():
+  class Top(ComponentLevel8):
+    def construct( s ):
+      s.a = Wire(32)
+
+      @update_delay(600)
+      def up_a():
+        s.a @= 12
+
+  try:
+    x = Top()
+    x.elaborate()
+  except UpdateBlockWriteError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown UpdateBlockWriteError.")
 
 def test_gl():
   class Top(ComponentLevel8):
@@ -20,11 +39,11 @@ def test_gl():
 
       @update_delay(600)
       def up_a():
-        s.a <<= Bits32(12)
+        s.a |= 12
 
       @update
       def up():
-        s.b <<= s.a + 1
+        s.b @= s.a + 1
 
   x = Top()
   x.elaborate()
