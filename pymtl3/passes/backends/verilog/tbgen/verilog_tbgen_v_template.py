@@ -16,7 +16,8 @@ template = \
 // Tick one extra cycle upon an error.
 `define CHECK(lineno, out, ref, port_name) \\
   // We first check to see if there's any X in the output signal
-  if ((|(out ^ out)) === 1'bX) begin \\
+  if ((|(out ^ out)) == 1'b0) ; \\
+  else begin \\
     $display(""); \\
     $display("The test bench received a value containing X's! Please note"); \\
     $display("that the VTB is pessmistic about X's and you should make sure"); \\
