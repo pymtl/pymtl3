@@ -14,10 +14,7 @@ template = \
         t({args_strs},`__LINE__)
 
 // Tick one extra cycle upon an error.
-`define CHECK(lineno, out, ref, port_name) \\
-  if (out != ref) begin \\
-    $display(""); \\
-    $display("The test bench received an incorrect value!"); \\
+`define VTB_TEST_FAIL(lineno, out, ref, port_name) \\
     $display("- Timestamp      : %0d (default unit: ns)", $time); \\
     $display("- Cycle number   : %0d (variable: cycle_count)", cycle_count); \\
     $display("- line number    : line %0d in {cases_file_name}", lineno); \\
@@ -29,7 +26,21 @@ template = \
     cycle_count += 1; \\
     #`CYCLE_TIME; \\
     cycle_count += 1; \\
-    $fatal; \\
+    $fatal;
+
+`define CHECK(lineno, out, ref, port_name) \\
+  if ((|(out ^ out)) == 1'b0) ; \\
+  else begin \\
+    $display(""); \\
+    $display("The test bench received a value containing X/Z's! Please note"); \\
+    $display("that the VTB is pessmistic about X's and you should make sure"); \\
+    $display("all output ports of your DUT does not produce X's after reset."); \\
+    `VTB_TEST_FAIL(lineno, out, ref, port_name) \\
+  end \\
+  if (out != ref) begin \\
+    $display(""); \\
+    $display("The test bench received an incorrect value!"); \\
+    `VTB_TEST_FAIL(lineno, out, ref, port_name) \\
   end
 
 module {harness_name};
