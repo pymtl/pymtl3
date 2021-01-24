@@ -17,7 +17,7 @@ template = \
 `define VTB_TEST_FAIL(lineno, out, ref, port_name) \\
     $display("- Timestamp      : %0d (default unit: ns)", $time); \\
     $display("- Cycle number   : %0d (variable: cycle_count)", cycle_count); \\
-    $display("- line number    : line %0d in {case_file_name}", lineno); \\
+    $display("- line number    : line %0d in {cases_file_name}", lineno); \\
     $display("- port name      : %s", port_name); \\
     $display("- expected value : 0x%x", ref); \\
     $display("- actual value   : 0x%x", out); \\
