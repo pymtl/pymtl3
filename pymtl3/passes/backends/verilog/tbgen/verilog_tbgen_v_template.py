@@ -15,6 +15,24 @@ template = \
 
 // Tick one extra cycle upon an error.
 `define CHECK(lineno, out, ref, port_name) \\
+  // We first check to see if there's any X in the output signal
+  if ((|(out ^ out)) === 1'bX) begin \\
+    $display(""); \\
+    $display("The test bench received a value containing X's! Please note"); \\
+    $display("that the VTB is pessmistic about X's and you should make sure"); \\
+    $display("all output ports of your DUT does not produce X's after reset."); \\
+    $display("- Timestamp      : %0d (default unit: ns)", $time); \\
+    $display("- Cycle number   : %0d (variable: cycle_count)", cycle_count); \\
+    $display("- line number    : line %0d in {cases_file_name}", lineno); \\
+    $display("- port name      : %s", port_name); \\
+    $display("- actual value   : 0x%x", out); \\
+    $display(""); \\
+    #(`CYCLE_TIME-`INTRA_CYCLE_TIME); \\
+    cycle_count += 1; \\
+    #`CYCLE_TIME; \\
+    cycle_count += 1; \\
+    $fatal; \\
+  end \\
   if (out != ref) begin \\
     $display(""); \\
     $display("The test bench received an incorrect value!"); \\
