@@ -7,6 +7,7 @@ Pure-Python implementation of fixed-bitwidth data type.
 Author : Shunning Jiang
 Date   : Oct 31, 2017
 """
+from collections import deque
 
 # lower <= value <= upper
 _upper = [ 0,  1 ]
@@ -24,7 +25,7 @@ def _new_valid_bits( nbits, uint ):
   return ret
 
 class Bits:
-  __slots__ = ( "_nbits", "_uint", "_next" )
+  __slots__ = ( "_nbits", "_uint", "_next", "_nexts" )
 
   @property
   def nbits( self ):
@@ -114,6 +115,7 @@ class Bits:
 
     try:
       self._nexts.append( _next )
+      print(self._nexts)
     except AttributeError:
       self._nexts = deque( [ _next ] )
 
@@ -124,10 +126,9 @@ class Bits:
 
   def _advance( self ):
     try:
-      self._uint = self._next.popleft()
-    except IndexError:
+      self._uint = self._nexts.popleft()
+    except Exception:
       pass
-
 
   def clone( self ):
     return _new_valid_bits( self._nbits, self._uint )

@@ -298,21 +298,21 @@ def check_top_level_inports():
 
     # this is to wrap the bits with a call to the _flip method, as directly
     # referring to the bounded method results in the same handle to the method object
-    def create_flip_event( signal_bits ):
-      def flip_event():
-        return signal_bits._flip()
-      return flip_event
+    def create_advance_event( signal_bits ):
+      def advance_event():
+        return signal_bits._advance()
+      return advance_event
 
-    signal_flip_mapping = {}
+    signal_adv_mapping = {}
 
     for b, writes in top._dsl.all_upblk_writes.items():
       if b in top._dsl.all_update_delay:
         for w in writes:
-          signal_flip_mapping[w] = flip_event = create_flip_event( top._sched.signal_object_mapping[w][-1] )
+          signal_adv_mapping[w] = adv_event = create_advance_event( top._sched.signal_object_mapping[w][-1] )
 
           if w not in event_created:
             event_created.add( w )
-            event_vcd_netids[ flip_event ] = [ signal_net_mapping[ w ] ]
+            event_vcd_netids[ adv_event ] = [ signal_net_mapping[ w ] ]
 
       else: # b not in top._dsl.all_update_delay:
         event_vcd_netids[ b ] = netids = []
@@ -362,7 +362,7 @@ def check_top_level_inports():
       if b in top._dsl.all_update_delay:
         delay = top._dsl.all_update_delay[b]
         for w in writes:
-          triggers[b].append( ( 0, delay, signal_flip_mapping[w]) )
+          triggers[b].append( ( 0, delay, signal_adv_mapping[w]) )
 
     for b, writes in top._dag.genblk_writes.items():
       assert b not in top._dsl.all_update_delay
@@ -410,6 +410,7 @@ def check_top_level_inports():
       def sim_delay( delay ):
         time = top._sched.timestamp
         target_time = time + delay
+        print(target_time)
 
         top._check_top_level_inports()
 
@@ -418,10 +419,11 @@ def check_top_level_inports():
         for delay, event in preamble:
           event()
           triggered_time = time + delay
+          print("TT", triggered_time)
           for p, t, e in triggers[event]:
-            if (triggered_time, e) not in hashset:
-              heappush( Q, ( triggered_time, p, id(e), t, e ) )
-              hashset.add( (triggered_time, e) )
+            # if (triggered_time, e) not in hashset:
+            heappush( Q, ( triggered_time, p, id(e), t, e ) )
+              # hashset.add( (triggered_time, e) )
 
         for e in inport_vcds:
           dump_vcd( time, e )
@@ -431,17 +433,20 @@ def check_top_level_inports():
           if time > target_time:
             break
 
+          print(time, event)
+
           heappop( Q )
-          hashset.remove( (time, event) )
+          # hashset.remove( (time, event) )
 
           event()
 
           if event_type:
+            print("TT", triggered_time)
             triggered_time = time + event_delay
             for p, t, e in triggers[event]:
-              if (triggered_time, e) not in hashset:
-                heappush( Q, ( triggered_time, p, id(e), t, e ) )
-                hashset.add( (triggered_time, e) )
+              # if (triggered_time, e) not in hashset:
+              heappush( Q, ( triggered_time, p, id(e), t, e ) )
+                # hashset.add( (triggered_time, e) )
 
             if event_delay == 0:
               dump_vcd( time, event )

@@ -62,15 +62,15 @@ def test_clock_gen_flat():
 
       @update_delay(300)
       def up_nand():
-        s.nand_out <<= ~(s.inv1_out & s.en)
+        s.nand_out |= ~(s.inv1_out & s.en)
 
       @update_delay(100)
       def up_inv0():
-        s.inv0_out <<= ~s.nand_out
+        s.inv0_out |= ~s.nand_out
 
       @update_delay(100)
       def up_inv1():
-        s.inv1_out <<= ~s.inv0_out
+        s.inv1_out |= ~s.inv0_out
 
       s.out //= s.inv1_out
 
@@ -94,7 +94,7 @@ def test_clock_gen_modular():
 
       @update_delay(delay)
       def up_inverter():
-        s.out <<= ~s.in_
+        s.out |= ~s.in_
 
   class Nand(Component):
     def construct( s, delay ):
@@ -132,3 +132,118 @@ def test_clock_gen_modular():
   print("\nenable @= 1\n")
   x.en @= 1
   x.sim_delay( 10000 )
+
+def test_d_latch():
+
+  class PosTrigDLatch(Component):
+    def construct( s, delay ):
+      s.in_clk = InPort()
+      s.D = InPort()
+      s.Q = OutPort()
+
+      @update_delay(delay)
+      def update_dlatch():
+        s.Q |= s.D if s.in_clk else s.Q
+
+  x = PosTrigDLatch(delay=720)
+  x.elaborate()
+  x.apply( GenDAGPass() )
+  x.apply( EventSchedulePass() )
+
+  x.in_clk @= 0
+  for i in range(10):
+    x.D @= 1
+    x.sim_delay( 50 )
+    x.D @= 0
+    x.sim_delay( 150 )
+  print("gogogo")
+
+  x.in_clk @= 1
+  for i in range(10):
+    x.D @= 1
+    x.sim_delay( 50 )
+    x.D @= 0
+    x.sim_delay( 150 )
+  x.in_clk @= 0
+  # first cycle
+  for i in range(10):
+    x.D @= 1
+    x.sim_delay( 50 )
+    x.D @= 0
+    x.sim_delay( 150 )
+
+def test_DFF():
+
+  class PosTrigDLatch(Component):
+    def construct( s, delay ):
+      s.in_clk = InPort()
+      s.D = InPort()
+      s.Q = OutPort()
+
+      @update_delay(delay)
+      def update_dlatch():
+        s.Q |= s.D if s.in_clk else s.Q
+
+  class DFF(Component):
+    def construct( s ):
+      s.in_clk = InPort()
+      s.D = InPort()
+      s.Q = OutPort()
+
+      s.DL1 = PosTrigDLatch(delay=50)
+      s.DL2 = PosTrigDLatch(delay=50)
+
+      s.DL1.in_clk //= lambda: ~s.in_clk
+      s.DL2.in_clk //= lambda: s.in_clk
+      s.D //= s.DL1.D
+      s.DL1.Q //= s.DL2.D
+      s.DL2.Q //= s.Q
+
+  x = DFF()
+  x.elaborate()
+  x.apply( GenDAGPass() )
+  x.apply( EventSchedulePass() )
+
+  x.in_clk @= 0
+  x.D @= 1
+  x.sim_delay(1000)
+  x.in_clk @= 1
+
+  for i in range(10):
+    x.D @= 1
+    x.sim_delay( 50 )
+    x.D @= 0
+    x.sim_delay( 150 )
+
+  x.in_clk @= 0
+
+  for i in range(10):
+    x.D @= 1
+    x.sim_delay( 50 )
+    x.D @= 0
+    x.sim_delay( 150 )
+
+  x.in_clk @= 1
+
+  for i in range(10):
+    x.D @= 1
+    x.sim_delay( 50 )
+    x.D @= 0
+    x.sim_delay( 150 )
+
+  x.in_clk @= 0
+
+  for i in range(10):
+    x.D @= 0
+    x.sim_delay( 50 )
+    x.D @= 1
+    x.sim_delay( 150 )
+
+  x.in_clk @= 1
+
+  for i in range(10):
+    x.D @= 1
+    x.sim_delay( 50 )
+    x.D @= 0
+    x.sim_delay( 150 )
+
