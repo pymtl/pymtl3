@@ -24,7 +24,7 @@ class InValRdyIfc( Interface ):
     s.val = InPort( 1 )
     s.rdy = OutPort( 1 )
 
-  def line_trace( s ):
+  def __str__( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy )
 
 class OutValRdyIfc( Interface ):
@@ -35,5 +35,5 @@ class OutValRdyIfc( Interface ):
     s.val = OutPort( 1 )
     s.rdy = InPort( 1 )
 
-  def line_trace( s ):
+  def __str__( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy )

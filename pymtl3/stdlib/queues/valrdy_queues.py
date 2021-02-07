@@ -44,8 +44,8 @@ class BypassQueue1RTL( Component ):
     s.buffer = RegEn( Type )
     s.buffer.in_ //= s.enq.msg
 
-    s.next_full = Wire( Bits1 )
-    s.full      = Wire( Bits1 )
+    s.next_full = Wire()
+    s.full      = Wire()
 
     s.byp_mux = m = Mux( Type, 2 )
     m.out    //= s.deq.msg
@@ -86,8 +86,8 @@ class NormalQueue1RTL( Component ):
     m.in_ //= s.enq.msg
     m.out //= s.deq.msg
 
-    s.next_full = Wire( Bits1 )
-    s.full      = Wire( Bits1 )
+    s.next_full = Wire()
+    s.full      = Wire()
     connect( s.full, s.deq.val )
 
     @update_ff
