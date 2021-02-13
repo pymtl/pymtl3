@@ -9,7 +9,6 @@ from .send_recv_ifcs import (
     SendIfcFL,
     SendIfcRTL,
 )
-from .val_rdy_ifcs import InValRdyIfc, OutValRdyIfc
 from .xcel_ifcs import (
     XcelMasterIfcCL,
     XcelMasterIfcFL,
