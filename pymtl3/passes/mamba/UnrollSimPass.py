@@ -29,6 +29,7 @@ class UnrollSimPass( PrepareSimPass ):
 def compile_unroll( schedule ):
   {}
   def unrolled():
+    pass
     # The code below does the actual calling of update blocks.
     {}
   return unrolled
