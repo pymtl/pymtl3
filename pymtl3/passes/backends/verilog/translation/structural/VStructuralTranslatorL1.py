@@ -45,10 +45,8 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
               f"`explicit_module_name` option of TranslationConfigs.")
 
         # Read the dependency of the placeholder
-        dependency, nlines = [], ph_cfg.pickled_wrapper_nlines
-        with open(ph_cfg.pickled_source_file) as fd:
-          dependency = fd.readlines()
-        dependency = ''.join( dependency[:-nlines] )
+        nlines     = ph_cfg.pickled_wrapper_nlines
+        dependency = '\n'.join( ph_cfg.pickled_source.splitlines()[:-nlines] )
 
         # Create the placeholder wrapper from the ph_cfg metadata
         wrapper = ph_cfg.pickled_wrapper_template.format(top_module_name=module_name)
@@ -57,8 +55,7 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
 
       else:
         # Otherwise use the pickled placeholder source
-        with open(ph_cfg.pickled_source_file) as fd:
-          return fd.read()
+        return ph_cfg.pickled_source
     except (AttributeError, OSError):
       # Forgot to apply VerilogPlaceholderPass?
       raise Exception(

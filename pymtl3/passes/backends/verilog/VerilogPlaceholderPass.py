@@ -134,10 +134,6 @@ class VerilogPlaceholderPass( PlaceholderPass ):
         parent_dir = os.path.dirname(inspect.getfile(m.__class__))
         cfg.src_file = f"{parent_dir}{os.sep}{cfg.top_module}.v"
 
-      # Pickled file name should always be the same as the top level
-      # module name.
-      cfg.pickled_source_file = f"{cfg.pickled_top_module}__pickled.v"
-
       # What is the original file/flist of the pickled source file?
       if cfg.src_file:
         cfg.pickled_orig_file = cfg.src_file
@@ -266,11 +262,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     cfg.pickled_wrapper_template = pickled_wrapper_source_tplt.format(pickled_wrapper=tplt)
     cfg.pickled_wrapper_nlines   = len(pickled_wrapper_source.split('\n'))-1
 
-    with open( cfg.pickled_source_file, 'w' ) as fd:
-      fd.write( pickled_source )
-      fd.flush()
-      os.fsync( fd )
-      fd.close()
+    cfg.pickled_source = pickled_source
 
   def _get_v_lib_files( s, m, cfg, irepr ):
     orig_comp_name = cfg.orig_comp_name
