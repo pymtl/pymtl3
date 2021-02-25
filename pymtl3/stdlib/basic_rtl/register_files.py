@@ -6,7 +6,7 @@ class RegisterFile( Component ):
   def construct( s, Type, nregs=32, rd_ports=1, wr_ports=1,
                 const_zero=False ):
 
-    addr_type = mk_bits( clog2( nregs ) )
+    addr_type = mk_bits( max( 1, clog2( nregs ) ) )
 
     s.raddr = [ InPort( addr_type ) for i in range( rd_ports ) ]
     s.rdata = [ OutPort( Type ) for i in range( rd_ports ) ]
