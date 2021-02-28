@@ -140,7 +140,7 @@ class TestVectorSimulator:
     self.model = config_model_with_cmdline_opts( self.model, cmdline_opts, [] )
 
     try:
-      self.model.apply( DefaultPassGroup(print_line_trace=True) )
+      self.model.apply( DefaultPassGroup(linetrace=True) )
       self.model.sim_reset()
 
       for test_vector in self.test_vectors:
@@ -160,7 +160,7 @@ class TestVectorSimulator:
     finally:
       finalize_verilator( self.model )
 
-def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
+def run_sim( model, cmdline_opts=None, print_line_trace=True, duts=None ):
 
   cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'max_cycles': None, 'dump_vtb': ''}
 
@@ -172,7 +172,7 @@ def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
 
   try:
     # Create a simulator
-    model.apply( DefaultPassGroup(print_line_trace=line_trace) )
+    model.apply( DefaultPassGroup(linetrace=print_line_trace) )
     # Reset model
     model.sim_reset()
 
@@ -194,7 +194,7 @@ def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
 class RunTestVectorSimError( Exception ):
   pass
 
-def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True ):
+def run_test_vector_sim( model, test_vectors, cmdline_opts=None, print_line_trace=True ):
   cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'dump_vtb': ''}
 
   # First row in test vectors contains port names
@@ -214,7 +214,7 @@ def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True
 
   try:
     # Create a simulator
-    model.apply( DefaultPassGroup(print_line_trace=line_trace) )
+    model.apply( DefaultPassGroup(linetrace=print_line_trace) )
     # Reset model
     model.sim_reset()
 
