@@ -290,7 +290,7 @@ Please double check the provided values.
         else:     out_value = getattr( model, g[1] )
 
         if out_value != ref_value:
-          if line_trace:
+          if print_line_trace:
             model.print_line_trace()
           error_msg = """
 run_test_vector_sim received an incorrect value!
