@@ -415,7 +415,23 @@ class Bits:
                           f"Suggestion: 0 <= x <= {hex(_upper[ nbits ])}" )
       return _new_valid_bits( 1, self._uint == other )
 
-  # No need for __ne__
+  def __ne__( self, other ):
+    nbits = self._nbits
+    try:
+      if other.nbits != nbits:
+        raise ValueError( f"Operands of '!=' (ne) operation must have matching bitwidth, "\
+                          f"but here Bits{nbits} != Bits{other.nbits}.\n" )
+      return _new_valid_bits( 1, self._uint != other._uint )
+    except AttributeError:
+      try:
+        other = int(other)
+      except:
+        return _new_valid_bits( 1, 1 )
+
+      if other < 0 or other > _upper[ nbits ]:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(_upper[ nbits ])}" )
+      return _new_valid_bits( 1, self._uint != other )
 
   def __lt__( self, other ):
     nbits = self._nbits
