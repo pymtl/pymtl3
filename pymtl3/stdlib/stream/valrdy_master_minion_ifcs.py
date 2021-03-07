@@ -8,7 +8,7 @@ Master/minion send/recv interface implementations at CL and RTL.
 """
 from pymtl3 import *
 
-from .val_rdy_ifcs import InValRdyIfc, OutValRdyIfc
+from .ifcs import RecvIfcRTL, SendIfcRTL
 from pymtl3.extra import clone_deepcopy
 
 #-------------------------------------------------------------------------
@@ -50,10 +50,11 @@ class MasterIfcRTL( Interface ):
   def construct( s, ReqType, RespType ):
     s.ReqType  = ReqType
     s.RespType = RespType
-    s.req  = OutValRdyIfc( Type=ReqType )
-    s.resp = InValRdyIfc ( Type=RespType )
+    s.req  = RecvIfcRTL( Type=ReqType )
+    s.resp = SendIfcRTL( Type=RespType )
   def __str__( s ):
     return f"{s.req}|{s.resp}"
+
   def connect( s, other, parent ):
     if isinstance( other, MinionIfcCL ):
       m = ValRdyMasterMinionRTL2CLAdapter( other.ReqType, other.RespType )
@@ -76,8 +77,8 @@ class MinionIfcRTL( Interface ):
   def construct( s, ReqType, RespType ):
     s.ReqType  = ReqType
     s.RespType = RespType
-    s.req  = InValRdyIfc ( Type=ReqType )
-    s.resp = OutValRdyIfc( Type=RespType )
+    s.req  = RecvIfcRTL( Type=ReqType )
+    s.resp = SendIfcRTL( Type=RespType )
   def __str__( s ):
     return f"{s.req}|{s.resp}"
 

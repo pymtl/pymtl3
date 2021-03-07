@@ -41,3 +41,21 @@ class SendIfcRTL( Interface ):
 
   def __str__( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy, s.trace_len )
+
+class MasterIfcRTL( Interface ):
+  def construct( s, ReqType, RespType ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
+    s.req  = SendIfcRTL( Type=ReqType )
+    s.resp = RecvIfcRTL( Type=RespType )
+  def __str__( s ):
+    return f"{s.req}|{s.resp}"
+
+class MinionIfcRTL( Interface ):
+  def construct( s, ReqType, RespType ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
+    s.req  = RecvIfcRTL( Type=ReqType )
+    s.resp = SendIfcRTL( Type=RespType )
+  def __str__( s ):
+    return f"{s.req}|{s.resp}"
