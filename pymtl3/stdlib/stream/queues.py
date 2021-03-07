@@ -14,12 +14,53 @@ from pymtl3.stdlib.basic_rtl import Mux, RegisterFile
 from .ifcs import RecvIfcRTL, SendIfcRTL
 
 #-------------------------------------------------------------------------
+# NormalQueue1EntryRTL
+#-------------------------------------------------------------------------
+
+class NormalQueue1EntryRTL( Component ):
+
+  def construct( s, EntryType ):
+
+    # Interface
+
+    s.recv  = RecvIfcRTL( EntryType )
+    s.send  = SendIfcRTL( EntryType )
+    s.count = OutPort()
+
+    # Components
+
+    s.full  = Wire()
+    s.entry = Wire( EntryType )
+
+    # Logic
+
+    s.count //= s.full
+
+    s.send.msg //= s.entry
+    s.send.val //= s.full
+    s.recv.rdy //= lambda: ~s.full
+
+    @update_ff
+    def ff_normal1():
+      if s.reset:
+        s.full <<= 0
+      else:
+        s.full <<= (s.recv.val & ~s.full) | (s.full & ~s.send.rdy)
+
+      if s.recv.val & ~s.full:
+        s.entry <<= s.recv.msg
+
+  def line_trace( s ):
+    return f"{s.recv}({s.full}){s.send}"
+
+#-------------------------------------------------------------------------
 # Dpath and Ctrl for NormalQueueRTL
 #-------------------------------------------------------------------------
 
 class NormalQueueDpathRTL( Component ):
 
   def construct( s, EntryType, num_entries=2 ):
+    assert num_entries >= 2
 
     # Interface
 
@@ -27,8 +68,8 @@ class NormalQueueDpathRTL( Component ):
     s.send_msg = OutPort( EntryType )
 
     s.wen   = InPort()
-    s.waddr = InPort( max( 1, clog2( num_entries ) ) )
-    s.raddr = InPort( max( 1, clog2( num_entries ) ) )
+    s.waddr = InPort( clog2( num_entries ) )
+    s.raddr = InPort( clog2( num_entries ) )
 
     # Component
 
@@ -42,15 +83,12 @@ class NormalQueueDpathRTL( Component ):
 class NormalQueueCtrlRTL( Component ):
 
   def construct( s, num_entries=2 ):
+    assert num_entries >= 2
 
     # Constants
 
-    addr_nbits    = max( 1, clog2( num_entries   ) )
-    count_nbits   = max( 1, clog2( num_entries+1 ) )
-    PtrType       = mk_bits  ( addr_nbits    )
-    CountType     = mk_bits  ( count_nbits   )
-    s.last_idx    = PtrType  ( num_entries-1 )
-    s.num_entries = CountType( num_entries   )
+    addr_nbits  = clog2( num_entries   )
+    count_nbits = clog2( num_entries+1 )
 
     # Interface
 
@@ -59,15 +97,15 @@ class NormalQueueCtrlRTL( Component ):
     s.send_val = OutPort()
     s.send_rdy = InPort()
 
-    s.count = OutPort( CountType )
+    s.count = OutPort( count_nbits )
     s.wen   = OutPort()
-    s.waddr = OutPort( PtrType )
-    s.raddr = OutPort( PtrType )
+    s.waddr = OutPort( addr_nbits )
+    s.raddr = OutPort( addr_nbits )
 
     # Registers
 
-    s.head = Wire( PtrType )
-    s.tail = Wire( PtrType )
+    s.head = Wire( addr_nbits )
+    s.tail = Wire( addr_nbits )
 
     # Wires
 
@@ -80,7 +118,7 @@ class NormalQueueCtrlRTL( Component ):
     s.waddr //= s.tail
     s.raddr //= s.head
 
-    s.recv_rdy  //= lambda: s.count < s.num_entries
+    s.recv_rdy  //= lambda: s.count < num_entries
     s.send_val  //= lambda: s.count > 0
 
     s.recv_xfer //= lambda: s.recv_val & s.recv_rdy
@@ -96,10 +134,10 @@ class NormalQueueCtrlRTL( Component ):
 
       else:
         if s.recv_xfer:
-          s.tail <<= s.tail + 1 if s.tail < s.last_idx else 0
+          s.tail <<= s.tail + 1
 
         if s.send_xfer:
-          s.head <<= s.head + 1 if s.head < s.last_idx else 0
+          s.head <<= s.head + 1
 
         if s.recv_xfer & ~s.send_xfer:
           s.count <<= s.count + 1
@@ -118,30 +156,38 @@ class NormalQueueRTL( Component ):
 
     s.recv  = RecvIfcRTL( EntryType )
     s.send  = SendIfcRTL( EntryType )
-    s.count = OutPort( mk_bits( clog2( num_entries+1 ) ) )
+    s.count = OutPort( clog2( num_entries+1 ) )
 
     # Components
 
     assert num_entries > 0
-    s.ctrl  = NormalQueueCtrlRTL ( num_entries )
-    s.dpath = NormalQueueDpathRTL( EntryType, num_entries )
 
-    # Connect ctrl to data path
+    if num_entries == 1:
+      s.q = NormalQueue1EntryRTL( EntryType )
+      s.recv  //= s.q.recv
+      s.send  //= s.q.send
+      s.count //= s.q.count
 
-    s.ctrl.wen   //= s.dpath.wen
-    s.ctrl.waddr //= s.dpath.waddr
-    s.ctrl.raddr //= s.dpath.raddr
+    else:
+      s.ctrl  = NormalQueueCtrlRTL ( num_entries )
+      s.dpath = NormalQueueDpathRTL( EntryType, num_entries )
 
-    # Connect to interface
+      # Connect ctrl to data path
 
-    s.recv.val //= s.ctrl.recv_val
-    s.recv.rdy //= s.ctrl.recv_rdy
-    s.recv.msg //= s.dpath.recv_msg
+      s.ctrl.wen   //= s.dpath.wen
+      s.ctrl.waddr //= s.dpath.waddr
+      s.ctrl.raddr //= s.dpath.raddr
 
-    s.send.val //= s.ctrl.send_val
-    s.send.rdy //= s.ctrl.send_rdy
-    s.send.msg //= s.dpath.send_msg
-    s.count   //= s.ctrl.count
+      # Connect to interface
+
+      s.recv.val //= s.ctrl.recv_val
+      s.recv.rdy //= s.ctrl.recv_rdy
+      s.recv.msg //= s.dpath.recv_msg
+
+      s.send.val //= s.ctrl.send_val
+      s.send.rdy //= s.ctrl.send_rdy
+      s.send.msg //= s.dpath.send_msg
+      s.count   //= s.ctrl.count
 
   # Line trace
 
@@ -164,32 +210,38 @@ class PipeQueue1EntryRTL( Component ):
 
     # Components
 
-    s.entry = Wire( EntryType )
     s.full  = Wire()
+    s.entry = Wire( EntryType )
 
     # Logic
 
     s.count //= s.full
 
     s.send.msg //= s.entry
+    s.send.val //= s.full
 
-    s.enq.rdy //= lambda: ~s.reset & ( ~s.full | s.deq.en )
-    s.deq.rdy //= lambda: s.full & ~s.reset
+    # If send is rdy, either the entry will be sent out to free up space
+    # for recv, or entry is already available for send. Then if not full
+    # entry can always buffer up a message. rdy path is elongated
+    s.recv.rdy //= lambda: s.send.rdy | ~s.full
 
     @update_ff
     def ff_pipe1():
       if s.reset:
         s.full <<= 0
-        s.recv.rdy <<= 0
-
       else:
-        s.full <<= ( s.enq.en | s.full & ~s.deq.en )
+        # The pipe queue is full if in this cycle it cannot receive a
+        # message due to back pressure and the entry is already full.
+        # Otherwise it is not full and it becomes full only if there is
+        # a valid incoming message.
+        s.full <<= ~s.recv.rdy | s.recv.val
 
-      if s.enq.en:
-        s.entry <<= s.enq.msg
+      # AND rdy and val to buffer the incoming message
+      if s.recv.rdy & s.recv.val:
+        s.entry <<= s.recv.msg
 
   def line_trace( s ):
-    return f"{s.enq}({s.full}){s.deq}"
+    return f"{s.recv}({s.full}){s.send}"
 
 #-------------------------------------------------------------------------
 # Ctrl for PipeQueue
@@ -198,69 +250,66 @@ class PipeQueue1EntryRTL( Component ):
 class PipeQueueCtrlRTL( Component ):
 
   def construct( s, num_entries=2 ):
+    assert num_entries >= 2
 
     # Constants
 
-    addr_nbits    = clog2    ( num_entries   )
-    count_nbits   = clog2    ( num_entries+1 )
-    PtrType       = mk_bits  ( addr_nbits    )
-    CountType     = mk_bits  ( count_nbits   )
-    s.last_idx    = PtrType  ( num_entries-1 )
-    s.num_entries = CountType( num_entries   )
+    addr_nbits  = clog2( num_entries   )
+    count_nbits = clog2( num_entries+1 )
 
     # Interface
 
-    s.enq_en  = InPort ( Bits1     )
-    s.enq_rdy = OutPort( Bits1     )
-    s.deq_en  = InPort ( Bits1     )
-    s.deq_rdy = OutPort( Bits1     )
-    s.count   = OutPort( CountType )
+    s.recv_val = InPort ()
+    s.recv_rdy = OutPort()
+    s.send_val = OutPort()
+    s.send_rdy = InPort ()
+    s.count    = OutPort( count_nbits )
 
-    s.wen     = OutPort( Bits1   )
-    s.waddr   = OutPort( PtrType )
-    s.raddr   = OutPort( PtrType )
+    s.wen      = OutPort()
+    s.waddr    = OutPort( addr_nbits )
+    s.raddr    = OutPort( addr_nbits )
 
     # Registers
 
-    s.head = Wire( PtrType )
-    s.tail = Wire( PtrType )
+    s.head = Wire( addr_nbits )
+    s.tail = Wire( addr_nbits )
 
     # Wires
 
-    s.enq_xfer  = Wire( Bits1   )
-    s.deq_xfer  = Wire( Bits1   )
+    s.recv_xfer  = Wire()
+    s.send_xfer  = Wire()
 
     # Connections
 
-    connect( s.wen,   s.enq_xfer )
-    connect( s.waddr, s.tail     )
-    connect( s.raddr, s.head     )
+    s.wen   //= s.recv_xfer
+    s.waddr //= s.tail
+    s.raddr //= s.head
 
-    s.deq_rdy //= lambda: ~s.reset & ( s.count > CountType(0) )
-    s.enq_rdy //= lambda: ~s.reset & ( ( s.count < s.num_entries ) | s.deq_en )
+    s.send_val //= lambda: s.count > 0
+    s.recv_rdy //= lambda: ( s.count < num_entries ) | s.send_rdy
 
-    s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
-    s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
+    s.recv_xfer //= lambda: s.recv_val & s.recv_rdy
+    s.send_xfer //= lambda: s.send_val & s.send_rdy
 
     @update_ff
     def up_reg():
 
       if s.reset:
-        s.head  <<= PtrType(0)
-        s.tail  <<= PtrType(0)
-        s.count <<= CountType(0)
+        s.head  <<= 0
+        s.tail  <<= 0
+        s.count <<= 0
 
       else:
-        if s.deq_xfer:
-          s.head <<= s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
+        if s.recv_xfer:
+          s.tail <<= s.tail + 1
 
-        if s.enq_xfer:
-          s.tail <<= s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
+        if s.send_xfer:
+          s.head <<= s.head + 1
 
-        if s.enq_xfer & ~s.deq_xfer:
-          s.count <<= s.count + CountType(1)
-        if ~s.enq_xfer & s.deq_xfer:
-          s.count <<= s.count - CountType(1)
+        if s.recv_xfer & ~s.send_xfer:
+          s.count <<= s.count + 1
+        elif ~s.recv_xfer & s.send_xfer:
+          s.count <<= s.count - 1
 
 #-------------------------------------------------------------------------
 # PipeQueueRTL
@@ -274,7 +323,7 @@ class PipeQueueRTL( Component ):
 
     s.recv  = RecvIfcRTL( EntryType )
     s.send  = SendIfcRTL( EntryType )
-    s.count = OutPort( mk_bits( clog2( num_entries+1 ) ) )
+    s.count = OutPort( clog2( num_entries+1 ) )
 
     # Components
 
@@ -308,8 +357,53 @@ class PipeQueueRTL( Component ):
   # Line trace
 
   def line_trace( s ):
-    return "{}({}){}".format( s.enq, s.count, s.deq )
+    return f"{s.recv}({s.count}){s.send}"
 
+#-------------------------------------------------------------------------
+# BypassQueue1EntryRTL
+#-------------------------------------------------------------------------
+
+class BypassQueue1EntryRTL( Component ):
+
+  def construct( s, EntryType ):
+
+    # Interface
+
+    s.recv  = RecvIfcRTL( EntryType )
+    s.send  = SendIfcRTL( EntryType )
+    s.count = OutPort()
+
+    # Components
+
+    s.full  = Wire()
+    s.entry = Wire( EntryType )
+
+    s.bypass_mux = m = Mux( EntryType, 2 )
+    m.in_[0] //= s.recv.msg
+    m.in_[1] //= s.entry
+    m.out    //= s.send.msg
+    m.sel    //= s.full
+
+    # Logic
+
+    s.count //= s.full
+
+    s.send.val //= lambda: s.full | s.recv.val
+    s.recv.rdy //= lambda: ~s.full
+
+    @update_ff
+    def ff_bypass1():
+      if s.reset:
+        s.full <<= 0
+      else:
+        s.full <<= ~s.send.rdy & (s.full | s.recv.val)
+
+      # buffer the incoming message if we cannot directly send it out
+      if ~s.send.rdy & ~s.full & s.recv.val:
+        s.entry <<= s.recv.msg
+
+  def line_trace( s ):
+    return f"{s.recv}({s.full}){s.send}"
 #-------------------------------------------------------------------------
 # Ctrl and Dpath for BypassQueue
 #-------------------------------------------------------------------------
@@ -317,100 +411,100 @@ class PipeQueueRTL( Component ):
 class BypassQueueDpathRTL( Component ):
 
   def construct( s, EntryType, num_entries=2 ):
+    assert num_entries >= 2
 
     # Interface
 
-    s.enq_msg = InPort( EntryType )
-    s.deq_ret = OutPort( EntryType )
+    s.recv_msg = InPort( EntryType )
+    s.send_msg = OutPort( EntryType )
 
-    s.wen     = InPort( Bits1 )
-    s.waddr   = InPort( mk_bits( clog2( num_entries ) ) )
-    s.raddr   = InPort( mk_bits( clog2( num_entries ) ) )
-    s.mux_sel = InPort( Bits1 )
+    s.wen     = InPort()
+    s.waddr   = InPort( clog2( num_entries ) )
+    s.raddr   = InPort( clog2( num_entries ) )
+    s.mux_sel = InPort()
 
     # Component
 
-    s.queue = m = RegisterFile( EntryType, num_entries )
+    s.rf = m = RegisterFile( EntryType, num_entries )
     m.raddr[0] //= s.raddr
     m.wen[0]   //= s.wen
     m.waddr[0] //= s.waddr
-    m.wdata[0] //= s.enq_msg
+    m.wdata[0] //= s.recv_msg
 
     s.mux = m = Mux( EntryType, 2 )
     m.sel    //= s.mux_sel
-    m.in_[0] //= s.queue.rdata[0]
-    m.in_[1] //= s.enq_msg
-    m.out    //= s.deq_ret
+    m.in_[0] //= s.rf.rdata[0]
+    m.in_[1] //= s.recv_msg
+    m.out    //= s.send_msg
 
 class BypassQueueCtrlRTL( Component ):
 
   def construct( s, num_entries=2 ):
+    assert num_entries >= 2
 
     # Constants
 
-    addr_nbits    = clog2    ( num_entries   )
-    count_nbits   = clog2    ( num_entries+1 )
-    PtrType       = mk_bits  ( addr_nbits    )
-    CountType     = mk_bits  ( count_nbits   )
-    s.last_idx    = PtrType  ( num_entries-1 )
-    s.num_entries = CountType( num_entries   )
+    addr_nbits  = clog2( num_entries   )
+    count_nbits = clog2( num_entries+1 )
+
+    last_idx = num_entries-1
 
     # Interface
 
-    s.enq_en  = InPort ( Bits1     )
-    s.enq_rdy = OutPort( Bits1     )
-    s.deq_en  = InPort ( Bits1     )
-    s.deq_rdy = OutPort( Bits1     )
-    s.count   = OutPort( CountType )
+    s.recv_val = InPort ()
+    s.recv_rdy = OutPort()
+    s.send_val = OutPort()
+    s.send_rdy = InPort()
+    s.count    = OutPort( count_nbits )
 
-    s.wen     = OutPort( Bits1   )
-    s.waddr   = OutPort( PtrType )
-    s.raddr   = OutPort( PtrType )
-    s.mux_sel = OutPort( Bits1   )
+    s.wen     = OutPort()
+    s.waddr   = OutPort( addr_nbits )
+    s.raddr   = OutPort( addr_nbits )
+    s.mux_sel = OutPort()
 
     # Registers
 
-    s.head = Wire( PtrType )
-    s.tail = Wire( PtrType )
+    s.head = Wire( addr_nbits )
+    s.tail = Wire( addr_nbits )
 
     # Wires
 
-    s.enq_xfer  = Wire( Bits1   )
-    s.deq_xfer  = Wire( Bits1   )
+    s.recv_xfer  = Wire()
+    s.send_xfer  = Wire()
 
     # Connections
 
-    connect( s.wen,   s.enq_xfer )
-    connect( s.waddr, s.tail     )
-    connect( s.raddr, s.head     )
+    s.wen   //= s.recv_xfer
+    s.waddr //= s.tail
+    s.raddr //= s.head
 
-    s.enq_rdy //= lambda: ~s.reset & ( s.count < s.num_entries )
-    s.deq_rdy //= lambda: ~s.reset & ( (s.count > CountType(0) ) | s.enq_en )
+    s.recv_rdy //= lambda: s.count < num_entries
+    s.send_val //= lambda: (s.count > 0) | s.recv_val
 
-    s.mux_sel //= lambda: s.count == CountType(0)
+    s.mux_sel //= lambda: s.count == 0
 
-    s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
-    s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
+    s.recv_xfer //= lambda: s.recv_val & s.recv_rdy
+    s.send_xfer //= lambda: s.send_val & s.send_rdy
 
     @update_ff
     def up_reg():
 
       if s.reset:
-        s.head  <<= PtrType(0)
-        s.tail  <<= PtrType(0)
-        s.count <<= CountType(0)
+        s.head  <<= 0
+        s.tail  <<= 0
+        s.count <<= 0
 
       else:
-        if s.deq_xfer:
-          s.head <<= s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
+        if s.recv_xfer:
+          s.tail <<= s.tail + 1
 
-        if s.enq_xfer:
-          s.tail <<= s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
+        if s.send_xfer:
+          s.head <<= s.head + 1
 
-        if s.enq_xfer & ~s.deq_xfer:
-          s.count <<= s.count + CountType(1)
-        if ~s.enq_xfer & s.deq_xfer:
-          s.count <<= s.count - CountType(1)
+        if s.recv_xfer & ~s.send_xfer:
+          s.count <<= s.count + 1
+        if ~s.recv_xfer & s.send_xfer:
+          s.count <<= s.count - 1
 
 #-------------------------------------------------------------------------
 # BypassQueueRTL
@@ -422,18 +516,18 @@ class BypassQueueRTL( Component ):
 
     # Interface
 
-    s.enq   = RecvIfcRTL( EntryType )
-    s.deq   = SendIfcRTL( EntryType )
-    s.count = OutPort( mk_bits( clog2( num_entries+1 ) ) )
+    s.recv  = RecvIfcRTL( EntryType )
+    s.send  = SendIfcRTL( EntryType )
+    s.count = OutPort( clog2( num_entries+1 ) )
 
     # Components
 
     assert num_entries > 0
     if num_entries == 1:
       s.q = BypassQueue1EntryRTL( EntryType )
-      connect( s.enq,   s.q.enq )
-      connect( s.deq,   s.q.deq )
-      connect( s.count, s.q.count )
+      s.recv  //= s.q.recv
+      s.send  //= s.q.send
+      s.count //= s.q.count
 
     else:
       s.ctrl  = BypassQueueCtrlRTL ( num_entries )
@@ -441,23 +535,23 @@ class BypassQueueRTL( Component ):
 
       # Connect ctrl to data path
 
-      connect( s.ctrl.wen,     s.dpath.wen     )
-      connect( s.ctrl.waddr,   s.dpath.waddr   )
-      connect( s.ctrl.raddr,   s.dpath.raddr   )
-      connect( s.ctrl.mux_sel, s.dpath.mux_sel )
+      s.ctrl.wen     //= s.dpath.wen
+      s.ctrl.waddr   //= s.dpath.waddr
+      s.ctrl.raddr   //= s.dpath.raddr
+      s.ctrl.mux_sel //= s.dpath.mux_sel
 
       # Connect to interface
 
-      connect( s.enq.en,  s.ctrl.enq_en   )
-      connect( s.enq.rdy, s.ctrl.enq_rdy  )
-      connect( s.deq.en,  s.ctrl.deq_en   )
-      connect( s.deq.rdy, s.ctrl.deq_rdy  )
-      connect( s.count,   s.ctrl.count    )
-      connect( s.enq.msg, s.dpath.enq_msg )
-      connect( s.deq.ret, s.dpath.deq_ret )
+      s.recv.val //= s.ctrl.recv_val
+      s.recv.rdy //= s.ctrl.recv_rdy
+      s.send.val //= s.ctrl.send_val
+      s.send.rdy //= s.ctrl.send_rdy
+      s.count    //= s.ctrl.count
+      s.recv.msg //= s.dpath.recv_msg
+      s.send.msg //= s.dpath.send_msg
 
   # Line trace
 
   def line_trace( s ):
-    return f"{s.enq}({s.count}){s.deq}"
+    return f"{s.recv}({s.count}){s.send}"
 
