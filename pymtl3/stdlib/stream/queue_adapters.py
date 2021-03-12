@@ -15,9 +15,9 @@ class RecvQueueAdapter( Component ):
 
     s.entry = None
 
-    @update_ff
+    @update_once
     def up_recv_rdy():
-      s.recv.rdy <<= (s.entry is None)
+      s.recv.rdy @= (s.entry is None)
 
     @update_once
     def up_recv_msg():
@@ -25,8 +25,9 @@ class RecvQueueAdapter( Component ):
         s.entry = clone_deepcopy( s.recv.msg )
 
     s.add_constraints(
-      U( up_recv_msg ) < M( s.deq ), # bypass behavior
-      U( up_recv_msg ) < M( s.deq.rdy ),
+      M( s.deq )     < U( up_recv_rdy ), # deq before recv in a cycle -- pipe behavior
+      M( s.deq.rdy ) < U( up_recv_rdy ),
+      U( up_recv_rdy ) < U( up_recv_msg ),
     )
 
 

@@ -28,7 +28,6 @@ class SourceRTL( Component ):
 
     # TODO: use wires and ROM to make it translatable
     s.idx = 0
-    s.num_msgs = len(s.msgs)
     s.count = 0
 
     @update_ff
@@ -48,7 +47,7 @@ class SourceRTL( Component ):
           s.send.val <<= 0
 
         else: # s.count == 0
-          if s.idx < s.num_msgs:
+          if s.idx < len(s.msgs):
             s.send.val <<= 1
             s.send.msg <<= s.msgs[s.idx]
           else:
@@ -56,7 +55,7 @@ class SourceRTL( Component ):
 
 
   def done( s ):
-    return s.idx >= s.num_msgs
+    return s.idx >= len(s.msgs)
 
   # Line trace
 

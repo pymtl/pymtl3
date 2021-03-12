@@ -36,7 +36,6 @@ class SinkRTL( Component ):
       assert len( msgs ) == len( arrival_time )
       s.arrival_time = list( arrival_time )
 
-    s.num_msgs     = len(msgs)
     s.idx          = 0
     s.count        = 0
     s.cycle_count  = 0
@@ -60,7 +59,7 @@ class SinkRTL( Component ):
       if s.all_msg_recved:
         s.done_flag = True
 
-      if s.idx >= len( s.msgs ):
+      if s.idx >= len(s.msgs):
         s.all_msg_recved = True
 
       s.received = False
@@ -70,7 +69,7 @@ class SinkRTL( Component ):
 
         s.idx = 0
         s.count = initial_delay
-        s.recv.rdy <<= (s.idx < s.num_msgs) & (s.count == 0)
+        s.recv.rdy <<= (s.idx < len(s.msgs)) & (s.count == 0)
 
       else:
         s.cycle_count += 1
@@ -80,7 +79,7 @@ class SinkRTL( Component ):
           msg = s.recv.msg
 
           # Sanity check
-          if s.idx >= s.num_msgs:
+          if s.idx >= len(s.msgs):
             s.error_msg = ( 'Test Sink received more msgs than expected!\n'
                            f'Received : {msg}' )
 
@@ -110,7 +109,7 @@ class SinkRTL( Component ):
           s.count -= 1
           s.recv.rdy <<= 0
         else: # s.count == 0
-          s.recv.rdy <<= (s.idx < s.num_msgs)
+          s.recv.rdy <<= (s.idx < len(s.msgs))
 
   def done( s ):
     return s.done_flag
