@@ -139,8 +139,20 @@ class VStructuralTranslatorL4(
         obj_c_rtype = s.tr_top.get_metadata(RTLIRPass.rtlir_getter).get_rtlir(obj)
         _c_name = s.rtlir_tr_component_unique_name(obj_c_rtype)
 
+        # Check to see if explicit_module_name is present
+        from pymtl3.passes.backends.verilog.translation.VerilogTranslationPass import (
+            VerilogTranslationPass,
+        )
+        if obj.has_metadata( VerilogTranslationPass.explicit_module_name ):
+          subcomp_explicit_name = obj.get_metadata( VerilogTranslationPass.explicit_module_name )
+        else:
+          subcomp_explicit_name = ''
+
         if isinstance(obj, VerilogPlaceholder):
           c_name = obj.get_metadata( s._placeholder_pass.placeholder_config ).pickled_top_module
+        elif subcomp_explicit_name:
+          # If someone sets explicit_module_name, we need to honor that config
+          c_name = subcomp_explicit_name
         else:
           c_name = _c_name
 

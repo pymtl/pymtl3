@@ -16,6 +16,7 @@ from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 from ....testcases import (
     CaseBits32ArrayConnectSubCompAttrComp,
     CaseBits32ConnectSubCompAttrComp,
+    CaseChildExplicitModuleName,
     CaseConnectArraySubCompArrayStructIfcComp,
     CaseHeteroCompArrayComp,
 )
@@ -44,3 +45,6 @@ def run_test( case, m ):
 )
 def test_verilog_structural_L4( case ):
   run_test( case, case.DUT() )
+
+def test_verilog_structural_L4_child_explicit_module_name():
+  run_test( CaseChildExplicitModuleName, CaseChildExplicitModuleName.DUT() )

@@ -39,6 +39,7 @@ from pymtl3.passes.testcases import (
     CaseBitSelOverBitSelComp,
     CaseBitSelOverPartSelComp,
     CaseBoolTmpVarComp,
+    CaseChildExplicitModuleName,
     CaseConnectArrayBits32FooIfcComp,
     CaseConnectArrayNestedIfcComp,
     CaseConnectArrayStructAttrToOutComp,
@@ -2797,6 +2798,22 @@ CaseHeteroCompArrayComp = set_attributes( CaseHeteroCompArrayComp,
 
         endmodule
     '''
+)
+
+CaseChildExplicitModuleName = set_attributes( CaseChildExplicitModuleName,
+    'REF_COMP',
+    '''\
+        logic [0:0] child__clk ;
+        logic [31:0] child__in_ ;
+        logic [0:0] child__reset ;
+
+        NewChildDUTName child
+        (
+          .clk( child__clk ),
+          .in_( child__in_ ),
+          .reset( child__reset )
+        );
+    ''',
 )
 
 CaseBehavioralArraySubCompArrayStructIfcComp = set_attributes( CaseBehavioralArraySubCompArrayStructIfcComp,
