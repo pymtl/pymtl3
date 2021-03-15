@@ -37,7 +37,7 @@ install:
  - verilator --version
 
  # Install Python requirements
- - pip install --upgrade pip setuptools twine
+ - pip install --upgrade pip setuptools twine `if [ $NOT_USING_PYPY -eq 1 ]; then echo ""; else echo "--requirement requirements/pypy-constraints.txt"; fi`
  - pip install --upgrade --requirement requirements/`if [ $NOT_USING_PYPY -eq 1 ]; then echo "CI.txt"; else echo "CI-pypy.txt"; fi`
  - pip install .
  - pip list
