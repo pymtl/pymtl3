@@ -96,6 +96,14 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     # With the default options, the frequency of PyMTL clock is 1GHz
     "vl_trace_cycle_time" : 100,
 
+    # Set to true to allow for on-demand VCD dumping
+    "vl_trace_on_demand" : False,
+
+    # Top level port name that is used to enable VCD dumping when
+    # `vl_trace_on_demand` is True. Assuming the port is an active-high
+    # enable signal.
+    "vl_trace_on_demand_enable" : "",
+
     # C-compilation options
     # These options will be passed to the C compiler to create a shared lib.
 
@@ -128,10 +136,11 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
 
   Checkers = {
     ("enable", "verbose", "vl_enable_assert", "vl_line_trace", "vl_W_lint", "vl_W_style",
-     "vl_W_fatal", "vl_trace", "vl_coverage", "vl_line_coverage", "vl_toggle_coverage"):
+     "vl_W_fatal", "vl_trace", "vl_coverage", "vl_line_coverage", "vl_toggle_coverage",
+     "vl_trace_on_demand"):
       Checker( lambda v: isinstance(v, bool), "expects a boolean" ),
 
-    ("c_flags", "ld_flags", "ld_libs", "vl_trace_filename"):
+    ("c_flags", "ld_flags", "ld_libs", "vl_trace_filename", "vl_trace_on_demand_enable"):
       Checker( lambda v: isinstance(v, str),  "expects a string" ),
 
     "vl_Wno_list": Checker( lambda v: isinstance(v, list) and all(w in VerilogPlaceholderConfigs.Warnings for w in v),

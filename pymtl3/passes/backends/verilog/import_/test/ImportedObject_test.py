@@ -11,7 +11,7 @@ from os.path import dirname
 import pytest
 
 from pymtl3 import DefaultPassGroup, Interface
-from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
+from pymtl3.datatypes import Bits1, Bits10, Bits32, Bits48, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.backends.verilog import (
     VerilogPlaceholder,
@@ -485,4 +485,27 @@ def test_reg_infer_external_trace( do_test ):
   # 0xFFFFFFFF unsigned
   assert a.line_trace() == 'q = 4294967295'
   a.sim_tick()
+  a.finalize()
+
+def test_incr_on_demand_vcd( do_test ):
+  class VIncr( Component, VerilogPlaceholder ):
+    def construct( s ):
+      s.in_ = InPort( 10 )
+      s.out = OutPort( 10 )
+      s.vcd_en = OutPort()
+      s.set_metadata( VerilogPlaceholderPass.has_clk, False )
+      s.set_metadata( VerilogPlaceholderPass.has_reset, False )
+      s.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
+      s.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand, True )
+      s.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand_enable, "vcd_en" )
+  a = VIncr()
+  a.elaborate()
+  a.apply( VerilogPlaceholderPass() )
+  a = VerilogTranslationImportPass()( a )
+  a.apply( DefaultPassGroup() )
+
+  for i in range(64):
+    a.in_ @= Bits10(i)
+    a.sim_tick()
+
   a.finalize()
