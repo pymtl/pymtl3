@@ -22,6 +22,8 @@ env:
 #------------------------------------------------------------------------
 
 install:
+ # Check if we are using pypy
+ - export NOT_USING_PYPY=$(python -V | grep -q "PyPy"; echo $?)
 
  # Install packages
  - sudo apt-get install -y graphviz
@@ -35,8 +37,8 @@ install:
  - verilator --version
 
  # Install Python requirements
- - pip install --upgrade pip setuptools twine --requirement requirements/pypy-requirements.txt
- - pip install --upgrade --requirement requirements/CI.txt
+ - pip install --upgrade pip setuptools twine
+ - pip install --upgrade --requirement requirements/`if [ $NOT_USING_PYPY -eq 1 ]; then echo "CI.txt"; else echo "CI-pypy.txt"; fi`
  - pip install .
  - pip list
 
@@ -53,12 +55,11 @@ script:
  - git diff --exit-code
  - mkdir -p build
  - cd build
- - export NOT_USING_PYPY=$(python -V | grep -q "PyPy"; echo $?)
- - py.test `if [ $NOT_USING_PYPY -eq 1 ]; then echo "--cov-report xml --cov=pymtl3"; else echo ""; fi` .. $CONFIG --hypothesis-profile CI
+ - pytest `if [ $NOT_USING_PYPY -eq 1 ]; then echo "--cov-report xml --cov=pymtl3"; else echo ""; fi` .. $CONFIG --hypothesis-profile CI
 
 #-------------------------------------------------------------------------
 # after success
 #-------------------------------------------------------------------------
 
 after_success:
-  - if [ $NOT_USING_PYPY -eq 1 ]; then codecov; fi
+ - if [ $NOT_USING_PYPY -eq 1 ]; then codecov; fi
