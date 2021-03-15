@@ -497,7 +497,7 @@ def test_incr_on_demand_vcd( do_test ):
       s.set_metadata( VerilogPlaceholderPass.has_reset, False )
       s.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
       s.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand, True )
-      s.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand_enable, "vcd_en" )
+      s.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand_portname, "vcd_en" )
   a = VIncr()
   a.elaborate()
   a.apply( VerilogPlaceholderPass() )

@@ -209,7 +209,7 @@ class VerilogVerilatorImportPass( BasePass ):
   #: Type: ``str``; input
   #:
   #: Default value: ``""``
-  vl_trace_on_demand_enable = MetadataKey(str)
+  vl_trace_on_demand_portname = MetadataKey(str)
 
   #: Optional flags to be passed to the C compiler.
   #:
@@ -456,7 +456,11 @@ class VerilogVerilatorImportPass( BasePass ):
 
     # On-demand VCD dumping configs
     on_demand_dump_vcd = int(ip_cfg.vl_trace_on_demand)
-    on_demand_vcd_enable = str(ip_cfg.vl_trace_on_demand_enable)
+    on_demand_vcd_enable = str(ip_cfg.vl_trace_on_demand_portname)
+    if on_demand_vcd_enable:
+      on_demand_vcd_enable = f"model->{on_demand_vcd_enable}"
+    else:
+      on_demand_vcd_enable = 0
 
     ip_cfg.vprint("\n=====Generate C wrapper=====")
 

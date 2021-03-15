@@ -102,7 +102,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     # Top level port name that is used to enable VCD dumping when
     # `vl_trace_on_demand` is True. Assuming the port is an active-high
     # enable signal.
-    "vl_trace_on_demand_enable" : "",
+    "vl_trace_on_demand_portname" : "",
 
     # C-compilation options
     # These options will be passed to the C compiler to create a shared lib.
@@ -140,7 +140,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
      "vl_trace_on_demand"):
       Checker( lambda v: isinstance(v, bool), "expects a boolean" ),
 
-    ("c_flags", "ld_flags", "ld_libs", "vl_trace_filename", "vl_trace_on_demand_enable"):
+    ("c_flags", "ld_flags", "ld_libs", "vl_trace_filename", "vl_trace_on_demand_portname"):
       Checker( lambda v: isinstance(v, str),  "expects a string" ),
 
     "vl_Wno_list": Checker( lambda v: isinstance(v, list) and all(w in VerilogPlaceholderConfigs.Warnings for w in v),

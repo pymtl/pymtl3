@@ -204,7 +204,7 @@ void seq_eval( V{component_name}_t * m ) {{
   model->eval();
 
   #if DUMP_VCD
-  if ( m->_vcd_en && (model->ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
+  if ( m->_vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
 
     // update simulation time only on clock toggle
     m->trace_time += {half_cycle_time};
@@ -225,7 +225,7 @@ void seq_eval( V{component_name}_t * m ) {{
   model->eval();
 
   #if DUMP_VCD
-  if ( m->_vcd_en && (model->ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
+  if ( m->_vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
 
     // update simulation time only on clock toggle
     m->trace_time += {half_cycle_time};
