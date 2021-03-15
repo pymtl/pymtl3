@@ -160,7 +160,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     s.structural.component_full_name[m] = get_component_full_name(m_rtype)
     s.structural.component_unique_name[m] = \
         s.rtlir_tr_component_unique_name(m_rtype)
-    if m is s.tr_top and s.tr_cfgs:
+    if s.tr_cfgs:
       s.structural.component_explicit_module_name[m] = s.tr_cfgs[m].explicit_module_name
     else:
       s.structural.component_explicit_module_name[m] = ''

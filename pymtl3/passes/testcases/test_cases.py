@@ -268,6 +268,12 @@ class Bits32DummyBarComp( Component ):
     def upblk():
       s.out @= s.in_ + Bits32(42)
 
+class TestCompExplicitModuleName( Component ):
+  def construct( s ):
+    s.in_ = InPort( 32 )
+    from pymtl3.passes.backends.verilog import VerilogTranslationPass
+    s.set_metadata( VerilogTranslationPass.explicit_module_name, "NewChildDUTName" )
+
 #-------------------------------------------------------------------------
 # Test Components
 #-------------------------------------------------------------------------
@@ -1253,6 +1259,19 @@ class CaseHeteroCompArrayComp:
       [    0,     -1,     0,    41],
       [   42,      0,    42,    42],
       [   -1,     42,    -1,    84],
+  ]
+
+class CaseChildExplicitModuleName:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( 32 )
+      s.child = TestCompExplicitModuleName()
+      s.child.in_ //= s.in_
+  TV_IN  = _set( 'in_', Bits32, 0 )
+  TV_OUT = _check()
+  TV =\
+  [
+      [ 0 ],
   ]
 
 #-------------------------------------------------------------------------

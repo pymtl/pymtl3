@@ -17,7 +17,7 @@ class VerilogTranslationConfigs( BasePassConfigs ):
     # Give an explicit file name to the translated source
     "explicit_file_name" : "",
 
-    # Give an explicit module name to the translated top level
+    # Give an explicit module name to the translated component
     "explicit_module_name" : "",
 
     # Remove module definition during synthesis
