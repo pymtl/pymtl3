@@ -1,0 +1,2 @@
+# Workaround the PyPy PEP 517 issue related to cryptography
+cryptography==3.0

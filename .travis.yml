@@ -35,7 +35,7 @@ install:
  - verilator --version
 
  # Install Python requirements
- - pip install --upgrade pip setuptools twine
+ - pip install --upgrade pip setuptools twine --requirements requirements/pypy-requirements.txt
  - pip install --upgrade --requirement requirements/CI.txt
  - pip install .
  - pip list
