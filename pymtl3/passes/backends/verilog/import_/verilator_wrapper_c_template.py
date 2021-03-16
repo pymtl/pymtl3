@@ -19,6 +19,13 @@ template = \
 // set to true when VCD tracing is enabled in Verilator
 #define DUMP_VCD {dump_vcd}
 
+// set to true to enable on-demand VCD dumping
+#define ON_DEMAND_DUMP_VCD {on_demand_dump_vcd}
+
+// top level port to be used in on-demand VCD dumping; only dump vars when
+// that port has a non-zero value.
+#define ON_DEMAND_VCD_ENABLE {on_demand_vcd_enable}
+
 // set to true when Verilog module has line tracing
 #define VLINETRACE {external_trace}
 
@@ -197,7 +204,7 @@ void seq_eval( V{component_name}_t * m ) {{
   model->eval();
 
   #if DUMP_VCD
-  if ( m->_vcd_en ) {{
+  if ( m->_vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
 
     // update simulation time only on clock toggle
     m->trace_time += {half_cycle_time};
@@ -218,7 +225,7 @@ void seq_eval( V{component_name}_t * m ) {{
   model->eval();
 
   #if DUMP_VCD
-  if ( m->_vcd_en ) {{
+  if ( m->_vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
 
     // update simulation time only on clock toggle
     m->trace_time += {half_cycle_time};

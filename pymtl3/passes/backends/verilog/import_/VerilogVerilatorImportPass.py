@@ -195,6 +195,22 @@ class VerilogVerilatorImportPass( BasePass ):
   #: Default value: ``100``
   vl_trace_cycle_time = MetadataKey(int)
 
+  #: Set to true to allow for on-demand VCD dumping
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
+  vl_trace_on_demand  = MetadataKey(bool)
+
+  #: Top level port name that is used to enable VCD dumping when
+  #: `vl_trace_on_demand` is True. Assuming the port is an active-high
+  #: enable signal.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ``""``
+  vl_trace_on_demand_portname = MetadataKey(str)
+
   #: Optional flags to be passed to the C compiler.
   #:
   #: Type: ``str``; input
@@ -437,6 +453,14 @@ class VerilogVerilatorImportPass( BasePass ):
     verilator_xinit_value = ip_cfg.get_vl_xinit_value()
     verilator_xinit_seed = ip_cfg.get_vl_xinit_seed()
     has_clk = int(ph_cfg.has_clk)
+
+    # On-demand VCD dumping configs
+    on_demand_dump_vcd = int(ip_cfg.vl_trace_on_demand)
+    on_demand_vcd_enable = str(ip_cfg.vl_trace_on_demand_portname)
+    if on_demand_vcd_enable:
+      on_demand_vcd_enable = f"model->{on_demand_vcd_enable}"
+    else:
+      on_demand_vcd_enable = 0
 
     ip_cfg.vprint("\n=====Generate C wrapper=====")
 
