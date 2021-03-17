@@ -15,6 +15,7 @@ from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 from .. import VerilogTranslationImportPass
 from ..testcases import (
+    CaseChildExplicitModuleName,
     CaseMultiPlaceholderImport,
     CasePlaceholderTranslationRegIncr,
     CasePlaceholderTranslationVReg,
@@ -73,6 +74,7 @@ def run_test( case ):
             CasePlaceholderTranslationRegIncr,
             CaseVIncludePopulation,
             CaseVLibsTranslation,
+            CaseChildExplicitModuleName,
           ]
 )
 def test_verilog_translation_import_adhoc( case ):

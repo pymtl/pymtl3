@@ -29,11 +29,10 @@ class VerilogTranslationPass( BasePass ):
   #:
   #: Type: ``str``; input
   #:
-  #: Default value: value of ``explicit_module_name``
+  #: Default value: value of ``explicit_module_name`` of the top level
   explicit_file_name    = MetadataKey(str)
 
   #: Specify the translated name of the component.
-  #: Note that this option only works for the top level component.
   #:
   #: Type: ``str``; input
   #:
