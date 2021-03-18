@@ -12,7 +12,6 @@ class RecvQueueAdapter( Component ):
 
   def construct( s, Type ):
     s.recv = RecvIfcRTL( Type )
-
     s.entry = None
 
     @update_once
@@ -24,11 +23,9 @@ class RecvQueueAdapter( Component ):
       if (s.entry is None) & s.recv.val:
         s.entry = clone_deepcopy( s.recv.msg )
 
-    s.add_constraints(
-      M( s.deq )     < U( up_recv_rdy ), # deq before recv in a cycle -- pipe behavior
-      M( s.deq.rdy ) < U( up_recv_rdy ),
-      U( up_recv_rdy ) < U( up_recv_msg ),
-    )
+    s.add_constraints( M( s.deq )     < U( up_recv_rdy ), # deq before recv in a cycle -- pipe behavior
+                       M( s.deq.rdy ) < U( up_recv_rdy ),
+                       U( up_recv_rdy ) < U( up_recv_msg ) )
 
 
 class SendQueueAdapter( Component ):
