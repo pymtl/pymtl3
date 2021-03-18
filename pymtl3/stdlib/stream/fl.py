@@ -171,25 +171,25 @@ class MemMasterAdapter( Component ):
 class XcelMasterAdapter( Component ):
 
   @blocking
-  def read( s, addr, nbytes ):
+  def read( s, addr ):
     while s.req_entry is not None:
       greenlet.getcurrent().parent.switch(0)
 
-    s.req_entry = s.create_req( XCEL_TYPE_READ, addr )
+    s.req_entry = s.create_req( 0, addr )
 
     while s.resp_entry is None:
       greenlet.getcurrent().parent.switch(0)
 
-    ret = s.resp_entry.data[0:nbytes<<3]
+    ret = s.resp_entry.data
     s.resp_entry = None
     return ret
 
   @blocking
-  def write( s, addr, nbytes, data ):
+  def write( s, addr, data ):
     while s.req_entry is not None:
       greenlet.getcurrent().parent.switch(0)
 
-    s.req_entry = s.create_req( XCEL_TYPE_WRITE, addr, data )
+    s.req_entry = s.create_req( 1, addr, data )
 
     while s.resp_entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -200,6 +200,7 @@ class XcelMasterAdapter( Component ):
     s.master = MasterIfcRTL( ReqType, RespType )
 
     # Use create_req to handle type mismatch
+    Tdata = ReqType.get_field_type('data')
     s.create_req = lambda a,b,c=0: ReqType( a, b, Tdata(int(c)) )
 
     s.req_entry  = None
