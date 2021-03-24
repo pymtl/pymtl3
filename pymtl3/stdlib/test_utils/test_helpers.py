@@ -67,12 +67,20 @@ def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
   dump_vcd     = cmdline_opts[ 'dump_vcd'     ]
   dump_vtb     = cmdline_opts[ 'dump_vtb'     ]
 
+  if 'on_demand_vcd_portname' in cmdline_opts:
+    on_demand_vcd_portname = cmdline_opts['on_demand_vcd_portname']
+  else:
+    on_demand_vcd_portname = ""
+
   # Setup the model
 
   top.elaborate()
 
   if dump_vcd:
     _recursive_set_vl_trace( top, dump_vcd )
+
+  if on_demand_vcd_portname:
+    assert test_verilog, "--test-verilog has to be present to enable on-demand VCD!"
 
   if duts:
     dut_objs = []
@@ -89,6 +97,10 @@ def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
       if dump_vcd:
         dut.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
         dut.set_metadata( VerilogVerilatorImportPass.vl_trace_filename, dump_vcd )
+
+      if on_demand_vcd_portname:
+        dut.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand, True )
+        dut.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand_portname, on_demand_vcd_portname )
 
   top.apply( VerilogPlaceholderPass() )
   top = VerilogTranslationImportPass()( top )
