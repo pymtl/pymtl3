@@ -38,12 +38,15 @@ class VStructuralTranslatorL4(
     direction = port_rtype.get_direction()
     if direction == 'input':
       direction += ' '
+    vname = port_id
+    port_full_name = f"{obj}.{port_id}"
+    ph_id = vname if pmap(port_full_name) == port_full_name else pmap(port_full_name)
     return {
         'direction' : direction,
         'data_type' : port_dtype['data_type'],
         'packed_type' : port_dtype['packed_type'],
         'id' : port_id,
-        'ph_id' : pmap(port_id),
+        'ph_id' : ph_id,
         'unpacked_type' : port_array_type['unpacked_type'],
     }
 
@@ -60,7 +63,11 @@ class VStructuralTranslatorL4(
         pmap = lambda x: x
       vname = f'{ifc_id}__{port_id}'
       pyname = vname.replace('__', '.')
-      ph_id = vname if pmap(pyname) == pyname else pmap(pyname)
+      # `pmap` is a function that maps the _full name_ of a port object to its
+      # Verilog name. `pyname` is simply a name in the local scope. We need to
+      # build up the full name by concatenating `str(obj)` and `pyname`.
+      port_full_name = f"{obj}.{pyname}"
+      ph_id = vname if pmap(port_full_name) == port_full_name else pmap(port_full_name)
       port_dtype = s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
       direction = port_rtype.get_direction()
       if direction == 'input':
