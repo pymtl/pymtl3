@@ -101,7 +101,7 @@ class VerilogPlaceholderConfigs( PlaceholderConfigs ):
           'exactly one of src_file and v_flist should be non-emtpy!' )
 
   def get_port_map( s ):
-    pmap = { p._dsl._my_name: name for p, name in s.port_map.items() }
+    pmap = { p._dsl.full_name: name for p, name in s.port_map.items() }
     return lambda name: pmap[name] if name in pmap else name
 
   def _add_to_checkers( s, checkers, cfg, chk ):
