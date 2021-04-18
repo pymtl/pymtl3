@@ -60,10 +60,9 @@ class PrepareSimPass( BasePass ):
 
 
   def create_sim_eval_comb( self, top ):
-    # FIXME update_once? currently check if the design has method_port
-    method_ports = top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) )
-
-    if len(method_ports) == 0: # Pure RTL design, add eval_combinational
+    # Pure RTL design, add eval_combinational
+    if len( top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) ) ) == 0 and \
+       len( top.get_all_update_once() ) == 0:
       sim_eval_combinational = SimpleTickPass.gen_tick_function( [top._sim.check_top_level_inports] + top._sched.update_schedule )
     else:
       def sim_eval_combinational():
@@ -73,8 +72,10 @@ class PrepareSimPass( BasePass ):
 
   def create_sim_tick( self, top ):
     final_schedule = []
-    if not top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) ):
-      # Pure RTL -- tick update blocks first
+
+    # Pure RTL -- tick update blocks first
+    if len( top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) ) ) == 0 and \
+       len( top.get_all_update_once() ) == 0:
       final_schedule = top._sched.update_schedule[::]
 
     if self.print_line_trace and hasattr( top, 'line_trace' ):
