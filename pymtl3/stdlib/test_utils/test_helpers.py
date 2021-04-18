@@ -258,12 +258,19 @@ def run_test_vector_sim( model, test_vectors, cmdline_opts=None, print_line_trac
 
         groups[i] = g = ( True, m.group(1), int(m.group(2)) )
 
+        if not hasattr( model, g[1] ):
+          raise RunTestVectorSimError(f"Invalid port name: {g[1]}")
+
         # Get type of all the ports
         t = type( getattr( model, g[1] )[ int(g[2]) ] )
         types[i] = None if is_bitstruct_class( t ) else t
 
       else:
         groups[i] = ( False, port_name )
+
+        if not hasattr( model, port_name ):
+          raise RunTestVectorSimError(f"Invalid port name: {port_name}")
+
         t = type( getattr( model, port_name ) )
         types[i] = None if is_bitstruct_class( t ) else t
 
@@ -304,6 +311,11 @@ Please double check the provided values.
         if out_value != ref_value:
           if print_line_trace:
             model.print_line_trace()
+
+          port_name = g[1]
+          if g[0]:
+            port_name = f"{g[1]}[{g[2]}]"
+
           error_msg = """
 run_test_vector_sim received an incorrect value!
 - row number     : {row_number}
