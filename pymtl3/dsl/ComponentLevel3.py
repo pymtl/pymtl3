@@ -218,7 +218,9 @@ class ComponentLevel3( ComponentLevel2 ):
       if not issubclass( Type, Bits ):
         raise InvalidConnectionError( f"We don't support connecting a {Type2} constant "
                                       f"to non-Bits type {Type}" )
-      if Type is not Type2:
+      # Both bits, check bitwidth
+      # use object.nbits instead of Type.nbits to handle both cases: Bits32(2) and Bits(32,2)
+      if Type.nbits != o2.nbits:
         raise InvalidConnectionError( f"Bitwidth mismatch when connecting a {Type2} constant "
                                       f"to signal {o1} with type {Type}." )
       o2 = Const( Type, o2, s )
