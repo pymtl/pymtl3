@@ -10,7 +10,6 @@ dist: xenial
 language: python
 # Use pypy3.6-7.0.0+ to have 1.12.0 version of CFFI which has `dlclose`
 python:
- - "pypy3.6-7.1.1"
  - "3.6"
  - "3.7"
 
