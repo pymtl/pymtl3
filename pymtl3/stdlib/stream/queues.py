@@ -301,10 +301,10 @@ class PipeQueueCtrlRTL( Component ):
 
       else:
         if s.recv_xfer:
-          s.tail <<= s.tail + 1
+          s.tail <<= s.tail + 1 if ( s.tail + 1  < num_entries ) else 0
 
         if s.send_xfer:
-          s.head <<= s.head + 1
+          s.head <<= s.head + 1 if ( s.head + 1  < num_entries ) else 0
 
         if s.recv_xfer & ~s.send_xfer:
           s.count <<= s.count + 1
