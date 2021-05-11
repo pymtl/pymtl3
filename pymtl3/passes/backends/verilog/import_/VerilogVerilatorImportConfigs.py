@@ -265,7 +265,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
 
     # Always verilator -O3 and unroll because -O0 may lead to this error:
     # -Info: Command Line disabled gate optimization with -Og/-O0.  This may cause ordering problems
-    opt_level   = "-O3"
+    opt_level   = "-O3 --inline-mult 1 -j 16"
     loop_unroll = "--unroll-count 1000000"
     stmt_unroll = "--unroll-stmts 1000000"
     trace       = "--trace" if s.vl_trace else ""
