@@ -37,7 +37,7 @@ class DefaultPassGroup( BasePass ):
   def __call__( s, top ):
 
     if s.vcdwave:
-      top.set_metadata( VcdGenerationPass.vcdwave, s.vcdwave )
+      top.set_metadata( VcdGenerationPass.vcd_file_name, s.vcdwave )
 
     if s.textwave:
       top.set_metadata( PrintTextWavePass.enable, True )
