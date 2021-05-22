@@ -9,6 +9,7 @@ Date   : Jan 17, 2018
 """
 
 import ast
+import sys
 
 
 class DetectVarNames( ast.NodeVisitor ):
@@ -19,9 +20,14 @@ class DetectVarNames( ast.NodeVisitor ):
     self.globals = upblk.__globals__
     self.closure = { *upblk.__code__.co_freevars }
 
+    if sys.version_info < (3,8,10000):
+      self._get_full_name = self._get_full_name_up_to_py38
+    else:
+      self._get_full_name = self._get_full_name_starting_py39
+
   # Helper function to get the full name containing "s"
 
-  def _get_full_name( self, node ):
+  def _get_full_name_up_to_py38( self, node ):
 
     # Store the name/index linearly, and store the corresponding ast nodes linearly
     obj_name = []
@@ -67,6 +73,99 @@ class DetectVarNames( ast.NodeVisitor ):
       num = []
       while isinstance( node, ast.Subscript ) and isinstance( node.slice, ast.Index ):
         v = node.slice.value
+        n = "*"
+
+        if isinstance( v, ast.Attribute ): # s.sel, may be constant
+          self.visit( v )
+        elif isinstance( v, ast.Num ):
+          n = v.n
+        elif isinstance( v, ast.Name ):
+          x = v.id
+          if   x in self.globals: n = (False, x)
+          elif x in self.closure: n = (True, x)
+        elif isinstance( v, ast.Call ): # int(x)
+          for x in v.args:
+            self.visit(x)
+
+        num.append(n)
+
+        nodelist.append( node )
+        node = node.value
+
+      if   isinstance( node, ast.Attribute ):
+        obj_name.append( (node.attr, num[::-1]) )
+      elif isinstance( node, ast.Name ):
+        obj_name.append( (node.id, num[::-1]) )
+      elif isinstance( node, ast.Call ): # a.b().c()
+        # FIXME?
+        return None, None
+      else:
+        assert isinstance( node, ast.Str ) # filter out line_trace
+        return None, None
+
+      nodelist.append( node )
+
+      if not hasattr( node, "value" ):
+        break
+      node = node.value
+
+    if slices:
+      assert len(slices) == 1, "Multiple slices at the end of s.%s in update block %s" % \
+        ( ".".join( [ obj_name[i][0] + "".join([f"[{x}]" for x in obj_name[i][1]]) for i in range(len(obj_name)) ] ) \
+        +  f"[{x[0]}:{x[1]}]", self.upblk.__name__ )
+
+      obj_name[0][1].append( slices[0] )
+
+    obj_name = obj_name[::-1]
+    nodelist = nodelist[::-1]
+    return obj_name, nodelist
+
+  def _get_full_name_starting_py39( self, node ):
+
+    # Store the name/index linearly, and store the corresponding ast nodes linearly
+    obj_name = []
+    nodelist = []
+
+    # First strip off all slices -- s.x[1][2].y[i][3][2:3]
+    slices = []
+    while isinstance( node, ast.Subscript ) and isinstance( node.slice, ast.Slice ):
+      lower = node.slice.lower
+      upper = node.slice.upper
+      # If the slice looks like a[i:i+1] where i is variable, I assume it
+      # would access the whole variable
+
+      # Shunning: since the closure/global variables can vary across
+      # different instances of the same class, we need to cache the name.
+
+      low = up = None
+
+      if isinstance( lower, ast.Num ):
+        low = node.slice.lower.n
+      elif isinstance( lower, ast.Name ):
+        x = lower.id
+        if   x in self.globals: low = (False, x)
+        elif x in self.closure: low = (True, x)
+
+      if isinstance( upper, ast.Num ):
+        up = node.slice.upper.n
+      elif isinstance( upper, ast.Name ):
+        x = upper.id
+        if   x in self.globals: up = (False, x)
+        elif x in self.closure: up = (True, x)
+
+      if low is not None and up is not None:
+        slices.append( slice(low, up) )
+      # FIXME
+      # else:
+
+      nodelist.append( node )
+      node = node.value
+
+    # Then do the rests.x[1][2].y[i]
+    while True:
+      num = []
+      while isinstance( node, ast.Subscript ):
+        v = node.slice
         n = "*"
 
         if isinstance( v, ast.Attribute ): # s.sel, may be constant
