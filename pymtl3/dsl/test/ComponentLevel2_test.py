@@ -98,6 +98,42 @@ def test_signal_require_type_or_int():
   except AssertionError as e:
     print(e)
     assert str(e).startswith( "RTL signal can only be of Bits type or bitstruct type" )
+    return
+  raise Exception("Should've thrown AssertionError.")
+
+def test_ast_invalid_slice1():
+
+  class Parametrized(ComponentLevel2):
+    def construct( s, nbits ):
+      s.x = Wire( nbits*2 )
+      @update
+      def upA():
+        print( s.x[1:2][1] )
+
+  a = Parametrized( 1 )
+  try:
+    a.elaborate()
+  except TypeError as e:
+    print(e)
+    return
+  raise Exception("Should've thrown TypeError.")
+
+def test_ast_invalid_slice2():
+
+  class Parametrized(ComponentLevel2):
+    def construct( s, nbits ):
+      s.x = Wire( nbits*2 )
+      @update
+      def upA():
+        print( s.x[1][1:2][1] )
+
+  a = Parametrized( 1 )
+  try:
+    a.elaborate()
+  except TypeError as e:
+    print(e)
+    return
+  raise Exception("Should've thrown TypeError.")
 
 def test_ast_caching_closure():
 

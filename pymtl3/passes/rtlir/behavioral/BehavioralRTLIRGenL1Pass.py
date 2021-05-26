@@ -6,6 +6,7 @@
 """Provide L1 behavioral RTLIR generation pass."""
 import ast
 import copy
+import sys
 
 from pymtl3 import MetadataKey, dsl
 from pymtl3.datatypes import (
@@ -79,6 +80,11 @@ class BehavioralRTLIRGenL1Pass( RTLIRPass ):
 class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
   def __init__( s, component ):
     s.component = component
+
+    if sys.version_info < (3,8,10000):
+      s.visit_Subscript = s._visit_Subscript_up_to_py38
+    else:
+      s.visit_Subscript = s._visit_Subscript_starting_py39
 
   def enter( s, blk, ast ):
     """Entry point of RTLIR generation."""
@@ -315,7 +321,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     ret.ast = node
     return ret
 
-  def visit_Subscript( s, node ):
+  def _visit_Subscript_up_to_py38( s, node ):
     obj = s.const_extractor.enter( node )
     ret = s.handle_constant( node, obj )
     if ret:
@@ -354,6 +360,42 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     raise PyMTLSyntaxError( s.blk, node,
       'Illegal subscript ' + node + ' encountered!' )
+
+  def _visit_Subscript_starting_py39( s, node ):
+    obj = s.const_extractor.enter( node )
+    ret = s.handle_constant( node, obj )
+    if ret:
+      return ret
+
+    value = s.visit( node.value )
+    if isinstance( node.slice, ast.Slice ):
+      if node.slice.step is not None:
+        raise PyMTLSyntaxError( s.blk, node,
+          'Slice with steps is not supported!' )
+      lower, upper = s.visit( node.slice )
+      ret = bir.Slice( value, lower, upper )
+      ret.ast = node
+      return ret
+
+    # signal[ index ]
+    # index might be a slice object!
+    idx = s.visit( node.slice )
+    # If we have a static slice object then use it
+    if isinstance( idx, bir.FreeVar ) and isinstance( idx.obj, slice ):
+      slice_obj = idx.obj
+      if slice_obj.step is not None:
+        raise PyMTLSyntaxError( s.blk, node,
+          'Slice with steps is not supported!' )
+      assert isinstance( slice_obj.start, int ) and \
+             isinstance( slice_obj.stop, int ), \
+          f"start and stop of slice object {slice_obj} must be integers!"
+      ret = bir.Slice( value,
+            bir.Number(slice_obj.start), bir.Number(slice_obj.stop) )
+    # Else this is a real index
+    else:
+      ret = bir.Index( value, idx )
+    ret.ast = node
+    return ret
 
   def visit_Slice( s, node ):
     return ( s.visit( node.lower ), s.visit( node.upper ) )
@@ -516,6 +558,11 @@ class ConstantExtractor( ast.NodeVisitor ):
                           reduce_or, reduce_and, reduce_xor,
                           copy.copy, copy.deepcopy }
 
+    if sys.version_info < (3,8,10000):
+      s.visit_Subscript = s._visit_Subscript_up_to_py38
+    else:
+      s.visit_Subscript = s._visit_Subscript_starting_py39
+
   def generic_visit( s, node ):
     return None
 
@@ -549,7 +596,7 @@ class ConstantExtractor( ast.NodeVisitor ):
     s.cache[node] = ret
     return ret
 
-  def visit_Subscript( s, node ):
+  def _visit_Subscript_up_to_py38( s, node ):
     if node in s.cache:
       return s.cache[node]
     ret = None
@@ -561,6 +608,20 @@ class ConstantExtractor( ast.NodeVisitor ):
           ret = value[idx]
         except:
           ret = None
+    s.cache[node] = ret
+    return ret
+
+  def _visit_Subscript_starting_py39( s, node ):
+    if node in s.cache:
+      return s.cache[node]
+    ret = None
+    value = s.visit( node.value )
+    idx = s.visit( node.slice )
+    if value is not None and idx is not None:
+      try:
+        ret = value[idx]
+      except:
+        ret = None
     s.cache[node] = ret
     return ret
 

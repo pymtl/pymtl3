@@ -27,7 +27,8 @@ class DetectVarNames( ast.NodeVisitor ):
 
   # Helper function to get the full name containing "s"
 
-  def _get_full_name_up_to_py38( self, node ):
+  def _get_full_name_up_to_py38( self, input_node ):
+    node = input_node
 
     # Store the name/index linearly, and store the corresponding ast nodes linearly
     obj_name = []
@@ -92,10 +93,15 @@ class DetectVarNames( ast.NodeVisitor ):
         nodelist.append( node )
         node = node.value
 
-      if   isinstance( node, ast.Attribute ):
+      if isinstance( node, ast.Attribute ):
         obj_name.append( (node.attr, num[::-1]) )
       elif isinstance( node, ast.Name ):
         obj_name.append( (node.id, num[::-1]) )
+      elif isinstance( node, ast.Subscript ):
+        # this is s.x[1:2][1][2] which doesn't make sense
+        raise TypeError( f"Having slice in the middle such as s.x[1][1:2][1][2] "
+                         f"doesn't make sense at line {input_node.lineno} of "
+                         f"update block {self.upblk.__name__} in class {self.obj.__class__}." )
       elif isinstance( node, ast.Call ): # a.b().c()
         # FIXME?
         return None, None
@@ -120,7 +126,8 @@ class DetectVarNames( ast.NodeVisitor ):
     nodelist = nodelist[::-1]
     return obj_name, nodelist
 
-  def _get_full_name_starting_py39( self, node ):
+  def _get_full_name_starting_py39( self, input_node ):
+    node = input_node
 
     # Store the name/index linearly, and store the corresponding ast nodes linearly
     obj_name = []
@@ -179,6 +186,10 @@ class DetectVarNames( ast.NodeVisitor ):
         elif isinstance( v, ast.Call ): # int(x)
           for x in v.args:
             self.visit(x)
+        elif isinstance( v, ast.Slice ): # s.sel, may be constant
+          raise TypeError( f"Having slice in the middle such as s.x[1][1:2][1][2] "
+                           f"doesn't make sense at line {input_node.lineno} of "
+                           f"update block {self.upblk.__name__} in class {self.obj.__class__}." )
 
         num.append(n)
 
