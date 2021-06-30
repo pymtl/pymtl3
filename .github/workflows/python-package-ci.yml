@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7] # [3.6, 3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
@@ -24,17 +24,24 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: "Install Verilator"
+      run: |
+        wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.036.tar.gz
+        tar -C ${HOME} -xzf verilator-travis-4.036.tar.gz
+        echo "VERILATOR_ROOT=${HOME}/verilator" >> $GITHUB_ENV
+        echo "PYMTL_VERILATOR_INCLUDE_DIR=${HOME}/verilator/share/verilator/include" >> $GITHUB_ENV
+        echo "${HOME}/verilator/bin" >> $GITHUB_PATH
+    - name: "Check Verilator"
+      run: |
+        echo ${VERILATOR_ROOT}
+        echo ${PYMTL_VERILATOR_INCLUDE_DIR}
+        verilator --version
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install flake8 pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        pip install --requirement requirements/CI.txt
     - name: Test with pytest
       run: |
         mkdir build && cd build
