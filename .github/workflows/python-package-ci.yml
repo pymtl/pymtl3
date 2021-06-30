@@ -45,4 +45,4 @@ jobs:
     - name: Test with pytest
       run: |
         mkdir build && cd build
-        pytest ..
+        pytest .. --tb=short
