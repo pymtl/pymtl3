@@ -11,7 +11,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -41,8 +40,9 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get install -y graphviz
-        python -m pip install --upgrade pip
+        pip install --upgrade pip
         pip install --requirement requirements/CI.txt
+        pip install .
     - name: Test with pytest
       run: |
         mkdir build && cd build
