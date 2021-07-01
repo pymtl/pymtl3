@@ -40,6 +40,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        sudo apt-get install -y graphviz
         python -m pip install --upgrade pip
         pip install --requirement requirements/CI.txt
     - name: Test with pytest
