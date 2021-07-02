@@ -107,13 +107,13 @@ class ComponentLevel3( ComponentLevel2 ):
     blk_name = "_lambda__{}".format( repr(o).replace(".","_").replace("[", "_").replace("]", "_").replace(":", "_") )
     lambda_upblk = ast.FunctionDef(
       name=blk_name,
-      args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
+      args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], posonlyargs=[], kwarg=None, defaults=[]),
       body=[ast.AugAssign(target=lhs, op=ast.MatMult(), value=rhs, lineno=2, col_offset=6)],
       decorator_list=[],
       returns=None,
       lineno=1, col_offset=4,
     )
-    lambda_upblk_module = ast.Module(body=[ lambda_upblk ])
+    lambda_upblk_module = ast.Module(body=[ lambda_upblk ], type_ignores=[])
 
     # Manually wrap the lambda upblk with a closure function that adds the
     # desired variables to the closure of `_lambda__*`
@@ -134,7 +134,7 @@ class ComponentLevel3( ComponentLevel2 ):
       ast.FunctionDef(
           name="closure",
           args=ast.arguments(args=[ast.arg(arg="lambda_closure", annotation=None, lineno=1, col_offset=12)],
-                             vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
+                             vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, posonlyargs=[], defaults=[]),
           body=[
             ast.Assign(
               targets=[ast.Name(id=var, ctx=ast.Store(), lineno=1+idx, col_offset=2)],
@@ -174,7 +174,7 @@ class ComponentLevel3( ComponentLevel2 ):
           returns=None,
           lineno=1, col_offset=0,
         )
-    ] )
+    ], type_ignores=[] )
 
     # In Python 3 we need to supply a dict as local to get the newly
     # compiled function from closure.

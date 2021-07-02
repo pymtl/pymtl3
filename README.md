@@ -1,7 +1,7 @@
 PyMTL 3 (Mamba)
 ==========================================================================
 
-[![Build Status](https://travis-ci.com/pymtl/pymtl3.svg?branch=master)](https://travis-ci.com/pymtl/pymtl3)
+[![Github Action](https://github.com/pymtl/pymtl3/actions/workflows/python-package-ci.yml/badge.svg)](https://github.com/pymtl/pymtl3/actions/workflows/python-package-ci.yml)
 [![Documentation Status](https://readthedocs.org/projects/pymtl3/badge/?version=latest)](https://pymtl3.readthedocs.io/en/latest/?badge=latest)
 [![Codecov Status](https://codecov.io/gh/pymtl/pymtl3/branch/master/graph/badge.svg)](https://codecov.io/gh/pymtl/pymtl3)
 
