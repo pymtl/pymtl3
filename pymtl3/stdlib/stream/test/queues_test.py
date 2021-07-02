@@ -111,6 +111,12 @@ def test_normal2_simple( cmdline_opts ):
   th.set_param( "top.dut.construct", num_entries = 2 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
+def test_normal3_simple( cmdline_opts ):
+  th = TestHarness( Bits16, NormalQueueRTL, test_msgs, test_msgs )
+  th.set_param( "top.sink.construct", arrival_time = arrival_pipe )
+  th.set_param( "top.dut.construct", num_entries = 3 )
+  run_sim( th, cmdline_opts, duts=['dut'] )
+
 def test_pipe1_simple( cmdline_opts ):
   th = TestHarness( Bits16, PipeQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", arrival_time = arrival_pipe )
@@ -129,6 +135,12 @@ def test_pipe2_backpressure( cmdline_opts ):
   th.set_param( "top.dut.construct", num_entries = 2 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
+def test_pipe3_backpressure( cmdline_opts ):
+  th = TestHarness( Bits16, PipeQueueRTL, test_msgs, test_msgs )
+  th.set_param( "top.sink.construct", initial_delay = 20 )
+  th.set_param( "top.dut.construct", num_entries = 3 )
+  run_sim( th, cmdline_opts, duts=['dut'] )
+
 def test_bypass1_simple( cmdline_opts ):
   th = TestHarness( Bits16, BypassQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", arrival_time = arrival_bypass )
@@ -145,6 +157,12 @@ def test_bypass2_sparse( cmdline_opts ):
   th = TestHarness( Bits16, BypassQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.src.construct", interval_delay = 3 )
   th.set_param( "top.dut.construct", num_entries = 2 )
+  run_sim( th, cmdline_opts, duts=['dut'] )
+
+def test_bypass3_sparse( cmdline_opts ):
+  th = TestHarness( Bits16, BypassQueueRTL, test_msgs, test_msgs )
+  th.set_param( "top.src.construct", interval_delay = 3 )
+  th.set_param( "top.dut.construct", num_entries = 3 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 @pytest.mark.parametrize(
