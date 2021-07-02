@@ -1,0 +1,49 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ 3.6, 3.7, 3.8, 3.9 ] # FIXME github recognizes 3.10 as 3.1 lol
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: "Install Verilator"
+      run: |
+        wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.036.tar.gz
+        tar -C ${HOME} -xzf verilator-travis-4.036.tar.gz
+        echo "VERILATOR_ROOT=${HOME}/verilator" >> $GITHUB_ENV
+        echo "PYMTL_VERILATOR_INCLUDE_DIR=${HOME}/verilator/share/verilator/include" >> $GITHUB_ENV
+        echo "${HOME}/verilator/bin" >> $GITHUB_PATH
+    - name: "Check Verilator"
+      run: |
+        echo ${VERILATOR_ROOT}
+        echo ${PYMTL_VERILATOR_INCLUDE_DIR}
+        verilator --version
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get install -y graphviz
+        pip install --upgrade pip
+        pip install --requirement requirements/CI.txt
+        pip install .
+    - name: Test with pytest
+      run: |
+        mkdir build && cd build
+        pytest .. --tb=short
