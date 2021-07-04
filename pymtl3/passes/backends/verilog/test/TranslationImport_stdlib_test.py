@@ -19,15 +19,10 @@ from pymtl3.stdlib.basic_rtl.test.crossbars_test import test_crossbar3 as _cross
 from pymtl3.stdlib.basic_rtl.test.encoders_test import (
     test_encoder_5_directed as _encoder5,
 )
-from pymtl3.stdlib.queues.test.valrdy_queues_test import test_2entry_normal_Bits as _n2
-from pymtl3.stdlib.queues.test.valrdy_queues_test import test_3entry_normal_Bits as _n3
-from pymtl3.stdlib.queues.test.valrdy_queues_test import (
-    test_bypass_Bits as _bypass_Bits,
-)
-from pymtl3.stdlib.queues.test.valrdy_queues_test import (
-    test_normal_Bits as _normal_Bits,
-)
-from pymtl3.stdlib.queues.test.valrdy_queues_test import test_pipe_Bits as _pipe_Bits
+from pymtl3.stdlib.stream.test.queues_test import test_normal1_simple as _n1
+from pymtl3.stdlib.stream.test.queues_test import test_normal2_simple as _n2
+from pymtl3.stdlib.stream.test.queues_test import test_bypass1_simple as _b1
+from pymtl3.stdlib.stream.test.queues_test import test_pipe1_simple as _p1
 from pymtl3.stdlib.test_utils import TestVectorSimulator
 
 from ..VerilogTranslationImportPass import VerilogTranslationImportPass
@@ -129,6 +124,7 @@ def test_encoder_5_directed( do_test ):
 # Swap run_test_queue with modified version that calls the local do_test
 def _run_queue_test( do_test, test_func ):
 
+  assert False
   def _run_test( m, tvs ):
     def tv_in( model, tv ):
       model.enq.val @= tv[0]
@@ -142,24 +138,21 @@ def _run_queue_test( do_test, test_func ):
     m._tv_in, m._tv_out = tv_in, tv_out
     do_test( m )
 
-  original_run_test = test_func.__globals__['run_test_queue']
-  test_func.__globals__['run_test_queue'] = _run_test
+  original_run_test = test_func.__globals__['run_tv_test']
+  test_func.__globals__['run_tv_test'] = _run_test
   try:
-    test_func()
+    test_func( None )
   finally:
-    test_func.__globals__['run_test_queue'] = original_run_test
+    test_func.__globals__['run_tv_test'] = original_run_test
 
-def test_bypass_Bits( do_test ):
-  _run_queue_test( do_test, _bypass_Bits )
+def test_normal1_simple( do_test ):
+  _run_queue_test( do_test, _n1 )
 
-def test_pipe_Bits( do_test ):
-  _run_queue_test( do_test, _pipe_Bits )
+def test_normal2_simple( do_test ):
+  _run_queue_test( do_test, _n1 )
 
-def test_normal_Bits( do_test ):
-  _run_queue_test( do_test, _normal_Bits )
+def test_bypass1_simple( do_test ):
+  _run_queue_test( do_test, _b1 )
 
-def test_2entry_normal_Bits( do_test ):
-  _run_queue_test( do_test, _n2 )
-
-def test_3entry_normal_Bits( do_test ):
-  _run_queue_test( do_test, _n3 )
+def test_pipe1_simple( do_test ):
+  _run_queue_test( do_test, _p1 )

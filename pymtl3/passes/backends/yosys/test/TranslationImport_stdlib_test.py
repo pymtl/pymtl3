@@ -13,15 +13,14 @@ finishing each test (no matter it fails or passes).
 """
 
 from pymtl3.passes.backends.verilog.test.TranslationImport_stdlib_test import (
-    test_2entry_normal_Bits,
-    test_3entry_normal_Bits,
+    test_normal1_simple,
+    test_normal2_simple,
     test_arbiter_rr_arb_4,
     test_arbiter_rr_arb_en_4,
-    test_bypass_Bits,
+    test_bypass1_simple,
     test_crossbar3,
     test_encoder_5_directed,
-    test_normal_Bits,
-    test_pipe_Bits,
+    test_pipe1_simple,
 )
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test_utils import TestVectorSimulator
