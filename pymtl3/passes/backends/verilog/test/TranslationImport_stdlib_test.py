@@ -124,7 +124,6 @@ def test_encoder_5_directed( do_test ):
 # Swap run_test_queue with modified version that calls the local do_test
 def _run_queue_test( do_test, test_func ):
 
-  assert False
   def _run_test( m, tvs ):
     def tv_in( model, tv ):
       model.enq.val @= tv[0]
