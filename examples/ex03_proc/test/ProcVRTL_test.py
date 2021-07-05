@@ -58,7 +58,7 @@ class ProcVRTL_Tests( BaseTests ):
     th = YosysTranslationImportPass()( th )
 
     # Create a simulator and run simulation
-    th.apply( DefaultPassGroup(print_line_trace=True) )
+    th.apply( DefaultPassGroup(linetrace=True) )
     th.sim_reset()
 
     while not th.done() and th.sim_cycle_count() < max_cycles:
