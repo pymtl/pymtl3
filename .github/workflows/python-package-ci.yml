@@ -24,14 +24,15 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: "Install Verilator"
+    - name: Install Verilator
       run: |
         wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.036.tar.gz
         tar -C ${HOME} -xzf verilator-travis-4.036.tar.gz
         echo "VERILATOR_ROOT=${HOME}/verilator" >> $GITHUB_ENV
         echo "PYMTL_VERILATOR_INCLUDE_DIR=${HOME}/verilator/share/verilator/include" >> $GITHUB_ENV
         echo "${HOME}/verilator/bin" >> $GITHUB_PATH
-    - name: "Check Verilator"
+
+    - name: Check Verilator
       run: |
         echo ${VERILATOR_ROOT}
         echo ${PYMTL_VERILATOR_INCLUDE_DIR}
@@ -43,7 +44,12 @@ jobs:
         pip install --upgrade pip
         pip install --requirement requirements/CI.txt
         pip install .
+
     - name: Test with pytest
       run: |
         mkdir build && cd build
-        pytest .. --tb=short
+        pytest --cov-report xml --cov=pymtl3 .. --tb=short --hypothesis-profile CI
+
+    - name: Upload code coverage report
+      run: |
+        codecov
