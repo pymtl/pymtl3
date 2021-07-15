@@ -12,6 +12,8 @@ to make sure the orignal reference is not lost and is restored after
 finishing each test (no matter it fails or passes).
 """
 
+from pymtl3.passes.PassGroups import DefaultPassGroup
+
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.basic_rtl.test.arbiters_test import test_rr_arb_4 as _rr_arb_4
 from pymtl3.stdlib.basic_rtl.test.arbiters_test import test_rr_arb_en_4 as _rr_arb_en_4
@@ -19,16 +21,12 @@ from pymtl3.stdlib.basic_rtl.test.crossbars_test import test_crossbar3 as _cross
 from pymtl3.stdlib.basic_rtl.test.encoders_test import (
     test_encoder_5_directed as _encoder5,
 )
-from pymtl3.stdlib.queues.test.valrdy_queues_test import test_2entry_normal_Bits as _n2
-from pymtl3.stdlib.queues.test.valrdy_queues_test import test_3entry_normal_Bits as _n3
-from pymtl3.stdlib.queues.test.valrdy_queues_test import (
-    test_bypass_Bits as _bypass_Bits,
-)
-from pymtl3.stdlib.queues.test.valrdy_queues_test import (
-    test_normal_Bits as _normal_Bits,
-)
-from pymtl3.stdlib.queues.test.valrdy_queues_test import test_pipe_Bits as _pipe_Bits
+from pymtl3.stdlib.stream.test.queues_test import test_normal1_simple as _n1
+from pymtl3.stdlib.stream.test.queues_test import test_normal2_simple as _n2
+from pymtl3.stdlib.stream.test.queues_test import test_bypass1_simple as _b1
+from pymtl3.stdlib.stream.test.queues_test import test_pipe1_simple as _p1
 from pymtl3.stdlib.test_utils import TestVectorSimulator
+from pymtl3.stdlib.test_utils import run_sim as stdlib_run_sim
 
 from ..VerilogTranslationImportPass import VerilogTranslationImportPass
 
@@ -126,40 +124,44 @@ def test_encoder_5_directed( do_test ):
 # Queue tests
 #-------------------------------------------------------------------------
 
-# Swap run_test_queue with modified version that calls the local do_test
-def _run_queue_test( do_test, test_func ):
+# Swap run_test_queue with modified version that calls the local run_sim
+def _run_queue_test( test_func ):
 
-  def _run_test( m, tvs ):
-    def tv_in( model, tv ):
-      model.enq.val @= tv[0]
-      model.enq.msg @= tv[2]
-      model.deq.rdy @= tv[4]
-    def tv_out( model, tv ):
-      if tv[1] != '?': assert model.enq.rdy == tv[1]
-      if tv[3] != '?': assert model.deq.val == tv[3]
-      if tv[5] != '?': assert model.deq.msg == tv[5]
-    m._tvs = tvs
-    m._tv_in, m._tv_out = tv_in, tv_out
-    do_test( m )
+  def _run_sim( th, cmdline_opts, duts ):
+    th.elaborate()
+    dut_objs = []
 
-  original_run_test = test_func.__globals__['run_test_queue']
-  test_func.__globals__['run_test_queue'] = _run_test
+    for dut in duts:
+      dut_objs.append( eval(f'th.{dut}') )
+
+    for obj in dut_objs:
+      obj.set_metadata( VerilogTranslationImportPass.enable, True )
+
+    th = VerilogTranslationImportPass()( th )
+
+    th.apply( DefaultPassGroup() )
+    th.sim_reset()
+
+    while not th.done() and th.sim_cycle_count() < 100:
+      th.sim_tick()
+
+    assert th.sim_cycle_count() < 100
+
+  original_run_sim = test_func.__globals__['run_sim']
+  test_func.__globals__['run_sim'] = _run_sim
   try:
-    test_func()
+    test_func( None )
   finally:
-    test_func.__globals__['run_test_queue'] = original_run_test
+    test_func.__globals__['run_sim'] = original_run_sim
 
-def test_bypass_Bits( do_test ):
-  _run_queue_test( do_test, _bypass_Bits )
+def test_normal1_simple():
+  _run_queue_test( _n1 )
 
-def test_pipe_Bits( do_test ):
-  _run_queue_test( do_test, _pipe_Bits )
+def test_normal2_simple():
+  _run_queue_test( _n2 )
 
-def test_normal_Bits( do_test ):
-  _run_queue_test( do_test, _normal_Bits )
+def test_bypass1_simple():
+  _run_queue_test( _b1 )
 
-def test_2entry_normal_Bits( do_test ):
-  _run_queue_test( do_test, _n2 )
-
-def test_3entry_normal_Bits( do_test ):
-  _run_queue_test( do_test, _n3 )
+def test_pipe1_simple():
+  _run_queue_test( _p1 )

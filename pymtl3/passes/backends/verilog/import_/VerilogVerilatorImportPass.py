@@ -658,6 +658,7 @@ class VerilogVerilatorImportPass( BasePass ):
       'vl_W_lint', 'vl_W_style', 'vl_W_fatal', 'vl_Wno_list',
       'vl_xinit', 'vl_trace',
       'vl_trace_timescale', 'vl_trace_cycle_time',
+      'vl_trace_on_demand', 'vl_trace_on_demand_portname',
       'c_flags', 'c_include_path', 'c_srcs',
       'ld_flags', 'ld_libs',
     ]

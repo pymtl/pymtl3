@@ -25,7 +25,7 @@ def make_indent( src, nindent ):
 
 def get_component_unique_name( c_rtype ):
   full_name = get_component_full_name( c_rtype )
-  special_chars = [' ', '<', '>', '.']
+  special_chars = [' ', '<', '>', '.', '[', ']']
 
   if len( full_name ) < 64 and not any([c in full_name for c in special_chars]):
     return full_name

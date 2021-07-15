@@ -120,6 +120,8 @@ class ComponentLevel2( ComponentLevel1 ):
 
       def expand_array_index( obj, name_depth, node_depth, idx_depth, idx ):
         """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_variable """
+        if obj is None:
+          return
 
         if idx_depth >= len(idx): # exhausted, go to next level of name
           lookup_variable( obj, name_depth+1, node_depth+1 )

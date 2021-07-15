@@ -111,7 +111,7 @@ class ChecksumVRTLSrcSink_Tests( BaseSrcSinkTests ):
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
     th = YosysTranslationImportPass()( th )
-    th.apply( DefaultPassGroup(print_line_trace=False) )
+    th.apply( DefaultPassGroup(linetrace=False) )
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 

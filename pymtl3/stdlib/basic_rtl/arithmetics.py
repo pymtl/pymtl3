@@ -36,11 +36,13 @@ class Demux( Component ):
 
 class RightLogicalShifter( Component ):
 
-  def construct( s, Type, shamt_nbits=1 ):
+  def construct( s, Type, shamt_nbits=0 ):
+    if shamt_nbits == 0: shamt_nbits = Type.nbits
+    assert shamt_nbits == Type.nbits
+
     s.in_   = InPort( Type )
     s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )
-    assert shamt_nbits == Type.nbits
 
     @update
     def up_rshifter():
@@ -50,7 +52,10 @@ class RightLogicalShifter( Component ):
 
 class LeftLogicalShifter( Component ):
 
-  def construct( s, Type, shamt_nbits = 1 ):
+  def construct( s, Type, shamt_nbits=0 ):
+    if shamt_nbits == 0: shamt_nbits = Type.nbits
+    assert shamt_nbits == Type.nbits
+
     s.in_   = InPort( Type )
     s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )

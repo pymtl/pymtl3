@@ -23,15 +23,15 @@ class SimpleSimPass( BasePass ):
     VcdGenerationPass()( top )
     PrintTextWavePass()( top )
 
-    PrepareSimPass(print_line_trace=True)( top )
+    PrepareSimPass(print_line_trace=False)( top )
 
 class DefaultPassGroup( BasePass ):
   def __init__( s, *, vcdwave=None, textwave=False,
-                      print_line_trace=True, reset_active_high=True ):
+                      linetrace=False, reset_active_high=True ):
 
     s.vcdwave = vcdwave
     s.textwave = textwave
-    s.print_line_trace = print_line_trace
+    s.linetrace = linetrace
     s.reset_active_high = reset_active_high
 
   def __call__( s, top ):
@@ -50,7 +50,7 @@ class DefaultPassGroup( BasePass ):
     VcdGenerationPass()( top )
     PrintTextWavePass()( top )
 
-    PrepareSimPass(print_line_trace=s.print_line_trace,
+    PrepareSimPass(print_line_trace=s.linetrace,
                    reset_active_high=s.reset_active_high)( top )
 
 class AutoTickSimPass( BasePass ):

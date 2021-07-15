@@ -67,12 +67,20 @@ def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
   dump_vcd     = cmdline_opts[ 'dump_vcd'     ]
   dump_vtb     = cmdline_opts[ 'dump_vtb'     ]
 
+  if 'on_demand_vcd_portname' in cmdline_opts:
+    on_demand_vcd_portname = cmdline_opts['on_demand_vcd_portname']
+  else:
+    on_demand_vcd_portname = ""
+
   # Setup the model
 
   top.elaborate()
 
   if dump_vcd:
     _recursive_set_vl_trace( top, dump_vcd )
+
+  if on_demand_vcd_portname:
+    assert test_verilog, "--test-verilog has to be present to enable on-demand VCD!"
 
   if duts:
     dut_objs = []
@@ -89,6 +97,10 @@ def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
       if dump_vcd:
         dut.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
         dut.set_metadata( VerilogVerilatorImportPass.vl_trace_filename, dump_vcd )
+
+      if on_demand_vcd_portname:
+        dut.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand, True )
+        dut.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand_portname, on_demand_vcd_portname )
 
   top.apply( VerilogPlaceholderPass() )
   top = VerilogTranslationImportPass()( top )
@@ -140,7 +152,7 @@ class TestVectorSimulator:
     self.model = config_model_with_cmdline_opts( self.model, cmdline_opts, [] )
 
     try:
-      self.model.apply( DefaultPassGroup(print_line_trace=True) )
+      self.model.apply( DefaultPassGroup(linetrace=True) )
       self.model.sim_reset()
 
       for test_vector in self.test_vectors:
@@ -160,7 +172,7 @@ class TestVectorSimulator:
     finally:
       finalize_verilator( self.model )
 
-def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
+def run_sim( model, cmdline_opts=None, print_line_trace=True, duts=None ):
 
   cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'max_cycles': None, 'dump_vtb': ''}
 
@@ -172,7 +184,7 @@ def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
 
   try:
     # Create a simulator
-    model.apply( DefaultPassGroup(print_line_trace=line_trace) )
+    model.apply( DefaultPassGroup(linetrace=print_line_trace) )
     # Reset model
     model.sim_reset()
 
@@ -194,7 +206,7 @@ def run_sim( model, cmdline_opts=None, line_trace=True, duts=None ):
 class RunTestVectorSimError( Exception ):
   pass
 
-def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True ):
+def run_test_vector_sim( model, test_vectors, cmdline_opts=None, print_line_trace=True ):
   cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'dump_vtb': ''}
 
   # First row in test vectors contains port names
@@ -214,7 +226,7 @@ def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True
 
   try:
     # Create a simulator
-    model.apply( DefaultPassGroup(print_line_trace=line_trace) )
+    model.apply( DefaultPassGroup(linetrace=print_line_trace) )
     # Reset model
     model.sim_reset()
 
@@ -246,12 +258,19 @@ def run_test_vector_sim( model, test_vectors, cmdline_opts=None, line_trace=True
 
         groups[i] = g = ( True, m.group(1), int(m.group(2)) )
 
+        if not hasattr( model, g[1] ):
+          raise RunTestVectorSimError(f"Invalid port name: {g[1]}")
+
         # Get type of all the ports
         t = type( getattr( model, g[1] )[ int(g[2]) ] )
         types[i] = None if is_bitstruct_class( t ) else t
 
       else:
         groups[i] = ( False, port_name )
+
+        if not hasattr( model, port_name ):
+          raise RunTestVectorSimError(f"Invalid port name: {port_name}")
+
         t = type( getattr( model, port_name ) )
         types[i] = None if is_bitstruct_class( t ) else t
 
@@ -290,8 +309,13 @@ Please double check the provided values.
         else:     out_value = getattr( model, g[1] )
 
         if out_value != ref_value:
-          if line_trace:
+          if print_line_trace:
             model.print_line_trace()
+
+          port_name = g[1]
+          if g[0]:
+            port_name = f"{g[1]}[{g[2]}]"
+
           error_msg = """
 run_test_vector_sim received an incorrect value!
 - row number     : {row_number}

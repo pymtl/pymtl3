@@ -410,7 +410,13 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     if 'placeholder' in pymtl_config and \
        'auto_prefix' in pymtl_config['placeholder'] and \
        pymtl_config.getboolean( 'placeholder', 'auto_prefix' ):
-      return f"{os.path.basename(parent_dir)}_"
+      if cwd == parent_dir:
+        # Just return the base name
+        return f"{os.path.basename(parent_dir)}_"
+      else:
+        # Return an underscore-connected prefix that includes all
+        # directories along the path
+        return f"{parent_dir[len(cwd)+1:].replace(os.path.sep,'_')}_"
     else:
       return ''
 
