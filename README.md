@@ -1,4 +1,4 @@
-Baseline PyMTL3 for GTHDL PLDI Submission
+Baseline PyMTL3 for GTHDL Paper
 ==========================================================================
 
 This repo simulates with the three designs (idiv, proc, cgra) used in
