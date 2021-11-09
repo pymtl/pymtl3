@@ -151,11 +151,13 @@ class NamedObject:
       # for common cases.
       if isinstance( obj, NamedObject ):
         fields = sd.NamedObject_fields
-        if name in fields:
-          if getattr( s, name ) is obj:
-            return
-          raise FieldReassignError(f"The attempt to assign hardware construct to field {name} is illegal:\n"
-                                   f" - top{repr(s)[1:]} already has field {name} with type {type(getattr( s, name ))}.")
+        # PP: removing this check because sometimes we want to explicitly
+        # annotate s.clk and s.reset
+        # if name in fields:
+        #   if getattr( s, name ) is obj:
+        #     return
+        #   raise FieldReassignError(f"The attempt to assign hardware construct to field {name} is illegal:\n"
+        #                            f" - top{repr(s)[1:]} already has field {name} with type {type(getattr( s, name ))}.")
         fields.add( name )
 
         ud = obj._dsl

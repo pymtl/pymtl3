@@ -9,7 +9,8 @@ Author : Yanghui Ou
 
 
 from pymtl3 import *
-from pymtl3.stdlib.basic_rtl import Mux, RegisterFile
+from pymtl3.stdlib.basic_rtl import Mux, RegisterFile, RegEn, RegRst
+from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
 
 from .enq_deq_ifcs import DeqIfcRTL, EnqIfcRTL
 
@@ -537,6 +538,55 @@ class BypassQueue1EntryRTL( Component ):
 
       if s.enq.en & ~s.deq.en:
         s.entry <<= s.enq.msg
+
+  def line_trace( s ):
+    return f"{s.enq}({s.full}){s.deq}"
+
+#-------------------------------------------------------------------------
+# BypassQueue2RTL
+#-------------------------------------------------------------------------
+
+class BypassQueue1RTL( Component ):
+
+  def construct( s, Width ):
+    s.enq = RecvIfcRTL(Width)
+    s.deq = SendIfcRTL(Width)
+
+    s.buffer = RegEn(Width)
+    connect( s.buffer.in_, s.enq.msg )
+
+    s.full = RegRst( Bits1, reset_value = 0 )
+
+    s.byp_mux = Mux( Width, 2 )
+    connect( s.byp_mux.out, s.deq.msg )
+    connect( s.byp_mux.in_[0], s.enq.msg )
+    connect( s.byp_mux.in_[1], s.buffer.out )
+    connect( s.byp_mux.sel, s.full.out ) # full -- buffer.out, empty -- bypass
+
+    @update
+    def up_bypq_set_enq_rdy():
+      s.enq.rdy @= ~s.full.out
+
+    @update
+    def up_bypq_use_enq_en():
+      s.deq.en    @= (s.enq.en | s.full.out) & s.deq.rdy
+      s.buffer.en @= s.enq.en  & ~s.deq.en
+      s.full.in_  @= (s.enq.en | s.full.out) & ~s.deq.en
+
+  def line_trace( s ):
+    return s.buffer.line_trace()
+
+
+class BypassQueue2RTL( Component ):
+
+  def construct( s, Width ):
+    s.enq = RecvIfcRTL(Width)
+    s.deq = SendIfcRTL(Width)
+    s.q1 = BypassQueue1RTL(Width)
+    connect( s.q1.enq, s.enq )
+    s.q2 = BypassQueue1RTL(Width)
+    connect( s.q2.enq, s.q1.deq )
+    connect( s.q2.deq, s.deq )
 
   def line_trace( s ):
     return f"{s.enq}({s.full}){s.deq}"
