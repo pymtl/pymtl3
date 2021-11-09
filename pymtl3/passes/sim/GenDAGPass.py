@@ -31,6 +31,8 @@ class GenDAGPass( BasePass ):
     if placeholders:
       raise LeftoverPlaceholderError( placeholders )
 
+    top.rt_check_time = [0.0]
+
     self._generate_net_blocks( top )
     self._process_value_constraints( top )
     self._process_methods( top )
@@ -181,6 +183,11 @@ class GenDAGPass( BasePass ):
 
       rstrs   = [ f"s.{repr(x)[lca_len+1:]}" for x in readers ]
 
+      # PP: we do nothing here because this is the baseline PyMTL3 (i.e., all runtime
+      # type checks happen through @= and <<= operators). In GTHDL we need to carefully
+      # insert runtime type checks here just between the boundary between statically and
+      # dynamically typed components. Also in GTHDL the Bits operations do not perform
+      # unnecessary type checks -- everything is supposed to have been statically typed.
       gen_src = """
 def {}():
   x = {}
