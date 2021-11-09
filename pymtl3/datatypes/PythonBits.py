@@ -37,13 +37,13 @@ class Bits:
     self._nbits = nbits
 
     if isinstance( v, Bits ):
-      if nbits != v.nbits:
-        if nbits < v.nbits:
-          raise ValueError( f"The Bits{v.nbits} object on RHS is too wide to be used to construct Bits{nbits}!\n"
-                            f"- Suggestion: directly use trunc( value, {nbits}/Bits{nbits} )" )
-        else:
-          raise ValueError( f"The Bits{v.nbits} object on RHS is too narrow to be used to construct Bits{nbits}!\n"
-                            f"- Suggestion: directly use zext/sext(value, {nbits}/Bits{nbits} )" )
+      # if nbits != v.nbits:
+      #   if nbits < v.nbits:
+      #     raise ValueError( f"The Bits{v.nbits} object on RHS is too wide to be used to construct Bits{nbits}!\n"
+      #                       f"- Suggestion: directly use trunc( value, {nbits}/Bits{nbits} )" )
+      #   else:
+      #     raise ValueError( f"The Bits{v.nbits} object on RHS is too narrow to be used to construct Bits{nbits}!\n"
+      #                       f"- Suggestion: directly use zext/sext(value, {nbits}/Bits{nbits} )" )
       self._uint = v._uint
     else:
       v = int(v)
@@ -60,7 +60,7 @@ class Bits:
 
   def __ilshift__( self, v ):
     nbits = self._nbits
-    try:
+    if hasattr( v, 'nbits' ) and hasattr( v, 'to_bits' ):
       # Bits/Bitstruct
       if v.nbits != nbits:
         if v.nbits < nbits:
@@ -72,7 +72,7 @@ class Bits:
                             f"but here LHS Bits{nbits} < RHS Bits{v.nbits}.\n"
                             f"- Suggestion: LHS @= trunc(RHS, nbits/Type)" )
       self._next = v.to_bits()._uint
-    except AttributeError:
+    else:
       # Cast to int
       v = int(v)
       lo = _lower[nbits]
@@ -96,7 +96,7 @@ class Bits:
 
   def __imatmul__( self, v ):
     nbits = self._nbits
-    try:
+    if hasattr( v, 'nbits' ) and hasattr( v, 'to_bits' ):
       # Bits/Bitstruct
       if v.nbits != nbits:
         if v.nbits < nbits:
@@ -108,7 +108,7 @@ class Bits:
                             f"but here LHS Bits{nbits} < RHS Bits{v.nbits}.\n"
                             f"- Suggestion: LHS @= trunc(RHS, nbits/Type)" )
       self._uint = v.to_bits()._uint
-    except AttributeError:
+    else:
       # Cast to int
       v = int(v)
 
@@ -202,12 +202,12 @@ class Bits:
 
   def __add__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '+' (add) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( nbits, (self._uint + other._uint) & _upper[nbits] )
-    except AttributeError:
+    else:
       other = int(other)
       up = _upper[ nbits ]
       if other < 0 or other > up:
@@ -221,12 +221,12 @@ class Bits:
 
   def __sub__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '-' (sub) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( nbits, (self._uint - other._uint) & _upper[nbits] )
-    except AttributeError:
+    else:
       other = int(other)
       up = _upper[ nbits ]
       if other < 0 or other > up:
@@ -246,12 +246,12 @@ class Bits:
 
   def __mul__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '*' (mul) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( nbits, (self._uint * other._uint) & _upper[nbits] )
-    except AttributeError:
+    else:
       other = int(other)
       up = _upper[ nbits ]
       if other < 0 or other > up:
@@ -265,12 +265,12 @@ class Bits:
   # no need to AND mask
   def __and__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '&' (and) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( nbits, self._uint & other._uint )
-    except AttributeError:
+    else:
       other = int(other)
       if other < 0 or other > _upper[ nbits ]:
         raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{nbits}!\n"
@@ -283,12 +283,12 @@ class Bits:
   # no need to AND mask
   def __or__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '|' (or) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( nbits, self._uint | other._uint )
-    except AttributeError:
+    else:
       other = int(other)
       if other < 0 or other > _upper[ nbits ]:
         raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{nbits}!\n"
@@ -300,12 +300,12 @@ class Bits:
 
   def __xor__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of  '^' (xor) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( nbits, self._uint ^ other._uint )
-    except AttributeError:
+    else:
       other = int(other)
       if other < 0 or other > _upper[ self._nbits ]:
         raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{nbits}!\n"
@@ -317,12 +317,12 @@ class Bits:
 
   def __floordiv__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '//' (div) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( nbits, (self._uint // other._uint) & _upper[nbits] )
-    except AttributeError:
+    else:
       other = int(other)
       if other < 0 or other > _upper[ self._nbits ]:
         raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{nbits}!\n"
@@ -340,12 +340,12 @@ class Bits:
 
   def __mod__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '%' (mod) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( nbits, (self._uint % other._uint) & _upper[nbits] )
-    except AttributeError:
+    else:
       other = int(other)
       if other < 0 or other > _upper[ nbits ]:
         raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{nbits}!\n"
@@ -367,45 +367,45 @@ class Bits:
 
   def __lshift__( self, other ):
     nbits = self._nbits
-    try:
-      if other.nbits != nbits:
-        raise ValueError( f"Operands of '<<' (lshift) operation must have matching bitwidth, "\
-                          f"but here Bits{nbits} != Bits{other.nbits}.\n" )
+    if hasattr( other, '_uint' ):
+      # if other.nbits != nbits:
+      #   raise ValueError( f"Operands of '<<' (lshift) operation must have matching bitwidth, "\
+      #                     f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       uint = other._uint
       if uint >= nbits:
         return _new_valid_bits( self._nbits, 0 )
       return _new_valid_bits( nbits, (self._uint << uint) & _upper[nbits] )
-    except AttributeError:
+    else:
       other = int(other)
-      if other < 0 or other > _upper[ nbits ]:
-        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{nbits}!\n"
-                          f"Suggestion: 0 <= x <= {hex(_upper[ nbits ])}" )
+      # if other < 0 or other > _upper[ nbits ]:
+      #   raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{nbits}!\n"
+      #                     f"Suggestion: 0 <= x <= {hex(_upper[ nbits ])}" )
       if other >= nbits:
         return _new_valid_bits( self._nbits, 0 )
       return _new_valid_bits( nbits, (self._uint << other) & _upper[nbits] )
 
   def __rshift__( self, other ):
     nbits = self._nbits
-    try:
-      if other.nbits != nbits:
-        raise ValueError( f"Operands of '>>' (rshift) operation must have matching bitwidth, "\
-                          f"but here Bits{nbits} != Bits{other.nbits}.\n" )
+    if hasattr( other, '_uint' ):
+      # if other.nbits != nbits:
+      #   raise ValueError( f"Operands of '>>' (rshift) operation must have matching bitwidth, "\
+      #                     f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( nbits, self._uint >> other._uint )
-    except AttributeError:
+    else:
       other = int(other)
-      if other < 0 or other > _upper[ nbits ]:
-        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{nbits}!\n"
-                          f"Suggestion: 0 <= x <= {hex(_upper[ nbits ])}" )
+      # if other < 0 or other > _upper[ nbits ]:
+      #   raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{nbits}!\n"
+      #                     f"Suggestion: 0 <= x <= {hex(_upper[ nbits ])}" )
       return _new_valid_bits( nbits, self._uint >> other )
 
   def __eq__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '==' (eq) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( 1, self._uint == other._uint )
-    except AttributeError:
+    else:
       try:
         other = int(other)
       except:
@@ -420,12 +420,12 @@ class Bits:
 
   def __lt__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '<' (lt) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( 1, self._uint < other._uint )
-    except AttributeError:
+    else:
       other = int(other)
       if other < 0 or other > _upper[ self._nbits ]:
         raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self._nbits}!\n"
@@ -434,12 +434,12 @@ class Bits:
 
   def __le__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '<=' (le) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( 1, self._uint <= other._uint )
-    except AttributeError:
+    else:
       other = int(other)
       if other < 0 or other > _upper[ self._nbits ]:
         raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self._nbits}!\n"
@@ -448,12 +448,12 @@ class Bits:
 
   def __gt__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '>' (gt) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( 1, self._uint > other._uint )
-    except AttributeError:
+    else:
       other = int(other)
       if other < 0 or other > _upper[ self._nbits ]:
         raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self._nbits}!\n"
@@ -462,12 +462,12 @@ class Bits:
 
   def __ge__( self, other ):
     nbits = self._nbits
-    try:
+    if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
       if other.nbits != nbits:
         raise ValueError( f"Operands of '>=' (ge) operation must have matching bitwidth, "\
                           f"but here Bits{nbits} != Bits{other.nbits}.\n" )
       return _new_valid_bits( 1, self._uint >= other._uint )
-    except AttributeError:
+    else:
       other = int(other)
       if other < 0 or other > _upper[ self._nbits ]:
         raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self._nbits}!\n"
