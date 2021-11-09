@@ -27,6 +27,9 @@ from .dsl.MetadataKey import MetadataKey
 from .dsl.Placeholder import Placeholder
 from .passes.PassGroups import DefaultPassGroup
 
+def reveal_type(obj):
+    pass
+
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
@@ -38,8 +41,9 @@ __all__ = [
   'DefaultPassGroup',
   'Component', 'Placeholder', 'MetadataKey',
 
-  'trunc', 'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',
+  'trunc', 'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor', 'get_nbits',
   'mk_bits', 'Bits',
   'mk_bitstruct', 'bitstruct',
+  'reveal_type',
 ] + [ "Bits{}".format(x) for x in _bitwidths ] \
   + [ "b{}".format(x) for x in _bitwidths ]

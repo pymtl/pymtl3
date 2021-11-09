@@ -35,7 +35,7 @@ class LeftLogicalShifter( Component ):
     s.in_   = InPort( Type )
     s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )
-    assert shamt_nbits == Type.nbits
+    # assert shamt_nbits == Type.nbits
 
     @update
     def up_lshifter():

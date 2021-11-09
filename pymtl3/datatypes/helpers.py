@@ -76,3 +76,6 @@ def reduce_xor( value ):
 
   except AttributeError:
     raise TypeError("Cannot call reduce_xor on int")
+
+def get_nbits( width ):
+    return width.nbits
