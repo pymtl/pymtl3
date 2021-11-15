@@ -8,6 +8,11 @@ Author : Yanghui Ou
   Date : Apr 6, 2019
 """
 
+from collections import namedtuple
+from inspect import getfullargspec
+
+from pymtl3.datatypes import HWDataType, Bits
+
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
 from .Connectable import Const, InPort, Interface, MethodPort, OutPort, Signal, Wire
@@ -25,6 +30,72 @@ from .Placeholder import Placeholder
 class Component( ComponentLevel7 ):
 
   #-----------------------------------------------------------------------
+  # Static GTHDL class methods
+  #-----------------------------------------------------------------------
+
+  _gthdl_is_static           = None
+  _gthdl_construct_signature = None
+  _gthdl_inspected           = False
+
+  @classmethod
+  def _do_gthdl_inspection(cls):
+    if cls._gthdl_inspected:
+      return
+
+    con = cls.construct
+    arg_spec = getfullargspec(con)
+    anno = arg_spec.annotations
+    args = arg_spec.args[1:]
+
+    # If construct has absolutely zero type annotations, we treat any
+    # instances of this component as dynamically typed.
+    if anno == {}:
+      cls._gthdl_is_static = False
+      cls._gthdl_construct_signature = []
+      print(f"  * Component {cls} is dynamically typed")
+    else:
+      cls._gthdl_is_static = True
+
+      # Check if all args are annotated
+      assert 'return' in anno
+      assert all(map(lambda x: x in anno, args))
+
+      # For each argument except 's', determine its elaboration time type
+      # check
+      ElabTypeCheck = namedtuple("ElabTypeCheck", ['IsType', 'TypeObj'])
+
+      sig = []
+      for arg in args:
+        if hasattr(anno[arg], '__args__'):
+          # e.g., Type[BitsN]
+          _args, _org = anno[arg].__args__, anno[arg].__origin__
+          is_type = _org is type
+          if is_type:
+            type_obj = _args[0].__bound__
+            if type_obj is HWDataType:
+              # TODO: GT-HDL currently doesn't support BitStruct. We implicitly
+              # cast this HWDataType to Bits here
+              type_obj = Bits
+          else:
+            type_obj = _org
+        elif anno[arg] in (int, bool):
+          # Pass in an integer or a boolean
+          is_type  = False
+          type_obj = anno[arg]
+        else:
+          raise TypeError(f"{con} argument {arg} has unexpected type{anno[arg]}!")
+        etc = ElabTypeCheck(is_type, type_obj)
+        sig.append(etc)
+
+      cls._gthdl_construct_signature = sig
+
+      print(f"  * Component {cls} is statically typed:")
+      for i, arg in enumerate(args):
+          print(f"    - Argument {arg}: IsType {sig[i].IsType}; TypeObj {sig[i].TypeObj}")
+
+    cls._gthdl_inspected = True
+
+  #-----------------------------------------------------------------------
   # Private methods
   #-----------------------------------------------------------------------
 
@@ -32,6 +103,12 @@ class Component( ComponentLevel7 ):
     inst = super().__new__( cls, *args, **kwargs )
     # Maps a MetadataKey instance to its value
     inst._metadata = {}
+
+    # Perform GT-HDL specific inspection here
+    cls._do_gthdl_inspection()
+    inst._dsl.gt_is_static           = cls._gthdl_is_static
+    inst._dsl.gt_construct_signature = cls._gthdl_construct_signature
+
     return inst
 
   # Override
@@ -55,6 +132,16 @@ class Component( ComponentLevel7 ):
           kwargs.update( more_args )
 
       s._handle_decorated_methods()
+
+      # GTHDL: perform elaboration time type checks
+      if s._dsl.gt_is_static:
+        etcs = s._dsl.gt_construct_signature
+        for i, arg in enumerate(s._dsl.args):
+            etc = etcs[i]
+            if etc.IsType:
+                assert isinstance(arg, type) and issubclass(arg, etc.TypeObj)
+            else:
+                assert isinstance(arg, etc.TypeObj)
 
       # Same as parent class _construct
       s.construct( *s._dsl.args, **kwargs )

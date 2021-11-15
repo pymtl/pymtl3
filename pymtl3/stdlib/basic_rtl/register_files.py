@@ -1,10 +1,13 @@
 from pymtl3 import *
 
+from typing import *
 
-class RegisterFile( Component ):
 
-  def construct( s, Type, nregs=32, rd_ports=1, wr_ports=1,
-                const_zero=False ):
+T_RF = TypeVar("T_RF", bound=HWDataType)
+class RegisterFile( Component, Generic[T_RF] ):
+
+  def construct( s, Type: Type[T_RF], nregs:int=32, rd_ports:int=1, wr_ports:int=1,
+                 const_zero:bool=False ) -> None:
 
     addr_type = mk_bits( clog2( nregs ) )
 

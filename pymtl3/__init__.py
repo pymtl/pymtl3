@@ -27,10 +27,11 @@ from .dsl.MetadataKey import MetadataKey
 from .dsl.Placeholder import Placeholder
 from .passes.PassGroups import DefaultPassGroup
 
-def reveal_type(obj):
-    pass
+# def reveal_type(obj):
+#     pass
 
-HWDataType = None
+# class HWDataType:
+#     pass
 
 __all__ = [
   'U','M','RD','WR',

@@ -1,11 +1,14 @@
 from pymtl3 import *
 
+from typing import *
 
-class Reg( Component ):
 
-  def construct( s, Type ):
-    s.out = OutPort( Type )
-    s.in_ = InPort( Type )
+T_Reg = TypeVar("T_Reg", bound=HWDataType)
+class Reg( Component, Generic[T_Reg] ):
+
+  def construct( s, Width: Type[T_Reg] ) -> None:
+    s.out = OutPort( Width )
+    s.in_ = InPort( Width )
 
     @update_ff
     def up_reg():
@@ -14,11 +17,12 @@ class Reg( Component ):
   def line_trace( s ):
     return f"[{s.in_} > {s.out}]"
 
-class RegEn( Component ):
+T_RegEn = TypeVar("T_RegEn", bound=HWDataType)
+class RegEn( Component, Generic[T_RegEn] ):
 
-  def construct( s, Type ):
-    s.out = OutPort( Type )
-    s.in_ = InPort( Type )
+  def construct( s, Width: Type[T_RegEn] ) -> None:
+    s.out = OutPort( Width )
+    s.in_ = InPort( Width )
 
     s.en  = InPort()
 
@@ -30,11 +34,12 @@ class RegEn( Component ):
   def line_trace( s ):
     return f"[{'en' if s.en else '  '}|{s.in_} > {s.out}]"
 
-class RegRst( Component ):
+T_RegRst = TypeVar("T_RegRst", bound=HWDataType)
+class RegRst( Component, Generic[T_RegRst] ):
 
-  def construct( s, Type, reset_value=0 ):
-    s.out = OutPort( Type )
-    s.in_ = InPort( Type )
+  def construct( s, Width: Type[T_RegRst], reset_value:int=0 ) -> None:
+    s.out = OutPort( Width )
+    s.in_ = InPort( Width )
 
     @update_ff
     def up_regrst():
@@ -44,13 +49,14 @@ class RegRst( Component ):
   def line_trace( s ):
     return f"[{'rst' if s.reset else '   '}|{s.in_} > {s.out}]"
 
-class RegEnRst( Component ):
+T_RegEnRst = TypeVar("T_RegEnRst", bound=HWDataType)
+class RegEnRst( Component, Generic[T_RegEnRst] ):
 
-  def construct( s, Type, reset_value=0 ):
-    s.out = OutPort( Type )
-    s.in_ = InPort( Type )
+  def construct( s, Width: Type[T_RegEnRst], reset_value:int=0 ) -> None:
+    s.out = OutPort( Width )
+    s.in_ = InPort( Width )
 
-    s.en    = InPort()
+    s.en  = InPort()
 
     @update_ff
     def up_regenrst():

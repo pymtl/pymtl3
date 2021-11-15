@@ -1,13 +1,16 @@
 from pymtl3 import *
 
+from typing import *
+
 # N-input Mux
 
-class Mux( Component ):
+T_Mux = TypeVar("T_Mux", bound=HWDataType)
+class Mux( Component, Generic[T_Mux] ):
 
-  def construct( s, Type, ninputs ):
+  def construct( s, Width: Type[T_Mux], ninputs: int ) -> None:
     assert ninputs > 0
-    s.in_ = [ InPort( Type ) for _ in range(ninputs) ]
-    s.out = OutPort( Type )
+    s.in_ = [ InPort( Width ) for _ in range(ninputs) ]
+    s.out = OutPort( Width )
     s.sel = InPort( max(1, clog2(ninputs)) ) # allow 1-input
 
     @update
@@ -16,12 +19,14 @@ class Mux( Component ):
 
 # Rshifter
 
-class RightLogicalShifter( Component ):
+T_RShift      = TypeVar("T_RShift", bound=Bits)
+T_RShiftShamt = TypeVar("T_RShiftShamt", bound=Bits)
+class RightLogicalShifter( Component, Generic[T_RShift, T_RShiftShamt] ):
 
-  def construct( s, Type, shamt_nbits=1 ):
-    s.in_   = InPort( Type )
-    s.shamt = InPort( shamt_nbits )
-    s.out   = OutPort( Type )
+  def construct( s, Width: Type[T_RShift], ShamtWidth: Type[T_RShiftShamt] ) -> None:
+    s.in_   = InPort( Width )
+    s.shamt = InPort( ShamtWidth )
+    s.out   = OutPort( Width )
 
     @update
     def up_rshifter():
@@ -29,13 +34,15 @@ class RightLogicalShifter( Component ):
 
 # Lshifter
 
-class LeftLogicalShifter( Component ):
+T_LShift      = TypeVar("T_LShift", bound=Bits)
+T_LShiftShamt = TypeVar("T_LShiftShamt", bound=Bits)
+class LeftLogicalShifter( Component, Generic[T_LShift, T_LShiftShamt] ):
 
-  def construct( s, Type, shamt_nbits = 1 ):
-    s.in_   = InPort( Type )
-    s.shamt = InPort( shamt_nbits )
-    s.out   = OutPort( Type )
-    # assert shamt_nbits == Type.nbits
+  def construct( s, Width: Type[T_LShift], ShamtWidth: Type[T_LShiftShamt] ) -> None:
+    s.in_   = InPort( Width )
+    s.shamt = InPort( ShamtWidth )
+    s.out   = OutPort( Width )
+    # assert shamt_nbits == Width.nbits
 
     @update
     def up_lshifter():
@@ -43,11 +50,12 @@ class LeftLogicalShifter( Component ):
 
 # Incrementer
 
-class Incrementer( Component ):
+T_Incr = TypeVar("T_Incr", bound=Bits)
+class Incrementer( Component, Generic[T_Incr] ):
 
-  def construct( s, Type, amount=1 ):
-    s.in_ = InPort( Type )
-    s.out = OutPort( Type )
+  def construct( s, Width: Type[T_Incr], amount : int = 1 ) -> None:
+    s.in_ = InPort( Width )
+    s.out = OutPort( Width )
 
     @update
     def up_incrementer():
@@ -55,12 +63,13 @@ class Incrementer( Component ):
 
 # Adder
 
-class Adder( Component ):
+T_Adder = TypeVar("T_Adder", bound=Bits)
+class Adder( Component, Generic[T_Adder] ):
 
-  def construct( s, Type ):
-    s.in0 = InPort( Type )
-    s.in1 = InPort( Type )
-    s.out = OutPort( Type )
+  def construct( s, Width: Type[T_Adder] ) -> None:
+    s.in0 = InPort( Width )
+    s.in1 = InPort( Width )
+    s.out = OutPort( Width )
 
     @update
     def up_adder():
@@ -68,12 +77,13 @@ class Adder( Component ):
 
 # And
 
-class And( Component ):
+T_And = TypeVar("T_And", bound=Bits)
+class And( Component, Generic[T_And] ):
 
-  def construct( s, Type ):
-    s.in0 = InPort( Type )
-    s.in1 = InPort( Type )
-    s.out = OutPort( Type )
+  def construct( s, Width: Type[T_And] ) -> None:
+    s.in0 = InPort( Width )
+    s.in1 = InPort( Width )
+    s.out = OutPort( Width )
 
     @update
     def up_and():
@@ -81,12 +91,13 @@ class And( Component ):
 
 # Subtractor
 
-class Subtractor( Component ):
+T_Sub = TypeVar("T_Sub", bound=Bits)
+class Subtractor( Component, Generic[T_Sub] ):
 
-  def construct( s, Type ):
-    s.in0 = InPort( Type )
-    s.in1 = InPort( Type )
-    s.out = OutPort( Type )
+  def construct( s, Width: Type[T_Sub] ) -> None:
+    s.in0 = InPort( Width )
+    s.in1 = InPort( Width )
+    s.out = OutPort( Width )
 
     @update
     def up_subtractor():
@@ -94,10 +105,11 @@ class Subtractor( Component ):
 
 # ZeroComparator
 
-class ZeroComparator( Component ):
+T_ZCmp = TypeVar("T_ZCmp", bound=Bits)
+class ZeroComparator( Component, Generic[T_ZCmp] ):
 
-  def construct( s, Type ):
-    s.in_ = InPort( Type )
+  def construct( s, Width: Type[T_ZCmp] ) -> None:
+    s.in_ = InPort( Width )
     s.out = OutPort()
 
     @update
@@ -106,11 +118,12 @@ class ZeroComparator( Component ):
 
 # LeftThanComparator
 
-class LTComparator( Component ):
+T_LTCmp = TypeVar("T_LTCmp", bound=Bits)
+class LTComparator( Component, Generic[T_LTCmp] ):
 
-  def construct( s, Type ):
-    s.in0 = InPort( Type )
-    s.in1 = InPort( Type )
+  def construct( s, Width: Type[T_LTCmp] ) -> None:
+    s.in0 = InPort( Width )
+    s.in1 = InPort( Width )
     s.out = OutPort()
 
     @update
@@ -119,11 +132,12 @@ class LTComparator( Component ):
 
 # LeftThanOrEqualToComparator
 
-class LEComparator( Component ):
+T_LECmp = TypeVar("T_LECmp", bound=Bits)
+class LEComparator( Component, Generic[T_LECmp] ):
 
-  def construct( s, Type ):
-    s.in0 = InPort( Type )
-    s.in1 = InPort( Type )
+  def construct( s, Width: Type[T_LECmp] ) -> None:
+    s.in0 = InPort( Width )
+    s.in1 = InPort( Width )
     s.out = OutPort()
 
     @update

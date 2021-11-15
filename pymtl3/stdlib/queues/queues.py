@@ -12,15 +12,18 @@ from pymtl3 import *
 from pymtl3.stdlib.basic_rtl import Mux, RegisterFile, RegEn, RegRst
 from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
 
+from typing import *
+
 from .enq_deq_ifcs import DeqIfcRTL, EnqIfcRTL
 
 #-------------------------------------------------------------------------
 # Dpath and Ctrl for NormalQueueRTL
 #-------------------------------------------------------------------------
 
-class NormalQueueDpathRTL( Component ):
+T_NomQDpath = TypeVar("T_NomQDpath", bound=HWDataType)
+class NormalQueueDpathRTL( Component, Generic[T_NomQDpath] ):
 
-  def construct( s, EntryType, num_entries=2 ):
+  def construct( s, EntryType: Type[T_NomQDpath], num_entries:int=2 ) -> None:
 
     # Interface
 
@@ -42,7 +45,7 @@ class NormalQueueDpathRTL( Component ):
 
 class NormalQueueCtrlRTL( Component ):
 
-  def construct( s, num_entries=2 ):
+  def construct( s, num_entries:int=2 ) -> None:
 
     # Constants
 
@@ -111,9 +114,10 @@ class NormalQueueCtrlRTL( Component ):
 # NormalQueueRTL
 #-------------------------------------------------------------------------
 
-class NormalQueueRTL( Component ):
+T_NomQ = TypeVar("T_NomQ", bound=HWDataType)
+class NormalQueueRTL( Component, Generic[T_NomQ] ):
 
-  def construct( s, EntryType, num_entries=2 ):
+  def construct( s, EntryType: Type[T_NomQ], num_entries:int=2 ) -> None:
 
     # Interface
 
@@ -278,9 +282,10 @@ class PipeQueueRTL( Component ):
 # Ctrl and Dpath for BypassQueue
 #-------------------------------------------------------------------------
 
-class BypassQueueDpathRTL( Component ):
+T_BpsQDpath = TypeVar("T_BpsQDpath", bound=HWDataType)
+class BypassQueueDpathRTL( Component, Generic[T_BpsQDpath] ):
 
-  def construct( s, EntryType, num_entries=2 ):
+  def construct( s, EntryType: Type[T_BpsQDpath], num_entries:int=2 ) -> None:
 
     # Interface
 
@@ -308,7 +313,7 @@ class BypassQueueDpathRTL( Component ):
 
 class BypassQueueCtrlRTL( Component ):
 
-  def construct( s, num_entries=2 ):
+  def construct( s, num_entries:int=2 ) -> None:
 
     # Constants
 
@@ -380,9 +385,10 @@ class BypassQueueCtrlRTL( Component ):
 # BypassQueueRTL
 #-------------------------------------------------------------------------
 
-class BypassQueueRTL( Component ):
+T_BpsQ = TypeVar("T_BpsQ", bound=HWDataType)
+class BypassQueueRTL( Component, Generic[T_BpsQ] ):
 
-  def construct( s, EntryType, num_entries=2 ):
+  def construct( s, EntryType: Type[T_BpsQ], num_entries:int=2 ) -> None:
 
     # Interface
 
@@ -504,9 +510,10 @@ class PipeQueue1EntryRTL( Component ):
 # BypassQueue1EntryRTL
 #-------------------------------------------------------------------------
 
-class BypassQueue1EntryRTL( Component ):
+T_BpsQ1RTL = TypeVar("T_BpsQ1RTL", bound=HWDataType)
+class BypassQueue1EntryRTL( Component, Generic[T_BpsQ1RTL] ):
 
-  def construct( s, EntryType ):
+  def construct( s, EntryType: Type[T_BpsQ1RTL] ) -> None:
 
     # Interface
 
@@ -546,9 +553,10 @@ class BypassQueue1EntryRTL( Component ):
 # BypassQueue2RTL
 #-------------------------------------------------------------------------
 
-class BypassQueue1RTL( Component ):
+T_BpsQ1 = TypeVar("T_BpsQ1", bound=HWDataType)
+class BypassQueue1RTL( Component, Generic[T_BpsQ1] ):
 
-  def construct( s, Width ):
+  def construct( s, Width: Type[T_BpsQ1] ) -> None:
     s.enq = RecvIfcRTL(Width)
     s.deq = SendIfcRTL(Width)
 
@@ -577,9 +585,10 @@ class BypassQueue1RTL( Component ):
     return s.buffer.line_trace()
 
 
-class BypassQueue2RTL( Component ):
+T_BpsQ2 = TypeVar("T_BpsQ2", bound=HWDataType)
+class BypassQueue2RTL( Component, Generic[T_BpsQ2] ):
 
-  def construct( s, Width ):
+  def construct( s, Width: Type[T_BpsQ2] ) -> None:
     s.enq = RecvIfcRTL(Width)
     s.deq = SendIfcRTL(Width)
     s.q1 = BypassQueue1RTL(Width)
