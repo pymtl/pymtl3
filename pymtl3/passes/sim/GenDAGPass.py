@@ -121,16 +121,17 @@ class GenDAGPass( BasePass ):
       # If all signals are top-level, we still need to generate an empty
       # to convey the constraints using all_readers
 
-      if fanout == 0:
-        blk = compile_net_blk( {}, f"""def {genblk_name}(): pass""", writer )
+      # if fanout == 0:
+      #   blk = compile_net_blk( {}, f"""def {genblk_name}(): pass""", writer )
 
-        top._dag.genblks.add( blk )
-        if writer.is_signal():
-          top._dag.genblk_reads[ blk ] = [ writer ]
-        top._dag.genblk_writes[ blk ] = all_readers
-        continue
-      # readers = all_readers
-      # fanout  = all_fanout
+      #   top._dag.genblks.add( blk )
+      #   if writer.is_signal():
+      #     top._dag.genblk_reads[ blk ] = [ writer ]
+      #   top._dag.genblk_writes[ blk ] = all_readers
+      #   continue
+
+      readers = all_readers
+      fanout  = all_fanout
 
       wr_lca  = writer.get_host_component()
       rd_lcas = [ x.get_host_component() for x in readers ]

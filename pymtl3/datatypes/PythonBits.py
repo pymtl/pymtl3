@@ -37,11 +37,13 @@ class Bits:
     self._nbits = nbits
 
     if isinstance( v, Bits ):
-      # if nbits != v.nbits:
-      #   if nbits < v.nbits:
+      if nbits != v.nbits:
+        if nbits < v.nbits:
+          pass
       #     raise ValueError( f"The Bits{v.nbits} object on RHS is too wide to be used to construct Bits{nbits}!\n"
       #                       f"- Suggestion: directly use trunc( value, {nbits}/Bits{nbits} )" )
-      #   else:
+        else:
+          pass
       #     raise ValueError( f"The Bits{v.nbits} object on RHS is too narrow to be used to construct Bits{nbits}!\n"
       #                       f"- Suggestion: directly use zext/sext(value, {nbits}/Bits{nbits} )" )
       self._uint = v._uint
