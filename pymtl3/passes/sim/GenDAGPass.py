@@ -49,6 +49,11 @@ class GenDAGPass( BasePass ):
     top._dag.genblk_writes  = {}
     # top._dag.genblk_src     = {}
 
+    # GTHDL: check if the signal belongs to a statically typed component
+    def is_parent_static(signal):
+      parent_obj = signal.get_host_component()
+      return parent_obj._dsl.gt_is_static
+
     # Fall back to compiling one block at a time
     # This is currently because there might be different structs with
     # the same name but essentially different type. It requires name
@@ -57,6 +62,7 @@ class GenDAGPass( BasePass ):
 
     # TODO see if directly compiling AST instead of source can be faster
     def compile_net_blk( _globals, src, writer ):
+      # import pdb;pdb.set_trace()
       _locals = {}
       fname = f"Net (writer is {writer!r}"
       custom_exec( compile( src, filename=fname, mode="exec"), _globals, _locals )
@@ -121,16 +127,17 @@ class GenDAGPass( BasePass ):
       # If all signals are top-level, we still need to generate an empty
       # to convey the constraints using all_readers
 
-      if fanout == 0:
-        blk = compile_net_blk( {}, f"""def {genblk_name}(): pass""", writer )
+      # if fanout == 0:
+      #   blk = compile_net_blk( {}, f"""def {genblk_name}(): pass""", writer )
 
-        top._dag.genblks.add( blk )
-        if writer.is_signal():
-          top._dag.genblk_reads[ blk ] = [ writer ]
-        top._dag.genblk_writes[ blk ] = all_readers
-        continue
-      # readers = all_readers
-      # fanout  = all_fanout
+      #   top._dag.genblks.add( blk )
+      #   if writer.is_signal():
+      #     top._dag.genblk_reads[ blk ] = [ writer ]
+      #   top._dag.genblk_writes[ blk ] = all_readers
+      #   continue
+
+      readers = all_readers
+      fanout  = all_fanout
 
       wr_lca  = writer.get_host_component()
       rd_lcas = [ x.get_host_component() for x in readers ]
@@ -183,15 +190,42 @@ class GenDAGPass( BasePass ):
 
       rstrs   = [ f"s.{repr(x)[lca_len+1:]}" for x in readers ]
 
-      # PP: we do nothing here because this is the baseline PyMTL3 (i.e., all runtime
-      # type checks happen through @= and <<= operators). In GTHDL we need to carefully
-      # insert runtime type checks here just between the boundary between statically and
-      # dynamically typed components. Also in GTHDL the Bits operations do not perform
-      # unnecessary type checks -- everything is supposed to have been statically typed.
-      gen_src = """
-def {}():
-  x = {}
-  {}""".format( genblk_name, wstr, '\n  '.join([ f"{rstr} @= x" for rstr in rstrs ]) )
+      assignments = '\n  '.join([ f"{rstr} @= x" for rstr in rstrs ])
+
+      # GTHDL: generate type check code for signal assignments across the
+      # static/dynamic boundaries
+      type_checks = ""
+      w_is_static = is_parent_static(writer)
+      r_is_static = [is_parent_static(r) for r in readers]
+
+      # Assignment is at the boundary if wrtier is dynamically typed and any of
+      # the reader is statically typed
+      w_name = repr(writer)[lca_len+1:]
+      is_boundary = not isinstance(writer, Const) and not w_is_static and any(r_is_static)
+      if is_boundary:
+        static_nbits = None
+        static_signal = None
+        for i, reader in enumerate(readers):
+          is_static = r_is_static[i]
+          if is_static:
+            reader_nbits = reader._dsl.Type.nbits
+            assert static_nbits is None or static_nbits == reader_nbits
+            static_nbits = reader_nbits
+            static_signal = reader
+
+        r_name = repr(static_signal)[lca_len+1:]
+
+        type_checks = "print('wr:s.{} = {{}}, rd:s.{} = {{}}'.format(s.{}, s.{}))\n  ".format(
+            w_name, r_name, w_name, r_name )
+        type_checks += "assert s.{}.nbits == {}".format( w_name, static_nbits )
+
+      gen_src = f"""
+def {genblk_name}():
+  {type_checks}
+  x = {wstr}
+  {assignments}
+
+{genblk_name}.is_boundary={is_boundary}"""
 
       blk = compile_net_blk( _globals, gen_src, writer )
 
@@ -199,6 +233,13 @@ def {}():
       if writer.is_signal():
         top._dag.genblk_reads[ blk ] = [ writer ]
       top._dag.genblk_writes[ blk ] = all_readers
+
+      # GTHDL: debug output
+      print(f"  * Update block {genblk_name}")
+      print(f"    - ST checks: {type_checks}")
+      print(f"    - Wrtier: {wstr}")
+      print(f"    - Assignments: {assignments}")
+      print(f"    - Is boundary?: {is_boundary}")
 
     # Get the final list of update blocks
     top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks

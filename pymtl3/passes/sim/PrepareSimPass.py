@@ -213,46 +213,49 @@ class PrepareSimPass( BasePass ):
             elif isinstance( obj, (Interface, list) ):
               Q.append( (obj, host) )
 
-      # Swap all Signal objects with actual data
-      nets = top.get_all_value_nets()
+      # GTHDL NOTE: I'm de-optimizing this because it breaks the assumption of
+      # the GTHDL paper and we almost certainly cannot get speedups from this.
 
-      # First step is to consolidate all non-slice signals in the same net
-      # by pointing them to the same object
-      # TODO optimize for bitstruct fields. Essentially only sliced signals
-      # should be excluded.
-      for writer, signals in nets:
-        residence = None
+      # # Swap all Signal objects with actual data
+      # nets = top.get_all_value_nets()
 
-        # Find the residence value
-        if isinstance( writer, Const ) or writer.is_top_level_signal():
-          residence = writer
-        else:
-          for x in signals:
-            if x.is_top_level_signal():
-              residence = x
-              break
+      # # First step is to consolidate all non-slice signals in the same net
+      # # by pointing them to the same object
+      # # TODO optimize for bitstruct fields. Essentially only sliced signals
+      # # should be excluded.
+      # for writer, signals in nets:
+      #   residence = None
 
-        if residence is None:
-          continue # whole net is slice
+      #   # Find the residence value
+      #   if isinstance( writer, Const ) or writer.is_top_level_signal():
+      #     residence = writer
+      #   else:
+      #     for x in signals:
+      #       if x.is_top_level_signal():
+      #         residence = x
+      #         break
 
-        if isinstance( residence, Const ):
-          residence_value = residence._dsl.const
-        else:
-          residence_value = signal_object_mapping[ residence ][-1]
+      #   if residence is None:
+      #     continue # whole net is slice
 
-        # Replace top-level signals in the net with residence value
+      #   if isinstance( residence, Const ):
+      #     residence_value = residence._dsl.const
+      #   else:
+      #     residence_value = signal_object_mapping[ residence ][-1]
 
-        for x in signals:
-          if x is not residence and x.is_top_level_signal():
-            # swap old value with new residence value
+      #   # Replace top-level signals in the net with residence value
 
-            current_obj, i, is_list, value = signal_object_mapping[ x ]
-            signal_object_mapping[ x ] = (current_obj, i, is_list, residence_value)
+      #   for x in signals:
+      #     if x is not residence and x.is_top_level_signal():
+      #       # swap old value with new residence value
 
-            if is_list:
-              current_obj[i] = residence_value
-            else:
-              setattr( current_obj, i, residence_value )
+      #       current_obj, i, is_list, value = signal_object_mapping[ x ]
+      #       signal_object_mapping[ x ] = (current_obj, i, is_list, residence_value)
+
+      #       if is_list:
+      #         current_obj[i] = residence_value
+      #       else:
+      #         setattr( current_obj, i, residence_value )
 
       top._sim.signal_object_mapping = signal_object_mapping
       top._sim.locked_simulation = True
