@@ -171,7 +171,7 @@ def test_bitstruct( T ):
   @hypothesis.given(
     bs = pst.bitstructs(T)
   )
-  @hypothesis.settings( max_examples=16 )
+  @hypothesis.settings( max_examples=16, suppress_health_check=[hypothesis.HealthCheck.data_too_large] )
   def actual_test( bs ):
     assert isinstance( bs, T )
     print( bs )
