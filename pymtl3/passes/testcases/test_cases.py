@@ -2135,6 +2135,32 @@ class CaseConnectArrayBits32FooIfcComp:
       [ 1,     -2,    1,     -2, ],
   ]
 
+class CaseConnectArrayBits32Comp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = [ InPort(32) for _ in range(2) ]
+      s.out = [ OutPort(32) for _ in range(2) ]
+      for i in range(2):
+        connect( s.out[i], s.in_[i] )
+  TV_IN = \
+  _set(
+      'in_[0]',   Bits32,  0,
+      'in_[1]',   Bits32,  1,
+  )
+  TV_OUT = \
+  _check(
+      'out[0]',   Bits32,  2,
+      'out[1]',   Bits32,  3,
+  )
+  TV =\
+  [
+      [ 1,      0,    1,      0, ],
+      [ 0,     42,    0,     42, ],
+      [ 1,     42,    1,     42, ],
+      [ 1,     -1,    1,     -1, ],
+      [ 1,     -2,    1,     -2, ],
+  ]
+
 class CaseConnectArrayNestedIfcComp:
   class DUT( Component ):
     def construct( s ):

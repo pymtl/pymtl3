@@ -79,6 +79,19 @@ class VerilogTBGenPass( BasePass ):
         elif isinstance( dtype, rdt.Struct ): nbits = dtype.get_class().nbits
         else:                                 raise Exception( f"unrecognized data type {d}!" )
 
+        # Expand pname if we have an array (or arrays) of unexpanded vector ports
+        expanded_pname = []
+        if isinstance( port, rt.Array ) and len(pname) == 1:
+          Q = deque( [ (pname[0], p_n_dim) ] )
+          while Q:
+            name, dim = Q.popleft()
+            if not dim:
+              expanded_pname.append(name)
+            else:
+              for i in range(dim[0]):
+                Q.append((f"{name}[{i}]", dim[1:]))
+          pname = expanded_pname
+
         # signal_decls
         signal_decl_indices = " ".join( [ f"[0:{d-1}]" for d in p_n_dim ] )
         signal_decls.append( f"logic [{nbits-1}:0] {vname} {signal_decl_indices}" )
@@ -93,7 +106,7 @@ class VerilogTBGenPass( BasePass ):
           dut_signal_decls.append( f".{vname}({vname})" )
 
         Q = deque( [ (vname, vname, p_n_dim) ] )
-        tot = 0 # This is to keep the same order as pname list
+        tot = 0 # This is to keep the same order as the expanded pname list
         while Q:
           name, mangled_name, indices = Q.popleft()
           if not indices:

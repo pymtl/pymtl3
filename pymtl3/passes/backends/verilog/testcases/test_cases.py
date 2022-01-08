@@ -40,6 +40,7 @@ from pymtl3.passes.testcases import (
     CaseBitSelOverPartSelComp,
     CaseBoolTmpVarComp,
     CaseChildExplicitModuleName,
+    CaseConnectArrayBits32Comp,
     CaseConnectArrayBits32FooIfcComp,
     CaseConnectArrayNestedIfcComp,
     CaseConnectArrayStructAttrToOutComp,
