@@ -67,7 +67,15 @@ module {harness_name};
   // use 25% clock cycle, so #1 for setup #2 for sim #1 for hold
   always #(`CYCLE_TIME/2) clk = ~clk;
 
+  // DUT name
+  // By default we use the translated name of the Verilog component. But you can change
+  // that by defining the VTB_TOP_MODULE_NAME macro through the simulator command line
+  // options (e.g., for VCS you can do +define+VTB_TOP_MODULE_NAME=YourTopModuleName).
+`ifdef VTB_TOP_MODULE_NAME
+  `VTB_TOP_MODULE_NAME DUT
+`else
   {dut_name} DUT
+`endif
   (
     {dut_clk_decl},
     {dut_reset_decl},
