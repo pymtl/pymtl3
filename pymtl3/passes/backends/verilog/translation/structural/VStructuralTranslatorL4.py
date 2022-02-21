@@ -173,14 +173,28 @@ class VStructuralTranslatorL4(
         no_clk   = s.structural.component_no_synthesis_no_clk[obj]
         no_reset = s.structural.component_no_synthesis_no_reset[obj]
 
-        for i, dscp in enumerate(port_conns + ifc_conns):
-          comma = ',\n' if i != len(port_conns+ifc_conns)-1 else ''
+        # Move clk and reset ports to the front if no_clk/no_reset is true
+
+        conns           = []
+        clk_reset_conns = []
+
+        for dscp in port_conns + ifc_conns:
+            port_name = dscp['id']
+            if (port_name == 'clk' and no_clk) or (port_name == 'reset' and no_reset):
+                clk_reset_conns.append(dscp)
+            else:
+                conns.append(dscp)
+
+        conns = clk_reset_conns + conns
+
+        for i, dscp in enumerate(conns):
+          comma = ',\n' if i != len(conns)-1 else ''
           port_name = dscp['id']
           ph_port_name = dscp['ph_id']
           port_wire = f"{orig_c_id}__{dscp['id']}{unpacked_str}"
           if (port_name == 'clk' and no_clk) or (port_name == 'reset' and no_reset):
-            comma = ',\n' if i != len(port_conns+ifc_conns)-1 else '\n'
-            newline = '\n' if i != len(port_conns+ifc_conns)-1 else ''
+            comma = ',\n' if i != len(conns)-1 else '\n'
+            newline = '\n' if i != len(conns)-1 else ''
             port_conn_decls.append("`ifndef SYNTHESIS\n")
             port_conn_decls.append(f".{ph_port_name}( {port_wire} ){comma}")
             port_conn_decls.append(f"`endif{newline}")
