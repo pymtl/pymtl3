@@ -37,14 +37,79 @@ class RecvIfcRTL( Interface ):
     s.trace_len = len(str(Type()))
 
   def connect( s, other, parent ):
-    connect_valid = False
 
     # SendCL (other) -> [ RecvCL -> SendRTL ] -> RecvRTL
     if isinstance( other, CallerIfcCL ):
       connect_valid = True
+      # Create an adapter and add to parents
+      m = RecvCL2SendRTL( s.MsgType )
 
-    # RecvCL -> [ RecvCL -> SendRTL ] -> RecvRTL
+      if hasattr( parent, "RecvCL2SendRTL_count" ):
+        count = parent.RecvRTL2SendCL_count
+        setattr( parent, f"RecvCL2SendRTL_{count}", m )
+      else:
+        parent.RecvCL2SendRTL_count = 0
+        parent.RecvCL2SendRTL_0     = m
+
+      other  //= m.recv
+      m.send //= s
+      parent.RecvCL2SendRTL_count += 1
+      return True
+
+    # RecvRTL -> [ RecvRTL -> SendCL ] -> RecvCL (other)
     elif isinstance( other, CalleeIfcCL ):
+      if s._dsl.level <= other._dsl.level:
+        raise InvalidConnectionError(
+            "CL2RTL connection is not supported between RecvIfcRTL"
+            " and CalleeIfcCL.\n"
+            f"          - level {s._dsl.level    }: {s:r    } (class {type(s)    })\n"
+            f"          - level {other._dsl.level}: {other:r} (class {type(other)})"
+        )
+      else:
+        # Create an adapter and add to parents
+        m = RecvRTL2SendCL( s.MsgType )
+
+        if hasattr( parent, "RecvRTL2SendCL_count" ):
+          count = parent.RecvRTL2SendCL_count
+          setattr( parent, f"RecvRTL2SendCL_{count}", m )
+        else:
+          parent.RecvRTL2SendCL_count = 0
+          parent.RecvRTL2SendCL_0     = m
+
+        s      //= m.recv
+        m.send //= other
+        parent.RecvRTL2SendCL_count += 1
+        return True
+
+    return False
+
+  def __str__( s ):
+    return valrdy_to_str( s.msg, s.val, s.rdy, s.trace_len )
+
+#-------------------------------------------------------------------------
+# SendIfcRTL
+#-------------------------------------------------------------------------
+
+class SendIfcRTL( Interface ):
+
+  def construct( s, Type ):
+
+    s.msg = OutPort( Type )
+    s.val = OutPort()
+    s.rdy = InPort()
+
+    s.trace_len = len(str(Type()))
+
+  def connect( s, other, parent ):
+
+    connect_valid = False
+
+    # SendRTL -> [ RecvRTL -> SendCL ] -> RecvCL (other)
+    if isinstance( other, CalleeIfcCL ):
+      connect_valid = True
+
+    # SendCL (other) -> [ RecvCL -> SendRTL ] -> SendRTL
+    elif isinstance( other, CallerIfcCL ):
       if s._dsl.level <= other._dsl.level:
         raise InvalidConnectionError(
             "CL2RTL connection is not supported between RecvIfcRTL"
@@ -72,23 +137,6 @@ class RecvIfcRTL( Interface ):
       return True
 
     return False
-
-  def __str__( s ):
-    return valrdy_to_str( s.msg, s.val, s.rdy, s.trace_len )
-
-#-------------------------------------------------------------------------
-# SendIfcRTL
-#-------------------------------------------------------------------------
-
-class SendIfcRTL( Interface ):
-
-  def construct( s, Type ):
-
-    s.msg = OutPort( Type )
-    s.val = OutPort()
-    s.rdy = InPort()
-
-    s.trace_len = len(str(Type()))
 
   def __str__( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy, s.trace_len )
@@ -161,3 +209,36 @@ class RecvCL2SendRTL( Component ):
 
   def line_trace( s ):
     return f"{s.recv}({'*' if s.entry is not None else' '}){s.send}"
+
+#-------------------------------------------------------------------------
+# RecvRTL2SendCL
+#-------------------------------------------------------------------------
+
+class RecvRTL2SendCL( Component ):
+
+  def construct( s, MsgType ):
+
+    # Interface
+    s.recv = RecvIfcRTL ( MsgType )
+    s.send = CallerIfcCL( MsgType )
+
+    # Declarations
+    s.send_rdy = False
+
+    @update_once
+    def up_recv_rtl_rdy():
+      s.send_rdy = s.send.rdy() & ~s.reset
+      s.recv.rdy @= s.send_rdy
+
+    @update
+    def up_send_cl():
+      if s.send_rdy and s.recv.val:
+        s.send( s.recv.msg )
+
+    # Bypass behavior
+    # Update rdy --> Call send if valid
+    # This should work for any val/rdy dependencies
+    s.add_constraints( U( up_recv_rtl_rdy ) < U( up_send_cl ) )
+
+  def line_trace( s ):
+    return f"{s.recv}(){s.send}"
