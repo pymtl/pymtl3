@@ -42,7 +42,7 @@ class DepUnit( Component ):
 # TestHarness
 #-------------------------------------------------------------------------
 
-class ThClRTL( Component ):
+class ThCLRTL( Component ):
   def construct( s, Type, msgs, rdy_dep_val=False ):
 
     msgs   = [ Type(x) for x in msgs ]
@@ -62,36 +62,70 @@ class ThClRTL( Component ):
   def line_trace( s ):
     return f'{s.src.line_trace()}>()>{s.sink.line_trace()}'
 
+class ThRTLCL( Component ):
+  def construct( s, Type, msgs, val_dep_rdy=False ):
+    msgs   = [ Type(x) for x in msgs ]
+    s.src  = SourceCL( Type, msgs )
+    s.sink = SinkRTL ( Type, msgs )
+
+    s.src.send //=s.sink.recv
+
+  def done( s ):
+    return s.src.done() and s.sink.done()
+
+  def line_trace( s ):
+    return f'{s.src.line_trace()}>()>{s.sink.line_trace()}'
+
 #-------------------------------------------------------------------------
 # test_cl_rtl
 #-------------------------------------------------------------------------
 
-@pytest.mark.parametrize( 'dep', [ False, True ] )
-def test_cl_rtl_simple( dep, cmdline_opts ):
+@pytest.mark.parametrize(
+   'Th,      dep',
+  [(ThCLRTL, False),
+   (ThCLRTL, True ),
+   (ThRTLCL, False),
+])
+def test_simple( Th, dep, cmdline_opts ):
   msgs = [ 0xdeadbeef, 0x0000ffff, 0xffff0000 ]
-  th   = ThClRTL( Bits32, msgs, dep )
+  th   = Th( Bits32, msgs, dep )
   run_sim( th, cmdline_opts )
 
-@pytest.mark.parametrize( 'dep', [ False, True ] )
-def test_cl_rtl_src_delay( dep, cmdline_opts ):
+@pytest.mark.parametrize(
+   'Th,      dep',
+  [(ThCLRTL, False),
+   (ThCLRTL, True ),
+   (ThRTLCL, False),
+])
+def test_src_delay( Th, dep, cmdline_opts ):
   msgs = [ 0xdeadbeef, 0x0000ffff, 0xffff0000 ] * 7
-  th   = ThClRTL( Bits32, msgs, dep )
+  th   = Th( Bits32, msgs, dep )
 
   th.set_param( 'top.src.construct',  initial_delay=10, interval_delay=3 )
   run_sim( th, cmdline_opts )
 
-@pytest.mark.parametrize( 'dep', [ False, True ] )
-def test_cl_rtl_sink_delay( dep, cmdline_opts ):
+@pytest.mark.parametrize(
+   'Th,      dep',
+  [(ThCLRTL, False),
+   (ThCLRTL, True ),
+   (ThRTLCL, False),
+])
+def test_sink_delay( Th, dep, cmdline_opts ):
   msgs = [ 0xdeadbeef, 0x0000ffff, 0xffff0000 ] * 7
-  th   = ThClRTL( Bits32, msgs, dep )
+  th   = Th( Bits32, msgs, dep )
 
   th.set_param( 'top.sink.construct', initial_delay=20, interval_delay=5 )
   run_sim( th, cmdline_opts )
 
-@pytest.mark.parametrize( 'dep', [ False, True ] )
-def test_cl_rtl_rand_delay( dep, cmdline_opts ):
+@pytest.mark.parametrize(
+   'Th,      dep',
+  [(ThCLRTL, False),
+   (ThCLRTL, True ),
+   (ThRTLCL, False),
+])
+def test_both_delay( Th, dep, cmdline_opts ):
   msgs = [ 0xdeadbeef, 0x0000ffff, 0xffff0000 ] * 7
-  th   = ThClRTL( Bits32, msgs, dep )
+  th   = Th( Bits32, msgs, dep )
 
   th.set_param( 'top.src.construct',  interval_delay=3 )
   th.set_param( 'top.sink.construct', interval_delay=5 )

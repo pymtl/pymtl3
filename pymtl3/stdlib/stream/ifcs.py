@@ -101,12 +101,22 @@ class SendIfcRTL( Interface ):
     s.trace_len = len(str(Type()))
 
   def connect( s, other, parent ):
-
-    connect_valid = False
-
     # SendRTL -> [ RecvRTL -> SendCL ] -> RecvCL (other)
     if isinstance( other, CalleeIfcCL ):
-      connect_valid = True
+      # Create an adapter and add to parents
+      m = RecvRTL2SendCL( s.MsgType )
+
+      if hasattr( parent, "RecvRTL2SendCL_count" ):
+        count = parent.RecvCL2SendRTL_count
+        setattr( parent, f"RecvRTL2SendCL_{count}", m )
+      else:
+        parent.RecvRTL2SendCL_count = 0
+        parent.RecvRTL2SendCL_0     = m
+
+      s      //= m.recv
+      m.send //= other
+      parent.RecvRTL2SendCL_count += 1
+      return True
 
     # SendCL (other) -> [ RecvCL -> SendRTL ] -> SendRTL
     elif isinstance( other, CallerIfcCL ):
@@ -118,23 +128,20 @@ class SendIfcRTL( Interface ):
             f"          - level {other._dsl.level}: {other:r} (class {type(other)})"
         )
       else:
-        connect_valid = True
+        # Create an adapter and add to parents
+        m = RecvCL2SendRTL( s.MsgType )
 
-      # Create an adapter and add to parents
-    if connect_valid:
-      m = RecvCL2SendRTL( s.MsgType )
+        if hasattr( parent, "RecvCL2SendRTL_count" ):
+          count = parent.RecvCL2SendRTL_count
+          setattr( parent, f"RecvCL2SendRTL_{count}", m )
+        else:
+          parent.RecvCL2SendRTL_count = 0
+          parent.RecvCL2SendRTL_0     = m
 
-      if hasattr( parent, "RecvCL2SendRTL_count" ):
-        count = parent.RecvCL2SendRTL_count
-        setattr( parent, f"RecvCL2SendRTL_{count}", m )
-      else:
-        parent.RecvCL2SendRTL_count = 0
-        parent.RecvCL2SendRTL_0     = m
-
-      other  //= m.recv
-      m.send //= s
-      parent.RecvCL2SendRTL_count += 1
-      return True
+        other  //= m.recv
+        m.send //= s
+        parent.RecvCL2SendRTL_count += 1
+        return True
 
     return False
 
@@ -242,3 +249,4 @@ class RecvRTL2SendCL( Component ):
 
   def line_trace( s ):
     return f"{s.recv}(){s.send}"
+
