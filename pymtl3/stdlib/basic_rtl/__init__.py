@@ -15,5 +15,5 @@ from .arithmetics import (
 )
 from .crossbars import Crossbar
 from .encoders import Encoder
-from .register_files import RegisterFile
+from .register_files import RegisterFile, RegisterFileRst
 from .registers import Reg, RegEn, RegEnRst, RegRst
