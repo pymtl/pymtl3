@@ -134,7 +134,7 @@ class MemMinionIfcCL( Interface ):
 
 class MemMasterIfcRTL( Interface ):
 
-  def construct( s, ReqType, RespType ):
+  def construct( s, ReqType: int, RespType: int ):
     s.ReqType  = ReqType
     s.RespType = RespType
     s.req  = SendIfcRTL( ReqType  )
@@ -144,7 +144,7 @@ class MemMasterIfcRTL( Interface ):
     return "{},{}".format( s.req, s.resp )
 
 class MemMinionIfcRTL( Interface ):
-  def construct( s, ReqType, RespType ):
+  def construct( s, ReqType: int, RespType: int ):
     s.ReqType  = ReqType
     s.RespType = RespType
     s.req  = RecvIfcRTL( ReqType  )

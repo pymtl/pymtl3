@@ -3,8 +3,8 @@ from pymtl3 import *
 
 class RegisterFile( Component ):
 
-  def construct( s, Type, nregs=32, rd_ports=1, wr_ports=1,
-                const_zero=False ):
+  def construct( s, Type: int, nregs:int=32, rd_ports:int=1, wr_ports:int=1,
+                 const_zero:int=False ):
 
     addr_type = mk_bits( clog2( nregs ) )
 

@@ -14,15 +14,17 @@ from pymtl3.stdlib.ifcs import GiveIfcFL, GiveIfcRTL, RecvIfcFL, RecvIfcRTL
 # EnqIfcRTL
 #-------------------------------------------------------------------------
 
-class EnqIfcRTL( RecvIfcRTL ):
-  pass
+# class EnqIfcRTL( RecvIfcRTL ):
+#   pass
+EnqIfcRTL = RecvIfcRTL
 
 #-------------------------------------------------------------------------
 # DeqIfcRTL
 #-------------------------------------------------------------------------
 
-class DeqIfcRTL( GiveIfcRTL ):
-  pass
+# class DeqIfcRTL( GiveIfcRTL ):
+#   pass
+DeqIfcRTL = GiveIfcRTL
 
 class EnqIfcFL( RecvIfcFL ):
   pass

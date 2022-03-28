@@ -21,8 +21,12 @@ from pymtl3.stdlib.connects import connect_pairs
 
 class RecvIfcRTL( CalleeIfcRTL ):
 
-  def construct( s, Type ):
-    super().construct( en=True, rdy=True, MsgType=Type, RetType=None )
+  def construct( s, Type: int ):
+    # super().construct( en=True, rdy=True, MsgType=Type, RetType=None )
+    s.en = InPort( Bits1 )
+    s.rdy = OutPort( Bits1 )
+    s.msg = InPort( Type )
+    s.MsgType = Type
 
   def connect( s, other, parent ):
 
@@ -83,8 +87,12 @@ class RecvIfcRTL( CalleeIfcRTL ):
 
 class SendIfcRTL( CallerIfcRTL ):
 
-  def construct( s, Type ):
-    super().construct( en=True, rdy=True, MsgType=Type, RetType=None )
+  def construct( s, Type: int ):
+    # super().construct( en=True, rdy=True, MsgType=Type, RetType=None )
+    s.en = OutPort( Bits1 )
+    s.rdy = InPort( Bits1 )
+    s.msg = OutPort( Type )
+    s.MsgType = Type
 
   def connect( s, other, parent ):
 

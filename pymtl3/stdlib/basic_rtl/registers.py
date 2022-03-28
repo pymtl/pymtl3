@@ -3,7 +3,9 @@ from pymtl3 import *
 
 class Reg( Component ):
 
-  def construct( s, Type ):
+  def construct( s, Type: int ):
+    s.clk = InPort()
+    s.reset = InPort()
     s.out = OutPort( Type )
     s.in_ = InPort( Type )
 
@@ -16,7 +18,9 @@ class Reg( Component ):
 
 class RegEn( Component ):
 
-  def construct( s, Type ):
+  def construct( s, Type: int ):
+    s.clk = InPort()
+    s.reset = InPort()
     s.out = OutPort( Type )
     s.in_ = InPort( Type )
 
@@ -32,9 +36,11 @@ class RegEn( Component ):
 
 class RegRst( Component ):
 
-  def construct( s, Type, reset_value=0 ):
+  def construct( s, Type: int, reset_value: int=0 ):
+    s.clk = InPort()
     s.out = OutPort( Type )
     s.in_ = InPort( Type )
+    s.reset = InPort( Bits1 )
 
     @update_ff
     def up_regrst():
@@ -46,11 +52,13 @@ class RegRst( Component ):
 
 class RegEnRst( Component ):
 
-  def construct( s, Type, reset_value=0 ):
+  def construct( s, Type: int, reset_value: int=0 ):
+    s.clk = InPort()
     s.out = OutPort( Type )
     s.in_ = InPort( Type )
 
     s.en    = InPort()
+    s.reset = InPort( Bits1 )
 
     @update_ff
     def up_regenrst():

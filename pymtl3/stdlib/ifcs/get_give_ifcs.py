@@ -20,8 +20,12 @@ from .send_recv_ifcs import RecvIfcRTL
 #-------------------------------------------------------------------------
 
 class GetIfcRTL( CallerIfcRTL ):
-  def construct( s, Type ):
-    super().construct( en=True, rdy=True, MsgType=None, RetType=Type )
+  def construct( s, Type: int ):
+    # super().construct( en=True, rdy=True, MsgType=None, RetType=Type )
+    s.en = OutPort( Bits1 )
+    s.rdy = InPort( Bits1 )
+    s.ret = InPort( Type )
+    s.RetType = Type
 
 #-------------------------------------------------------------------------
 # GiveIfcRTL
@@ -39,8 +43,12 @@ class And( Component ):
       s.out @= s.in0 & s.in1
 
 class GiveIfcRTL( CalleeIfcRTL ):
-  def construct( s, Type ):
-    super().construct( en=True, rdy=True, MsgType=None, RetType=Type )
+  def construct( s, Type: int ):
+    # super().construct( en=True, rdy=True, MsgType=None, RetType=Type )
+    s.en = InPort( Bits1 )
+    s.rdy = OutPort( Bits1 )
+    s.ret = OutPort( Type )
+    s.RetType = Type
 
   def connect( s, other, parent ):
     # We are doing GiveIfcRTL (s) -> [ AND ] -> RecvIfcRTL (other)

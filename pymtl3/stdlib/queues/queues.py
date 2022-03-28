@@ -280,7 +280,7 @@ class PipeQueueRTL( Component ):
 
 class BypassQueueDpathRTL( Component ):
 
-  def construct( s, EntryType, num_entries=2 ):
+  def construct( s, EntryType: int, num_entries: int=2 ):
 
     # Interface
 
@@ -294,21 +294,31 @@ class BypassQueueDpathRTL( Component ):
 
     # Component
 
-    s.queue = m = RegisterFile( EntryType, num_entries )
-    m.raddr[0] //= s.raddr
-    m.wen[0]   //= s.wen
-    m.waddr[0] //= s.waddr
-    m.wdata[0] //= s.enq_msg
+    # s.queue = m = RegisterFile( EntryType, num_entries )
+    # m.raddr[0] //= s.raddr
+    # m.wen[0]   //= s.wen
+    # m.waddr[0] //= s.waddr
+    # m.wdata[0] //= s.enq_msg
+    s.queue = RegisterFile( EntryType, num_entries, 1, 1, 0 )
+    s.queue.raddr[0] //= s.raddr
+    s.queue.wen[0]   //= s.wen
+    s.queue.waddr[0] //= s.waddr
+    s.queue.wdata[0] //= s.enq_msg
 
-    s.mux = m = Mux( EntryType, 2 )
-    m.sel    //= s.mux_sel
-    m.in_[0] //= s.queue.rdata[0]
-    m.in_[1] //= s.enq_msg
-    m.out    //= s.deq_ret
+    # s.mux = m = Mux( EntryType, 2 )
+    # m.sel    //= s.mux_sel
+    # m.in_[0] //= s.queue.rdata[0]
+    # m.in_[1] //= s.enq_msg
+    # m.out    //= s.deq_ret
+    s.mux = Mux( EntryType, 2 )
+    s.mux.sel    //= s.mux_sel
+    s.mux.in_[0] //= s.queue.rdata[0]
+    s.mux.in_[1] //= s.enq_msg
+    s.mux.out    //= s.deq_ret
 
 class BypassQueueCtrlRTL( Component ):
 
-  def construct( s, num_entries=2 ):
+  def construct( s, num_entries: int = 2 ):
 
     # Constants
 
@@ -320,6 +330,8 @@ class BypassQueueCtrlRTL( Component ):
     s.num_entries = CountType( num_entries   )
 
     # Interface
+
+    s.reset = InPort()
 
     s.enq_en  = InPort ( Bits1     )
     s.enq_rdy = OutPort( Bits1     )
@@ -348,13 +360,21 @@ class BypassQueueCtrlRTL( Component ):
     connect( s.waddr, s.tail     )
     connect( s.raddr, s.head     )
 
-    s.enq_rdy //= lambda: ~s.reset & ( s.count < s.num_entries )
-    s.deq_rdy //= lambda: ~s.reset & ( (s.count > CountType(0) ) | s.enq_en )
+    # s.enq_rdy //= lambda: ~s.reset & ( s.count < s.num_entries )
+    # s.deq_rdy //= lambda: ~s.reset & ( (s.count > CountType(0) ) | s.enq_en )
 
-    s.mux_sel //= lambda: s.count == CountType(0)
+    # s.mux_sel //= lambda: s.count == CountType(0)
 
-    s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
-    s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
+    # s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
+    # s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
+
+    @update
+    def upblk_bpsq():
+        s.enq_rdy @= ~s.reset & ( s.count < s.num_entries )
+        s.deq_rdy @= ~s.reset & ( (s.count > CountType(0) ) | s.enq_en )
+        s.mux_sel @= s.count == CountType(0)
+        s.enq_xfer @= s.enq_en & s.enq_rdy
+        s.deq_xfer @= s.deq_en & s.deq_rdy
 
     @update_ff
     def up_reg():
@@ -366,10 +386,18 @@ class BypassQueueCtrlRTL( Component ):
 
       else:
         if s.deq_xfer:
-          s.head <<= s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
+          # s.head <<= s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
+          if s.head < s.last_idx:
+              s.head <<= s.head + PtrType(1)
+          else:
+              s.head <<= PtrType(0)
 
         if s.enq_xfer:
-          s.tail <<= s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
+          # s.tail <<= s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
+          if s.tail < s.last_idx:
+              s.tail <<= s.tail + PtrType(1)
+          else:
+              s.tail <<= PtrType(0)
 
         if s.enq_xfer & ~s.deq_xfer:
           s.count <<= s.count + CountType(1)
@@ -382,7 +410,7 @@ class BypassQueueCtrlRTL( Component ):
 
 class BypassQueueRTL( Component ):
 
-  def construct( s, EntryType, num_entries=2 ):
+  def construct( s, EntryType: int, num_entries: int =2 ):
 
     # Interface
 
@@ -506,9 +534,11 @@ class PipeQueue1EntryRTL( Component ):
 
 class BypassQueue1EntryRTL( Component ):
 
-  def construct( s, EntryType ):
+  def construct( s, EntryType: int ):
 
     # Interface
+
+    s.reset = InPort()
 
     s.enq   = EnqIfcRTL( EntryType )
     s.deq   = DeqIfcRTL( EntryType )
@@ -519,18 +549,28 @@ class BypassQueue1EntryRTL( Component ):
     s.entry = Wire( EntryType )
     s.full  = Wire( Bits1 )
 
-    s.bypass_mux = m = Mux( EntryType, 2 )
-    m.in_[0] //= s.enq.msg
-    m.in_[1] //= s.entry
-    m.out    //= s.deq.ret
-    m.sel    //= s.full
+    # s.bypass_mux = m = Mux( EntryType, 2 )
+    # m.in_[0] //= s.enq.msg
+    # m.in_[1] //= s.entry
+    # m.out    //= s.deq.ret
+    # m.sel    //= s.full
+    s.bypass_mux = Mux( EntryType, 2 )
+    s.bypass_mux.in_[0] //= s.enq.msg
+    s.bypass_mux.in_[1] //= s.entry
+    s.bypass_mux.out    //= s.deq.ret
+    s.bypass_mux.sel    //= s.full
 
     # Logic
 
     s.count //= s.full
 
-    s.enq.rdy //= lambda: ~s.reset & ~s.full
-    s.deq.rdy //= lambda: ~s.reset & ( s.full | s.enq.en )
+    # s.enq.rdy //= lambda: ~s.reset & ~s.full
+    # s.deq.rdy //= lambda: ~s.reset & ( s.full | s.enq.en )
+
+    @update
+    def upblk_bypass1():
+        s.enq.rdy @= ~s.reset & ~s.full
+        s.deq.rdy @= ~s.reset & ( s.full | s.enq.en )
 
     @update_ff
     def ff_bypass1():
@@ -548,14 +588,14 @@ class BypassQueue1EntryRTL( Component ):
 
 class BypassQueue1RTL( Component ):
 
-  def construct( s, Width ):
+  def construct( s, Width: int ):
     s.enq = RecvIfcRTL(Width)
     s.deq = SendIfcRTL(Width)
 
     s.buffer = RegEn(Width)
     connect( s.buffer.in_, s.enq.msg )
 
-    s.full = RegRst( Bits1, reset_value = 0 )
+    s.full = RegRst( Bits1, 0 )
 
     s.byp_mux = Mux( Width, 2 )
     connect( s.byp_mux.out, s.deq.msg )
@@ -579,7 +619,7 @@ class BypassQueue1RTL( Component ):
 
 class BypassQueue2RTL( Component ):
 
-  def construct( s, Width ):
+  def construct( s, Width: int ):
     s.enq = RecvIfcRTL(Width)
     s.deq = SendIfcRTL(Width)
     s.q1 = BypassQueue1RTL(Width)

@@ -156,7 +156,7 @@ class XcelMinionIfcCL( Interface ):
 
 class XcelMasterIfcRTL( Interface ):
 
-  def construct( s, ReqType, RespType ):
+  def construct( s, ReqType: int, RespType: int ):
     s.ReqType  = ReqType
     s.RespType = RespType
     s.req  = SendIfcRTL( ReqType  )
@@ -166,7 +166,7 @@ class XcelMasterIfcRTL( Interface ):
     return "{},{}".format( s.req, s.resp )
 
 class XcelMinionIfcRTL( Interface ):
-  def construct( s, ReqType, RespType ):
+  def construct( s, ReqType: int, RespType: int ):
     s.ReqType  = ReqType
     s.RespType = RespType
     s.req  = RecvIfcRTL( ReqType  )

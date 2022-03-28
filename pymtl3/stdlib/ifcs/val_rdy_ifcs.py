@@ -18,7 +18,7 @@ def valrdy_to_str( msg, val, rdy, trace_len=15 ):
 
 class InValRdyIfc( Interface ):
 
-  def construct( s, Type ):
+  def construct( s, Type: int ):
 
     s.msg = InPort( Type )
     s.val = InPort( 1 )
@@ -29,7 +29,7 @@ class InValRdyIfc( Interface ):
 
 class OutValRdyIfc( Interface ):
 
-  def construct( s, Type ):
+  def construct( s, Type: int ):
 
     s.msg = OutPort( Type )
     s.val = OutPort( 1 )

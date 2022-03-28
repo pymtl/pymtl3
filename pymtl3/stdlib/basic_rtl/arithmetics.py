@@ -4,11 +4,12 @@ from pymtl3 import *
 
 class Mux( Component ):
 
-  def construct( s, Type, ninputs ):
+  def construct( s, Type: int, ninputs: int ):
     assert ninputs > 0
     s.in_ = [ InPort( Type ) for _ in range(ninputs) ]
     s.out = OutPort( Type )
-    s.sel = InPort( max(1, clog2(ninputs)) ) # allow 1-input
+    # s.sel = InPort( max(1, clog2(ninputs)) ) # allow 1-input
+    s.sel = InPort( clog2(ninputs) ) # allow 1-input
 
     @update
     def up_mux():
@@ -18,7 +19,7 @@ class Mux( Component ):
 
 class RightLogicalShifter( Component ):
 
-  def construct( s, Type, shamt_nbits=1 ):
+  def construct( s, Type: int, shamt_nbits:int=1 ):
     s.in_   = InPort( Type )
     s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )
@@ -31,7 +32,7 @@ class RightLogicalShifter( Component ):
 
 class LeftLogicalShifter( Component ):
 
-  def construct( s, Type, shamt_nbits = 1 ):
+  def construct( s, Type: int, shamt_nbits:int = 1 ):
     s.in_   = InPort( Type )
     s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )
@@ -45,7 +46,7 @@ class LeftLogicalShifter( Component ):
 
 class Incrementer( Component ):
 
-  def construct( s, Type, amount=1 ):
+  def construct( s, Type: int, amount: int=1 ):
     s.in_ = InPort( Type )
     s.out = OutPort( Type )
 
@@ -57,7 +58,7 @@ class Incrementer( Component ):
 
 class Adder( Component ):
 
-  def construct( s, Type ):
+  def construct( s, Type: int ):
     s.in0 = InPort( Type )
     s.in1 = InPort( Type )
     s.out = OutPort( Type )
@@ -70,7 +71,7 @@ class Adder( Component ):
 
 class And( Component ):
 
-  def construct( s, Type ):
+ def construct( s, Type: int ):
     s.in0 = InPort( Type )
     s.in1 = InPort( Type )
     s.out = OutPort( Type )
@@ -83,7 +84,7 @@ class And( Component ):
 
 class Subtractor( Component ):
 
-  def construct( s, Type ):
+  def construct( s, Type: int ):
     s.in0 = InPort( Type )
     s.in1 = InPort( Type )
     s.out = OutPort( Type )
@@ -96,7 +97,7 @@ class Subtractor( Component ):
 
 class ZeroComparator( Component ):
 
-  def construct( s, Type ):
+  def construct( s, Type: int ):
     s.in_ = InPort( Type )
     s.out = OutPort()
 
@@ -108,7 +109,7 @@ class ZeroComparator( Component ):
 
 class LTComparator( Component ):
 
-  def construct( s, Type ):
+  def construct( s, Type: int ):
     s.in0 = InPort( Type )
     s.in1 = InPort( Type )
     s.out = OutPort()
@@ -121,7 +122,7 @@ class LTComparator( Component ):
 
 class LEComparator( Component ):
 
-  def construct( s, Type ):
+  def construct( s, Type: int ):
     s.in0 = InPort( Type )
     s.in1 = InPort( Type )
     s.out = OutPort()
