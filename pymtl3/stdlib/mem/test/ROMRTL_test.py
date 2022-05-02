@@ -19,7 +19,7 @@ def test_combinational_rom_rtl():
     ('raddr[0]', 'rdata[0]*', 'raddr[1]', 'rdata[1]*'),
     [ 1,          7,           5,          3          ],
     [ 2,          6,           7,          1          ],
-  ], {'dump_vcd': 'test_rom', 'test_verilog': 'ones', 'dump_vtb': ''} )
+  ], {'dump_textwave':False, 'dump_vcd': 'test_rom', 'test_verilog': 'ones', 'dump_vtb': ''} )
 
 
 def test_sequential_rom_rtl():
@@ -35,6 +35,6 @@ def test_sequential_rom_rtl():
     [ 1,          '?',         5,          '?'        ],
     [ 2,          7,           7,          3          ],
     [ 0,          6,           0,          1          ],
-  ], {'dump_vcd': 'test_rom', 'test_verilog': 'ones', 'dump_vtb': ''} )
+  ], {'dump_textwave':False, 'dump_vcd': 'test_rom', 'test_verilog': 'ones', 'dump_vtb': ''} )
 
 
