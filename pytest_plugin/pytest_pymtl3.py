@@ -28,6 +28,8 @@ def pytest_addoption(parser):
   group.addoption( "--test-verilog", dest="test_verilog", action="store",
                     default='', nargs='?', const='zeros',
                     help="run verilog translation" )
+  group.addoption( "--dump-textwave", dest="dump_textwave", action="store_true",
+                    default=None, help="dump text waveform for each test" )
   group.addoption( "--dump-vcd", dest="dump_vcd", action="store_true",
                     default=None, help="dump vcd for each test" )
   group.addoption( "--dump-vtb", dest="dump_vtb", action="store_true",
@@ -76,10 +78,11 @@ def pytest_runtest_setup(item):
 
 def _any_opts_present( config ):
   opt_default_pairs = [
-      ( 'test_verilog', ''    ),
-      ( 'dump_vcd',     None ),
-      ( 'dump_vtb',     None ),
-      ( 'max_cycles',   None ),
+      ( 'test_verilog',  ''   ),
+      ( 'dump_textwave', None ),
+      ( 'dump_vcd',      None ),
+      ( 'dump_vtb',      None ),
+      ( 'max_cycles',    None ),
   ]
   return any([config.getoption(opt) != val for opt, val in opt_default_pairs])
 
@@ -94,6 +97,10 @@ def _parse_opts_from_request( request ):
     assert test_verilog in ['', 'zeros', 'ones', 'rand'], \
         "--test-verilog should be an int or one of '', 'zeros', 'ones', 'rand'!"
   opts['test_verilog'] = test_verilog
+
+  # dump_textwave
+  dump_textwave = request.config.getoption("dump_textwave")
+  opts['dump_textwave'] = bool(dump_textwave)
 
   # dump_vcd
   dump_vcd = request.config.getoption("dump_vcd")

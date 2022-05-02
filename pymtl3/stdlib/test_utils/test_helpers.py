@@ -14,7 +14,7 @@ import re
 from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes.backends.verilog import *
-from pymtl3.passes.tracing import VcdGenerationPass
+from pymtl3.passes.tracing import VcdGenerationPass, PrintTextWavePass
 
 #-------------------------------------------------------------------------
 # mk_test_case_table
@@ -63,9 +63,10 @@ def _recursive_set_vl_trace( m, dump_vcd ):
 
 def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
 
-  test_verilog = cmdline_opts[ 'test_verilog' ]
-  dump_vcd     = cmdline_opts[ 'dump_vcd'     ]
-  dump_vtb     = cmdline_opts[ 'dump_vtb'     ]
+  test_verilog  = cmdline_opts[ 'test_verilog' ]
+  dump_textwave = cmdline_opts[ 'dump_textwave' ]
+  dump_vcd      = cmdline_opts[ 'dump_vcd'     ]
+  dump_vtb      = cmdline_opts[ 'dump_vtb'     ]
 
   if 'on_demand_vcd_portname' in cmdline_opts:
     on_demand_vcd_portname = cmdline_opts['on_demand_vcd_portname']
@@ -124,6 +125,9 @@ def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
   # Need to transfer metadata from the new DUT
   if dump_vcd:
     top.set_metadata( VcdGenerationPass.vcd_file_name, dump_vcd )
+
+  if dump_textwave:
+    top.set_metadata( PrintTextWavePass.enable, True )
 
   return top
 
