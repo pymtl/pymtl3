@@ -14,7 +14,7 @@ import re
 from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes.backends.verilog import *
-from pymtl3.passes.tracing import VcdGenerationPass
+from pymtl3.passes.tracing import VcdGenerationPass, PrintTextWavePass
 
 #-------------------------------------------------------------------------
 # mk_test_case_table
@@ -63,9 +63,10 @@ def _recursive_set_vl_trace( m, dump_vcd ):
 
 def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
 
-  test_verilog = cmdline_opts[ 'test_verilog' ]
-  dump_vcd     = cmdline_opts[ 'dump_vcd'     ]
-  dump_vtb     = cmdline_opts[ 'dump_vtb'     ]
+  test_verilog  = cmdline_opts[ 'test_verilog' ]
+  dump_textwave = cmdline_opts[ 'dump_textwave' ]
+  dump_vcd      = cmdline_opts[ 'dump_vcd'     ]
+  dump_vtb      = cmdline_opts[ 'dump_vtb'     ]
 
   if 'on_demand_vcd_portname' in cmdline_opts:
     on_demand_vcd_portname = cmdline_opts['on_demand_vcd_portname']
@@ -125,6 +126,9 @@ def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
   if dump_vcd:
     top.set_metadata( VcdGenerationPass.vcd_file_name, dump_vcd )
 
+  if dump_textwave:
+    top.set_metadata( PrintTextWavePass.enable, True )
+
   return top
 
 #------------------------------------------------------------------------------
@@ -146,7 +150,10 @@ class TestVectorSimulator:
 
   def run_test( self, cmdline_opts=None ):
 
-    cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'dump_vtb': ''}
+    cmdline_opts = cmdline_opts or {'dump_textwave' : False,
+                                    'dump_vcd'      : False,
+                                    'test_verilog'  : False,
+                                    'dump_vtb'      : ''}
 
     # Setup the model
     self.model = config_model_with_cmdline_opts( self.model, cmdline_opts, [] )
@@ -169,12 +176,21 @@ class TestVectorSimulator:
           raise e
 
         self.model.sim_tick()
+
     finally:
+      # Dump out textwave at the end of simulation
+      if cmdline_opts['dump_textwave']:
+          self.model.print_textwave()
+
       finalize_verilator( self.model )
 
 def run_sim( model, cmdline_opts=None, print_line_trace=True, duts=None ):
 
-  cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'max_cycles': None, 'dump_vtb': ''}
+  cmdline_opts = cmdline_opts or {'dump_textwave' : False,
+                                  'dump_vcd'      : False,
+                                  'test_verilog'  : False,
+                                  'max_cycles'    : None,
+                                  'dump_vtb'      : ''}
 
   max_cycles = cmdline_opts['max_cycles'] or 10000
 
@@ -201,13 +217,20 @@ def run_sim( model, cmdline_opts=None, print_line_trace=True, duts=None ):
     model.sim_tick()
 
   finally:
+    # Dump out textwave at the end of simulation
+    if cmdline_opts['dump_textwave']:
+        model.print_textwave()
+
     finalize_verilator( model )
 
 class RunTestVectorSimError( Exception ):
   pass
 
 def run_test_vector_sim( model, test_vectors, cmdline_opts=None, print_line_trace=True ):
-  cmdline_opts = cmdline_opts or {'dump_vcd': False, 'test_verilog': False, 'dump_vtb': ''}
+  cmdline_opts = cmdline_opts or {'dump_textwave' : False,
+                                  'dump_vcd'      : False,
+                                  'test_verilog'  : False,
+                                  'dump_vtb'      : ''}
 
   # First row in test vectors contains port names
 
@@ -339,4 +362,8 @@ run_test_vector_sim received an incorrect value!
     model.sim_tick()
 
   finally:
+    # Dump out textwave at the end of simulation
+    if cmdline_opts['dump_textwave']:
+        model.print_textwave()
+
     finalize_verilator( model )
