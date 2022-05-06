@@ -14,6 +14,8 @@ import re
 from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes.backends.verilog import *
+from pymtl3.passes.backends.yosys.YosysTranslationImportPass import YosysTranslationImportPass
+from pymtl3.passes.backends.yosys.import_.YosysVerilatorImportPass import YosysVerilatorImportPass
 from pymtl3.passes.tracing import VcdGenerationPass, PrintTextWavePass
 
 #-------------------------------------------------------------------------
@@ -63,10 +65,14 @@ def _recursive_set_vl_trace( m, dump_vcd ):
 
 def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
 
-  test_verilog  = cmdline_opts[ 'test_verilog' ]
-  dump_textwave = cmdline_opts[ 'dump_textwave' ]
-  dump_vcd      = cmdline_opts[ 'dump_vcd'     ]
-  dump_vtb      = cmdline_opts[ 'dump_vtb'     ]
+  test_verilog       = cmdline_opts[ 'test_verilog' ]
+  test_yosys_verilog = cmdline_opts[ 'test_yosys_verilog' ]
+  dump_textwave      = cmdline_opts[ 'dump_textwave' ]
+  dump_vcd           = cmdline_opts[ 'dump_vcd'     ]
+  dump_vtb           = cmdline_opts[ 'dump_vtb'     ]
+
+  if test_verilog and test_yosys_verilog:
+    raise ValueError("--test-verilog and --test-yosys-verilog cannot be enabled at the same time!")
 
   if 'on_demand_vcd_portname' in cmdline_opts:
     on_demand_vcd_portname = cmdline_opts['on_demand_vcd_portname']
@@ -81,7 +87,7 @@ def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
     _recursive_set_vl_trace( top, dump_vcd )
 
   if on_demand_vcd_portname:
-    assert test_verilog, "--test-verilog has to be present to enable on-demand VCD!"
+    assert test_verilog or test_yosys_verilog, "--test-(yosys-)verilog has to be present to enable on-demand VCD!"
 
   if duts:
     dut_objs = []
@@ -103,8 +109,24 @@ def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
         dut.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand, True )
         dut.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand_portname, on_demand_vcd_portname )
 
-  top.apply( VerilogPlaceholderPass() )
-  top = VerilogTranslationImportPass()( top )
+    elif test_yosys_verilog:
+      dut.set_metadata( YosysTranslationImportPass.enable, True )
+      dut.set_metadata( YosysVerilatorImportPass.vl_xinit, test_yosys_verilog )
+
+      if dump_vcd:
+        dut.set_metadata( YosysVerilatorImportPass.vl_trace, True )
+        dut.set_metadata( YosysVerilatorImportPass.vl_trace_filename, dump_vcd )
+
+      if on_demand_vcd_portname:
+        dut.set_metadata( YosysVerilatorImportPass.vl_trace_on_demand, True )
+        dut.set_metadata( YosysVerilatorImportPass.vl_trace_on_demand_portname, on_demand_vcd_portname )
+
+  if test_yosys_verilog:
+    top.apply( VerilogPlaceholderPass() )
+    top = YosysTranslationImportPass()( top )
+  else:
+    top.apply( VerilogPlaceholderPass() )
+    top = VerilogTranslationImportPass()( top )
 
   # Access dut object again because those dut_objs can be replaced by
   # import passes
@@ -150,10 +172,11 @@ class TestVectorSimulator:
 
   def run_test( self, cmdline_opts=None ):
 
-    cmdline_opts = cmdline_opts or {'dump_textwave' : False,
-                                    'dump_vcd'      : False,
-                                    'test_verilog'  : False,
-                                    'dump_vtb'      : ''}
+    cmdline_opts = cmdline_opts or {'dump_textwave'      : False,
+                                    'dump_vcd'           : False,
+                                    'test_verilog'       : False,
+                                    'test_yosys_verilog' : False,
+                                    'dump_vtb'           : ''}
 
     # Setup the model
     self.model = config_model_with_cmdline_opts( self.model, cmdline_opts, [] )
@@ -186,11 +209,12 @@ class TestVectorSimulator:
 
 def run_sim( model, cmdline_opts=None, print_line_trace=True, duts=None ):
 
-  cmdline_opts = cmdline_opts or {'dump_textwave' : False,
-                                  'dump_vcd'      : False,
-                                  'test_verilog'  : False,
-                                  'max_cycles'    : None,
-                                  'dump_vtb'      : ''}
+  cmdline_opts = cmdline_opts or {'dump_textwave'      : False,
+                                  'dump_vcd'           : False,
+                                  'test_verilog'       : False,
+                                  'test_yosys_verilog' : False,
+                                  'max_cycles'         : None,
+                                  'dump_vtb'           : ''}
 
   max_cycles = cmdline_opts['max_cycles'] or 10000
 
@@ -227,10 +251,11 @@ class RunTestVectorSimError( Exception ):
   pass
 
 def run_test_vector_sim( model, test_vectors, cmdline_opts=None, print_line_trace=True ):
-  cmdline_opts = cmdline_opts or {'dump_textwave' : False,
-                                  'dump_vcd'      : False,
-                                  'test_verilog'  : False,
-                                  'dump_vtb'      : ''}
+  cmdline_opts = cmdline_opts or {'dump_textwave'      : False,
+                                  'dump_vcd'           : False,
+                                  'test_verilog'       : False,
+                                  'test_yosys_verilog' : False,
+                                  'dump_vtb'           : ''}
 
   # First row in test vectors contains port names
 

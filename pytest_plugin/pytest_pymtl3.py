@@ -28,6 +28,9 @@ def pytest_addoption(parser):
   group.addoption( "--test-verilog", dest="test_verilog", action="store",
                     default='', nargs='?', const='zeros',
                     help="run verilog translation" )
+  group.addoption( "--test-yosys-verilog", dest="test_yosys_verilog", action="store",
+                    default='', nargs='?', const='zeros',
+                    help="run yosys verilog translation" )
   group.addoption( "--dump-textwave", dest="dump_textwave", action="store_true",
                     default=None, help="dump text waveform for each test" )
   group.addoption( "--dump-vcd", dest="dump_vcd", action="store_true",
@@ -54,8 +57,8 @@ def cmdline_opts( request ):
 def no_translation( request ):
   """Mark a test case as not to be translated."""
   opts = _parse_opts_from_request( request )
-  if opts['test_verilog'] != '':
-    pytest.skip("skipping untranslatable test cases with --test-verilog")
+  if opts['test_verilog'] != '' or opts['test_yosys_verilog'] != '':
+    pytest.skip("skipping untranslatable test cases with --test-verilog or --test-yosys-verilog")
 
 def pytest_configure(config):
   pass
@@ -78,11 +81,12 @@ def pytest_runtest_setup(item):
 
 def _any_opts_present( config ):
   opt_default_pairs = [
-      ( 'test_verilog',  ''   ),
-      ( 'dump_textwave', None ),
-      ( 'dump_vcd',      None ),
-      ( 'dump_vtb',      None ),
-      ( 'max_cycles',    None ),
+      ( 'test_verilog',       ''   ),
+      ( 'test_yosys_verilog', ''   ),
+      ( 'dump_textwave',      None ),
+      ( 'dump_vcd',           None ),
+      ( 'dump_vtb',           None ),
+      ( 'max_cycles',         None ),
   ]
   return any([config.getoption(opt) != val for opt, val in opt_default_pairs])
 
@@ -97,6 +101,18 @@ def _parse_opts_from_request( request ):
     assert test_verilog in ['', 'zeros', 'ones', 'rand'], \
         "--test-verilog should be an int or one of '', 'zeros', 'ones', 'rand'!"
   opts['test_verilog'] = test_verilog
+
+  # test_yosys_verilog
+  test_yosys_verilog = request.config.getoption("test_yosys_verilog")
+  try:
+    test_yosys_verilog = int(test_yosys_verilog)
+  except ValueError:
+    assert test_yosys_verilog in ['', 'zeros', 'ones', 'rand'], \
+        "--test-yosys-verilog should be an int or one of '', 'zeros', 'ones', 'rand'!"
+  opts['test_yosys_verilog'] = test_yosys_verilog
+
+  if test_verilog != '' and test_yosys_verilog != '':
+    raise ValueError("--test-verilog and --test-yosys-verilog cannot be enabled at the same time!")
 
   # dump_textwave
   dump_textwave = request.config.getoption("dump_textwave")
@@ -115,7 +131,8 @@ def _parse_opts_from_request( request ):
   # dump_vtb
   dump_vtb = request.config.getoption("dump_vtb")
   if dump_vtb:
-    assert request.config.getoption("test_verilog"), "--dump-vtb requires --test-verilog"
+    assert request.config.getoption("test_verilog") or request.config.getoption("test_yosys_verilog"), \
+           "--dump-vtb requires --test-verilog or --test-yosys-verilog"
     test_module = request.module.__name__
     test_name   = request.node.name
     dump_vtb    = test_name.replace('-', '_').replace( '[', '_' ).replace( ']', '' )
