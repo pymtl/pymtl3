@@ -10,6 +10,7 @@ from pymtl3.passes.backends.verilog.translation.structural.VStructuralTranslator
     VStructuralTranslatorL4,
 )
 from pymtl3.passes.backends.verilog.util.utility import make_indent
+from pymtl3.passes.backends.verilog.VerilogPlaceholder import VerilogPlaceholder
 
 from .YosysStructuralTranslatorL3 import YosysStructuralTranslatorL3
 
@@ -202,8 +203,33 @@ class YosysStructuralTranslatorL4(
 
     c_n_dim = c_array_type["n_dim"]
 
+    # Get a copy of the object
+    obj = getattr(m, c_id)
+    while isinstance(obj, list):
+      obj = obj[0]
+
+    # Check to see if explicit_module_name is present
+    from pymtl3.passes.backends.verilog.translation.VerilogTranslationPass import (
+        VerilogTranslationPass,
+    )
+    if obj.has_metadata( VerilogTranslationPass.explicit_module_name ):
+      subcomp_explicit_name = obj.get_metadata( VerilogTranslationPass.explicit_module_name )
+    else:
+      subcomp_explicit_name = ''
+
     # Add sub-component info to port declarations and generate declarations
-    c_name = s.rtlir_tr_component_unique_name( c_rtype )
+    if isinstance(obj, VerilogPlaceholder):
+      c_name = obj.get_metadata( s._placeholder_pass.placeholder_config ).pickled_top_module
+    elif subcomp_explicit_name:
+      # If someone sets explicit_module_name, we need to honor that config
+      c_name = subcomp_explicit_name
+    else:
+      c_name = s.rtlir_tr_component_unique_name( c_rtype )
+
+    # c_name = s.rtlir_tr_component_unique_name( c_rtype )
+    # if c_name == 'IntDivPRTL_noparam':
+    #   import pdb;pdb.set_trace()
+
     port_decls = _subcomp_port_gen( c_name, c_id, c_n_dim, _port_decls )
 
     # Add sub-component info to wire declarations and generate declarations
