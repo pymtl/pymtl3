@@ -65,11 +65,11 @@ def _recursive_set_vl_trace( m, dump_vcd ):
 
 def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
 
-  test_verilog       = cmdline_opts[ 'test_verilog' ]
-  test_yosys_verilog = cmdline_opts[ 'test_yosys_verilog' ]
-  dump_textwave      = cmdline_opts[ 'dump_textwave' ]
-  dump_vcd           = cmdline_opts[ 'dump_vcd'     ]
-  dump_vtb           = cmdline_opts[ 'dump_vtb'     ]
+  test_verilog       = cmdline_opts['test_verilog'] if 'test_verilog' in cmdline_opts else False
+  test_yosys_verilog = cmdline_opts['test_yosys_verilog'] if 'test_yosys_verilog' in cmdline_opts else False
+  dump_textwave      = cmdline_opts['dump_textwave'] if 'dump_textwave' in cmdline_opts else False
+  dump_vcd           = cmdline_opts['dump_vcd'] if 'dump_vcd' in cmdline_opts else False
+  dump_vtb           = cmdline_opts['dump_vtb'] if 'dump_vtb' in cmdline_opts else False
 
   if test_verilog and test_yosys_verilog:
     raise ValueError("--test-verilog and --test-yosys-verilog cannot be enabled at the same time!")
