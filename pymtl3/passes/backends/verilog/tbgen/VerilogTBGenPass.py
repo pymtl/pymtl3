@@ -81,7 +81,7 @@ class VerilogTBGenPass( BasePass ):
 
         # Expand pname if we have an array (or arrays) of unexpanded vector ports
         expanded_pname = []
-        if isinstance( port, rt.Array ) and len(pname) == 1:
+        if isinstance( port, rt.Array ) and len(pname) == 1 and not bool(is_ifc):
           Q = deque( [ (pname[0], p_n_dim) ] )
           while Q:
             name, dim = Q.popleft()
