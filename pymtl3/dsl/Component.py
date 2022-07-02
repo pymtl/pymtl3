@@ -52,7 +52,7 @@ class Component( ComponentLevel7 ):
     if anno == {}:
       cls._gthdl_is_static = False
       cls._gthdl_construct_signature = []
-      print(f"  * Component {cls} is dynamically typed")
+      # print(f"  * Component {cls} is dynamically typed")
     else:
       cls._gthdl_is_static = True
 
@@ -89,9 +89,9 @@ class Component( ComponentLevel7 ):
 
       cls._gthdl_construct_signature = sig
 
-      print(f"  * Component {cls} is statically typed:")
-      for i, arg in enumerate(args):
-          print(f"    - Argument {arg}: IsType {sig[i].IsType}; TypeObj {sig[i].TypeObj}")
+      # print(f"  * Component {cls} is statically typed:")
+      # for i, arg in enumerate(args):
+      #     print(f"    - Argument {arg}: IsType {sig[i].IsType}; TypeObj {sig[i].TypeObj}")
 
     cls._gthdl_inspected = True
 

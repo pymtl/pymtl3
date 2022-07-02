@@ -21,22 +21,29 @@ def _new_valid_bits( nbits, uint ):
   ret = object_new( Bits )
   ret._nbits = nbits
   ret._uint  = uint
+  # ret._up    = _upper[nbits]
   return ret
 
 class Bits:
   __slots__ = ( "_nbits", "_uint", "_next" )
+
+  # def __init_subclass__(cls, nbits):
+  #   super().__init_subclass__()
+  #   cls._up = _upper[nbits]
 
   @property
   def nbits( self ):
     return self._nbits
 
   def __init__( self, nbits, v=0, trunc_int=False ):
-    nbits = int(nbits)
-    if nbits < 1 or nbits >= 1024: raise ValueError(f"Only support 1 <= nbits < 1024, not {nbits}")
+    # nbits = int(nbits)
+    # if nbits < 1 or nbits >= 1024: raise ValueError(f"Only support 1 <= nbits < 1024, not {nbits}")
 
     self._nbits = nbits
-    up = _upper[nbits]
-    self._uint = int(v) & up
+    # up = _upper[nbits]
+    # self._uint = int(v) & up
+
+    self._uint = int(v)
 
     # if isinstance( v, Bits ):
     #   if nbits != v.nbits:
@@ -61,9 +68,10 @@ class Bits:
   # PyMTL simulation specific
 
   def __ilshift__( self, v ):
-    nbits = self._nbits
-    up = _upper[nbits]
-    self._next = int(v) & up
+    # nbits = self._nbits
+    # up = _upper[nbits]
+    # self._next = int(v) & up
+    self._next = int(v)
     # if hasattr( v, 'nbits' ) and hasattr( v, 'to_bits' ):
     #   Bits/Bitstruct
     #   if v.nbits != nbits:
@@ -99,9 +107,10 @@ class Bits:
     return _new_valid_bits( self._nbits, self._uint )
 
   def __imatmul__( self, v ):
-    nbits = self._nbits
-    up = _upper[nbits]
-    self._uint = int(v) & up
+    # nbits = self._nbits
+    # up = _upper[nbits]
+    # self._uint = int(v) & up
+    self._uint = int(v)
     # if hasattr( v, 'nbits' ) and hasattr( v, 'to_bits' ):
     #   # Bits/Bitstruct
     #   if v.nbits != nbits:
@@ -135,21 +144,22 @@ class Bits:
   def __getitem__( self, idx ):
 
     if isinstance( idx, slice ):
-      if idx.step:
-        raise IndexError( "Index cannot contain step" )
-      try:
-        start, stop = int(idx.start or 0), int(idx.stop or self._nbits)
-        assert 0 <= start < stop <= self._nbits
-      except:
-        raise IndexError( f"Invalid access: [{idx.start}:{idx.stop}] in a Bits{self._nbits} instance" )
+      # if idx.step:
+      #   raise IndexError( "Index cannot contain step" )
+      # try:
+      #   start, stop = int(idx.start or 0), int(idx.stop or self._nbits)
+      #   assert 0 <= start < stop <= self._nbits
+      # except:
+      #   raise IndexError( f"Invalid access: [{idx.start}:{idx.stop}] in a Bits{self._nbits} instance" )
+      start, stop = int(idx.start or 0), int(idx.stop or self._nbits)
 
       # Bypass check
       nbits = stop - start
       return _new_valid_bits( stop-start, (self._uint >> start) & _upper[nbits] )
 
     i = int(idx)
-    if i >= self._nbits or i < 0:
-      raise IndexError( f"Invalid access: [{i}] in a Bits{self._nbits} instance" )
+    # if i >= self._nbits or i < 0:
+    #   raise IndexError( f"Invalid access: [{i}] in a Bits{self._nbits} instance" )
 
     # Bypass check
     return _new_valid_bits( 1, (self._uint >> i) & 1 )
@@ -158,23 +168,25 @@ class Bits:
     sv = int(self._uint)
 
     if isinstance( idx, slice ):
-      if idx.step:
-        raise IndexError( "Index cannot contain step" )
-      try:
-        start, stop = int(idx.start or 0), int(idx.stop or self._nbits)
-        assert 0 <= start < stop <= self._nbits
-      except:
-        raise IndexError( f"Invalid access: [{idx.start}:{idx.stop}] in a Bits{self._nbits} instance" )
+      # if idx.step:
+      #   raise IndexError( "Index cannot contain step" )
+      # try:
+      #   start, stop = int(idx.start or 0), int(idx.stop or self._nbits)
+      #   assert 0 <= start < stop <= self._nbits
+      # except:
+      #   raise IndexError( f"Invalid access: [{idx.start}:{idx.stop}] in a Bits{self._nbits} instance" )
+
+      start, stop = int(idx.start or 0), int(idx.stop or self._nbits)
 
       slice_nbits = stop - start
       if isinstance( v, Bits ):
-        if v.nbits != slice_nbits:
-          if v.nbits < slice_nbits:
-            raise ValueError( f"Cannot fit a Bits{v.nbits} object into a {slice_nbits}-bit slice [{start}:{stop}]\n"
-                              f"- Suggestion: sext/zext the RHS")
-          else:
-            raise ValueError( f"Cannot fit a Bits{v.nbits} object into a {slice_nbits}-bit slice [{start}:{stop}]\n"
-                              f"- Suggestion: trunc the RHS")
+        # if v.nbits != slice_nbits:
+        #   if v.nbits < slice_nbits:
+        #     raise ValueError( f"Cannot fit a Bits{v.nbits} object into a {slice_nbits}-bit slice [{start}:{stop}]\n"
+        #                       f"- Suggestion: sext/zext the RHS")
+        #   else:
+        #     raise ValueError( f"Cannot fit a Bits{v.nbits} object into a {slice_nbits}-bit slice [{start}:{stop}]\n"
+        #                       f"- Suggestion: trunc the RHS")
 
         self._uint = (sv & (~((1 << stop) - (1 << start)))) | \
                      ((v._uint & _upper[slice_nbits]) << start)
@@ -184,32 +196,32 @@ class Bits:
         lo = _lower[slice_nbits]
         up = _upper[slice_nbits]
 
-        if v < lo or v > up:
-          raise ValueError( f"Cannot fit {v} into a Bits{slice_nbits} slice\n" \
-                            f"(Bits{slice_nbits} only accepts {hex(lo)} <= value <= {hex(up)})" )
+        # if v < lo or v > up:
+        #   raise ValueError( f"Cannot fit {v} into a Bits{slice_nbits} slice\n" \
+        #                     f"(Bits{slice_nbits} only accepts {hex(lo)} <= value <= {hex(up)})" )
 
         self._uint = (sv & (~((1 << stop) - (1 << start)))) | \
                      ((v & _upper[slice_nbits]) << start)
       return
 
     i = int(idx)
-    if i >= self._nbits or i < 0:
-      raise IndexError( f"Invalid access: [{i}] in a Bits{self._nbits} instance" )
+    # if i >= self._nbits or i < 0:
+    #   raise IndexError( f"Invalid access: [{i}] in a Bits{self._nbits} instance" )
 
     if isinstance( v, Bits ):
-      if v.nbits > 1:
-        raise ValueError( f"Cannot fit a Bits{v.nbits} object into the 1-bit slice" )
+      # if v.nbits > 1:
+      #   raise ValueError( f"Cannot fit a Bits{v.nbits} object into the 1-bit slice" )
       self._uint = (sv & ~(1 << i)) | ((v._uint & 1) << i)
     else:
       v = int(v)
-      if abs(v) > 1:
-        raise ValueError( f"Value {hex(v)} is too big for the 1-bit slice!\n" )
+      # if abs(v) > 1:
+      #   raise ValueError( f"Value {hex(v)} is too big for the 1-bit slice!\n" )
       self._uint = (sv & ~(1 << i)) | ((int(v) & 1) << i)
 
   def __add__( self, other ):
     nbits = self._nbits
     up = _upper[nbits]
-    return _new_valid_bits(nbits, (self._uint+int(other)&up))
+    return _new_valid_bits(nbits, (self._uint+int(other))&up)
     # if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
     #   if other.nbits != nbits:
     #     raise ValueError( f"Operands of '+' (add) operation must have matching bitwidth, "\
@@ -230,7 +242,7 @@ class Bits:
   def __sub__( self, other ):
     nbits = self._nbits
     up = _upper[nbits]
-    return _new_valid_bits(nbits, (self._uint-int(other)&up))
+    return _new_valid_bits(nbits, (self._uint-int(other))&up)
     # if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
     #   if other.nbits != nbits:
     #     raise ValueError( f"Operands of '-' (sub) operation must have matching bitwidth, "\
@@ -258,7 +270,7 @@ class Bits:
   def __mul__( self, other ):
     nbits = self._nbits
     up = _upper[nbits]
-    return _new_valid_bits(nbits, (self._uint*int(other)&up))
+    return _new_valid_bits(nbits, (self._uint*int(other))&up)
     # if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
     #   if other.nbits != nbits:
     #     raise ValueError( f"Operands of '*' (mul) operation must have matching bitwidth, "\
@@ -422,7 +434,7 @@ class Bits:
     #   return _new_valid_bits( nbits, self._uint >> other )
 
   def __eq__( self, other ):
-    nbits = self._nbits
+    # nbits = self._nbits
     return _new_valid_bits( 1, self._uint == int(other) )
     # if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
     #   if other.nbits != nbits:
@@ -443,7 +455,7 @@ class Bits:
   # No need for __ne__
 
   def __lt__( self, other ):
-    nbits = self._nbits
+    # nbits = self._nbits
     return _new_valid_bits( 1, self._uint < int(other) )
     # if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
     #   if other.nbits != nbits:
@@ -458,7 +470,7 @@ class Bits:
     #   return _new_valid_bits( 1, self._uint < other )
 
   def __le__( self, other ):
-    nbits = self._nbits
+    # nbits = self._nbits
     return _new_valid_bits( 1, self._uint <= int(other) )
     # if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
     #   if other.nbits != nbits:
@@ -473,7 +485,7 @@ class Bits:
     #   return _new_valid_bits( 1, self._uint <= other )
 
   def __gt__( self, other ):
-    nbits = self._nbits
+    # nbits = self._nbits
     return _new_valid_bits( 1, self._uint > int(other) )
     # if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
     #   if other.nbits != nbits:
@@ -488,7 +500,7 @@ class Bits:
     #   return _new_valid_bits( 1, self._uint > other )
 
   def __ge__( self, other ):
-    nbits = self._nbits
+    # nbits = self._nbits
     return _new_valid_bits( 1, self._uint >= int(other) )
     # if hasattr( other, 'nbits' ) and hasattr( other, '_uint' ):
     #   if other.nbits != nbits:

@@ -100,15 +100,25 @@ class GenDAGPass( BasePass ):
       #   b[0] @= x
       #   c[0] @= x
 
+      w_is_static = is_parent_static(writer)
+      # r_is_static = [is_parent_static(r) for r in readers]
+
       readers = []
+      # Type check is only necessary if dynamic writer and static reader
+      # if not w_is_static:
+      #   for x in all_readers:
+      #     if is_parent_static(x):
+      #       readers.append(x)
+
       if isinstance( writer, Const ) or writer.is_top_level_signal():
         for x in all_readers:
-          if not x.is_top_level_signal():
+          if not x.is_top_level_signal() or (not w_is_static and is_parent_static(x)):
             readers.append( x )
       else:
         residence = None
         for x in all_readers:
           if x.is_top_level_signal():
+            # if not w_is_static and is_parent_static(x):
             if residence is None:
               residence = x
               readers.append( x )
@@ -127,17 +137,17 @@ class GenDAGPass( BasePass ):
       # If all signals are top-level, we still need to generate an empty
       # to convey the constraints using all_readers
 
-      # if fanout == 0:
-      #   blk = compile_net_blk( {}, f"""def {genblk_name}(): pass""", writer )
+      if fanout == 0:
+        blk = compile_net_blk( {}, f"""def {genblk_name}(): pass""", writer )
 
-      #   top._dag.genblks.add( blk )
-      #   if writer.is_signal():
-      #     top._dag.genblk_reads[ blk ] = [ writer ]
-      #   top._dag.genblk_writes[ blk ] = all_readers
-      #   continue
+        top._dag.genblks.add( blk )
+        if writer.is_signal():
+          top._dag.genblk_reads[ blk ] = [ writer ]
+        top._dag.genblk_writes[ blk ] = all_readers
+        continue
 
-      readers = all_readers
-      fanout  = all_fanout
+      # readers = all_readers
+      # fanout  = all_fanout
 
       wr_lca  = writer.get_host_component()
       rd_lcas = [ x.get_host_component() for x in readers ]
@@ -195,12 +205,11 @@ class GenDAGPass( BasePass ):
       # GTHDL: generate type check code for signal assignments across the
       # static/dynamic boundaries
       type_checks = ""
-      w_is_static = is_parent_static(writer)
-      r_is_static = [is_parent_static(r) for r in readers]
 
       # Assignment is at the boundary if wrtier is dynamically typed and any of
       # the reader is statically typed
       w_name = repr(writer)[lca_len+1:]
+      r_is_static = [is_parent_static(r) for r in readers]
       is_boundary = not isinstance(writer, Const) and not w_is_static and any(r_is_static)
       if is_boundary:
         static_nbits = None
@@ -215,17 +224,16 @@ class GenDAGPass( BasePass ):
 
         r_name = repr(static_signal)[lca_len+1:]
 
-        type_checks = "print('wr:s.{} = {{}}, rd:s.{} = {{}}'.format(s.{}, s.{}))\n  ".format(
-            w_name, r_name, w_name, r_name )
+        # type_checks = "print('wr:s.{} = {{}}, rd:s.{} = {{}}'.format(s.{}, s.{}))\n  ".format(
+        #     w_name, r_name, w_name, r_name )
         type_checks += "assert s.{}.nbits == {}".format( w_name, static_nbits )
 
       gen_src = f"""
 def {genblk_name}():
   {type_checks}
   x = {wstr}
-  {assignments}
-
-{genblk_name}.is_boundary={is_boundary}"""
+  {assignments}"""
+# {genblk_name}.is_boundary={is_boundary}"""
 
       blk = compile_net_blk( _globals, gen_src, writer )
 
@@ -235,11 +243,11 @@ def {genblk_name}():
       top._dag.genblk_writes[ blk ] = all_readers
 
       # GTHDL: debug output
-      print(f"  * Update block {genblk_name}")
-      print(f"    - ST checks: {type_checks}")
-      print(f"    - Wrtier: {wstr}")
-      print(f"    - Assignments: {assignments}")
-      print(f"    - Is boundary?: {is_boundary}")
+      # print(f"  * Update block {genblk_name}")
+      # print(f"    - ST checks: {type_checks}")
+      # print(f"    - Wrtier: {wstr}")
+      # print(f"    - Assignments: {assignments}")
+      # print(f"    - Is boundary?: {is_boundary}")
 
     # Get the final list of update blocks
     top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks
