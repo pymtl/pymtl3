@@ -9,7 +9,7 @@ Author : Shunning Jiang
 """
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import GetIfcRTL, GiveIfcRTL
-from pymtl3.stdlib.basic_rtl import RegRst
+from pymtl3.stdlib.primitive import RegRst
 
 from .TinyRV0InstRTL import *
 
