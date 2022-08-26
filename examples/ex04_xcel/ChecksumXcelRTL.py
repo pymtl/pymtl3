@@ -11,7 +11,7 @@ from examples.ex02_cksum.ChecksumRTL import ChecksumRTL
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg, XcelMinionIfcRTL
 from pymtl3.stdlib.queues import NormalQueueRTL
-from pymtl3.stdlib.basic_rtl import Reg
+from pymtl3.stdlib.primitive import Reg
 
 
 # TODO: add more comments.

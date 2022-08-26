@@ -9,7 +9,7 @@ Author : Yanghui Ou
 
 
 from pymtl3 import *
-from pymtl3.stdlib.basic_rtl import Mux, RegisterFile
+from pymtl3.stdlib.primitive import Mux, RegisterFile
 
 from .ifcs import RecvIfcRTL, SendIfcRTL
 

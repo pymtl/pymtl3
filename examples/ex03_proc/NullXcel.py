@@ -9,7 +9,7 @@ Author : Shunning Jiang
 from pymtl3 import *
 from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMinionIfcRTL
 from pymtl3.stdlib.ifcs.XcelMsg import XcelMsgType, mk_xcel_msg
-from pymtl3.stdlib.basic_rtl import RegEn
+from pymtl3.stdlib.primitive import RegEn
 from pymtl3.stdlib.queues import NormalQueueRTL
 
 
