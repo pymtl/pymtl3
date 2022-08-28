@@ -9,16 +9,16 @@
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import MasterIfcCL
 
-from .test_sinks import TestSinkCL
-from .test_srcs import TestSrcCL
+from .test_sinks import TestSinkFL
+from .test_srcs import TestSourceFL
 
 
 class TestMasterCL( Component ):
 
   def construct( s, ReqType, RespType, MasterIfc=MasterIfcCL ):
     s.master = MasterIfc( ReqType, RespType )
-    s.src  = TestSrcCL( ReqType )
-    s.sink = TestSinkCL( RespType )
+    s.src  = TestSourceFL( ReqType )
+    s.sink = TestSinkFL( RespType )
 
     s.src.send  //= s.master.req
     s.sink.recv //= s.master.resp

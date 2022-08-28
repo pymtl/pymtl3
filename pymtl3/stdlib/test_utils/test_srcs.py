@@ -10,13 +10,14 @@ Author : Yanghui Ou
 from collections import deque
 
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import RecvCL2SendRTL, SendIfcRTL
+from pymtl3.stdlib.dstruct.ifcs import SendIfc
+from pymtl3.stdlib.dstruct.ifcs.ifcs import RecvCL2SendRTL
 
 #-------------------------------------------------------------------------
-# TestSrcCL
+# BehavioralTestSource
 #-------------------------------------------------------------------------
 
-class TestSrcCL( Component ):
+class BehavioralTestSource( Component ):
 
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0 ):
 
@@ -44,21 +45,20 @@ class TestSrcCL( Component ):
     return "{}".format( s.send )
 
 #-------------------------------------------------------------------------
-# TestSrcRTL
+# TestSourceFL
 #-------------------------------------------------------------------------
-# TODO: deprecating TestSrcRTL.
 
-class TestSrcRTL( Component ):
+class TestSourceFL( Component ):
 
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0 ):
 
     # Interface
 
-    s.send = SendIfcRTL( Type )
+    s.send = SendIfc( Type )
 
     # Components
 
-    s.src     = TestSrcCL( Type, msgs, initial_delay, interval_delay )
+    s.src     = BehavioralTestSource( Type, msgs, initial_delay, interval_delay )
     s.adapter = RecvCL2SendRTL( Type )
 
     connect( s.src.send,     s.adapter.recv )

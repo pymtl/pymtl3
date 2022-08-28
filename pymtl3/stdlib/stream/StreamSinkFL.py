@@ -1,31 +1,31 @@
 """
 ========================================================================
-SinkRTL
+StremSinkFL
 ========================================================================
-Test sinks with RTL interfaces.
+Test sinks with port interfaces.
 
-Author : Shunning Jiang
-  Date : Feb 12, 2021
+Author : Shunning Jiang, Peitian Pan
+  Date : Aug 26, 2022
 """
 
 from pymtl3 import *
-from .ifcs import RecvIfcRTL
+from .ifcs import IStreamIfc
 
 
 class PyMTLTestSinkError( Exception ): pass
 
 #-------------------------------------------------------------------------
-# TestSinkRTL
+# StreamSinkFL
 #-------------------------------------------------------------------------
 
-class SinkRTL( Component ):
+class StreamSinkFL( Component ):
 
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0,
                  arrival_time=None, cmp_fn=lambda a, b : a == b ):
 
     # Interface
 
-    s.recv = RecvIfcRTL( Type )
+    s.istream = IStreamIfc( Type )
 
     # Data
 
@@ -69,14 +69,14 @@ class SinkRTL( Component ):
 
         s.idx = 0
         s.count = initial_delay
-        s.recv.rdy <<= (s.idx < len(s.msgs)) & (s.count == 0)
+        s.istream.rdy <<= (s.idx < len(s.msgs)) & (s.count == 0)
 
       else:
         s.cycle_count += 1
 
         # This means at least previous cycle count = 0
-        if s.recv.val & s.recv.rdy:
-          msg = s.recv.msg
+        if s.istream.val & s.istream.rdy:
+          msg = s.istream.msg
 
           # Sanity check
           if s.idx >= len(s.msgs):
@@ -107,9 +107,9 @@ class SinkRTL( Component ):
 
         if s.count > 0:
           s.count -= 1
-          s.recv.rdy <<= 0
+          s.istream.rdy <<= 0
         else: # s.count == 0
-          s.recv.rdy <<= (s.idx < len(s.msgs))
+          s.istream.rdy <<= (s.idx < len(s.msgs))
 
   def done( s ):
     return s.done_flag
@@ -117,4 +117,4 @@ class SinkRTL( Component ):
   # Line trace
 
   def line_trace( s ):
-    return f"{s.recv}"
+    return f"{s.istream}"

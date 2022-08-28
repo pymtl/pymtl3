@@ -9,16 +9,17 @@ Author : Yanghui Ou
 """
 
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import RecvIfcRTL, RecvRTL2SendCL
+from pymtl3.stdlib.dstruct.ifcs import RecvIfc
+from pymtl3.stdlib.dstruct.ifcs.ifcs import RecvRTL2SendCL
 
 
 class PyMTLTestSinkError( Exception ): pass
 
 #-------------------------------------------------------------------------
-# TestSinkCL
+# BehavioralTestSink
 #-------------------------------------------------------------------------
 
-class TestSinkCL( Component ):
+class BehavioralTestSink( Component ):
 
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0,
                  arrival_time=None, cmp_fn=lambda a, b : a == b ):
@@ -118,22 +119,22 @@ class TestSinkCL( Component ):
     return "{}".format( s.recv )
 
 #-------------------------------------------------------------------------
-# TestSinkRTL
+# TestSinkFL
 #-------------------------------------------------------------------------
 
-class TestSinkRTL( Component ):
+class TestSinkFL( Component ):
 
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0,
                  arrival_time=None, cmp_fn=lambda a, b : a == b ):
 
     # Interface
 
-    s.recv = RecvIfcRTL( Type )
+    s.recv = RecvIfc( Type )
 
     # Components
 
-    s.sink    = TestSinkCL( Type, msgs, initial_delay, interval_delay,
-                            arrival_time, cmp_fn )
+    s.sink    = BehavioralTestSink( Type, msgs, initial_delay, interval_delay,
+                                    arrival_time, cmp_fn )
     s.adapter = RecvRTL2SendCL( Type )
 
     connect( s.recv,         s.adapter.recv )
