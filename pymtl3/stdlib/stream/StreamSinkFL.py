@@ -109,7 +109,8 @@ class StreamSinkFL( Component ):
           s.count -= 1
           s.istream.rdy <<= 0
         else: # s.count == 0
-          s.istream.rdy <<= (s.idx < len(s.msgs))
+          # s.istream.rdy <<= (s.idx < len(s.msgs))
+          s.istream.rdy <<= 1
 
   def done( s ):
     return s.done_flag

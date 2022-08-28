@@ -102,9 +102,9 @@ class TestHarness( Component ):
 
 test_msgs = [ Bits16( 4 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
 
-arrival_normal = [ 2, 4, 6, 8 ]
-arrival_pipe   = [ 2, 3, 4, 5 ]
-arrival_bypass = [ 1, 2, 3, 4 ]
+arrival_normal = [ 3, 5, 7, 9 ]
+arrival_pipe   = [ 3, 4, 5, 6 ]
+arrival_bypass = [ 2, 3, 4, 5 ]
 
 
 def test_normal1_simple():
