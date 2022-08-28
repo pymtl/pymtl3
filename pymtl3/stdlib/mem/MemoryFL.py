@@ -1,6 +1,6 @@
 """
 ========================================================================
-MagicMemoryCL
+MemoryFL
 ========================================================================
 A behavioral magic memory which is parameterized based on the number of
 memory request/response ports. This version is a little different from
@@ -15,12 +15,11 @@ from collections import deque
 
 from pymtl3 import *
 from pymtl3.extra import clone_deepcopy
-from pymtl3.stdlib.delays import DelayPipeDeqCL, DelayPipeSendCL, StallCL
 
-from pymtl3.stdlib.mem.MagicMemoryFL import MagicMemoryFL
+from pymtl3.stdlib.mem.BehavioralMemory import BehavioralMemory
 from pymtl3.stdlib.mem.MemMsg import MemMsgType, mk_mem_msg
-from .ifcs import MinionIfcRTL, RecvIfcRTL, SendIfcRTL
-from .queues import NormalQueueRTL, PipeQueueRTL
+from pymtl3.stdlib.reqresp.ifcs import ResponderIfc
+from pymtl3.stdlib.stream.ifcs import IStreamIfc, OStreamIfc
 
 # BRGTC2 custom MemMsg modified for RISC-V 32
 
@@ -51,10 +50,10 @@ from .queues import NormalQueueRTL, PipeQueueRTL
 class RandomStall( Component ):
   def construct( s, Type, stall_prob=0, stall_seed=0xdeadbeef ):
 
-    s.recv = RecvIfcRTL( Type )
-    s.send = SendIfcRTL( Type )
+    s.istream = IStreamIfc( Type )
+    s.ostream = OStreamIfc( Type )
 
-    s.recv.msg //= s.send.msg
+    s.istream.msg //= s.ostream.msg
 
     stall_rgen = Random( stall_seed )
 
@@ -67,10 +66,10 @@ class RandomStall( Component ):
 
     @update
     def up_stall_rdy():
-      s.recv.rdy @= s.send.rdy & (s.rand_value > stall_prob)
+      s.istream.rdy @= s.ostream.rdy & (s.rand_value > stall_prob)
     @update
     def up_stall_val():
-      s.send.val @= s.recv.val & (s.rand_value > stall_prob)
+      s.ostream.val @= s.istream.val & (s.rand_value > stall_prob)
 
   def line_trace( s ):
     return "[ ]" if s.rand_value > s.stall_prob else "[#]"
@@ -80,8 +79,8 @@ class InelasticDelayPipe( Component ):
 
   def construct( s, Type, delay=1 ):
 
-    s.recv = RecvIfcRTL( Type )
-    s.send = SendIfcRTL( Type )
+    s.istream = IStreamIfc( Type )
+    s.ostream = OStreamIfc( Type )
 
     assert delay >= 1
     s.delay = delay
@@ -92,32 +91,32 @@ class InelasticDelayPipe( Component ):
     @update_ff
     def up_delay():
 
-      if s.recv.rdy & s.recv.val:
-        s.delay_pipe[0] = clone_deepcopy( s.recv.msg )
+      if s.istream.rdy & s.istream.val:
+        s.delay_pipe[0] = clone_deepcopy( s.istream.msg )
 
       # We remove the sent message from the pipe first and then
       # clone the recv message. This allows us to use one entry for one
       # delay
 
-      if s.send.val:
-        if s.send.rdy:
+      if s.ostream.val:
+        if s.ostream.rdy:
           s.delay_pipe[-1] = None
           s.delay_pipe.rotate()
       else: # this cycle invalid send means pipe[-1] is None
         s.delay_pipe.rotate()
 
       if s.delay_pipe[-1] is None:
-        s.send.val <<= 0
+        s.ostream.val <<= 0
       else:
-        s.send.val <<= 1
-        s.send.msg <<= s.delay_pipe[-1]
+        s.ostream.val <<= 1
+        s.ostream.msg <<= s.delay_pipe[-1]
 
-      s.recv.rdy <<= s.delay_pipe[0] is None
+      s.istream.rdy <<= s.delay_pipe[0] is None
 
   def line_trace( s ):
     return f"[{''.join([ ' ' if x is None else '*' for x in s.delay_pipe])}]"
 
-class MagicMemoryRTL( Component ):
+class MemoryFL( Component ):
 
   # Magical methods
 
@@ -141,7 +140,7 @@ class MagicMemoryRTL( Component ):
 
     # Interface
 
-    s.ifc = [ MinionIfcRTL( req_classes[i], resp_classes[i] ) for i in range(nports) ]
+    s.ifc = [ ResponderIfc( req_classes[i], resp_classes[i] ) for i in range(nports) ]
 
 
     # stall and delays
@@ -150,23 +149,23 @@ class MagicMemoryRTL( Component ):
     s.resp_qs    = [ InelasticDelayPipe( resp_classes[i], extra_latency+1 ) for i in range(nports) ]
 
     for i in range(nports):
-      s.req_stalls[i].recv //= s.ifc[i].req
-      # s.req_stalls[i].send //= s.req_qs[i].recv
-      s.resp_qs[i].send    //= s.ifc[i].resp
+      s.req_stalls[i].istream //= s.ifc[i].req
+      # s.req_stalls[i].ostream //= s.req_qs[i].istream
+      s.resp_qs[i].ostream    //= s.ifc[i].resp
 
-      s.req_stalls[i].send.rdy //= s.resp_qs[i].recv.rdy
-      s.req_stalls[i].send.val //= s.resp_qs[i].recv.val
+      s.req_stalls[i].ostream.rdy //= s.resp_qs[i].istream.rdy
+      s.req_stalls[i].ostream.val //= s.resp_qs[i].istream.val
 
     @update_once
     def up_mem():
 
       for i in range(nports):
 
-        if s.req_stalls[i].send.val:
+        if s.req_stalls[i].ostream.val:
 
           # Dequeue memory request message
 
-          req = s.req_stalls[i].send.msg
+          req = s.req_stalls[i].ostream.msg
           len_ = int(req.len)
           if len_ == 0: len_ = req_classes[i].data_nbits >> 3
 
@@ -196,7 +195,7 @@ class MagicMemoryRTL( Component ):
           else:
             assert False
 
-          s.resp_qs[i].recv.msg @= resp
+          s.resp_qs[i].istream.msg @= resp
 
   #-----------------------------------------------------------------------
   # line_trace

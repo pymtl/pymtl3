@@ -18,12 +18,10 @@ AMO_FUNS = { MemMsgType.AMO_ADD  : lambda m,a : m+a,
              MemMsgType.AMO_XOR  : lambda m,a : m^a,
            }
 
-class MagicMemoryFL( Component ):
+class BehavioralMemory( Component ):
 
   def construct( s, mem_nbytes=1<<20 ):
     s.mem = bytearray( mem_nbytes )
-
-    s.ifc = MemMinionIfcFL( s.read, s.write, s.amo )
 
     s.trace = "     "
     @update_once

@@ -12,8 +12,8 @@ import pytest
 from pymtl3 import *
 
 from ..test_helpers import run_sim
-from ..test_sinks import PyMTLTestSinkError, TestSinkCL, TestSinkRTL
-from ..test_srcs import TestSrcCL, TestSrcRTL
+from ..test_sinks import PyMTLTestSinkError, BehavioralTestSink, TestSinkFL
+from ..test_srcs import BehavioralTestSource, TestSourceFL
 
 #-------------------------------------------------------------------------
 # TestHarnessSimple
@@ -41,7 +41,7 @@ class TestHarnessSimple( Component ):
 
 def test_cl_no_delay():
   msgs  = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
-  th = TestHarnessSimple( Bits16, TestSrcCL, TestSinkCL, msgs, msgs )
+  th = TestHarnessSimple( Bits16, BehavioralTestSource, BehavioralTestSink, msgs, msgs )
   run_sim( th )
 
 # int_msgs = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
@@ -68,7 +68,7 @@ arrival4 = [ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60 ]
 )
 def test_src_sink_cl( Type, msgs, src_init,  src_intv,
                       sink_init, sink_intv, arrival_time ):
-  th = TestHarnessSimple( Type, TestSrcCL, TestSinkCL, msgs, msgs )
+  th = TestHarnessSimple( Type, BehavioralTestSource, BehavioralTestSink, msgs, msgs )
   th.set_param( "top.src.construct",
     initial_delay  = src_init,
     interval_delay = src_intv,
@@ -93,7 +93,7 @@ def test_src_sink_cl( Type, msgs, src_init,  src_intv,
 )
 def test_src_sink_rtl( Type, msgs, src_init,  src_intv,
                        sink_init, sink_intv, arrival_time ):
-  th = TestHarnessSimple( Type, TestSrcRTL, TestSinkRTL, msgs, msgs )
+  th = TestHarnessSimple( Type, TestSourceFL, TestSinkFL, msgs, msgs )
   th.set_param( "top.src.construct",
     initial_delay  = src_init,
     interval_delay = src_intv,
@@ -121,19 +121,19 @@ class TestHarness( Component ):
     s.num_pairs = 2
 
     if src_level == 'cl':
-      s.srcs = [ TestSrcCL ( MsgType, src_msgs, src_init, src_intv )
+      s.srcs = [ BehavioralTestSource ( MsgType, src_msgs, src_init, src_intv )
                   for i in range(s.num_pairs) ]
     elif src_level == 'rtl':
-      s.srcs = [ TestSrcRTL( MsgType, src_msgs, src_init, src_intv )
+      s.srcs = [ TestSourceFL( MsgType, src_msgs, src_init, src_intv )
                   for i in range(s.num_pairs) ]
     else:
       raise
 
     if sink_level == 'cl':
-      s.sinks = [ TestSinkCL( MsgType, sink_msgs, sink_init, sink_interval, arrival_time )
+      s.sinks = [ BehavioralTestSink( MsgType, sink_msgs, sink_init, sink_interval, arrival_time )
                   for i in range(s.num_pairs) ]
     elif sink_level == 'rtl':
-      s.sinks = [ TestSinkRTL( MsgType, sink_msgs, sink_init, sink_interval, arrival_time )
+      s.sinks = [ TestSinkFL( MsgType, sink_msgs, sink_init, sink_interval, arrival_time )
                   for i in range(s.num_pairs) ]
     else:
       raise
@@ -182,7 +182,7 @@ def test_adaptive( src_level, sink_level, msgs, src_init,  src_intv,
 def test_error_more_msg():
   try:
     th = TestHarnessSimple(
-      Bits16, TestSrcCL, TestSinkCL,
+      Bits16, BehavioralTestSource, BehavioralTestSink,
       src_msgs  = [ b16(0xface), b16(0xface) ],
       sink_msgs = [ b16(0xface) ],
     )
@@ -194,7 +194,7 @@ def test_error_more_msg():
 def test_error_wrong_msg():
   try:
     th = TestHarnessSimple(
-      Bits16, TestSrcCL, TestSinkCL,
+      Bits16, BehavioralTestSource, BehavioralTestSink,
       src_msgs  = [ b16(0xface), b16(0xface) ],
       sink_msgs = [ b16(0xface), b16(0xdead) ],
     )
@@ -206,7 +206,7 @@ def test_error_wrong_msg():
 def test_error_late_msg():
   try:
     th = TestHarnessSimple(
-      Bits16, TestSrcCL, TestSinkCL,
+      Bits16, BehavioralTestSource, BehavioralTestSink,
       src_msgs  = [ b16(0xface), b16(0xface) ],
       sink_msgs = [ b16(0xface), b16(0xdead) ],
     )
@@ -223,7 +223,7 @@ def test_error_late_msg():
 
 def test_customized_cmp():
   th = TestHarnessSimple(
-    Bits4, TestSrcCL, TestSinkCL,
+    Bits4, BehavioralTestSource, BehavioralTestSink,
     src_msgs  = [ b4(0b1110), b4(0b1111) ],
     sink_msgs = [ b4(0b0010), b4(0b0011) ],
   )
