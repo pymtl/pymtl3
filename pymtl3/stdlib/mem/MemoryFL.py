@@ -18,8 +18,9 @@ from pymtl3.extra import clone_deepcopy
 
 from pymtl3.stdlib.mem.BehavioralMemory import BehavioralMemory
 from pymtl3.stdlib.mem.MemMsg import MemMsgType, mk_mem_msg
-from pymtl3.stdlib.reqresp.ifcs import ResponderIfc
 from pymtl3.stdlib.stream.ifcs import IStreamIfc, OStreamIfc
+
+from .ifcs.ifcs import MemResponderIfc
 
 # BRGTC2 custom MemMsg modified for RISC-V 32
 
@@ -136,11 +137,11 @@ class MemoryFL( Component ):
     req_classes  = [ x for (x,y) in mem_ifc_dtypes ]
     resp_classes = [ y for (x,y) in mem_ifc_dtypes ]
 
-    s.mem = MagicMemoryFL( mem_nbytes )
+    s.mem = BehavioralMemory( mem_nbytes )
 
     # Interface
 
-    s.ifc = [ ResponderIfc( req_classes[i], resp_classes[i] ) for i in range(nports) ]
+    s.ifc = [ MemResponderIfc( req_classes[i], resp_classes[i] ) for i in range(nports) ]
 
 
     # stall and delays
@@ -149,9 +150,9 @@ class MemoryFL( Component ):
     s.resp_qs    = [ InelasticDelayPipe( resp_classes[i], extra_latency+1 ) for i in range(nports) ]
 
     for i in range(nports):
-      s.req_stalls[i].istream //= s.ifc[i].req
+      s.req_stalls[i].istream //= s.ifc[i].reqstream
       # s.req_stalls[i].ostream //= s.req_qs[i].istream
-      s.resp_qs[i].ostream    //= s.ifc[i].resp
+      s.resp_qs[i].ostream    //= s.ifc[i].respstream
 
       s.req_stalls[i].ostream.rdy //= s.resp_qs[i].istream.rdy
       s.req_stalls[i].ostream.val //= s.resp_qs[i].istream.val
@@ -203,5 +204,5 @@ class MemoryFL( Component ):
 
   def line_trace( s ):
     # print()
-    return "|".join( f"{s.req_stalls[i].line_trace()}{s.ifc[i].req}>{s.ifc[i].resp}{s.resp_qs[i].line_trace()}"
+    return "|".join( f"{s.req_stalls[i].line_trace()}{s.ifc[i].reqstream}>{s.ifc[i].respstream}{s.resp_qs[i].line_trace()}"
                         for i in range(len(s.ifc)) )

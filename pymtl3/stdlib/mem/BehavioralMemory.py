@@ -4,7 +4,6 @@ from pymtl3.extra.pypy.fast_bytearray_funcs import (
     write_bytearray_bits,
 )
 
-from .mem_ifcs import MemMinionIfcFL
 from .MemMsg import MemMsgType
 
 AMO_FUNS = { MemMsgType.AMO_ADD  : lambda m,a : m+a,

@@ -8,7 +8,7 @@ Author : Shunning Jiang
   Date : June 13, 2019
 """
 from pymtl3 import *
-from pymtl3.stdlib.ifcs.XcelMsg import XcelMsgType
+from pymtl3.stdlib.xcel import XcelMsgType
 
 from .TinyRV0InstRTL import *
 
@@ -23,37 +23,37 @@ class ProcCtrl( Component ):
 
     # imem ports
 
-    s.imemreq_en    = OutPort()
+    s.imemreq_val   = OutPort()
     s.imemreq_rdy   = InPort ()
-    s.imemresp_en   = OutPort()
-    s.imemresp_rdy  = InPort()
+    s.imemresp_val  = InPort()
+    s.imemresp_rdy  = OutPort()
     s.imemresp_drop = OutPort()
 
     # dmem ports
-    s.dmemreq_en    = OutPort()
+    s.dmemreq_val   = OutPort()
     s.dmemreq_rdy   = InPort ()
     s.dmemreq_type  = OutPort( Bits4 )
-    s.dmemresp_en   = OutPort()
-    s.dmemresp_rdy  = InPort ()
+    s.dmemresp_val  = InPort()
+    s.dmemresp_rdy  = OutPort()
 
     # mngr ports
 
     # Get interface
-    s.mngr2proc_en  = OutPort()
-    s.mngr2proc_rdy = InPort ()
+    s.mngr2proc_val = InPort()
+    s.mngr2proc_rdy = OutPort()
 
     # Send interface
-    s.proc2mngr_en  = OutPort()
+    s.proc2mngr_val = OutPort()
     s.proc2mngr_rdy = InPort ()
 
     # Send interface
     s.xcelreq_rdy   = InPort ()
-    s.xcelreq_en    = OutPort()
+    s.xcelreq_val   = OutPort()
     s.xcelreq_type  = OutPort()
 
     # Get interface
-    s.xcelresp_rdy  = InPort ()
-    s.xcelresp_en   = OutPort()
+    s.xcelresp_rdy  = OutPort ()
+    s.xcelresp_val  = InPort()
 
     # Control signals (ctrl->dpath)
 
@@ -194,7 +194,7 @@ class ProcCtrl( Component ):
 
       # ostall due to imemresp
 
-      s.ostall_F @= s.val_F & ~s.imemresp_rdy
+      s.ostall_F @= s.val_F & ~s.imemresp_val
 
       # stall and squash in F stage
 
@@ -206,8 +206,8 @@ class ProcCtrl( Component ):
       # because we need to redirect the PC. We also need to factor in
       # reset. When we are resetting we shouldn't send out imem req.
 
-      s.imemreq_en  @= ~s.reset & (~s.stall_F | s.squash_F) & s.imemreq_rdy
-      s.imemresp_en @= ~s.stall_F | s.squash_F
+      s.imemreq_val @= ~s.reset & (~s.stall_F | s.squash_F) & s.imemreq_rdy
+      s.imemresp_rdy @= ~s.stall_F | s.squash_F
 
       # We drop the mem response when we are getting squashed
 
@@ -457,7 +457,7 @@ class ProcCtrl( Component ):
     def comb_D():
 
       # ostall due to mngr2proc not ready
-      s.ostall_mngr_D @= s.mngr2proc_D & ~s.mngr2proc_rdy # This is get, rdy means we can get the message
+      s.ostall_mngr_D @= s.mngr2proc_D & ~s.mngr2proc_val # This is get, rdy means we can get the message
 
       # put together all ostall conditions
       s.ostall_D @= s.val_D & ( s.ostall_mngr_D | s.ostall_hazard_D )
@@ -473,7 +473,7 @@ class ProcCtrl( Component ):
       s.next_val_D @= s.val_D & ~s.stall_D & ~s.squash_D
 
       # enable signal for send/get interface
-      s.mngr2proc_en @= s.val_D & ~s.stall_D & ~s.squash_D & s.mngr2proc_D
+      s.mngr2proc_rdy @= s.val_D & ~s.stall_D & ~s.squash_D & s.mngr2proc_D
 
     #---------------------------------------------------------------------
     # X stage
@@ -545,13 +545,13 @@ class ProcCtrl( Component ):
 
       # send dmemreq enable if not stalling
 
-      s.dmemreq_en @= s.val_X & ~s.stall_X & ( s.dmemreq_type_X != nr )
+      s.dmemreq_val @= s.val_X & ~s.stall_X & ( s.dmemreq_type_X != nr )
 
       s.dmemreq_type @= zext( s.dmemreq_type_X == st, 4 )  # 0-load/DC, 1-store
 
       # send xcelreq enable if not stalling
 
-      s.xcelreq_en @= s.val_X & ~s.stall_X & s.xcelreq_X
+      s.xcelreq_val @= s.val_X & ~s.stall_X & s.xcelreq_X
       s.xcelreq_type @= s.xcelreq_type_X
 
       # next valid bit
@@ -595,8 +595,8 @@ class ProcCtrl( Component ):
 
       # ostall due to xcel resp or dmem resp
 
-      s.ostall_xcel_M @= (s.xcelreq_M & ~s.xcelresp_rdy)
-      s.ostall_dmem_M @= (s.dmemreq_type_M != nr ) & ~s.dmemresp_rdy
+      s.ostall_xcel_M @= (s.xcelreq_M & ~s.xcelresp_val)
+      s.ostall_dmem_M @= (s.dmemreq_type_M != nr ) & ~s.dmemresp_val
 
       s.ostall_M @= s.val_M & ( s.ostall_dmem_M | s.ostall_xcel_M )
 
@@ -606,8 +606,8 @@ class ProcCtrl( Component ):
 
       # dmemresp/xcelresp get enable if not stalling
 
-      s.dmemresp_en @= s.val_M & ~s.stall_M & ( s.dmemreq_type_M != nr )
-      s.xcelresp_en @= s.val_M & ~s.stall_M & s.xcelreq_M
+      s.dmemresp_rdy @= s.val_M & ~s.stall_M & ( s.dmemreq_type_M != nr )
+      s.xcelresp_rdy @= s.val_M & ~s.stall_M & s.xcelreq_M
 
       # next valid bit
 
@@ -655,6 +655,6 @@ class ProcCtrl( Component ):
 
       # proc2mngr send is enabled if not stalling
 
-      s.proc2mngr_en @= s.val_W & ~s.stall_W & s.proc2mngr_en_W
+      s.proc2mngr_val @= s.val_W & ~s.stall_W & s.proc2mngr_en_W
 
       s.commit_inst @= s.val_W & ~s.stall_W
