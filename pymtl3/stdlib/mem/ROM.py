@@ -1,6 +1,6 @@
 """
 ========================================================================
-ROMRTL.py
+ROM.py
 ========================================================================
 Multiported ROM
 
@@ -11,7 +11,7 @@ Date   : June 18, 2020
 from pymtl3 import *
 
 
-class CombinationalROMRTL( Component ):
+class CombinationalROM( Component ):
 
   def construct( s, Type, num_entries, data, num_ports=1 ):
     assert len(data) == num_entries
@@ -28,7 +28,7 @@ class CombinationalROMRTL( Component ):
       for i in range(num_ports):
         s.rdata[i] @= s.mem[ s.raddr[i] ]
 
-class SequentialROMRTL( Component ):
+class SequentialROM( Component ):
 
   def construct( s, Type, num_entries, data, num_ports=1 ):
     assert len(data) == num_entries

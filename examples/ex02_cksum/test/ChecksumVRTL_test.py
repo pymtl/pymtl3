@@ -10,7 +10,6 @@ Author : Yanghui Ou
 from pymtl3 import *
 from pymtl3.passes.backends.yosys import *
 from pymtl3.passes.tracing import *
-from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 from pymtl3.stdlib.test_utils.test_helpers import finalize_verilator
 
 from ..ChecksumFL import checksum
@@ -44,21 +43,21 @@ def checksum_vrtl( words ):
   dut.sim_reset()
 
   # Wait until the checksum unit is ready to receive input
-  dut.send.rdy @= 1
-  while not dut.recv.rdy:
+  dut.ostream.rdy @= 1
+  while not dut.istream.rdy:
     dut.sim_tick()
 
   # Feed in the input
-  dut.recv.en  @= 1
-  dut.recv.msg @= bits_in
+  dut.istream.val @= 1
+  dut.istream.msg @= bits_in
   dut.sim_tick()
 
   # Wait until the checksum unit is about to send the message
-  while not dut.send.en:
+  while not dut.ostream.val:
     dut.sim_tick()
 
   # Return the result
-  return dut.send.msg
+  return dut.ostream.msg
 
 #-------------------------------------------------------------------------
 # Reuse functionality from CL test suite

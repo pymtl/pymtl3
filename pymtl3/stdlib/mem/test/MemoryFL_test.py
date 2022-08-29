@@ -8,9 +8,10 @@ import struct
 import pytest
 
 from pymtl3 import *
-from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL, mk_test_case_table, run_sim
+from pymtl3.stdlib.stream import StreamSourceFL, StreamSinkFL
+from pymtl3.stdlib.test_utils import mk_test_case_table, run_sim
 
-from ..MagicMemoryCL import MagicMemoryCL
+from ..MemoryFL import MemoryFL
 from ..MemMsg import MemMsgType, mk_mem_msg
 
 #-------------------------------------------------------------------------
@@ -23,16 +24,16 @@ class TestHarness( Component ):
                  stall_prob, mem_latency, src_initial,  src_interval, sink_initial, sink_interval,
                  arrival_time=None ):
     assert len(PortTypes) == nports
-    s.srcs = [ TestSrcCL( PortTypes[i][0], src_msgs[i], src_initial, src_interval )
-                for i in range(nports) ]
+    s.srcs = [ StreamSourceFL( PortTypes[i][0], src_msgs[i], src_initial, src_interval )
+               for i in range(nports) ]
     s.mem  = cls( nports, PortTypes, stall_prob, mem_latency )
-    s.sinks = [ TestSinkCL( PortTypes[i][1], sink_msgs[i], sink_initial, sink_interval,
-                            arrival_time ) for i in range(nports) ]
+    s.sinks = [ StreamSinkFL( PortTypes[i][1], sink_msgs[i], sink_initial, sink_interval,
+                              arrival_time ) for i in range(nports) ]
 
     # Connections
     for i in range(nports):
-      connect( s.srcs[i].send, s.mem.ifc[i].req )
-      connect( s.mem.ifc[i].resp,  s.sinks[i].recv  )
+      connect( s.srcs[i].ostream, s.mem.ifc[i].reqstream )
+      connect( s.mem.ifc[i].respstream, s.sinks[i].istream )
 
   def done( s ):
     return all([x.done() for x in s.srcs] + [x.done() for x in s.sinks])
@@ -246,7 +247,7 @@ test_case_table = mk_test_case_table([
 @pytest.mark.parametrize( **test_case_table )
 def test_1port( test_params, cmdline_opts ):
   msgs = test_params.msg_func(0x1000)
-  run_sim( TestHarness( MagicMemoryCL, 1, [(req_cls, resp_cls)],
+  run_sim( TestHarness( MemoryFL, 1, [(req_cls, resp_cls)],
                         [ msgs[::2] ],
                         [ msgs[1::2] ],
                         test_params.stall, test_params.lat,
@@ -261,7 +262,7 @@ def test_1port( test_params, cmdline_opts ):
 def test_2port( test_params, cmdline_opts ):
   msgs0 = test_params.msg_func(0x1000)
   msgs1 = test_params.msg_func(0x2000)
-  run_sim( TestHarness( MagicMemoryCL, 2, [(req_cls, resp_cls)]*2,
+  run_sim( TestHarness( MemoryFL, 2, [(req_cls, resp_cls)]*2,
                         [ msgs0[::2],  msgs1[::2]  ],
                         [ msgs0[1::2], msgs1[1::2] ],
                         test_params.stall, test_params.lat,
@@ -271,7 +272,7 @@ def test_2port( test_params, cmdline_opts ):
 @pytest.mark.parametrize( **test_case_table )
 def test_20port( test_params, cmdline_opts ):
   msgs = [ test_params.msg_func(0x1000*i) for i in range(20) ]
-  run_sim( TestHarness( MagicMemoryCL, 20, [(req_cls, resp_cls)]*20,
+  run_sim( TestHarness( MemoryFL, 20, [(req_cls, resp_cls)]*20,
                         [ x[::2]  for x in msgs ],
                         [ x[1::2] for x in msgs ],
                         test_params.stall, test_params.lat,
@@ -305,7 +306,7 @@ def test_read_write_mem( cmdline_opts ):
 
   # Create test harness with above memory messages
 
-  th = TestHarness( MagicMemoryCL, 2, [(req_cls, resp_cls)]*2, [msgs[::2], []], [msgs[1::2], []],
+  th = TestHarness( MemoryFL, 2, [(req_cls, resp_cls)]*2, [msgs[::2], []], [msgs[1::2], []],
                     0, 0, 0, 0, 0, 0 )
   th.elaborate()
 
