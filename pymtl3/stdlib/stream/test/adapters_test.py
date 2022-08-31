@@ -5,7 +5,8 @@ from pymtl3.stdlib.stream import StreamSourceFL, StreamSinkFL
 from pymtl3.stdlib.stream.ifcs import IStreamIfc, OStreamIfc
 from pymtl3.stdlib.test_utils import run_sim
 
-from ..adapters import IStreamDeqAdapterFL, OStreamEnqAdapterFL
+from ..IStreamDeqAdapterFL import IStreamDeqAdapterFL
+from ..OStreamEnqAdapterFL import OStreamEnqAdapterFL
 
 class SimplePassthroughFL( Component ):
   def construct( s, Type ):
