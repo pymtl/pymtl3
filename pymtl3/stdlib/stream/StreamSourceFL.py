@@ -29,6 +29,7 @@ class StreamSourceFL( Component ):
     # TODO: use wires and ROM to make it translatable
     s.idx = 0
     s.count = 0
+    s.prev_is_none = False
 
     @update_ff
     def up_src():
@@ -38,7 +39,7 @@ class StreamSourceFL( Component ):
         s.ostream.val <<= 0
 
       else:
-        if s.ostream.val & s.ostream.rdy:
+        if (s.ostream.val & s.ostream.rdy) or s.prev_is_none:
           s.idx += 1
           s.count = interval_delay
 
@@ -48,8 +49,13 @@ class StreamSourceFL( Component ):
 
         else: # s.count == 0
           if s.idx < len(s.msgs):
-            s.ostream.val <<= 1
-            s.ostream.msg <<= s.msgs[s.idx]
+            if s.msgs[s.idx] is None:
+              s.ostream.val <<= 0
+              s.prev_is_none = True
+            else:
+              s.ostream.val <<= 1
+              s.ostream.msg <<= s.msgs[s.idx]
+              s.prev_is_none = False
           else:
             s.ostream.val <<= 0
 
