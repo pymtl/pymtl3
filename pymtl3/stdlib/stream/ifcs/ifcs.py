@@ -24,10 +24,16 @@ class IStreamIfc( Interface ):
     s.val = InPort()
     s.rdy = OutPort()
 
-    s.trace_len = len(str(Type()))
+    if isinstance( Type, int ):
+      s.trace_len = len(str(mk_bits(Type)()))
+    else:
+      s.trace_len = len(str(Type()))
 
   def __str__( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy, s.trace_len )
+
+  def line_trace( s ):
+    return str( s )
 
 class OStreamIfc( Interface ):
 
@@ -37,7 +43,13 @@ class OStreamIfc( Interface ):
     s.val = OutPort()
     s.rdy = InPort()
 
-    s.trace_len = len(str(Type()))
+    if isinstance( Type, int ):
+      s.trace_len = len(str(mk_bits(Type)()))
+    else:
+      s.trace_len = len(str(Type()))
 
   def __str__( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy, s.trace_len )
+
+  def line_trace( s ):
+    return str( s )
