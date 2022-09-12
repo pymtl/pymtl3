@@ -1,6 +1,7 @@
 import greenlet
 
 from pymtl3 import *
+from pymtl3.extra import clone_deepcopy
 from pymtl3.stdlib.reqresp.ifcs import RequesterIfc
 
 class XcelRequesterAdapterFL( Component ):
