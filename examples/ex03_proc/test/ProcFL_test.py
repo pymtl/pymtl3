@@ -11,7 +11,7 @@ import random
 
 import pytest
 
-from examples.ex03_proc.ProcRTL import ProcRTL
+from examples.ex03_proc.ProcFL import ProcFL
 from pymtl3 import *
 from pymtl3.stdlib.test_utils import run_sim
 
@@ -31,17 +31,12 @@ from .harness import TestHarness, asm_test, assemble
 
 random.seed(0xdeadbeef)
 
-
 #-------------------------------------------------------------------------
-# ProcRTL_Tests
+# ProcFL_Tests
 #-------------------------------------------------------------------------
-# It is as simple as inheriting from FL tests. No need to overwrite
-# the [run_sim], since the version for ProcFL should work fine.
-
-from .ProcFL_test import ProcFL_Tests as BaseTests
 
 @pytest.mark.usefixtures("cmdline_opts")
-class ProcRTL_Tests( BaseTests ):
+class ProcFL_Tests:
 
   # [setup_class] will be called by pytest before running all the tests in
   # the test class. Here we specify the type of the processor that is used
@@ -50,7 +45,7 @@ class ProcRTL_Tests( BaseTests ):
   # overwrite the setup_class to provide a different processor type.
   @classmethod
   def setup_class( cls ):
-    cls.ProcType = ProcRTL
+    cls.ProcType = ProcFL
 
   # [run_sim] is a helper function in the test suite that creates a
   # simulator and runs test. We can overwrite this function when

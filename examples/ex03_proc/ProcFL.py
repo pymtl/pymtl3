@@ -9,11 +9,13 @@ Author : Shunning Jiang, Peitian Pan
 """
 
 from pymtl3 import *
+from pymtl3.extra import clone_deepcopy
 from pymtl3.stdlib.stream.ifcs import IStreamIfc, OStreamIfc
-from pymtl3.stdlib.xcel import mk_xcel_msg
-from pymtl3.stdlib.xcel.ifcs import XcelRequesterIfc
-from pymtl3.stdlib.mem import mk_mem_msg
-from pymtl3.stdlib.mem.ifc import MemRequesterIfc
+from pymtl3.stdlib.stream      import IStreamDeqAdapterFL, OStreamEnqAdapterFL
+from pymtl3.stdlib.xcel.ifcs   import XcelRequesterIfc
+from pymtl3.stdlib.xcel        import mk_xcel_msg, XcelRequesterAdapterFL
+from pymtl3.stdlib.mem.ifcs    import MemRequesterIfc
+from pymtl3.stdlib.mem         import mk_mem_msg, MemRequesterAdapterFL
 
 from .tinyrv0_encoding import RegisterFile, TinyRV0Inst, disassemble_inst
 
@@ -119,7 +121,7 @@ class ProcFL( Component ):
           if   inst.csrnum == 0x7C0:
             if not s.proc2mngr_q.enq.rdy():
               return
-            s.proc2mngr.enq( s.R[inst.rs1] )
+            s.proc2mngr_q.enq( s.R[inst.rs1] )
           elif 0x7E0 <= inst.csrnum <= 0x7FF:
             s.xcel_adapter.write( inst.csrnum[0:5], s.R[inst.rs1] )
           else:

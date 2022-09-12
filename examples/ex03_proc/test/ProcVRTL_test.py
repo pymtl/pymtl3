@@ -25,13 +25,17 @@ random.seed(0xdeadbeef)
 #-------------------------------------------------------------------------
 # ProcVRTL_Tests
 #-------------------------------------------------------------------------
-# It is as simple as inheriting from RTL tests and overwrite [run_sim]
+# It is as simple as inheriting from FL tests and overwriting the run_sim
 # function to apply the translation and import pass.
 
-from .ProcRTL_test import ProcRTL_Tests as BaseTests
+from .ProcFL_test import ProcFL_Tests as BaseTests
 
 @pytest.mark.usefixtures("cmdline_opts")
 class ProcVRTL_Tests( BaseTests ):
+
+  @classmethod
+  def setup_class( cls ):
+    cls.ProcType = ProcRTL
 
   def run_sim( s, th, gen_test ):
 
@@ -78,3 +82,5 @@ def test_proc_translate():
   from os.path import dirname
   script_path = dirname(dirname(__file__)) + '/proc-translate'
   os.system(f'python {script_path}')
+
+
