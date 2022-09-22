@@ -9,6 +9,7 @@ Author : Shunning Jiang, Peitian Pan
 """
 from collections import deque
 from copy import deepcopy
+from random import randint
 
 from pymtl3 import *
 from .ifcs import OStreamIfc
@@ -16,7 +17,8 @@ from .ifcs import OStreamIfc
 
 class StreamSourceFL( Component ):
 
-  def construct( s, Type, msgs, initial_delay=0, interval_delay=0 ):
+  def construct( s, Type, msgs, initial_delay=0, interval_delay=0,
+                 interval_delay_mode='fixed' ):
 
     # Interface
 
@@ -41,7 +43,10 @@ class StreamSourceFL( Component ):
       else:
         if (s.ostream.val & s.ostream.rdy) or s.prev_is_none:
           s.idx += 1
-          s.count = interval_delay
+          if ( interval_delay_mode == 'random' ):
+            s.count = randint(0,interval_delay)
+          else:
+            s.count = interval_delay
 
         if s.count > 0:
           s.count -= 1
