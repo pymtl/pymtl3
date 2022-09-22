@@ -8,6 +8,8 @@ Author : Shunning Jiang, Peitian Pan
   Date : Aug 26, 2022
 """
 
+from random import randint
+
 from pymtl3 import *
 from .ifcs import IStreamIfc
 
@@ -21,6 +23,7 @@ class PyMTLTestSinkError( Exception ): pass
 class StreamSinkFL( Component ):
 
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0,
+                 interval_delay_mode='fixed',
                  arrival_time=None, cmp_fn=lambda a, b : a == b ):
 
     # Interface
@@ -103,7 +106,10 @@ class StreamSinkFL( Component ):
               )
 
           s.idx += 1
-          s.count = interval_delay
+          if ( interval_delay_mode == 'random' ):
+            s.count = randint(0,interval_delay)
+          else:
+            s.count = interval_delay
 
         if s.count > 0:
           s.count -= 1

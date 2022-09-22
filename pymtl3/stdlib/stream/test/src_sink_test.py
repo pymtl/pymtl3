@@ -52,27 +52,34 @@ arrival4 = [ 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65 ]
 
 
 @pytest.mark.parametrize(
-  ('Type', 'msgs', 'src_init',  'src_intv',
-   'sink_init', 'sink_intv', 'arrival_time' ),
+  ('Type', 'msgs', 'src_init', 'src_intv', 'src_mode',
+   'sink_init', 'sink_intv', 'sink_mode', 'arrival_time' ),
   [
-    ( Bits16, bit_msgs,  0,  0, 0, 0, arrival0 ),
-    # ( int,    int_msgs, 10,  0, 0, 0, arrival1 ),
-    ( Bits16, bit_msgs, 10,  1, 0, 0, arrival2 ),
-    ( Bits16, bit_msgs, 10,  0, 0, 1, arrival3 ),
-    ( Bits16, bit_msgs,  3,  4, 5, 3, arrival4 )
+    ( Bits16, bit_msgs,  0,  0, 'fixed',  0,  0, 'fixed',  arrival0 ),
+    ( Bits16, bit_msgs, 10,  1, 'fixed',  0,  0, 'fixed',  arrival2 ),
+    ( Bits16, bit_msgs, 10,  0, 'fixed',  0,  1, 'fixed',  arrival3 ),
+    ( Bits16, bit_msgs,  3,  4, 'fixed',  5,  3, 'fixed',  arrival4 ),
+    ( Bits16, bit_msgs,  0, 10, 'random', 0,  0, 'fixed',  None     ),
+    ( Bits16, bit_msgs,  0, 40, 'random', 0,  0, 'fixed',  None     ),
+    ( Bits16, bit_msgs,  0,  0, 'fixed',  0, 10, 'random', None     ),
+    ( Bits16, bit_msgs,  0,  0, 'fixed',  0, 40, 'random', None     ),
+    ( Bits16, bit_msgs,  0, 10, 'random', 0, 10, 'random', None     ),
+    ( Bits16, bit_msgs,  0, 40, 'random', 0, 40, 'random', None     ),
   ]
 )
-def test_src_sink_rtl( Type, msgs, src_init,  src_intv,
-                       sink_init, sink_intv, arrival_time ):
+def test_src_sink_rtl( Type, msgs, src_init, src_intv, src_mode,
+                       sink_init, sink_intv, sink_mode, arrival_time ):
   th = TestHarnessSimple( Type, StreamSourceFL, StreamSinkFL, msgs, msgs )
   th.set_param( "top.src.construct",
-    initial_delay  = src_init,
-    interval_delay = src_intv,
+    initial_delay       = src_init,
+    interval_delay      = src_intv,
+    interval_delay_mode = src_mode,
   )
   th.set_param( "top.sink.construct",
-    initial_delay  = sink_init,
-    interval_delay = sink_intv,
-    arrival_time   = arrival_time,
+    initial_delay       = sink_init,
+    interval_delay      = sink_intv,
+    interval_delay_mode = sink_mode,
+    arrival_time        = arrival_time,
   )
   run_sim( th )
 
