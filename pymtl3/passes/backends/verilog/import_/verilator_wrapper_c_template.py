@@ -210,11 +210,31 @@ void seq_eval( V{component_name}_t * m ) {{
     m->trace_time += {one_tenth_cycle_time};
     g_main_time   += {one_tenth_cycle_time};
 
+    // PP: this is hacky -- we want the waveform to look like all signals
+    // except the CLK has toggled. We temporarily set the CLK signal
+    // back to 1 (as if it has not toggled) and dump VCD.
+    #if HAS_CLK
+    model->clk = 1;
+    #endif
+
     // dump current signal values
     VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
     tfp->dump( m->trace_time );
     tfp->flush();
 
+    // PP: now that we have generated the VCD we need to set CLK back to 0.
+    // We need to dump VCD again to register this clock toggle.
+    m->trace_time += {two_fifth_cycle_time};
+    g_main_time   += {two_fifth_cycle_time};
+
+    #if HAS_CLK
+    model->clk = 0;
+    #endif
+
+    model->eval();
+
+    tfp->dump( m->trace_time );
+    tfp->flush();
   }}
   #endif
 
@@ -228,8 +248,8 @@ void seq_eval( V{component_name}_t * m ) {{
   if ( m->_vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
 
     // update simulation time only on clock toggle
-    m->trace_time += {nine_tenth_cycle_time};
-    g_main_time += {nine_tenth_cycle_time};
+    m->trace_time += {half_cycle_time};
+    g_main_time   += {half_cycle_time};
 
     // dump current signal values
     VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
