@@ -447,7 +447,8 @@ class VerilogVerilatorImportPass( BasePass ):
     vl_component_name = s._verilator_name(component_name)
     dump_vcd = int(ip_cfg.vl_trace)
     vcd_timescale = ip_cfg.vl_trace_timescale
-    half_cycle_time = ip_cfg.vl_trace_cycle_time // 2
+    one_tenth_cycle_time = ip_cfg.vl_trace_cycle_time // 10
+    nine_tenth_cycle_time = 9 * (ip_cfg.vl_trace_cycle_time // 10)
     external_trace = int(ip_cfg.vl_line_trace)
     wrapper_name = ip_cfg.get_c_wrapper_path()
     verilator_xinit_value = ip_cfg.get_vl_xinit_value()
