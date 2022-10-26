@@ -192,6 +192,14 @@ class MemoryFL( Component ):
             resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
                s.mem.amo( req.type_, req.addr, len_, req.data ) )
 
+          # INV
+          elif  req.type_ == MemMsgType.INV:
+            resp = resp_classes[i]( req.type_, req.opaque, 0, 0, 0 )
+
+          # FLUSH
+          elif  req.type_ == MemMsgType.FLUSH:
+            resp = resp_classes[i]( req.type_, req.opaque, 0, 0, 0 )
+
           # Invalid type
           else:
             assert False
