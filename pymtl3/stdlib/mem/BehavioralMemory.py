@@ -28,10 +28,16 @@ class BehavioralMemory( Component ):
       s.trace = "     "
 
   def read( s, addr, nbytes ):
+    assert len(s.mem) > (int(addr) + int(nbytes)), \
+        f"Out-of-bound memory read of {int(nbytes)} bytes @ 0x{int(addr):#08x} detected at behavioral memory {s}!"
     s.trace = "[rd ]"
     return read_bytearray_bits( s.mem, addr, nbytes )
 
   def write( s, addr, nbytes, data ):
+    assert isinstance(data, Bits), \
+        f"Write operand {data} needs to be Bits to indicate write length!"
+    assert len(s.mem) > (int(addr) + data.nbits // 8), \
+        f"Out-of-bound memory write of {data.nbits//8} bytes @ 0x{int(addr):#08x} detected at behavioral memory {s}!"
     s.trace = "[wr ]"
     write_bytearray_bits( s.mem, addr, nbytes, data )
 
@@ -51,11 +57,15 @@ class BehavioralMemory( Component ):
     return ret
 
   def read_mem( s, addr, size ):
-    assert len(s.mem) > (addr + size)
+    assert len(s.mem) > (int(addr) + int(size)), \
+        f"Out-of-bound memory read of {int(size)} bytes @ 0x{int(addr):#08x} detected at behavioral memory {s}!"
     return s.mem[ addr : addr + size ]
 
   def write_mem( s, addr, data ):
-    assert len(s.mem) > (addr + len(data))
+    assert isinstance(data, bytes), \
+        f"Write operand {data} needs to be bytearray!"
+    assert len(s.mem) > (int(addr) + len(data)), \
+        f"Out-of-bound memory write of {len(data)} bytes @ 0x{int(addr):#08x} detected at behavioral memory {s}!"
     s.mem[ addr : addr + len(data) ] = data
 
   def line_trace( s ):
