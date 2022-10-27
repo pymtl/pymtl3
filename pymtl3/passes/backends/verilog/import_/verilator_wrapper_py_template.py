@@ -49,8 +49,8 @@ class {component_name}( Component ):
     """)
 
     # Print the modification time stamp of the shared lib
-    # print 'Modification time of {{}}: {{}}'.format(
-    #   '{lib_file}', os.path.getmtime( './{lib_file}' ) )
+    # print('Modification time of {{}}: {{}}'.format(
+    #       '{lib_file}', os.path.getmtime( './{lib_file}' ) ))
 
     # Import the shared library containing the model. We defer
     # construction to the elaborate_logic function to allow the user to
