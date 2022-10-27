@@ -7,7 +7,7 @@ template = \
 // Verilator-generated C++ model can be driven from Python.
 // This templated is based on PyMTL v2.
 
-#include "obj_dir_{component_name}/V{component_name}.h"
+#include "obj_dir_{component_name}/V{vl_component_name}.h"
 #include "stdio.h"
 #include "stdint.h"
 #include "verilated.h"
@@ -30,7 +30,7 @@ template = \
 #define VLINETRACE {external_trace}
 
 #if VLINETRACE
-#include "obj_dir_{component_name}/V{component_name}__Syms.h"
+#include "obj_dir_{component_name}/V{vl_component_name}__Syms.h"
 #include "svdpi.h"
 #endif
 
@@ -96,14 +96,14 @@ double sc_time_stamp()
 
 V{component_name}_t * create_model( const char *vcd_filename ) {{
 
-  V{component_name}_t * m;
-  V{component_name}   * model;
+  V{component_name}_t  * m;
+  V{vl_component_name} * model;
 
   Verilated::randReset( {verilator_xinit_value} );
   Verilated::randSeed( {verilator_xinit_seed} );
 
   m     = (V{component_name}_t *) malloc( sizeof(V{component_name}_t) );
-  model = new V{component_name}();
+  model = new V{vl_component_name}();
 
   m->model = (void *) model;
 
@@ -144,7 +144,7 @@ void destroy_model( V{component_name}_t * m ) {{
     VerilatedCov::write( "coverage.dat" );
   #endif
 
-  V{component_name} * model = (V{component_name} *) m->model;
+  V{vl_component_name} * model = (V{vl_component_name} *) m->model;
 
   // finalize verilator simulation
   model->final();
@@ -168,7 +168,7 @@ void destroy_model( V{component_name}_t * m ) {{
 
 void comb_eval( V{component_name}_t * m ) {{
 
-  V{component_name} * model = (V{component_name} *) m->model;
+  V{vl_component_name} * model = (V{vl_component_name} *) m->model;
 
   // evaluate one time step
   model->eval();
@@ -193,7 +193,7 @@ void comb_eval( V{component_name}_t * m ) {{
 
 void seq_eval( V{component_name}_t * m ) {{
 
-  V{component_name} * model = (V{component_name} *) m->model;
+  V{vl_component_name} * model = (V{vl_component_name} *) m->model;
 
   // evaluate one time cycle
 
@@ -276,7 +276,7 @@ void assert_en( bool en ) {{
 #if VLINETRACE
 void trace( V{component_name}_t * m, char* str ) {{
 
-  V{component_name} * model = (V{component_name} *) m->model;
+  V{vl_component_name} * model = (V{vl_component_name} *) m->model;
 
   const int nchars = 512;
   const int nwords = nchars/4;
