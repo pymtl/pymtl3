@@ -86,6 +86,7 @@ setup(
     'hypothesis >= 4.18.1',
     'cffi',
     'greenlet',
+    'py',
   ],
 
   entry_points = {
