@@ -75,6 +75,7 @@ def test_vl_uninit( do_test ):
           s.in_ : "d", s.out : "q",
       } )
       s.set_metadata( VerilogVerilatorImportPass.vl_xinit, 'ones' )
+      s.set_metadata( VerilogVerilatorImportPass.vl_Wno_list, ['LATCH'])
   a = VUninit()
   a._tvs = [
     [    0, 4294967295 ],

@@ -26,8 +26,8 @@ jobs:
 
     - name: Install Verilator
       run: |
-        wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.036.tar.gz
-        tar -C ${HOME} -xzf verilator-travis-4.036.tar.gz
+        wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.228.tar.gz
+        tar -C ${HOME} -xzf verilator-travis-4.228.tar.gz
         echo "VERILATOR_ROOT=${HOME}/verilator" >> $GITHUB_ENV
         echo "PYMTL_VERILATOR_INCLUDE_DIR=${HOME}/verilator/share/verilator/include" >> $GITHUB_ENV
         echo "${HOME}/verilator/bin" >> $GITHUB_PATH

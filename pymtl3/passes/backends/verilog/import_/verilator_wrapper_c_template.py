@@ -307,8 +307,17 @@ void trace( V{component_name}_t * m, char* str ) {{
   // PP: also note that since we add a wrapper around the external Verilog
   // module, the scope we are trying to set is actually the _wrapped_ module
   // which is called `v`.
+  // svSetScope( &model->__VlSymsp->__Vscope_{vl_component_name}__v );
 
-  svSetScope( &model->__VlSymsp->__Vscope_{vl_component_name}__v );
+  // PP update: the above (commented) way of setting scope is not
+  // compatible with newer versions of Verilator because it relies on
+  // Verilator's internal implementation. It is recommended to get scope through
+  // a dotted hierarchical name as shown below.
+
+  const svScope dut_scope = svGetScopeFromName("TOP.{vl_component_name}.v");
+  assert( dut_scope );
+  svSetScope( dut_scope );
+
   model->line_trace( words );
 
   // Note that the way the line tracing works, the line tracing function

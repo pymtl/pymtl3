@@ -14,7 +14,8 @@ from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 from pymtl3.passes.PlaceholderConfigs import expand
 
-from ..util.utility import get_hash_of_lean_verilog
+from ..errors import VerilogImportError
+from ..util.utility import get_hash_of_lean_verilog, wrap
 from .VerilogVerilatorImportPass import VerilogVerilatorImportPass
 
 
@@ -380,24 +381,25 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     return includes
 
   def _get_c_src_files( s ):
-    top_module = s.translated_top_module
+    top_module = s.translated_top_module.replace('__', '___05F')
     vl_mk_dir = s.vl_mk_dir
     vl_class_mk = f"{vl_mk_dir}/V{top_module}_classes.mk"
+    cxx_inputs = []
 
     # Add C wrapper
     o0 = []
     o1 = copy.copy(s.c_srcs) + [ s.get_c_wrapper_path() ]
+    objs = []
 
     # Add files listed in class makefile
     with open(vl_class_mk) as class_mk:
       all_lines = class_mk.readlines()
-      o1 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_FAST")
-      o1 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_FAST")
-      o1 += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_FAST")
-
-      o0 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_SLOW")
-      o0 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_SLOW")
-      o0 += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_SLOW")
+      o1 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_FAST" )
+      o1 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_FAST" )
+      o0 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_SLOW" )
+      o0 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_SLOW" )
+      objs += s._compile_vl_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_FAST" )
+      objs += s._compile_vl_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_SLOW" )
 
     with open(f"{top_module}_v__ALL_pickled.cpp", 'w') as out:
 
@@ -417,7 +419,9 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
           out.write('\n'.join( [ f'#include "{x}"' for x in o0 ]))
           out.write('\n#pragma GCC pop_options\n')
 
-    return [ f"{top_module}_v__ALL_pickled.cpp" ]
+    cxx_inputs += [ f"{top_module}_v__ALL_pickled.cpp" ]
+    cxx_inputs += objs
+    return cxx_inputs
 
   def _get_srcs_from_vl_class_mk( s, all_lines, path, label ):
     """Return all files under `path` directory in `label` section of `mk`."""
@@ -432,3 +436,46 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
           file_name = line.strip()[:-2]
           srcs.append( path + "/" + file_name + ".cpp" )
     return srcs
+
+  def _compile_vl_srcs_from_vl_class_mk( s, all_lines, path, label ):
+    """Return compiled objects from Verilator sources under `path` directory in `label` section of `mk`."""
+    srcs, found = [], False
+    for line in all_lines:
+      if line.startswith(label):
+        found = True
+      elif found:
+        if line.strip() == "":
+          found = False
+        else:
+          file_name = line.strip()[:-2]
+          srcs.append( (path + "/" + file_name + ".cpp", file_name) )
+
+    objs = []
+    cxx_includes = " ".join(map(lambda x: "-I"+x, s._get_all_includes()))
+    for src in srcs:
+      file_path, obj_name = src
+      cxx_cmd = f"g++ {cxx_includes} -O1 -fPIC -c -o {obj_name}.o {file_path}"
+      if os.path.exists(f"{obj_name}.o"):
+        s.vprint(f"Skip compiling {obj_name}.o because it already exists.")
+      else:
+        s.vprint(f"Compiling {obj_name}.o with command: {cxx_cmd}")
+      # Invoke CXX to compile objects
+      try:
+        subprocess.check_output(cxx_cmd,
+                                stderr = subprocess.STDOUT,
+                                shell = True,
+                                universal_newlines = True)
+        succeeds = True
+      except subprocess.CalledProcessError as e:
+        succeeds = False
+        err_msg = e.output if not isinstance(e.output, bytes) else \
+                  e.output.decode('utf-8')
+        import_err_msg = \
+            f"Internal error: failed to compile Verilator source files:\n"\
+            f"  CXX command:\n{indent(cxx_cmd, '  ')}\n\n"\
+            f"  CXX output:\n{indent(wrap(err_msg), '  ')}\n"
+      if not succeeds:
+        raise RuntimeError(import_err_msg)
+      objs.append(f"{obj_name}.o")
+
+    return objs
