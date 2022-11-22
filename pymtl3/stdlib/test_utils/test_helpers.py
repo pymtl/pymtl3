@@ -63,7 +63,24 @@ def _recursive_set_vl_trace( m, dump_vcd ):
     for child in m.get_child_components():
       _recursive_set_vl_trace( child, dump_vcd )
 
+# Define a singleton metadata key to check if a component has been configured.
+IsComponentConfigured = MetadataKey(bool)
+
 def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
+  # First, check to make sure if this model has not been configured yet.
+  if not isinstance(top, Component):
+    raise ValueError(f"Expecting a PyMTL3 component but got {top}!")
+
+  is_configured = top.has_metadata(IsComponentConfigured) and \
+                  top.get_metadata(IsComponentConfigured)
+
+  if is_configured:
+    raise RuntimeError(f"It appears that model {top} has already been configured by "
+                       f"`config_model_with_cmdline_opts'! Double configuring may cause "
+                       f"unexpected behaviors. If you simulate your model with "
+                       f"`pymtl3.stdlib.test_utils.run_sim' or "
+                       f"`pymtl3.stdlib.test_utils.run_test_vector_sim', "
+                       f"they will configure the model so you don't have to.")
 
   test_verilog       = cmdline_opts['test_verilog'] if 'test_verilog' in cmdline_opts else False
   test_yosys_verilog = cmdline_opts['test_yosys_verilog'] if 'test_yosys_verilog' in cmdline_opts else False
@@ -150,6 +167,9 @@ def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
 
   if dump_textwave:
     top.set_metadata( PrintTextWavePass.enable, True )
+
+  # All done -- mark the model as configured to avoid double configuring.
+  top.set_metadata(IsComponentConfigured, True)
 
   return top
 
