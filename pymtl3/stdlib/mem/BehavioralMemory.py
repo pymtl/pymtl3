@@ -62,8 +62,8 @@ class BehavioralMemory( Component ):
     return s.mem[ addr : addr + size ]
 
   def write_mem( s, addr, data ):
-    assert isinstance(data, bytes), \
-        f"Write operand {data} needs to be bytearray!"
+    assert isinstance(data, (bytes, bytearray, list)), \
+        f"Write operand {data} needs to be bytes, bytearray, or list of bytes!"
     assert len(s.mem) > (int(addr) + len(data)), \
         f"Out-of-bound memory write of {len(data)} bytes @ 0x{int(addr):#08x} detected at behavioral memory {s}!"
     s.mem[ addr : addr + len(data) ] = data
