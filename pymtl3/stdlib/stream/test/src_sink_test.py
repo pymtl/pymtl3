@@ -137,3 +137,30 @@ def test_customized_cmp():
   )
   th.set_param( 'top.sink.construct', cmp_fn=lambda a, b: a[0:2] == b[0:2] )
   run_sim( th )
+
+#-------------------------------------------------------------------------
+# Test unordered sink
+#-------------------------------------------------------------------------
+
+def test_unordered_sink():
+  th = TestHarnessSimple(
+    Bits4, StreamSourceFL, StreamSinkFL,
+    src_msgs  = [ b4(4), b4(3), b4(2), b4(1) ],
+    sink_msgs = [ b4(1), b4(2), b4(3), b4(4) ],
+  )
+  th.set_param( 'top.sink.construct', ordered=False )
+  run_sim( th )
+
+def test_error_unordered_sink():
+  try:
+    th = TestHarnessSimple(
+      Bits4, StreamSourceFL, StreamSinkFL,
+      src_msgs  = [ b4(4), b4(3), b4(2), b4(1) ],
+      sink_msgs = [ b4(1), b4(0), b4(3), b4(4) ],
+    )
+    th.set_param( 'top.sink.construct', ordered=False )
+    run_sim( th )
+  except PyMTLTestSinkError as e:
+    return
+  raise Exception( 'Fail to detect error!')
+
