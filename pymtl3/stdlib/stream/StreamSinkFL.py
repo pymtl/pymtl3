@@ -24,7 +24,8 @@ class StreamSinkFL( Component ):
 
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0,
                  interval_delay_mode='fixed',
-                 arrival_time=None, cmp_fn=lambda a, b : a == b ):
+                 arrival_time=None, cmp_fn=lambda a, b : a == b,
+                 ordered=True ):
 
     # Interface
 
@@ -87,23 +88,46 @@ class StreamSinkFL( Component ):
                            f'Received : {msg}' )
 
           else:
-            # Check correctness first
-            if not cmp_fn( msg, s.msgs[ s.idx ] ):
-              s.error_msg = (
-                f'Test sink {s} received WRONG message!\n'
-                f'Expected : { s.msgs[ s.idx ] }\n'
-                f'Received : { msg }'
-              )
+
+            # Check correctness assuming sink messages are ordered
+
+            if ordered:
+
+              if not cmp_fn( msg, s.msgs[ s.idx ] ):
+                s.error_msg = (
+                  f'Test sink {s} received WRONG message!\n'
+                  f'Expected : { s.msgs[ s.idx ] }\n'
+                  f'Received : { msg }'
+                )
+
+            # Check correctness assuming sink messages are unordered
+
+            else:
+
+              found = False
+              for ref_msg in s.msgs:
+                if cmp_fn( msg, ref_msg ):
+                  found = True
+                  break
+
+              if not found:
+                s.error_msg = (
+                  f'Test sink {s} received WRONG message!'
+                  f'Received : { msg }\n'
+                  f'Sink is in not checking message order, so the received\n'
+                  f'message was compared against all expected messages'
+                )
 
             # Check timing if performance regeression is turned on
-            elif s.arrival_time and s.cycle_count > s.arrival_time[ s.idx ]:
-              s.error_msg = (
-                f'Test sink {s} received message LATER than expected!\n'
-                f'Expected msg : {s.msgs[ s.idx ]}\n'
-                f'Expected at  : {s.arrival_time[ s.idx ]}\n'
-                f'Received msg : {msg}\n'
-                f'Received at  : {s.cycle_count}'
-              )
+            if not s.error_msg:
+              if s.arrival_time and s.cycle_count > s.arrival_time[ s.idx ]:
+                s.error_msg = (
+                  f'Test sink {s} received message LATER than expected!\n'
+                  f'Expected msg : {s.msgs[ s.idx ]}\n'
+                  f'Expected at  : {s.arrival_time[ s.idx ]}\n'
+                  f'Received msg : {msg}\n'
+                  f'Received at  : {s.cycle_count}'
+                )
 
           s.idx += 1
           if ( interval_delay_mode == 'random' ):
