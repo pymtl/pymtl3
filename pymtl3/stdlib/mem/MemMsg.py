@@ -55,7 +55,14 @@ def mk_mem_req_msg( o, a, d ):
 
   @bitstruct
   class MemReqMsg:
-    type_  : Bits4
+
+    # Temporary Fix! Had to switch this back to 3-bit type field because
+    # the type field in the verilog memory message is only 3 bits. We
+    # should change the verilog memory message eventually. -cbatten
+
+    # type_  : Bits4
+
+    type_  : Bits3
     opaque : mk_bits( o           )
     addr   : mk_bits( a           )
     len    : mk_bits( clog2(d>>3) )
@@ -78,7 +85,14 @@ def mk_mem_resp_msg( o, d ):
 
   @bitstruct
   class MemRespMsg:
-    type_  : Bits4
+
+    # Temporary Fix! Had to switch this back to 3-bit type field because
+    # the type field in the verilog memory message is only 3 bits. We
+    # should change the verilog memory message eventually. -cbatten
+
+    # type_  : Bits4
+
+    type_  : Bits3
     opaque : mk_bits( o           )
     test   : Bits2
     len    : mk_bits( clog2(d>>3) )
