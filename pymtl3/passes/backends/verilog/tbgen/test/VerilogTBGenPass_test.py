@@ -6,6 +6,7 @@
 """Test if the imported object works correctly."""
 
 import pytest
+from os.path import dirname
 
 from pymtl3 import DefaultPassGroup
 from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
@@ -47,6 +48,7 @@ def test_normal_queue( do_test ):
       s.enq_en  =  InPort( Bits1  )
       s.enq_rdy = OutPort( Bits1  )
       s.enq_msg =  InPort( mk_bits( data_width ) )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VQueue.v' )
       s.set_metadata( VerilogTranslationImportPass.enable, True )
   num_entries = 1
   q = VQueue(
