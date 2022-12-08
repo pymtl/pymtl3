@@ -47,6 +47,7 @@ def test_reg( do_test ):
           s.clk : "clk", s.reset : "reset",
           s.in_ : "d",   s.out : "q",
       } )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VReg.v' )
   a = VReg()
   a._tvs = [
     [    1,    '*' ],
@@ -71,6 +72,7 @@ def test_vl_uninit( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VUninit.v' )
       s.set_metadata( VerilogPlaceholderPass.port_map, {
           s.in_ : "d", s.out : "q",
       } )
@@ -98,6 +100,7 @@ def test_reg_incomplete_portmap( do_test ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
 
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VReg.v' )
       s.set_metadata( VerilogPlaceholderPass.port_map, {
           s.in_ : "d",   s.out : "q",
       } )
@@ -132,6 +135,7 @@ def test_adder( do_test ):
       s.cin = InPort( Bits1 )
       s.out = OutPort( Bits32 )
       s.cout = OutPort( Bits1 )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VAdder.v' )
   a = VAdder()
   a._tvs = [
     [    1,      1,     1,     3, 0 ],
@@ -165,6 +169,7 @@ def test_normal_queue_implicit_top_module( do_test ):
       s.enq_en  =  InPort( Bits1  )
       s.enq_rdy = OutPort( Bits1  )
       s.enq_msg =  InPort( mk_bits( data_width ) )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VQueue.v' )
   num_entries = 1
   q = VQueue(
       data_width = 32,
@@ -264,6 +269,7 @@ def test_normal_queue_interface( do_test ):
       s.count = OutPort( mk_bits( count_width )  )
       s.deq   = DequeueIfc( mk_bits( data_width ) )
       s.enq   = EnqueueIfc( mk_bits( data_width ) )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VQueue.v' )
   num_entries = 1
   q = VQueue(
       data_width = 32,
@@ -297,6 +303,7 @@ def test_unpacked_port_array( do_test ):
     def construct( s, nports, nbits ):
       s.in_ = [ InPort( mk_bits(nbits) ) for _ in range(nports) ]
       s.out = [ OutPort( mk_bits(nbits) ) for _ in range(nports) ]
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VPassThrough.v' )
       s.set_metadata( VerilogPlaceholderPass.params, {
           'num_ports' : nports,
           'bitwidth'  : nbits,
@@ -328,6 +335,7 @@ def test_unpacked_port_array_infer_clk_reset( do_test ):
     def construct( s, nports, nbits ):
       s.in_ = [ InPort( mk_bits(nbits) ) for _ in range(nports) ]
       s.out = [ OutPort( mk_bits(nbits) ) for _ in range(nports) ]
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VPassThrough.v' )
       s.set_metadata( VerilogPlaceholderPass.params, {
           'num_ports' : nports,
           'bitwidth'  : nbits,
@@ -353,6 +361,7 @@ def test_param_pass_through( do_test, translate ):
     def construct( s, nports, nbits ):
       s.in_ = [ InPort( mk_bits(nbits) ) for _ in range(nports) ]
       s.out = [ OutPort( mk_bits(nbits) ) for _ in range(nports) ]
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VPassThrough.v' )
       s.set_metadata( VerilogPlaceholderPass.params, {
           'num_ports' : nports,
           'bitwidth'  : nbits,
@@ -400,6 +409,7 @@ def test_non_top_portmap( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VReg.v' )
       s.set_metadata( VerilogPlaceholderPass.port_map, {
           s.in_ : "d", s.out : "q",
       } )
@@ -433,6 +443,7 @@ def test_reg_external_trace( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VRegTrace.v' )
       s.set_metadata( VerilogPlaceholderPass.port_map, {
           s.in_ : "d", s.out : "q",
       } )
@@ -464,6 +475,7 @@ def test_reg_infer_external_trace( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VRegTrace.v' )
       s.set_metadata( VerilogPlaceholderPass.port_map, {
           s.in_ : "d", s.out : "q",
       } )
@@ -494,6 +506,7 @@ def test_incr_on_demand_vcd( do_test ):
       s.in_ = InPort( 10 )
       s.out = OutPort( 10 )
       s.vcd_en = OutPort()
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VIncr.v' )
       s.set_metadata( VerilogPlaceholderPass.has_clk, False )
       s.set_metadata( VerilogPlaceholderPass.has_reset, False )
       s.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
