@@ -13,12 +13,16 @@ from .StructuralRTLIRGenL0Pass import StructuralRTLIRGenL0Pass
 
 class BaseSignalExpr:
   """Base abstract class of RTLIR signal expressions."""
-  def __init__( s, rtype ):
+  def __init__( s, rtype, obj = None ):
     assert isinstance( rtype, rt.BaseRTLIRType ), f"non-RTLIR type {rtype} encountered!"
     s.rtype = rtype
+    s.obj = obj
 
   def get_rtype( s ):
     return s.rtype
+
+  def get_object( s ):
+    return s.obj
 
   def __eq__( s, other ):
     return type(s) is type(other) and s.rtype == other.rtype
@@ -38,7 +42,15 @@ class _Index( BaseSignalExpr ):
   data type array or a bit selection.
   """
   def __init__( s, index_base, index, rtype ):
-    super().__init__( rtype )
+    try:
+      if isinstance(index, BaseSignalExpr):
+        idx = index.get_object()
+      else:
+        idx = int(index)
+      obj = index_base.get_object()[idx]
+    except:
+      obj = None
+    super().__init__( rtype, obj )
     s.index = index
     s.base = index_base
 
@@ -83,7 +95,7 @@ class _Slice( BaseSignalExpr ):
       rtype = rt.Wire( rdt.Vector( stop-start ) )
     else:
       assert False, f"unrecognized signal type {base_rtype} for slicing"
-    super().__init__( rtype )
+    super().__init__( rtype, None )
     s.base = slice_base
     s.slice = ( start, stop )
 
@@ -108,7 +120,11 @@ class _Attribute( BaseSignalExpr ):
   an interface, or a field in a struct signal.
   """
   def __init__( s, attr_base, attr, rtype ):
-    super().__init__( rtype )
+    try:
+      obj = getattr(attr_base.get_object(), attr)
+    except:
+      obj = None
+    super().__init__( rtype, obj )
     s.attr = attr
     s.base = attr_base
 
@@ -137,7 +153,7 @@ class ConstInstance( BaseSignalExpr ):
   an attribute of a component.
   """
   def __init__( s, obj, value ):
-    super().__init__(rt.Const(rdt.get_rtlir_dtype( obj )))
+    super().__init__(rt.Const(rdt.get_rtlir_dtype( obj )), obj)
     s.value = value
 
   def __eq__( s, other ):
@@ -159,7 +175,8 @@ class CurComp( BaseSignalExpr ):
   is the same as the current component's name.
   """
   def __init__( s, comp, comp_id ):
-    super().__init__(comp.get_metadata(StructuralRTLIRGenL0Pass.rtlir_type))
+    super().__init__(comp.get_metadata(StructuralRTLIRGenL0Pass.rtlir_type), comp)
+    s.comp = comp
     s.comp_id = comp_id
 
   def __eq__( s, other ):
@@ -168,6 +185,9 @@ class CurComp( BaseSignalExpr ):
 
   def __hash__( s ):
     return hash((type(s), s.rtype, s.comp_id))
+
+  def get_component( s ):
+    return s.comp
 
   def get_component_id( s ):
     return s.comp_id
@@ -189,7 +209,7 @@ class ComponentIndex( _UnpackedIndex ):
 
 class PackedIndex( _Index ):
   """IR class for indexing on a signal of packed data type."""
-  def __init__( s, index_base, index ):
+  def __init__( s, index_base, index, ):
     base_rtype = index_base.get_rtype()
     dtype = base_rtype.get_dtype()
     if isinstance( base_rtype, rt.Port ):

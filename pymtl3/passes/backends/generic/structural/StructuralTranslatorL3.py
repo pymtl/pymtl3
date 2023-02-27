@@ -70,12 +70,13 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
         ) )
       ifc_decls.append(
         s.rtlir_tr_interface_decl(
+          m,
           ifc_id,
           ifc_rtype,
           s.rtlir_tr_unpacked_array_type( array_rtype ),
-          s.rtlir_tr_interface_port_decls( ports )
+          s.rtlir_tr_interface_port_decls( m, ports ),
       ) )
-    s.structural.decl_ifcs[m] = s.rtlir_tr_interface_decls( ifc_decls )
+    s.structural.decl_ifcs[m] = s.rtlir_tr_interface_decls( m, ifc_decls )
 
     super().translate_decls( m )
 
@@ -90,11 +91,16 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
     Add support for the following operations at L3: sexp.InterfaceAttr
     """
     if isinstance( expr, sexp.InterfaceAttr ):
-      return s.rtlir_tr_interface_attr(
+      # expr.get_base() is an interface. `parent' is the component object that
+      # owns this interface.
+      parent = expr.get_base()
+      while not isinstance(parent, (sexp.CurCompAttr, sexp.SubCompAttr)):
+        parent = parent.get_base()
+      return s.rtlir_tr_interface_attr( parent.get_base().get_object(),
         s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_attr(), status)
 
     elif isinstance( expr, sexp.InterfaceViewIndex ):
-      return s.rtlir_tr_interface_array_index(
+      return s.rtlir_tr_interface_array_index( m,
         s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_index(), status)
 
     else:
@@ -105,21 +111,21 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
   #-----------------------------------------------------------------------
 
   # Declarations
-  def rtlir_tr_interface_port_decls( s, port_decls ):
+  def rtlir_tr_interface_port_decls( s, m, port_decls ):
     raise NotImplementedError()
 
   def rtlir_tr_interface_port_decl( s, m, port_id, port_rtype, port_array_type ):
     raise NotImplementedError()
 
-  def rtlir_tr_interface_decls( s, ifc_decls ):
+  def rtlir_tr_interface_decls( s, m, ifc_decls ):
     raise NotImplementedError()
 
-  def rtlir_tr_interface_decl( s, ifc_id, ifc_rtype, array_type, port_decls ):
+  def rtlir_tr_interface_decl( s, m, ifc_id, ifc_rtype, array_type, port_decls ):
     raise NotImplementedError()
 
   # Signal operations
-  def rtlir_tr_interface_array_index( s, base_signal, index, status ):
+  def rtlir_tr_interface_array_index( s, m, base_signal, index, status ):
     raise NotImplementedError()
 
-  def rtlir_tr_interface_attr( s, base_signal, attr, status ):
+  def rtlir_tr_interface_attr( s, m, base_signal, attr, status ):
     raise NotImplementedError()
