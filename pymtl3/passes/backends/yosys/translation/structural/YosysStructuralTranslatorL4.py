@@ -22,24 +22,24 @@ class YosysStructuralTranslatorL4(
   # Declarations
   #---------------------------------------------------------------------
 
-  def rtlir_tr_subcomp_port_decls( s, port_decls ):
-    return s.rtlir_tr_interface_port_decls( port_decls )
+  def rtlir_tr_subcomp_port_decls( s, m, c, port_decls ):
+    return s.rtlir_tr_interface_port_decls( m, port_decls )
 
-  def rtlir_tr_subcomp_port_decl( s, m, c_id, c_rtype, c_array_type, port_id,
+  def rtlir_tr_subcomp_port_decl( s, m, c, c_id, c_rtype, c_array_type, port_id,
       port_rtype, port_dtype, port_array_type ):
     return s.rtlir_tr_interface_port_decl(
         m, port_id, port_rtype, port_array_type )
 
-  def rtlir_tr_subcomp_ifc_port_decls( s, ifc_port_decls ):
-    return s.rtlir_tr_interface_port_decls( ifc_port_decls )
+  def rtlir_tr_subcomp_ifc_port_decls( s, m, c, ifc_port_decls ):
+    return s.rtlir_tr_interface_port_decls( m, ifc_port_decls )
 
-  def rtlir_tr_subcomp_ifc_port_decl( s, m, c_id, c_rtype, c_array_type,
+  def rtlir_tr_subcomp_ifc_port_decl( s, m, c, c_id, c_rtype, c_array_type,
       ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype,
       port_array_type ):
     return s.rtlir_tr_interface_port_decl(
         m, port_id, port_rtype, port_array_type )
 
-  def rtlir_tr_subcomp_ifc_decls( s, ifc_decls ):
+  def rtlir_tr_subcomp_ifc_decls( s, m, c, ifc_decls ):
     port_decls, wire_decls, connections = [], [], []
     for ifc_decl in ifc_decls:
       port_decls += ifc_decl["port_decls"]
@@ -51,7 +51,7 @@ class YosysStructuralTranslatorL4(
       "connections" : connections
     }
 
-  def rtlir_tr_subcomp_ifc_decl( s, m, c_id, c_rtype, c_array_type,
+  def rtlir_tr_subcomp_ifc_decl( s, m, c, c_id, c_rtype, c_array_type,
       ifc_id, ifc_rtype, ifc_array_type, ports ):
 
     def _subcomp_ifc_port_gen( d, msb, ifc_id, id_, n_dim ):
@@ -118,7 +118,7 @@ class YosysStructuralTranslatorL4(
       "connections" : connections
     }
 
-  def rtlir_tr_subcomp_decls( s, subcomp_decls ):
+  def rtlir_tr_subcomp_decls( s, m, subcomp_decls ):
     port_decls, wire_decls, conns = [], [], []
     for subcomp_decl in subcomp_decls:
       port_decls.extend( subcomp_decl["port_decls"] )
@@ -132,7 +132,7 @@ class YosysStructuralTranslatorL4(
       "connections" : "\n".join( conns )
     }
 
-  def rtlir_tr_subcomp_decl( s, m, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
+  def rtlir_tr_subcomp_decl( s, m, c, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
 
     def _subcomp_port_gen( c_name, c_id, n_dim, port_decls ):
       p_wire_tplt = "logic {packed_type: <8} {id_};"
@@ -226,10 +226,6 @@ class YosysStructuralTranslatorL4(
     else:
       c_name = s.rtlir_tr_component_unique_name( c_rtype )
 
-    # c_name = s.rtlir_tr_component_unique_name( c_rtype )
-    # if c_name == 'IntDivPRTL_noparam':
-    #   import pdb;pdb.set_trace()
-
     port_decls = _subcomp_port_gen( c_name, c_id, c_n_dim, _port_decls )
 
     # Add sub-component info to wire declarations and generate declarations
@@ -257,13 +253,13 @@ class YosysStructuralTranslatorL4(
   # Signal operations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_component_array_index( s, base_signal, index, status ):
+  def rtlir_tr_component_array_index( s, m, base_signal, index, status ):
     # Component array index
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
     return f'{base_signal}[{index}]'
 
-  def rtlir_tr_subcomp_attr( s, base_signal, attr, status ):
+  def rtlir_tr_subcomp_attr( s, m, c, base_signal, attr, status ):
     # Sub-component attribute
     s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )
