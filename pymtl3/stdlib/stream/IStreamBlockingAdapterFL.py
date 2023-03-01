@@ -1,14 +1,14 @@
+import greenlet
 from pymtl3 import *
 from pymtl3.extra import clone_deepcopy
 from .ifcs.ifcs import IStreamIfc
 
-class IStreamDeqAdapterFL( Component ):
-  # TODO (PP): remove this file during the future clean up to ensure consistent
-  # naming across adapters. This adapter is now deprecated and we should use
-  # IStreamNonBlockingAdapterFL instead.
+class IStreamBlockingAdapterFL( Component ):
 
-  @non_blocking( lambda s: s.entry is not None )
+  @blocking
   def deq( s ):
+    while s.entry is None:
+      greenlet.getcurrent().parent.switch(0)
     ret = s.entry
     s.entry = None
     return ret
@@ -26,6 +26,5 @@ class IStreamDeqAdapterFL( Component ):
       if (s.entry is None) & s.istream.val:
         s.entry = clone_deepcopy( s.istream.msg )
 
-    s.add_constraints( M( s.deq )     < U( up_recv_rdy ), # deq before recv in a cycle -- pipe behavior
-                       M( s.deq.rdy ) < U( up_recv_rdy ),
+    s.add_constraints( M( s.deq )       < U( up_recv_rdy ), # deq before recv in a cycle -- pipe behavior
                        U( up_recv_rdy ) < U( up_recv_msg ) )
