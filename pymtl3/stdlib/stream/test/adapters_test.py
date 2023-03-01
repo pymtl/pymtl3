@@ -5,15 +5,17 @@ from pymtl3.stdlib.stream import StreamSourceFL, StreamSinkFL
 from pymtl3.stdlib.stream.ifcs import IStreamIfc, OStreamIfc
 from pymtl3.stdlib.test_utils import run_sim
 
-from ..IStreamDeqAdapterFL import IStreamDeqAdapterFL
-from ..OStreamEnqAdapterFL import OStreamEnqAdapterFL
+from ..IStreamNonBlockingAdapterFL import IStreamNonBlockingAdapterFL
+from ..OStreamNonBlockingAdapterFL import OStreamNonBlockingAdapterFL
+from ..IStreamBlockingAdapterFL import IStreamBlockingAdapterFL
+from ..OStreamBlockingAdapterFL import OStreamBlockingAdapterFL
 
-class SimplePassthroughFL( Component ):
+class SimpleNonBlockingPassthroughFL( Component ):
   def construct( s, Type ):
     s.istream = IStreamIfc( Type )
     s.ostream = OStreamIfc( Type )
-    s.ideq_adapter = IStreamDeqAdapterFL( Type )
-    s.oenq_adapter = OStreamEnqAdapterFL( Type )
+    s.ideq_adapter = IStreamNonBlockingAdapterFL( Type )
+    s.oenq_adapter = OStreamNonBlockingAdapterFL( Type )
 
     s.istream //= s.ideq_adapter.istream
     s.oenq_adapter.ostream //= s.ostream
@@ -24,11 +26,26 @@ class SimplePassthroughFL( Component ):
         msg = s.ideq_adapter.deq()
         s.oenq_adapter.enq( msg )
 
+class SimpleBlockingPassthroughFL( Component ):
+  def construct( s, Type ):
+    s.istream = IStreamIfc( Type )
+    s.ostream = OStreamIfc( Type )
+    s.ideq_adapter = IStreamBlockingAdapterFL( Type )
+    s.oenq_adapter = OStreamBlockingAdapterFL( Type )
+
+    s.istream //= s.ideq_adapter.istream
+    s.oenq_adapter.ostream //= s.ostream
+
+    @update_once
+    def up_passthrough():
+      msg = s.ideq_adapter.deq()
+      s.oenq_adapter.enq( msg )
+
 class TestHarness( Component ):
-  def construct( s, Type, src_msgs, sink_msgs ):
+  def construct( s, DutClass, Type, src_msgs, sink_msgs ):
     s.src = StreamSourceFL( Type, src_msgs )
     s.sink = StreamSinkFL( Type, sink_msgs )
-    s.dut = SimplePassthroughFL( Type )
+    s.dut = DutClass( Type )
 
     s.src.ostream //= s.dut.istream
     s.dut.ostream //= s.sink.istream
@@ -50,18 +67,22 @@ arrival3 = [ 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35 ]
 arrival4 = [ 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65 ]
 
 @pytest.mark.parametrize(
-  ('Type', 'msgs', 'src_init',  'src_intv',
+  ('DutClass', 'Type', 'msgs', 'src_init',  'src_intv',
    'sink_init', 'sink_intv' ),
   [
-    ( Bits16, bit_msgs,  0,  0, 0, 0 ),
-    ( Bits16, bit_msgs, 10,  1, 0, 0 ),
-    ( Bits16, bit_msgs, 10,  0, 0, 1 ),
-    ( Bits16, bit_msgs,  3,  4, 5, 3 )
+    ( SimpleNonBlockingPassthroughFL, Bits16, bit_msgs,  0,  0, 0, 0 ),
+    ( SimpleNonBlockingPassthroughFL, Bits16, bit_msgs, 10,  1, 0, 0 ),
+    ( SimpleNonBlockingPassthroughFL, Bits16, bit_msgs, 10,  0, 0, 1 ),
+    ( SimpleNonBlockingPassthroughFL, Bits16, bit_msgs,  3,  4, 5, 3 ),
+    ( SimpleBlockingPassthroughFL,    Bits16, bit_msgs,  0,  0, 0, 0 ),
+    ( SimpleBlockingPassthroughFL,    Bits16, bit_msgs, 10,  1, 0, 0 ),
+    ( SimpleBlockingPassthroughFL,    Bits16, bit_msgs, 10,  0, 0, 1 ),
+    ( SimpleBlockingPassthroughFL,    Bits16, bit_msgs,  3,  4, 5, 3 ),
   ]
 )
-def test_src_sink_fl_adapter( Type, msgs, src_init, src_intv, sink_init,
-                              sink_intv ):
-  th = TestHarness( Type, msgs, msgs )
+def test_src_sink_fl_adapter( DutClass, Type, msgs, src_init, src_intv,
+                              sink_init, sink_intv ):
+  th = TestHarness( DutClass, Type, msgs, msgs )
   th.set_param( "top.src.construct",
     initial_delay  = src_init,
     interval_delay = src_intv,

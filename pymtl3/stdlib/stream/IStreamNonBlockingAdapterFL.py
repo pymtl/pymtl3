@@ -2,10 +2,7 @@ from pymtl3 import *
 from pymtl3.extra import clone_deepcopy
 from .ifcs.ifcs import IStreamIfc
 
-class IStreamDeqAdapterFL( Component ):
-  # TODO (PP): remove this file during the future clean up to ensure consistent
-  # naming across adapters. This adapter is now deprecated and we should use
-  # IStreamNonBlockingAdapterFL instead.
+class IStreamNonBlockingAdapterFL( Component ):
 
   @non_blocking( lambda s: s.entry is not None )
   def deq( s ):
