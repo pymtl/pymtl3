@@ -26,6 +26,9 @@ class SimpleNonBlockingPassthroughFL( Component ):
         msg = s.ideq_adapter.deq()
         s.oenq_adapter.enq( msg )
 
+  def line_trace( s ):
+    return f"{s.ideq_adapter.line_trace()} | {s.oenq_adapter.line_trace()}"
+
 class SimpleBlockingPassthroughFL( Component ):
   def construct( s, Type ):
     s.istream = IStreamIfc( Type )
@@ -41,6 +44,9 @@ class SimpleBlockingPassthroughFL( Component ):
       msg = s.ideq_adapter.deq()
       s.oenq_adapter.enq( msg )
 
+  def line_trace( s ):
+    return f"{s.ideq_adapter.line_trace()} | {s.oenq_adapter.line_trace()}"
+
 class TestHarness( Component ):
   def construct( s, DutClass, Type, src_msgs, sink_msgs ):
     s.src = StreamSourceFL( Type, src_msgs )
@@ -54,7 +60,7 @@ class TestHarness( Component ):
     return s.src.done() and s.sink.done()
 
   def line_trace( s ):
-    return f"{s.src.line_trace()} > {s.sink.line_trace()}"
+    return f"{s.src.line_trace()} ({s.dut.line_trace()}) {s.sink.line_trace()}"
 
 bit_msgs = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ),
              Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ),
