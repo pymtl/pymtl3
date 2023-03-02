@@ -37,3 +37,6 @@ class OStreamNonBlockingAdapterFL( Component ):
       M( s.enq )     < U( up_send ),
       M( s.enq.rdy ) < U( up_send )
     )
+
+  def line_trace( s ):
+    return f"{s.ostream}({s.entry})"
