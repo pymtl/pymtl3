@@ -37,3 +37,6 @@ class OStreamBlockingAdapterFL( Component ):
 
     s.add_constraints( U( up_clear ) < M( s.enq ),
                        M( s.enq )    < U( up_send ) )
+
+  def line_trace( s ):
+    return f"{s.ostream}({s.entry})"

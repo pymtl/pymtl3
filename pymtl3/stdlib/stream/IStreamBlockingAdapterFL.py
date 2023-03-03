@@ -28,3 +28,6 @@ class IStreamBlockingAdapterFL( Component ):
 
     s.add_constraints( M( s.deq )       < U( up_recv_rdy ), # deq before recv in a cycle -- pipe behavior
                        U( up_recv_rdy ) < U( up_recv_msg ) )
+
+  def line_trace( s ):
+    return f"{s.istream}({s.entry})"
