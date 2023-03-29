@@ -1,4 +1,5 @@
 # Minimal dependencies required for using pip-installed PyMTL
+py
 pytest
 hypothesis
 cffi
