@@ -173,6 +173,20 @@ class VerilogVerilatorImportPass( BasePass ):
   #:
   #: Default value: ``False``
   vl_trace            = MetadataKey(bool)
+  
+  #: Specify maximum trace line width.
+  #:
+  #: Type: ``int``; input
+  #:
+  #: Default value: ``256``
+  vl_trace_max_width      = MetadataKey(int)
+
+  #: Specify maximum trace array length
+  #:
+  #: Type: ``int``; input
+  #:
+  #: Default value: ``32``
+  vl_trace_max_array      = MetadataKey(int)
 
   #: Filename of Verilator VCD tracing.
   #:
@@ -400,6 +414,7 @@ class VerilogVerilatorImportPass( BasePass ):
     if not cached:
       # Generate verilator command
       cmd = ip_cfg.create_vl_cmd()
+#      raise VerilogImportError(m, cmd)
 
       # Remove obj_dir directory if it already exists.
       # obj_dir is where the verilator output ( C headers and sources ) is stored

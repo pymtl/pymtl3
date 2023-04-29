@@ -84,6 +84,12 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     # Expects a boolean value
     "vl_trace" : False,
 
+	# --trace-max-width
+    "vl_trace_max_width" : 256,
+	
+	# --trace-max-array
+    "vl_trace_max_array" : 32,
+
     # The output filename of Verilator VCD tracing
     # default is {component_name}.verilator1
     "vl_trace_filename" : "",
@@ -269,6 +275,8 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     loop_unroll = "--unroll-count 1000000"
     stmt_unroll = "--unroll-stmts 1000000"
     trace       = "--trace" if s.vl_trace else ""
+    trace_max_width = f"--trace-max-width {s.vl_trace_max_width}" if s.vl_trace_max_width else ""
+    trace_max_array = f"--trace-max-array {s.vl_trace_max_array}" if s.vl_trace_max_array else ""
     coverage    = "--coverage" if s.vl_coverage else ""
     line_cov    = "--coverage-line" if s.vl_line_coverage else ""
     toggle_cov  = "--coverage-toggle" if s.vl_toggle_coverage else ""
@@ -277,7 +285,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     all_opts = [
       top_module, mk_dir, include, en_assert, opt_level, loop_unroll,
       # stmt_unroll, trace, warnings, flist, src, coverage,
-      stmt_unroll, trace, warnings, src, vlibs, coverage,
+      stmt_unroll, trace, trace_max_width, trace_max_array, warnings, src, vlibs, coverage,
       line_cov, toggle_cov,
     ]
 
