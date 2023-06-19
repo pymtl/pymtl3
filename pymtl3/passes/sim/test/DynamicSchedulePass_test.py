@@ -283,13 +283,15 @@ def test_struct_with_list_field():
       def up_abcd():
         s.a @= s.struct.b[1] + 1
 
-  x = Top()
-  x.elaborate()
-  x.apply( GenDAGPass() )
-  x.apply( DynamicSchedulePass() )
-  x.apply( PrepareSimPass(print_line_trace=False) )
-  x.sim_reset()
-  x.sim_tick()
+  dut = Top()
+  dut.elaborate()
+  dut.apply( GenDAGPass() )
+  dut.apply( DynamicSchedulePass() )
+  dut.apply( PrepareSimPass(print_line_trace=False) )
+  dut.sim_reset()
+  dut.sim_tick()
+  assert dut.a == 4
+  assert dut.b == 5
 
 def test_equal_top_level():
   class A(Component):
