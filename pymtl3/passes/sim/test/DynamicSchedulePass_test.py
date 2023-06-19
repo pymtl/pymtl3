@@ -21,7 +21,6 @@ def _test_model( cls ):
   A.apply( GenDAGPass() )
   A.apply( DynamicSchedulePass() )
   A.apply( PrepareSimPass() )
-
   A.sim_reset()
   A.sim_eval_combinational()
 
@@ -258,6 +257,39 @@ def test_const_connect_cannot_handle_same_name_nested_struct():
     assert str(e).startswith("Cannot handle two subfields with the same struct name but different structs")
     return
   raise Exception("Should've thrown AssertionError")
+
+def test_struct_with_list_field():
+
+  @bitstruct
+  class SomeMsg:
+    a: [ Bits8,  Bits8 ]
+    b: [ Bits32, Bits32 ]
+
+  class Top( Component ):
+    def construct( s ):
+      s.struct = Wire(SomeMsg)
+      s.a      = Wire(32)
+      s.b      = Wire(32)
+
+      @update
+      def up_out():
+        s.struct.a[0] @= 0
+        s.struct.a[1] @= 1
+        s.struct.b[0] @= 2
+        s.struct.b[1] @= 3
+        s.b           @= s.a + 1
+
+      @update
+      def up_abcd():
+        s.a @= s.struct.b[1] + 1
+
+  x = Top()
+  x.elaborate()
+  x.apply( GenDAGPass() )
+  x.apply( DynamicSchedulePass() )
+  x.apply( PrepareSimPass(print_line_trace=False) )
+  x.sim_reset()
+  x.sim_tick()
 
 def test_equal_top_level():
   class A(Component):
