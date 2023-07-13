@@ -293,6 +293,110 @@ def test_struct_with_list_field():
   assert dut.a == 4
   assert dut.b == 5
 
+def test_struct_with_nested_list_field():
+  @bitstruct
+  class SomeMsgA:
+    a: [ Bits8,  Bits8 ]
+    b: [ Bits32, Bits32 ]
+
+  @bitstruct
+  class SomeMsgB:
+    msg_a: [ SomeMsgA, SomeMsgA ]
+    b: [ Bits32, Bits32 ]
+
+  class Top( Component ):
+    def construct( s ):
+      s.struct = Wire(SomeMsgB)
+      s.a      = Wire(32)
+      s.b      = Wire(32)
+
+      @update
+      def up_out():
+        s.struct.msg_a[0].a[0] @= 1
+        s.struct.msg_a[0].a[1] @= 2
+        s.struct.msg_a[0].b[0] @= 3
+        s.struct.msg_a[0].b[1] @= 4
+
+        s.struct.msg_a[1].a[0] @= 5
+        s.struct.msg_a[1].a[1] @= 6
+        s.struct.msg_a[1].b[0] @= 7
+        s.struct.msg_a[1].b[1] @= 8
+
+        s.struct.b[0] @= 9
+        s.struct.b[1] @= 10
+        s.b           @= s.a + 1
+
+      @update
+      def up_abcd():
+        s.a @= s.struct.msg_a[1].b[1] + 1
+
+  dut = Top()
+  dut.elaborate()
+  dut.apply( GenDAGPass() )
+  dut.apply( DynamicSchedulePass() )
+  dut.apply( PrepareSimPass(print_line_trace=False) )
+  dut.sim_reset()
+  dut.sim_tick()
+  assert dut.a == 9
+  assert dut.b == 10
+
+def test_list_struct_port_with_nested_list_field():
+  @bitstruct
+  class SomeMsgA:
+    a: [ Bits8,  Bits8 ]
+    b: [ Bits32, Bits32 ]
+
+  @bitstruct
+  class SomeMsgB:
+    msg_a: [ SomeMsgA, SomeMsgA ]
+    b: [ Bits32, Bits32 ]
+
+  class Top( Component ):
+    def construct( s ):
+      s.struct = [ Wire(SomeMsgB) for _ in range(2) ]
+      s.a      = Wire(32)
+      s.b      = Wire(32)
+
+      @update
+      def up_out():
+        s.struct[0].msg_a[0].a[0] @= 1
+        s.struct[0].msg_a[0].a[1] @= 2
+        s.struct[0].msg_a[0].b[0] @= 3
+        s.struct[0].msg_a[0].b[1] @= 4
+        s.struct[0].msg_a[1].a[0] @= 5
+        s.struct[0].msg_a[1].a[1] @= 6
+        s.struct[0].msg_a[1].b[0] @= 7
+        s.struct[0].msg_a[1].b[1] @= 8
+        s.struct[0].b[0] @= 9
+        s.struct[0].b[1] @= 10
+
+        s.struct[1].msg_a[0].a[0] @= 11
+        s.struct[1].msg_a[0].a[1] @= 12
+        s.struct[1].msg_a[0].b[0] @= 13
+        s.struct[1].msg_a[0].b[1] @= 14
+        s.struct[1].msg_a[1].a[0] @= 15
+        s.struct[1].msg_a[1].a[1] @= 16
+        s.struct[1].msg_a[1].b[0] @= 17
+        s.struct[1].msg_a[1].b[1] @= 18
+        s.struct[1].b[0] @= 19
+        s.struct[1].b[1] @= 20
+
+        s.b @= s.a + 1
+
+      @update
+      def up_abcd():
+        s.a @= s.struct[0].msg_a[1].b[1] + s.struct[1].msg_a[0].b[0]
+
+  dut = Top()
+  dut.elaborate()
+  dut.apply( GenDAGPass() )
+  dut.apply( DynamicSchedulePass() )
+  dut.apply( PrepareSimPass(print_line_trace=False) )
+  dut.sim_reset()
+  dut.sim_tick()
+  assert dut.a == 21
+  assert dut.b == 22
+
 def test_equal_top_level():
   class A(Component):
     def construct( s ):
