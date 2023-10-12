@@ -4,7 +4,7 @@
 # Author : Peitian Pan
 # Date   : March 12, 2019
 """Translate a PyMTL component hierarhcy into SystemVerilog source code."""
-import os, tempfile
+import os, tempfile, fasteners
 
 from pymtl3 import MetadataKey
 from pymtl3.passes.BasePass import BasePass
@@ -156,7 +156,11 @@ class VerilogTranslationPass( BasePass ):
       with open(tmp_path, "w+") as tmp_file:
         tmp_file.write( s.translator.hierarchy.src )
         tmp_file.flush()
+        tmp_file.seek(0)
         os.fsync( tmp_file )
+
+        lock = fasteners.InterProcessLock('translation.lock')
+        lock.acquire()
 
         # `is_same` is set if there exists a file that has the same filename as
         # `output_file`, and that file is the same as the temporary file.
@@ -164,7 +168,9 @@ class VerilogTranslationPass( BasePass ):
           is_same = verilog_cmp( tmp_file, output_file )
 
         # Rename the temporary file to the output file.
-        os.replace( tmp_path, output_file )
+        # os.replace( tmp_path, output_file )
+
+        lock.release()
 
         # Expose some attributes about the translation process.
         m.set_metadata( c.is_same,               is_same      )
