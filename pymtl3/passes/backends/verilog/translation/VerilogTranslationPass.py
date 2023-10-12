@@ -144,33 +144,6 @@ class VerilogTranslationPass( BasePass ):
           filename = fname.split('.sv')[0]
         else:
           filename = fname
-
-        output_file = filename + '.v'
-        temporary_file = filename + '.v.tmp'
-
-        # First write the file to a temporary file
-        is_same = False
-        with open( temporary_file, 'w' ) as output:
-          output.write( s.translator.hierarchy.src )
-          output.flush()
-          os.fsync( output )
-          output.close()
-
-        # `is_same` is set if there exists a file that has the same filename as
-        # `output_file`, and that file is the same as the temporary file
-        if ( os.path.exists(output_file) ):
-          is_same = verilog_cmp( temporary_file, output_file )
-
-        # Rename the temporary file to the output file
-        os.rename( temporary_file, output_file )
-
-        # Expose some attributes about the translation process
-        m.set_metadata( c.is_same,               is_same      )
-        m.set_metadata( c.translator,            s.translator )
-        m.set_metadata( c.translated,            True         )
-        m.set_metadata( c.translated_filename,   output_file  )
-        m.set_metadata( c.translated_top_module, module_name  )
-
       else:
         filename = f"{module_name}__pickled"
 
