@@ -4,7 +4,7 @@
 # Author : Peitian Pan
 # Date   : March 12, 2019
 """Translate a PyMTL component hierarhcy into SystemVerilog source code."""
-import os
+import os, tempfile
 
 from pymtl3 import MetadataKey
 from pymtl3.passes.BasePass import BasePass
@@ -148,30 +148,35 @@ class VerilogTranslationPass( BasePass ):
         filename = f"{module_name}__pickled"
 
       output_file = filename + '.v'
-      temporary_file = filename + '.v.tmp'
 
-      # First write the file to a temporary file
+      # Create a temporary file under the current directory.
       is_same = False
-      with open( temporary_file, 'w' ) as output:
-        output.write( s.translator.hierarchy.src )
-        output.flush()
-        os.fsync( output )
-        output.close()
+      tmp_fd, tmp_path = tempfile.mkstemp(dir=os.curdir, text=True)
 
-      # `is_same` is set if there exists a file that has the same filename as
-      # `output_file`, and that file is the same as the temporary file
-      if ( os.path.exists(output_file) ):
-        is_same = verilog_cmp( temporary_file, output_file )
+      with open(tmp_path, "w+") as tmp_file:
+        tmp_file.write( s.translator.hierarchy.src )
+        tmp_file.flush()
+        os.fsync( tmp_file )
 
-      # Rename the temporary file to the output file
-      os.rename( temporary_file, output_file )
+        # `is_same` is set if there exists a file that has the same filename as
+        # `output_file`, and that file is the same as the temporary file.
+        if ( os.path.exists(output_file) ):
+          is_same = verilog_cmp( tmp_file, output_file )
 
-      # Expose some attributes about the translation process
-      m.set_metadata( c.is_same,               is_same      )
-      m.set_metadata( c.translator,            s.translator )
-      m.set_metadata( c.translated,            True         )
-      m.set_metadata( c.translated_filename,   output_file  )
-      m.set_metadata( c.translated_top_module, module_name  )
+        # Rename the temporary file to the output file.
+        os.replace( tmp_path, output_file )
+
+        # Expose some attributes about the translation process.
+        m.set_metadata( c.is_same,               is_same      )
+        m.set_metadata( c.translator,            s.translator )
+        m.set_metadata( c.translated,            True         )
+        m.set_metadata( c.translated_filename,   output_file  )
+        m.set_metadata( c.translated_top_module, module_name  )
+
+      # Clean up the temporary file.
+      os.close( tmp_fd )
+      if os.path.exists( tmp_path ):
+        os.remove( tmp_path )
 
     else:
       for child in m.get_child_components(repr):
