@@ -82,7 +82,7 @@ class {component_name}( Component ):
     s._finalization_count += 1
 
     # Clean up python side FFI references
-    # del s._line_trace_str
+    del s._line_trace_str
 
     s._ffi_inst.destroy_model( s._ffi_m )
     s.ffi.dlclose( s._ffi_inst )
@@ -95,7 +95,7 @@ class {component_name}( Component ):
       s._finalization_count += 1
 
       # Clean up python side FFI references
-      # del s._line_trace_str
+      del s._line_trace_str
 
       s._ffi_inst.destroy_model( s._ffi_m )
       s.ffi.dlclose( s._ffi_inst )
@@ -123,8 +123,8 @@ class {component_name}( Component ):
     s._ffi_m = s._ffi_inst.create_model( ffi_vl_vcd_file )
 
     # Buffer for line tracing
-    # s._line_trace_str = s.ffi.new('char[512]')
-    # s._convert_string = s.ffi.string
+    s._line_trace_str = s.ffi.new('char[512]')
+    s._convert_string = s.ffi.string
 
     # Use non-attribute varialbe to reduce CPython bytecode count
     _ffi_m = s._ffi_m
@@ -168,9 +168,8 @@ class {component_name}( Component ):
 
   def line_trace( s ):
     if {external_trace}:
-      # s._ffi_inst.trace( s._ffi_m, s._line_trace_str )
-      # return s._convert_string( s._line_trace_str ).decode('ascii')
-      print('no implemented')
+      s._ffi_inst.trace( s._ffi_m, s._line_trace_str )
+      return s._convert_string( s._line_trace_str ).decode('ascii')
     else:
 {line_trace}
 
