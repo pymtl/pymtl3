@@ -47,6 +47,7 @@ extern "C" {{
 
     // Verilator model
     void * model;
+    VerilatedContext * context_ptr;
 
     // VCD state
     int _vcd_en;
@@ -64,7 +65,7 @@ extern "C" {{
   void destroy_model( V{component_name}_t *);
   void comb_eval( V{component_name}_t * );
   void seq_eval( V{component_name}_t * );
-  void assert_en( bool en );
+  void assert_en( V{component_name}_t *, bool );
 
   #if VLINETRACE
   void trace( V{component_name}_t *, char * );
@@ -75,16 +76,14 @@ extern "C" {{
 //------------------------------------------------------------------------
 // sc_time_stamp
 //------------------------------------------------------------------------
-// Must be defined so the simulator knows the current time. Called by
-// $time in Verilog. See:
-// http://www.veripool.org/projects/verilator/wiki/Faq
-
-vluint64_t g_main_time = 0;
+// This is now a lgeacy function required only so linking works on Cygwin
+// and MSVC++:
+// https://github.com/verilator/verilator/blob/master/examples/make_tracing_c/sim_main.cpp
 
 double sc_time_stamp()
 {{
 
-  return g_main_time;
+  return 0;
 
 }}
 
@@ -98,12 +97,16 @@ V{component_name}_t * create_model( const char *vcd_filename ) {{
 
   V{component_name}_t  * m;
   V{vl_component_name} * model;
+  VerilatedContext     * context_ptr;
 
-  Verilated::randReset( {verilator_xinit_value} );
-  Verilated::randSeed( {verilator_xinit_seed} );
+  context_ptr = new VerilatedContext;
+
+  context_ptr->debug(0);
+  context_ptr->randReset( {verilator_xinit_value} );
+  context_ptr->randSeed( {verilator_xinit_seed} );
 
   m     = (V{component_name}_t *) malloc( sizeof(V{component_name}_t) );
-  model = new V{vl_component_name}();
+  model = new V{vl_component_name}(context_ptr);
 
   m->model = (void *) model;
 
@@ -114,7 +117,7 @@ V{component_name}_t * create_model( const char *vcd_filename ) {{
   #if DUMP_VCD
   if ( strlen( vcd_filename ) != 0 ) {{
     m->_vcd_en = 1;
-    Verilated::traceEverOn( true );
+    context_ptr->traceEverOn( true );
     VerilatedVcdC * tfp = new VerilatedVcdC();
 
     model->trace( tfp, 99 );
@@ -158,6 +161,8 @@ void destroy_model( V{component_name}_t * m ) {{
   #endif
 
   delete model;
+
+  free(m);
 
 }}
 
@@ -259,9 +264,9 @@ void seq_eval( V{component_name}_t * m ) {{
 //------------------------------------------------------------------------
 // Enable or disable assertions controlled by --assert
 
-void assert_en( bool en ) {{
+void assert_en( V{component_name}_t * m, bool en ) {{
 
-  Verilated::assertOn(en);
+  m->context_ptr->assertOn(en);
 
 }}
 

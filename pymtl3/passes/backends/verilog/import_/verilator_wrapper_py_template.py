@@ -80,18 +80,28 @@ class {component_name}( Component ):
     assert s._finalization_count == 0,\
       'Imported component can only be finalized once!'
     s._finalization_count += 1
+
+    # Clean up python side FFI references
+    # del s._line_trace_str
+
     s._ffi_inst.destroy_model( s._ffi_m )
     s.ffi.dlclose( s._ffi_inst )
-    s.ffi = None
-    s._ffi_inst = None
+
+    del s._ffi_inst
+    del s.ffi
 
   def __del__( s ):
     if s._finalization_count == 0:
       s._finalization_count += 1
+
+      # Clean up python side FFI references
+      # del s._line_trace_str
+
       s._ffi_inst.destroy_model( s._ffi_m )
       s.ffi.dlclose( s._ffi_inst )
-      s.ffi = None
-      s._ffi_inst = None
+
+      del s._ffi_inst
+      del s.ffi
 
   def construct( s, *args, **kwargs ):
     # Set up the VCD file name
@@ -106,11 +116,15 @@ class {component_name}( Component ):
     verilator_vcd_file = verilator_vcd_file.encode('ascii')
 
     # Construct the model
-    s._ffi_m = s._ffi_inst.create_model( s.ffi.new("char[]", verilator_vcd_file) )
+    # PP: we need to keep the new'ed object alive by assigning it to
+    # a variable. See more about this:
+    # https://cffi.readthedocs.io/en/stable/ref.html#ffi-new
+    ffi_vl_vcd_file = s.ffi.new("char[]", verilator_vcd_file)
+    s._ffi_m = s._ffi_inst.create_model( ffi_vl_vcd_file )
 
     # Buffer for line tracing
-    s._line_trace_str = s.ffi.new('char[512]')
-    s._convert_string = s.ffi.string
+    # s._line_trace_str = s.ffi.new('char[512]')
+    # s._convert_string = s.ffi.string
 
     # Use non-attribute varialbe to reduce CPython bytecode count
     _ffi_m = s._ffi_m
@@ -150,12 +164,13 @@ class {component_name}( Component ):
     # at this moment I'm not sure if the C API's are compatible between
     # PyPy and CPython).
     assert isinstance( en, bool )
-    s._ffi_inst.assert_en( en )
+    s._ffi_inst.assert_en( s._ffi_m, en )
 
   def line_trace( s ):
     if {external_trace}:
-      s._ffi_inst.trace( s._ffi_m, s._line_trace_str )
-      return s._convert_string( s._line_trace_str ).decode('ascii')
+      # s._ffi_inst.trace( s._ffi_m, s._line_trace_str )
+      # return s._convert_string( s._line_trace_str ).decode('ascii')
+      print('no implemented')
     else:
 {line_trace}
 
