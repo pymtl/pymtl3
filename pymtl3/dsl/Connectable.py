@@ -213,10 +213,31 @@ class Signal( NamedObject, Connectable ):
           xd.top_level_signal = sd.top_level_signal
           xd.elaborate_top = sd.elaborate_top
 
-          xd.my_name     = name + "".join([ f"[{y}]" for y in indices ])
-          xd.full_name   = f"{sd.full_name}.{name}"
-          xd._my_name    = name
-          xd._my_indices = indices
+          # @bitstruct
+          # class SomeMsg:
+          #   a: [ Bits8, Bits8 ]
+          #   b: Bits32
+          # ...
+          # class A ( Component ):
+          #   def construct( s ):
+          #     s.struct_port = InPort( SomeMsg )
+          #
+          # Then, the newly created ports representing field a should be
+          # suffixed with the index, i.e., the name should be
+          # s.struct_port.a[0], s.struct_port.a[1]. Without the if
+          # statement below, both ports would have the same name
+          # s.struct_port.a, which can cause errors in simulation.
+          if is_bitstruct_class(s._dsl.Type):
+            xd.my_name = name + "".join([ f"[{y}]" for y in indices ])
+            xd.full_name   = f"{sd.full_name}.{name}"+"".join([ f"[{y}]" for y in indices ])
+            xd._my_name    = name
+            xd._my_indices = indices
+
+          else:
+            xd.my_name     = name + "".join([ f"[{y}]" for y in indices ])
+            xd.full_name   = f"{sd.full_name}.{name}"
+            xd._my_name    = name
+            xd._my_indices = indices
 
         if parent_is_list:
           parent.append( x )
