@@ -108,7 +108,8 @@ V{component_name}_t * create_model( const char *vcd_filename ) {{
   m     = (V{component_name}_t *) malloc( sizeof(V{component_name}_t) );
   model = new V{vl_component_name}(context_ptr);
 
-  m->model = (void *) model;
+  m->model       = (void *) model;
+  m->context_ptr = context_ptr;
 
   // Enable tracing. We have added a feature where if the vcd_filename is
   // "" then we don't do any VCD dumping even if DUMP_VCD is true.
@@ -161,6 +162,7 @@ void destroy_model( V{component_name}_t * m ) {{
   #endif
 
   delete model;
+  delete m->context_ptr;
 
   free(m);
 
@@ -226,7 +228,6 @@ void seq_eval( V{component_name}_t * m ) {{
     // PP: now that we have generated the VCD we need to set CLK back to 0.
     // We need to dump VCD again to register this clock toggle.
     m->trace_time += {half_cycle_time};
-    g_main_time   += {half_cycle_time};
 
     #if HAS_CLK
     model->clk = 0;
@@ -253,7 +254,6 @@ void seq_eval( V{component_name}_t * m ) {{
 
     // update simulation time only on clock toggle
     m->trace_time += {half_cycle_time};
-    g_main_time   += {half_cycle_time};
 
   }}
   #endif
@@ -323,7 +323,7 @@ void trace( V{component_name}_t * m, char* str ) {{
   assert( dut_scope );
   svSetScope( dut_scope );
 
-  model->line_trace( words );
+  V{vl_component_name}::line_trace( words );
 
   // Note that the way the line tracing works, the line tracing function
   // will store how the last character used in the line trace in the
