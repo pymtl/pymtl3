@@ -9,7 +9,10 @@ This wrapper makes a Verilator-generated C++ model appear as if it were a
 normal PyMTL model. This template is based on PyMTL v2.
 """
 
+import copy
 import os
+import gc
+import weakref
 
 from cffi import FFI
 
@@ -77,12 +80,15 @@ class {component_name}( Component ):
     you might need to call `imported_object.finalize()` at the end of each test
     to ensure correct behaviors.
     """
+    # print(f"In finalize() method of an instance of {{str(s.__class__)}}")
     assert s._finalization_count == 0,\
       'Imported component can only be finalized once!'
     s._finalization_count += 1
 
     # Clean up python side FFI references
-    del s._line_trace_str
+    s.ffi.release(s._line_trace_str)
+
+    s._convert_string = None
 
     s._ffi_inst.destroy_model( s._ffi_m )
     s.ffi.dlclose( s._ffi_inst )
@@ -90,18 +96,26 @@ class {component_name}( Component ):
     del s._ffi_inst
     del s.ffi
 
+    gc.collect()
+    # print("End of finalize()")
+
   def __del__( s ):
+    # print(f"In __del__() method of an instance of {{str(s.__class__)}}")
     if s._finalization_count == 0:
       s._finalization_count += 1
 
       # Clean up python side FFI references
-      del s._line_trace_str
+      s.ffi.release(s._line_trace_str)
+      s._convert_string = None
 
       s._ffi_inst.destroy_model( s._ffi_m )
       s.ffi.dlclose( s._ffi_inst )
 
       del s._ffi_inst
       del s.ffi
+
+      gc.collect()
+    # print("End of __del__")
 
   def construct( s, *args, **kwargs ):
     # Set up the VCD file name
@@ -123,8 +137,12 @@ class {component_name}( Component ):
     s._ffi_m = s._ffi_inst.create_model( ffi_vl_vcd_file )
 
     # Buffer for line tracing
-    s._line_trace_str = s.ffi.new('char[512]')
+    line_trace_str = s.ffi.new('char[512]')
+    s._line_trace_str = line_trace_str
     s._convert_string = s.ffi.string
+
+    global_weakref_dict = weakref.WeakKeyDictionary()
+    global_weakref_dict[s] = (line_trace_str)
 
     # Use non-attribute varialbe to reduce CPython bytecode count
     _ffi_m = s._ffi_m

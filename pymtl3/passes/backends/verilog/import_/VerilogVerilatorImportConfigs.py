@@ -333,6 +333,12 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     coverage = "-DVM_COVERAGE" if s.vl_coverage or \
                                   s.vl_line_coverage or \
                                   s.vl_toggle_coverage else ""
+
+    # PP: try not to introduce GNU unique symbols to the shared library.
+    linker_version_script_filename = "verilator_import_linker_version_script.lds"
+    dir_to_version_script = os.path.abspath(os.path.dirname(__file__))
+    ld_flags += f" -Wl,--version-script={os.path.join(dir_to_version_script, linker_version_script_filename)}"
+
     return f"g++ {c_flags} {c_include_path} {ld_flags}"\
            f" -o {out_file} {c_src_files} {ld_libs} {coverage}"
 
