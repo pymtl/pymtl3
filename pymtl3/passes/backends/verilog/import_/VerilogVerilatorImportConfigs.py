@@ -130,7 +130,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
 
     # We enforce the GNU makefile implicit rule that `LDLIBS` should only
     # include library linker flags/names such as `-lfoo`.
-    "ld_libs" : "",
+    "ld_libs" : "-lpthread",
 
     "c_flags" : "",
   }
@@ -269,6 +269,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     opt_level   = "-O3"
     loop_unroll = "--unroll-count 1000000"
     stmt_unroll = "--unroll-stmts 1000000"
+    thread      = "--threads 1"
     trace       = "--trace" if s.vl_trace else ""
     coverage    = "--coverage" if s.vl_coverage else ""
     line_cov    = "--coverage-line" if s.vl_line_coverage else ""
@@ -278,7 +279,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     all_opts = [
       top_module, mk_dir, include, en_assert, opt_level, loop_unroll,
       # stmt_unroll, trace, warnings, flist, src, coverage,
-      stmt_unroll, trace, warnings, src, vlibs, coverage,
+      stmt_unroll, thread, trace, warnings, src, vlibs, coverage,
       line_cov, toggle_cov,
     ]
 
@@ -325,6 +326,8 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     if not s.is_default("c_flags"):
       c_flags += f" {expand(s.c_flags)}"
 
+    c_flags += f" -std=c++11 -pthread -DVL_TIME_CONTEXT"
+
     c_include_path = " ".join("-I"+p for p in s._get_all_includes() if p)
     out_file = s.get_shared_lib_path()
     c_src_files = " ".join(s._get_c_src_files())
@@ -334,7 +337,17 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
                                   s.vl_line_coverage or \
                                   s.vl_toggle_coverage else ""
 
-    # PP: try not to introduce GNU unique symbols to the shared library.
+    # PP: eliminate GNU unique symbols in the compiled shared library.
+    # See https://stackoverflow.com/a/76664985
+    # ^ this says if a shared library has UNIQUE symbols in it a dlclose
+    # may become a no-op. The solution is to mark all symbols as `hidden`
+    # except for those we want to access in the C wrapper. Note that I've
+    # tried adding the g++ flag `-fvisibility=hidden` and 
+    # __attribute__((visibility("default"))) to APIs, but the compiled
+    # shared library still contains UNIQUE symbols:
+    # % readelf -sW --dyn-syms libVRegTrace_noparam_v.so | grep '\bUNIQUE\b'
+    # The solution proposed in the above post is to use a linker version
+    # script which specifies visibility of all symbols.
     linker_version_script_filename = "verilator_import_linker_version_script.lds"
     dir_to_version_script = os.path.abspath(os.path.dirname(__file__))
     ld_flags += f" -Wl,--version-script={os.path.join(dir_to_version_script, linker_version_script_filename)}"
@@ -460,7 +473,7 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     cxx_includes = " ".join(map(lambda x: "-I"+x, s._get_all_includes()))
     for src in srcs:
       file_path, obj_name = src
-      cxx_cmd = f"g++ {cxx_includes} -O1 -fPIC -c -o {obj_name}.o {file_path}"
+      cxx_cmd = f"g++ {cxx_includes} -std=c++11 -DVL_TIME_CONTEXT -O1 -fPIC -pthread -lpthread -c -o {obj_name}.o {file_path}"
       if os.path.exists(f"{obj_name}.o"):
         s.vprint(f"Skip compiling {obj_name}.o because it already exists.")
       else:

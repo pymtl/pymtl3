@@ -201,6 +201,7 @@ void comb_eval( V{component_name}_t * m ) {{
 void seq_eval( V{component_name}_t * m ) {{
 
   V{vl_component_name} * model = (V{vl_component_name} *) m->model;
+  VerilatedContext * context_ptr = m->context_ptr;
 
   // evaluate one time cycle
 
@@ -248,6 +249,7 @@ void seq_eval( V{component_name}_t * m ) {{
   #endif
 
   model->eval();
+  context_ptr->timeInc(1);
 
   #if DUMP_VCD
   if ( m->_vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
