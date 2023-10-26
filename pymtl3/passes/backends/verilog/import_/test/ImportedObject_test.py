@@ -467,7 +467,25 @@ def test_reg_external_trace( do_test ):
   # 0xFFFFFFFF unsigned
   assert a.line_trace() == 'q = 4294967295'
   a.sim_tick()
-  a.finalize()
+
+  # PP: This is a workaround to the $sformat issue I was seeing with Verilator
+  # 5.016. If I enable this finalize below, the C library will segfault after
+  # all pytest tests have finished. Digging deeper I found this could be
+  # reliably eliminated/reproduced by removing/adding the `thread_local`
+  # specifier to the temporary string used in VL_SFORMAT_X (verilated.h). Note
+  # that the program finishes just fine when this thread-local string is never
+  # used (VL_SFORMAT_X is never invoked). My theory is this could be a
+  # double-free situation: somehow the dynamically allocated memory that
+  # belongs to this thread-local string gets deleted twice: once when we unload
+  # the dynamic library (through a.finalize()) and once at the end of program
+  # execution.
+  #
+  # One stackoverflow post suggests this might be a compiler bug:
+  # https://stackoverflow.com/a/58366171
+  # I tried recompiling with the latest g++ on BRG server (scl-11) but the
+  # segfault persists.
+
+  # a.finalize()
 
 def test_reg_infer_external_trace( do_test ):
   # Test Verilog line trace
@@ -498,7 +516,7 @@ def test_reg_infer_external_trace( do_test ):
   # 0xFFFFFFFF unsigned
   assert a.line_trace() == 'q = 4294967295'
   a.sim_tick()
-  a.finalize()
+  # a.finalize()
 
 def test_incr_on_demand_vcd( do_test ):
   class VIncr( Component, VerilogPlaceholder ):
