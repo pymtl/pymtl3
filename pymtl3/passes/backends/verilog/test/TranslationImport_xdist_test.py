@@ -5,7 +5,7 @@
 # Date   : Oct 11th, 2023
 """Test if Verilated models can be simulated in parallel."""
 
-import pytest, multiprocessing
+import os, pytest, multiprocessing
 
 from pymtl3.datatypes import Bits32
 from pymtl3.passes import DefaultPassGroup
@@ -13,8 +13,13 @@ from pymtl3.passes.backends.verilog import VerilogPlaceholderPass, VerilogTransl
 
 from ..testcases import Bits32VRegComp
 
+if 'CI' in os.environ:
+  MAX_XDIST_TEST_INSTS = 10
+else:
+  MAX_XDIST_TEST_INSTS = 500
+
 @pytest.mark.parametrize(
-  'test_id', list(range(500))
+  'test_id', list(range(MAX_XDIST_TEST_INSTS))
 )
 def test_verilator_co_simulation( test_id ):
   n_cycles = 100
@@ -33,4 +38,4 @@ def test_verilator_co_simulation( test_id ):
     m.sim_tick()
     assert m.q == Bits32(test_id + i)
 
-  # m.finalize()
+  m.finalize()
