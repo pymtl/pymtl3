@@ -26,8 +26,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     "enable" : False,
 
     # Enable verbose mode?
-    # "verbose" : False,
-    "verbose" : True,
+    "verbose" : False,
 
     # Trade off compilation time for fast simulation performance?
     # controls: vl_opt_level, vl_unroll_count
