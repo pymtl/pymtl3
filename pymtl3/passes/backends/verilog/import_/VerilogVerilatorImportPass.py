@@ -6,7 +6,6 @@
 """Provide a pass that imports arbitrary SystemVerilog modules."""
 
 import copy
-import fasteners
 import importlib
 import json
 import linecache
@@ -16,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import timeit
+from fasteners import InterProcessLock
 from functools import reduce
 from importlib import reload
 from itertools import cycle
@@ -369,30 +369,37 @@ class VerilogVerilatorImportPass( BasePass ):
                                      ph_cfg.has_clk, ph_cfg.has_reset,
                                      ph_cfg.separator )
 
-    cache_lock = fasteners.InterProcessLock('cache.lock')
-    cache_lock.acquire()
-    try:
-      cached, config_file, cfg_d = s.is_cached( m, ip_cfg )
-      # Dump configuration dict to config_file
-      with open( config_file, 'w' ) as fd:
-        json.dump( cfg_d, fd, indent = 4 )
-    finally:
-      cache_lock.release()
+    cached, config_file, cfg_d = s.is_cached( m, ip_cfg )
 
     if not cached:
-      s.lock = fasteners.InterProcessLock('verilog_import.lock')
-      s.lock.acquire()
-      try:
+      lock = InterProcessLock("_verilog_import_pass.lock")
+      lock.acquire()
+
+      # The build could have been finished by another process after the first
+      # is_cached check.
+      cached, _, _ = s.is_cached( m, ip_cfg )
+
+      if not cached:
+        # Dump configuration dict to config_file
+        with open( config_file, 'w' ) as fd:
+          json.dump( cfg_d, fd, indent = 4 )
+
+        # Build the Verilated model
         s.create_verilator_model( m, ph_cfg, ip_cfg )
         port_cdefs = s.create_verilator_c_wrapper( m, ph_cfg, ip_cfg, ports )
         s.create_shared_lib( m, ph_cfg, ip_cfg )
         symbols = s.create_py_wrapper( m, ph_cfg, ip_cfg, rtype, ports, port_cdefs )
-      finally:
-        s.lock.release()
+
+      lock.release()
+
     else:
       ip_cfg.vprint(f"{ip_cfg.translated_top_module} is cached!", 2)
-      port_cdefs = s.create_verilator_c_wrapper( m, ph_cfg, ip_cfg, ports )
-      symbols = s.create_py_wrapper( m, ph_cfg, ip_cfg, rtype, ports, port_cdefs )
+
+    # Re-generate the necessary data structure but don't dump to files
+    # because they have been cached.
+    if cached:
+      port_cdefs = s.create_verilator_c_wrapper( m, ph_cfg, ip_cfg, ports, dump=False )
+      symbols = s.create_py_wrapper( m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, dump=False )
 
     imp = s.import_component( m, ph_cfg, ip_cfg, symbols )
 
