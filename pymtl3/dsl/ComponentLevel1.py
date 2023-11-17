@@ -69,9 +69,10 @@ class ComponentLevel1( NamedObject ):
   #-----------------------------------------------------------------------
 
   def _update( s, blk ):
-    if isinstance( s, Placeholder ):
-      raise InvalidPlaceholderError( "Cannot define update block <{}> "
-              "in a placeholder component.".format( blk.__name__ ) )
+    # PP: TODO
+    # if isinstance( s, Placeholder ):
+    #   raise InvalidPlaceholderError( "Cannot define update block <{}> "
+    #           "in a placeholder component.".format( blk.__name__ ) )
     name = blk.__name__
     if name in s._dsl.name_upblk:
       raise UpblkFuncSameNameError( name )

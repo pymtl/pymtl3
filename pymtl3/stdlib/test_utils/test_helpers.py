@@ -10,8 +10,11 @@ Author : Shunning Jiang
 
 import collections
 import re
+import hypothesis
+from hypothesis import strategies as st
 
 from pymtl3 import *
+from pymtl3.datatypes import strategies as pst
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes.backends.verilog import *
 from pymtl3.passes.backends.yosys.YosysTranslationImportPass import YosysTranslationImportPass
@@ -412,3 +415,67 @@ run_test_vector_sim received an incorrect value!
         model.print_textwave()
 
     finalize_verilator( model )
+
+#-------------------------------------------------------------------------
+# run_spec_test
+#-------------------------------------------------------------------------
+
+def apply_input( model, in_ports, in_vector ):
+  assert len(in_ports) == len(in_vector)
+  for i, name in enumerate(in_ports):
+    value = in_vector[i]
+    port = getattr(model, name)
+    port @= value
+
+def check_output( dut, ref, out_ports ):
+  for i, name in enumerate(out_ports):
+    dut_value = getattr(dut, name)
+    ref_value = getattr(ref, name)
+    assert dut_value == ref_value
+
+def run_spec_test( model_class, *args ):
+  dut = model_class(*args)
+
+  assert issubclass(model_class, VerilogIfcWithSpec)
+  dut.set_metadata( VerilogTranslationImportPass.enable, True )
+  dut.apply( VerilogPlaceholderPass() )
+  dut = VerilogTranslationImportPass()( dut )
+
+  ref = model_class(*args)
+  ref.elaborate()
+
+  # Reflection on both models to find input and output ports.
+  in_ports = [ x for x in ref.get_input_value_ports() if x.get_field_name() not in ('clk', 'reset')]
+  out_ports = ref.get_output_value_ports()
+
+  @hypothesis.given(
+    # input_list = st.lists(*[pst.bits(port.get_type().nbits) for port in in_ports])
+    # input_list = st.lists(pst.bits(32), pst.bits(32))
+    a = pst.bits(32),
+    b = pst.bits(32)
+  )
+  # The max_examples is for testing purposes only
+  @hypothesis.settings( max_examples=16 )
+  # def spec_test( input_list ):
+  def spec_test( a, b ):
+    print(f"The generated input is {a} and {b}")
+    in_vector = [(a, b)]
+
+    dut.apply( DefaultPassGroup(linetrace=True) )
+    dut.sim_reset()
+    ref.apply( DefaultPassGroup() )
+    ref.sim_reset()
+
+    for in_vector in input_list:
+      apply_input(dut, in_ports, in_vector)
+      apply_input(ref, in_ports, in_vector)
+
+      dut.sim_eval_combinational()
+      ref.sim_eval_combinational()
+
+      check_output(dut, ref, out_ports)
+
+      dut.sim_tick()
+      ref.sim_tick()
+
+  spec_test()
