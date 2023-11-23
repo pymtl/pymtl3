@@ -39,7 +39,7 @@ def test_normal_queue( do_test ):
     if tv[2] != '*': assert m.enq_rdy == tv[2]
     if tv[4] != '*': assert m.deq_rdy == tv[5]
     if tv[5] != '*': assert m.deq_msg == tv[4]
-  class VQueue( Component, Placeholder ):
+  class VQueueWithPorts( Component, Placeholder ):
     def construct( s, data_width, num_entries, count_width ):
       s.count   =  OutPort( mk_bits( count_width )  )
       s.deq_en  =  InPort( Bits1  )
@@ -49,9 +49,10 @@ def test_normal_queue( do_test ):
       s.enq_rdy = OutPort( Bits1  )
       s.enq_msg =  InPort( mk_bits( data_width ) )
       s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VQueue.v' )
+      s.set_metadata( VerilogPlaceholderPass.top_module, 'VQueue' )
       s.set_metadata( VerilogTranslationImportPass.enable, True )
   num_entries = 1
-  q = VQueue(
+  q = VQueueWithPorts(
       data_width = 32,
       num_entries = num_entries,
       count_width = clog2(num_entries+1))

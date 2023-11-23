@@ -89,7 +89,7 @@ CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module SizeCastPaddingStructPort_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in___foo,
@@ -117,7 +117,7 @@ CaseLambdaConnectWithListComp = set_attributes( CaseLambdaConnectWithListComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module LambdaConnectWithListComp_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in_,
@@ -147,7 +147,7 @@ CaseBits32x2ConcatFreeVarComp = set_attributes( CaseBits32x2ConcatFreeVarComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module Bits32x2ConcatFreeVarComp_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in_,
@@ -166,7 +166,7 @@ CaseBits32x2ConcatFreeVarComp = set_attributes( CaseBits32x2ConcatFreeVarComp,
 CaseBits32x2ConcatUnpackedSignalComp = set_attributes( CaseBits32x2ConcatUnpackedSignalComp,
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module Bits32x2ConcatUnpackedSignalComp_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in___0,
@@ -190,7 +190,7 @@ CaseBits32x2ConcatUnpackedSignalComp = set_attributes( CaseBits32x2ConcatUnpacke
 CaseConnectConstToOutComp = set_attributes( CaseConnectConstToOutComp,
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectConstToOutComp_noparam
         (
           input logic [0:0] clk,
           output logic [31:0] out,
@@ -217,7 +217,7 @@ CaseForRangeLowerUpperStepPassThroughComp = set_attributes( CaseForRangeLowerUpp
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ForRangeLowerUpperStepPassThroughComp_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in___0,
@@ -271,7 +271,7 @@ CaseIfExpInForStmtComp = set_attributes( CaseIfExpInForStmtComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module IfExpInForStmtComp_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in___0,
@@ -314,7 +314,7 @@ CaseIfExpInForStmtComp = set_attributes( CaseIfExpInForStmtComp,
 CaseIfExpUnaryOpInForStmtComp = set_attributes( CaseIfExpUnaryOpInForStmtComp,
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module IfExpUnaryOpInForStmtComp_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in___0,
@@ -370,7 +370,7 @@ CaseIfBoolOpInForStmtComp = set_attributes( CaseIfBoolOpInForStmtComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module IfBoolOpInForStmtComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [31:0]   in___0,
@@ -434,7 +434,7 @@ CaseIfTmpVarInForStmtComp = set_attributes( CaseIfTmpVarInForStmtComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module IfTmpVarInForStmtComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [31:0]   in___0,
@@ -497,7 +497,7 @@ CaseFixedSizeSliceComp = set_attributes( CaseFixedSizeSliceComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module FixedSizeSliceComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [15:0]   in_,
@@ -532,7 +532,7 @@ CaseBits32FooInBits32OutComp = set_attributes( CaseBits32FooInBits32OutComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module Bits32FooInBits32OutComp_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in___foo,
@@ -560,7 +560,7 @@ CaseConstStructInstComp = set_attributes( CaseConstStructInstComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConstStructInstComp_noparam
         (
           input  logic [0:0]    clk,
           output logic [31:0]   out,
@@ -584,7 +584,7 @@ CaseStructPackedArrayUpblkComp = set_attributes( CaseStructPackedArrayUpblkComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module StructPackedArrayUpblkComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [31:0]   in___foo__0,
@@ -628,7 +628,7 @@ CaseNestedStructPackedArrayUpblkComp = set_attributes( CaseNestedStructPackedArr
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module NestedStructPackedArrayUpblkComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [31:0]   in___foo,
@@ -669,7 +669,7 @@ CaseArrayBits32IfcInUpblkComp = set_attributes( CaseArrayBits32IfcInUpblkComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ArrayBits32IfcInUpblkComp_noparam
         (
           input  logic [0:0]    clk,
           output logic [31:0]   out,
@@ -707,7 +707,7 @@ CaseInterfaceArrayNonStaticIndexComp = set_attributes( CaseInterfaceArrayNonStat
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module InterfaceArrayNonStaticIndexComp_noparam
         (
           input  logic [0:0]    clk,
           output logic [31:0]   out,
@@ -751,7 +751,7 @@ CaseBits32ArraySubCompAttrUpblkComp = set_attributes( CaseBits32ArraySubCompAttr
 
         endmodule
 
-        module DUT_noparam
+        module Bits32ArraySubCompAttrUpblkComp_noparam
         (
           input  logic [0:0]    clk,
           output logic [31:0]   out,
@@ -894,7 +894,7 @@ CaseConnectInToWireComp = set_attributes( CaseConnectInToWireComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectInToWireComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [31:0]   in___0,
@@ -950,7 +950,7 @@ CaseConnectBitsConstToOutComp = set_attributes( CaseConnectBitsConstToOutComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectBitsConstToOutComp_noparam
         (
           input  logic [0:0]    clk,
           output logic [31:0]   out,
@@ -986,7 +986,7 @@ CaseConnectConstToOutComp = set_attributes( CaseConnectConstToOutComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectConstToOutComp_noparam
         (
           input  logic [0:0]    clk,
           output logic [31:0]   out,
@@ -1023,7 +1023,7 @@ CaseConnectBitSelToOutComp = set_attributes( CaseConnectBitSelToOutComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectBitSelToOutComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [31:0]   in_,
@@ -1061,7 +1061,7 @@ CaseConnectSliceToOutComp = set_attributes( CaseConnectSliceToOutComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectSliceToOutComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [31:0]   in_,
@@ -1098,7 +1098,7 @@ CaseConnectConstStructAttrToOutComp = set_attributes( CaseConnectConstStructAttr
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectConstStructAttrToOutComp_noparam
         (
           input  logic [0:0]    clk,
           output logic [31:0]   out,
@@ -1147,7 +1147,7 @@ CaseConnectLiteralStructComp = set_attributes( CaseConnectLiteralStructComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectLiteralStructComp_noparam
         (
           input  logic [0:0]    clk,
           output logic [31:0]   out__foo,
@@ -1214,7 +1214,7 @@ CaseConnectArrayStructAttrToOutComp = set_attributes( CaseConnectArrayStructAttr
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectArrayStructAttrToOutComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [31:0]   in___foo__0,
@@ -1284,7 +1284,7 @@ CaseConnectNestedStructPackedArrayComp = set_attributes( CaseConnectNestedStruct
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectNestedStructPackedArrayComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [31:0]   in___foo,
@@ -1395,7 +1395,7 @@ CaseConnectValRdyIfcComp = set_attributes( CaseConnectValRdyIfcComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectValRdyIfcComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [0:0]    reset,
@@ -1449,7 +1449,7 @@ CaseConnectArrayBits32FooIfcComp = set_attributes( CaseConnectArrayBits32FooIfcC
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectArrayBits32FooIfcComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [0:0]    reset,
@@ -1543,7 +1543,7 @@ CaseConnectArrayNestedIfcComp = set_attributes( CaseConnectArrayNestedIfcComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module ConnectArrayNestedIfcComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [0:0]    reset,
@@ -1638,7 +1638,7 @@ CaseBits32ConnectSubCompAttrComp = set_attributes( CaseBits32ConnectSubCompAttrC
 
         endmodule
 
-        module DUT_noparam
+        module Bits32ConnectSubCompAttrComp_noparam
         (
           input  logic [0:0]    clk,
           output logic [31:0]   out,
@@ -1717,7 +1717,7 @@ CaseConnectArraySubCompArrayStructIfcComp = set_attributes( CaseConnectArraySubC
 
         endmodule
 
-        module DUT_noparam
+        module ConnectArraySubCompArrayStructIfcComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [31:0]   in_,
@@ -1858,7 +1858,7 @@ CaseBits32ArrayConnectSubCompAttrComp = set_attributes( CaseBits32ArrayConnectSu
 
         endmodule
 
-        module DUT_noparam
+        module Bits32ArrayConnectSubCompAttrComp_noparam
         (
           input  logic [0:0]    clk,
           output logic [31:0]   out,
@@ -1990,7 +1990,7 @@ CaseBehavioralArraySubCompArrayStructIfcComp = set_attributes( CaseBehavioralArr
 
         endmodule
 
-        module DUT_noparam
+        module BehavioralArraySubCompArrayStructIfcComp_noparam
         (
           input  logic [0:0]    clk,
           input  logic [31:0]   in_,
@@ -2070,7 +2070,7 @@ CaseTypeBundle = set_attributes( CaseTypeBundle,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module TypeBundle_noparam
         (
           input logic [0:0] clk,
           output logic [31:0] out1,
@@ -2104,7 +2104,7 @@ CaseBits32FooToBits32Comp = set_attributes( CaseBits32FooToBits32Comp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module Bits32FooToBits32Comp_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in___foo,
@@ -2133,7 +2133,7 @@ CaseBits32ToBits32FooComp = set_attributes( CaseBits32ToBits32FooComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module Bits32ToBits32FooComp_noparam
         (
           input logic [0:0] clk,
           input logic [31:0] in_,
@@ -2162,7 +2162,7 @@ CaseIntToBits32FooComp = set_attributes( CaseIntToBits32FooComp,
     ''',
     'REF_SRC',
     '''\
-        module DUT_noparam
+        module IntToBits32FooComp_noparam
         (
           input logic [0:0] clk,
           output logic [31:0] out__foo,
