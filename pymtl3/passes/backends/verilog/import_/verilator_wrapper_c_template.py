@@ -45,45 +45,39 @@ extern "C" {{
     // Exposed port interface
 {port_defs}
 
+    // The following variables have a _cffi_ prefix to avoid name conflicts
+    // with the port names.
+
     // Verilator model
-    void * model;
-    VerilatedContext * context_ptr;
+    void * _cffi_model;
+
+    // Verilator simulation context
+    void * _cffi_context_ptr;
 
     // VCD state
-    int _vcd_en;
+    int _cffi_vcd_en;
 
-    // VCD tracing helpers
-    #if DUMP_VCD
-    void *        tfp;
-    unsigned int  trace_time;
-    #endif
+    // VCD tracing helpers. Note that these fields are not used if DUMP_VCD
+    // is 0.
+    void *        _cffi_tfp;
+    unsigned int  _cffi_trace_time;
+
+    // Verilog line trace buffer. Refer to the comments to the trace function
+    // below for more details.
+    char _cffi_line_trace_str[512];
 
   }} V{component_name}_t;
 
   // Exposed methods
-  V{component_name}_t * create_model( const char * );
-  void destroy_model( V{component_name}_t *);
-  void comb_eval( V{component_name}_t * );
-  void seq_eval( V{component_name}_t * );
-  void assert_en( V{component_name}_t *, bool );
+  V{component_name}_t * V{component_name}_create_model( const char * );
+  void V{component_name}_destroy_model( V{component_name}_t *);
+  void V{component_name}_comb_eval( V{component_name}_t * );
+  void V{component_name}_seq_eval( V{component_name}_t * );
+  void V{component_name}_assert_en( V{component_name}_t *, bool );
 
   #if VLINETRACE
-  void trace( V{component_name}_t *, char * );
+  void V{component_name}_line_trace( V{component_name}_t *, char * );
   #endif
-
-}}
-
-//------------------------------------------------------------------------
-// sc_time_stamp
-//------------------------------------------------------------------------
-// This is now a lgeacy function required only so linking works on Cygwin
-// and MSVC++:
-// https://github.com/verilator/verilator/blob/master/examples/make_tracing_c/sim_main.cpp
-
-double sc_time_stamp()
-{{
-
-  return 0;
 
 }}
 
@@ -93,7 +87,7 @@ double sc_time_stamp()
 // Construct a new verilator simulation, initialize interface signals
 // exposed via CFFI, and setup VCD tracing if enabled.
 
-V{component_name}_t * create_model( const char *vcd_filename ) {{
+V{component_name}_t * V{component_name}_create_model( const char *vcd_filename ) {{
 
   V{component_name}_t  * m;
   V{vl_component_name} * model;
@@ -105,19 +99,19 @@ V{component_name}_t * create_model( const char *vcd_filename ) {{
   context_ptr->randReset( {verilator_xinit_value} );
   context_ptr->randSeed( {verilator_xinit_seed} );
 
-  m     = (V{component_name}_t *) malloc( sizeof(V{component_name}_t) );
+  m     = new V{component_name}_t;
   model = new V{vl_component_name}(context_ptr);
 
-  m->model       = (void *) model;
-  m->context_ptr = context_ptr;
+  m->_cffi_model       = (void *) model;
+  m->_cffi_context_ptr = (void *) context_ptr;
 
   // Enable tracing. We have added a feature where if the vcd_filename is
   // "" then we don't do any VCD dumping even if DUMP_VCD is true.
 
-  m->_vcd_en = 0;
+  m->_cffi_vcd_en = 0;
   #if DUMP_VCD
   if ( strlen( vcd_filename ) != 0 ) {{
-    m->_vcd_en = 1;
+    m->_cffi_vcd_en = 1;
     context_ptr->traceEverOn( true );
     VerilatedVcdC * tfp = new VerilatedVcdC();
 
@@ -125,9 +119,12 @@ V{component_name}_t * create_model( const char *vcd_filename ) {{
     tfp->spTrace()->set_time_resolution( "{vcd_timescale}" );
     tfp->open( vcd_filename );
 
-    m->tfp        = (void *) tfp;
-    m->trace_time = 0;
+    m->_cffi_tfp        = (void *) tfp;
+    m->_cffi_trace_time = 0;
   }}
+  #else
+  m->_cffi_tfp = NULL;
+  m->_cffi_trace_time = 0;
   #endif
 
   // initialize exposed model interface pointers
@@ -142,29 +139,30 @@ V{component_name}_t * create_model( const char *vcd_filename ) {{
 //------------------------------------------------------------------------
 // Finalize the Verilator simulation, close files, call destructors.
 
-void destroy_model( V{component_name}_t * m ) {{
+void V{component_name}_destroy_model( V{component_name}_t * m ) {{
 
   #if VM_COVERAGE
     VerilatedCov::write( "coverage.dat" );
   #endif
 
-  V{vl_component_name} * model = (V{vl_component_name} *) m->model;
+  V{vl_component_name} * model = (V{vl_component_name} *) m->_cffi_model;
+  VerilatedContext * context_ptr = (VerilatedContext *) m->_cffi_context_ptr;
 
   // finalize verilator simulation
   model->final();
 
   #if DUMP_VCD
-  if ( m->_vcd_en ) {{
-    // printf("DESTROYING %d\\n", m->trace_time);
-    VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
+  if ( m->_cffi_vcd_en ) {{
+    // printf("DESTROYING %d\\n", m->_cffi_trace_time);
+    VerilatedVcdC * tfp = (VerilatedVcdC *) m->_cffi_tfp;
     tfp->close();
+    delete tfp;
   }}
   #endif
 
   delete model;
-  delete m->context_ptr;
-
-  free(m);
+  delete context_ptr;
+  delete m;
 
 }}
 
@@ -173,9 +171,9 @@ void destroy_model( V{component_name}_t * m ) {{
 //------------------------------------------------------------------------
 // Simulate one time-step in the Verilated model.
 
-void comb_eval( V{component_name}_t * m ) {{
+void V{component_name}_comb_eval( V{component_name}_t * m ) {{
 
-  V{vl_component_name} * model = (V{vl_component_name} *) m->model;
+  V{vl_component_name} * model = (V{vl_component_name} *) m->_cffi_model;
 
   // evaluate one time step
   model->eval();
@@ -183,10 +181,10 @@ void comb_eval( V{component_name}_t * m ) {{
   // Shunning: calling dump multiple times leads to unsuppressable warning
   //           under verilator 4.036
   // #if DUMP_VCD
-  // if ( m->_vcd_en ) {{
+  // if ( m->_cffi_vcd_en ) {{
   //   // dump current signal values
-  //   VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
-  //   tfp->dump( m->trace_time );
+  //   VerilatedVcdC * tfp = (VerilatedVcdC *) m->_cffi_tfp;
+  //   tfp->dump( m->_cffi_trace_time );
   //   tfp->flush();
   // }}
   // #endif
@@ -198,10 +196,10 @@ void comb_eval( V{component_name}_t * m ) {{
 //------------------------------------------------------------------------
 // Simulate the positive clock edge in the Verilated model.
 
-void seq_eval( V{component_name}_t * m ) {{
+void V{component_name}_seq_eval( V{component_name}_t * m ) {{
 
-  V{vl_component_name} * model = (V{vl_component_name} *) m->model;
-  VerilatedContext * context_ptr = m->context_ptr;
+  V{vl_component_name} * model = (V{vl_component_name} *) m->_cffi_model;
+  VerilatedContext * context_ptr = (VerilatedContext *) m->_cffi_context_ptr;
 
   // evaluate one time cycle
 
@@ -212,7 +210,7 @@ void seq_eval( V{component_name}_t * m ) {{
   model->eval();
 
   #if DUMP_VCD
-  if ( m->_vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
+  if ( m->vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
 
     // PP: this is hacky -- we want the waveform to look like all signals
     // except the CLK has toggled. We temporarily set the CLK signal
@@ -222,13 +220,13 @@ void seq_eval( V{component_name}_t * m ) {{
     #endif
 
     // dump current signal values
-    VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
-    tfp->dump( m->trace_time );
+    VerilatedVcdC * tfp = (VerilatedVcdC *) m->_cffi_tfp;
+    tfp->dump( m->_cffi_trace_time );
     tfp->flush();
 
     // PP: now that we have generated the VCD we need to set CLK back to 0.
     // We need to dump VCD again to register this clock toggle.
-    m->trace_time += {half_cycle_time};
+    m->_cffi_trace_time += {half_cycle_time};
 
     #if HAS_CLK
     model->clk = 0;
@@ -238,7 +236,7 @@ void seq_eval( V{component_name}_t * m ) {{
     // signals will not toggle.
     model->eval();
 
-    tfp->dump( m->trace_time );
+    tfp->dump( m->_cffi_trace_time );
     tfp->flush();
 
   }}
@@ -252,10 +250,10 @@ void seq_eval( V{component_name}_t * m ) {{
   context_ptr->timeInc(1);
 
   #if DUMP_VCD
-  if ( m->_vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
+  if ( m->_cffi_vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
 
     // update simulation time only on clock toggle
-    m->trace_time += {half_cycle_time};
+    m->_cffi_trace_time += {half_cycle_time};
 
   }}
   #endif
@@ -266,9 +264,11 @@ void seq_eval( V{component_name}_t * m ) {{
 //------------------------------------------------------------------------
 // Enable or disable assertions controlled by --assert
 
-void assert_en( V{component_name}_t * m, bool en ) {{
+void V{component_name}_assert_en( V{component_name}_t * m, bool en ) {{
 
-  m->context_ptr->assertOn(en);
+  VerilatedContext * context_ptr = (VerilatedContext *) m->_cffi_context_ptr;
+
+  context_ptr->assertOn(en);
 
 }}
 
@@ -281,9 +281,9 @@ void assert_en( V{component_name}_t * m, bool en ) {{
 // it everywhere.
 
 #if VLINETRACE
-void trace( V{component_name}_t * m, char* str ) {{
+void V{component_name}_line_trace( V{component_name}_t * m, char* str ) {{
 
-  V{vl_component_name} * model = (V{vl_component_name} *) m->model;
+  V{vl_component_name} * model = (V{vl_component_name} *) m->_cffi_model;
 
   const int nchars = 512;
   const int nwords = nchars/4;
@@ -357,4 +357,18 @@ void trace( V{component_name}_t * m, char* str ) {{
 
 }}
 #endif
+
+//------------------------------------------------------------------------
+// sc_time_stamp
+//------------------------------------------------------------------------
+// This is now a lgeacy function required only so linking works on Cygwin
+// and MSVC++:
+// https://github.com/verilator/verilator/blob/master/examples/make_tracing_c/sim_main.cpp
+
+double sc_time_stamp()
+{{
+
+  return 0;
+
+}}
 '''

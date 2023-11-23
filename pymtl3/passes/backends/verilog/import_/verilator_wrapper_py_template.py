@@ -38,15 +38,28 @@ class {component_name}( Component ):
 {port_cdefs}
 
         // Verilator model
-        void * model;
+        void * _cffi_model;
+
+        // Verilator simulation context
+        void * _cffi_context_ptr;
+
+        // VCD state
+        int _cffi_vcd_en;
+
+        // VCD tracing helpers
+        void *       _cffi_tfp;
+        unsigned int _cffi_trace_time;
+
+        // Verilog line trace buffer
+        char _cffi_line_trace_str[512];
 
       }} V{component_name}_t;
 
-      V{component_name}_t * create_model( const char * );
-      void destroy_model( V{component_name}_t *);
-      void comb_eval( V{component_name}_t * );
-      void seq_eval( V{component_name}_t * );
-      void assert_en( bool en );
+      V{component_name}_t * V{component_name}_create_model( const char * );
+      void V{component_name}_destroy_model( V{component_name}_t *);
+      void V{component_name}_comb_eval( V{component_name}_t * );
+      void V{component_name}_seq_eval( V{component_name}_t * );
+      void V{component_name}_assert_en( bool en );
       {trace_c_def}
 
     """)
@@ -58,7 +71,12 @@ class {component_name}( Component ):
     # Import the shared library containing the model. We defer
     # construction to the elaborate_logic function to allow the user to
     # set the vcd_file.
-    s._ffi_inst = s.ffi.dlopen('./{lib_file}')
+    # NOTE: the RTLD_NODELETE flag is necessary in this dlopen() to make sure
+    # all loaded shared libraries stick to the current processes (i.e., cannot
+    # be unloaded) until the exit of the main process. This behavior is necessary
+    # to avoid segfaults at exits due to destruction of thread-local variables,
+    # which are heavily used in Verilator's runtime library.
+    s._ffi_inst = s.ffi.dlopen('./{lib_file}', s.ffi.RTLD_NODELETE | s.ffi.RTLD_NOW)
 
     # increment instance count
     {component_name}.id_ += 1
@@ -86,17 +104,9 @@ class {component_name}( Component ):
     s._finalization_count += 1
 
     # Clean up python side FFI references
-    s.ffi.release(s._line_trace_str)
-
     s._convert_string = None
 
-    s._ffi_inst.destroy_model( s._ffi_m )
-    s.ffi.dlclose( s._ffi_inst )
-
-    del s._ffi_inst
-    del s.ffi
-
-    gc.collect()
+    s._ffi_inst.V{component_name}_destroy_model( s._ffi_m )
     # print("End of finalize()")
 
   def __del__( s ):
@@ -105,16 +115,9 @@ class {component_name}( Component ):
       s._finalization_count += 1
 
       # Clean up python side FFI references
-      s.ffi.release(s._line_trace_str)
       s._convert_string = None
 
-      s._ffi_inst.destroy_model( s._ffi_m )
-      s.ffi.dlclose( s._ffi_inst )
-
-      del s._ffi_inst
-      del s.ffi
-
-      gc.collect()
+      s._ffi_inst.V{component_name}_destroy_model( s._ffi_m )
     # print("End of __del__")
 
   def construct( s, *args, **kwargs ):
@@ -134,20 +137,15 @@ class {component_name}( Component ):
     # a variable. See more about this:
     # https://cffi.readthedocs.io/en/stable/ref.html#ffi-new
     ffi_vl_vcd_file = s.ffi.new("char[]", verilator_vcd_file)
-    s._ffi_m = s._ffi_inst.create_model( ffi_vl_vcd_file )
+    s._ffi_m = s._ffi_inst.V{component_name}_create_model( ffi_vl_vcd_file )
 
     # Buffer for line tracing
-    line_trace_str = s.ffi.new('char[512]')
-    s._line_trace_str = line_trace_str
     s._convert_string = s.ffi.string
-
-    global_weakref_dict = weakref.WeakKeyDictionary()
-    global_weakref_dict[s] = (line_trace_str)
 
     # Use non-attribute varialbe to reduce CPython bytecode count
     _ffi_m = s._ffi_m
-    _ffi_inst_comb_eval = s._ffi_inst.comb_eval
-    _ffi_inst_seq_eval  = s._ffi_inst.seq_eval
+    _ffi_inst_comb_eval = s._ffi_inst.V{component_name}_comb_eval
+    _ffi_inst_seq_eval  = s._ffi_inst.V{component_name}_seq_eval
 
     # declare the port interface
 {port_defs}
@@ -182,12 +180,12 @@ class {component_name}( Component ):
     # at this moment I'm not sure if the C API's are compatible between
     # PyPy and CPython).
     assert isinstance( en, bool )
-    s._ffi_inst.assert_en( s._ffi_m, en )
+    s._ffi_inst.V{component_name}_assert_en( s._ffi_m, en )
 
   def line_trace( s ):
     if {external_trace}:
-      s._ffi_inst.trace( s._ffi_m, s._line_trace_str )
-      return s._convert_string( s._line_trace_str ).decode('ascii')
+      s._ffi_inst.V{component_name}_line_trace( s._ffi_m, s._ffi_m._cffi_line_trace_str )
+      return s._convert_string( s._ffi_m._cffi_line_trace_str ).decode('ascii')
     else:
 {line_trace}
 
