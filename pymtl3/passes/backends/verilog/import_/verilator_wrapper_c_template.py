@@ -210,7 +210,7 @@ void V{component_name}_seq_eval( V{component_name}_t * m ) {{
   model->eval();
 
   #if DUMP_VCD
-  if ( m->vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
+  if ( m->_cffi_vcd_en && (ON_DEMAND_VCD_ENABLE || !ON_DEMAND_DUMP_VCD) ) {{
 
     // PP: this is hacky -- we want the waveform to look like all signals
     // except the CLK has toggled. We temporarily set the CLK signal
