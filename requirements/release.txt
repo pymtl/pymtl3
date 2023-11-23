@@ -5,3 +5,4 @@ hypothesis
 cffi
 greenlet
 py
+fasteners
