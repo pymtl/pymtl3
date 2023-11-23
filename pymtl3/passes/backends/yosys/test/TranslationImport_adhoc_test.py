@@ -40,10 +40,14 @@ from ..translation.structural.test.YosysStructuralTranslatorL4_test import (
 from ..YosysTranslationImportPass import YosysTranslationImportPass
 
 XFAILED_TESTS = [
-    # incoherent translation result of Yosys backend
+    # Incoherent translation result of Yosys backend
     # the translated design is correct after minor transformation
     # in logic synthesis, but verilator simulation is incorrect
     'CaseConnectLiteralStructComp',
+    # Negative-positive MULTIDRIVEN warning from Verilator: the translated
+    # module is functionally correct and the reported multiple drivers
+    # are actually the same signal.
+    'CaseConnectArrayBits32FooIfcComp',
 ]
 
 def run_test( case ):

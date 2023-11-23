@@ -160,7 +160,7 @@ def test_normal_queue_implicit_top_module( do_test ):
       assert m.deq_rdy == Bits1( tv[5] )
     if tv[5] != '*':
       assert m.deq_msg == Bits32( tv[4] )
-  class VQueue( Component, VerilogPlaceholder ):
+  class VQueueWithPorts( Component, VerilogPlaceholder ):
     def construct( s, data_width, num_entries, count_width ):
       s.count   =  OutPort( mk_bits( count_width )  )
       s.deq_en  =  InPort( Bits1  )
@@ -170,8 +170,9 @@ def test_normal_queue_implicit_top_module( do_test ):
       s.enq_rdy = OutPort( Bits1  )
       s.enq_msg =  InPort( mk_bits( data_width ) )
       s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VQueue.v' )
+      s.set_metadata( VerilogPlaceholderPass.top_module, 'VQueue' )
   num_entries = 1
-  q = VQueue(
+  q = VQueueWithPorts(
       data_width = 32,
       num_entries = num_entries,
       count_width = clog2(num_entries+1))
@@ -467,25 +468,7 @@ def test_reg_external_trace( do_test ):
   # 0xFFFFFFFF unsigned
   assert a.line_trace() == 'q = 4294967295'
   a.sim_tick()
-
-  # PP: This is a workaround to the $sformat issue I was seeing with Verilator
-  # 5.016. If I enable this finalize below, the C library will segfault after
-  # all pytest tests have finished. Digging deeper I found this could be
-  # reliably eliminated/reproduced by removing/adding the `thread_local`
-  # specifier to the temporary string used in VL_SFORMAT_X (verilated.h). Note
-  # that the program finishes just fine when this thread-local string is never
-  # used (VL_SFORMAT_X is never invoked). My theory is this could be a
-  # double-free situation: somehow the dynamically allocated memory that
-  # belongs to this thread-local string gets deleted twice: once when we unload
-  # the dynamic library (through a.finalize()) and once at the end of program
-  # execution.
-  #
-  # One stackoverflow post suggests this might be a compiler bug:
-  # https://stackoverflow.com/a/58366171
-  # I tried recompiling with the latest g++ on BRG server (scl-11) but the
-  # segfault persists.
-
-  # a.finalize()
+  a.finalize()
 
 def test_reg_infer_external_trace( do_test ):
   # Test Verilog line trace
@@ -516,7 +499,7 @@ def test_reg_infer_external_trace( do_test ):
   # 0xFFFFFFFF unsigned
   assert a.line_trace() == 'q = 4294967295'
   a.sim_tick()
-  # a.finalize()
+  a.finalize()
 
 def test_incr_on_demand_vcd( do_test ):
   class VIncr( Component, VerilogPlaceholder ):
