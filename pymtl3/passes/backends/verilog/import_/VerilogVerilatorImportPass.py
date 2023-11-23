@@ -581,7 +581,7 @@ class VerilogVerilatorImportPass( BasePass ):
 
     # External trace function definition
     if ip_cfg.vl_line_trace:
-      external_trace_c_def = f'void trace( V{ip_cfg.translated_top_module}_t *, char * );'
+      external_trace_c_def = f'void V{ip_cfg.translated_top_module}_line_trace( V{ip_cfg.translated_top_module}_t *, char * );'
     else:
       external_trace_c_def = ''
 
