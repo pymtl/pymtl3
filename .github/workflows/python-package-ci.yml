@@ -36,13 +36,11 @@ jobs:
       run: |
         wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-github-actions-5.016.tar.gz
         tar -C ${HOME} -xzf verilator-github-actions-5.016.tar.gz
-        echo "VERILATOR_ROOT=${HOME}/verilator" >> $GITHUB_ENV
         echo "PYMTL_VERILATOR_INCLUDE_DIR=${HOME}/verilator/share/verilator/include" >> $GITHUB_ENV
         echo "${HOME}/verilator/bin" >> $GITHUB_PATH
 
     - name: Check Verilator
       run: |
-        echo ${VERILATOR_ROOT}
         echo ${PYMTL_VERILATOR_INCLUDE_DIR}
         verilator --version
 
