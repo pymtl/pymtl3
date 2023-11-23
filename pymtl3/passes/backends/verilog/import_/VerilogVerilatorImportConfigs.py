@@ -319,14 +319,14 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     # (7/9/2020): Use -O0 by default so that normally the tests are super fast and don't corrupt cffi,
     # but when the user gives a "fast" flag, it uses -O1.
     if s.fast:
-      c_flags = "-O1 -fno-guess-branch-probability -fno-reorder-blocks -fno-if-conversion -fno-if-conversion2 -fno-dce -fno-delayed-branch -fno-dse -fno-auto-inc-dec -fno-branch-count-reg -fno-combine-stack-adjustments -fno-cprop-registers -fno-forward-propagate -fno-inline-functions-called-once -fno-ipa-profile -fno-ipa-pure-const -fno-ipa-reference -fno-move-loop-invariants -fno-omit-frame-pointer -fno-split-wide-types -fno-tree-bit-ccp -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-fre -fno-tree-phiprop -fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-reassoc -fPIC -fno-gnu-unique -shared"
+      c_flags = "-O1"
     else:
-      c_flags = "-O0 -fno-guess-branch-probability -fno-reorder-blocks -fno-if-conversion -fno-if-conversion2 -fno-dce -fno-delayed-branch -fno-dse -fno-auto-inc-dec -fno-branch-count-reg -fno-combine-stack-adjustments -fno-cprop-registers -fno-forward-propagate -fno-inline-functions-called-once -fno-ipa-profile -fno-ipa-pure-const -fno-ipa-reference -fno-move-loop-invariants -fno-omit-frame-pointer -fno-split-wide-types -fno-tree-bit-ccp -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-fre -fno-tree-phiprop -fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-reassoc -fPIC -fno-gnu-unique -shared"
+      c_flags = "-O0"
 
     if not s.is_default("c_flags"):
       c_flags += f" {expand(s.c_flags)}"
 
-    c_flags += f" -std=c++11 -pthread -DVL_TIME_CONTEXT"
+    c_flags += f" -fPIC -shared -std=c++11 -pthread"
 
     c_include_path = " ".join("-I"+p for p in s._get_all_includes() if p)
     out_file = s.get_shared_lib_path()
@@ -336,21 +336,6 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     coverage = "-DVM_COVERAGE" if s.vl_coverage or \
                                   s.vl_line_coverage or \
                                   s.vl_toggle_coverage else ""
-
-    # PP: eliminate GNU unique symbols in the compiled shared library.
-    # See https://stackoverflow.com/a/76664985
-    # ^ this says if a shared library has UNIQUE symbols in it a dlclose
-    # may become a no-op. The solution is to mark all symbols as `hidden`
-    # except for those we want to access in the C wrapper. Note that I've
-    # tried adding the g++ flag `-fvisibility=hidden` and 
-    # __attribute__((visibility("default"))) to APIs, but the compiled
-    # shared library still contains UNIQUE symbols:
-    # % readelf -sW --dyn-syms libVRegTrace_noparam_v.so | grep '\bUNIQUE\b'
-    # The solution proposed in the above post is to use a linker version
-    # script which specifies visibility of all symbols.
-    linker_version_script_filename = "verilator_import_linker_version_script.lds"
-    dir_to_version_script = os.path.abspath(os.path.dirname(__file__))
-    ld_flags += f" -Wl,--version-script={os.path.join(dir_to_version_script, linker_version_script_filename)}"
 
     return f"g++ {c_flags} {c_include_path} {ld_flags}"\
            f" -o {out_file} {c_src_files} {ld_libs} {coverage}"
@@ -473,28 +458,6 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     cxx_includes = " ".join(map(lambda x: "-I"+x, s._get_all_includes()))
     for src in srcs:
       file_path, obj_name = src
-      cxx_cmd = f"g++ {cxx_includes} -std=c++11 -DVL_TIME_CONTEXT -O1 -fPIC -pthread -lpthread -c -o {obj_name}.o {file_path}"
-      if os.path.exists(f"{obj_name}.o"):
-        s.vprint(f"Skip compiling {obj_name}.o because it already exists.")
-      else:
-        s.vprint(f"Compiling {obj_name}.o with command: {cxx_cmd}")
-      # Invoke CXX to compile objects
-      try:
-        subprocess.check_output(cxx_cmd,
-                                stderr = subprocess.STDOUT,
-                                shell = True,
-                                universal_newlines = True)
-        succeeds = True
-      except subprocess.CalledProcessError as e:
-        succeeds = False
-        err_msg = e.output if not isinstance(e.output, bytes) else \
-                  e.output.decode('utf-8')
-        import_err_msg = \
-            f"Internal error: failed to compile Verilator source files:\n"\
-            f"  CXX command:\n{indent(cxx_cmd, '  ')}\n\n"\
-            f"  CXX output:\n{indent(wrap(err_msg), '  ')}\n"
-      if not succeeds:
-        raise RuntimeError(import_err_msg)
-      objs.append(f"{obj_name}.o")
+      objs.append(file_path)
 
     return objs
