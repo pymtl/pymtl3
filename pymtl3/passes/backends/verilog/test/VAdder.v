@@ -6,6 +6,6 @@ module VAdder(
   output logic [32-1:0] sum
 );
 
-  assign sum = a + b;
+  assign sum = a + b + 1;
 
 endmodule

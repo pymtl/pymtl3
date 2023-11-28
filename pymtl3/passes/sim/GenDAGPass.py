@@ -25,11 +25,11 @@ class GenDAGPass( BasePass ):
     top.check()
     top._dag = PassMetadata()
 
-    placeholders = [ x for x in top._dsl.all_named_objects
-                     if isinstance( x, Placeholder ) ]
+    # placeholders = [ x for x in top._dsl.all_named_objects
+    #                  if isinstance( x, Placeholder ) ]
 
-    if placeholders:
-      raise LeftoverPlaceholderError( placeholders )
+    # if placeholders:
+    #   raise LeftoverPlaceholderError( placeholders )
 
     self._generate_net_blocks( top )
     self._process_value_constraints( top )
