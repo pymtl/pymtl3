@@ -1,4 +1,5 @@
 from os.path import dirname
+
 from pymtl3 import *
 from pymtl3.passes.backends.verilog import VerilogIfcWithSpec, VerilogPlaceholderPass
 from pymtl3.stdlib.test_utils import run_spec_test
@@ -17,5 +18,4 @@ def test_verilog_model_with_spec():
       def upblk():
         s.sum @= s.a + s.b
 
-  test = run_spec_test( VAdder )
-  test()
+  run_spec_test( VAdder )

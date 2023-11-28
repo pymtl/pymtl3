@@ -444,38 +444,55 @@ def run_spec_test( model_class, *args ):
   ref = model_class(*args)
   ref.elaborate()
 
-  # Reflection on both models to find input and output ports.
-  in_ports = [ x for x in ref.get_input_value_ports() if x.get_field_name() not in ('clk', 'reset')]
-  out_ports = ref.get_output_value_ports()
+  # Reflect on both models to find input and output ports.
+  in_ports = [ x.get_field_name() for x in ref.get_input_value_ports() if x.get_field_name() not in ('clk', 'reset')]
+  out_ports = [ x.get_field_name() for x in ref.get_output_value_ports() ]
+
+  # Get the list of port types as ordered by `in_ports`.
+  list_of_port_strategies = []
+  for in_port_name in in_ports:
+    port = getattr(ref, in_port_name)
+    assert isinstance(port, InPort)
+    port_type = port.get_type()
+    assert issubclass(port_type, Bits)
+    list_of_port_strategies.append(pst.bits(port_type.nbits))
 
   @hypothesis.given(
-    # input_list = st.lists(*[pst.bits(port.get_type().nbits) for port in in_ports])
-    # input_list = st.lists(pst.bits(32), pst.bits(32))
-    a = pst.bits(32),
-    b = pst.bits(32)
+    input_test_vector = st.lists(st.tuples(*list_of_port_strategies))
   )
   # The max_examples is for testing purposes only
-  @hypothesis.settings( max_examples=16 )
-  # def spec_test( input_list ):
-  def spec_test( a, b ):
-    print(f"The generated input is {a} and {b}")
-    in_vector = [(a, b)]
+  # @hypothesis.settings( max_examples=16 )
+  def spec_test( input_test_vector ):
+    print(f"The generated input test vector is {input_test_vector}")
 
-    dut.apply( DefaultPassGroup(linetrace=True) )
+    # This translation-import process should be fast because everything is
+    # cached.
+    dut = model_class(*args)
+    dut.set_metadata( VerilogTranslationImportPass.enable, True )
+    dut.apply( VerilogPlaceholderPass() )
+    dut = VerilogTranslationImportPass()( dut )
+
+    ref = model_class(*args)
+    ref.elaborate()
+
+    dut.apply( DefaultPassGroup() )
     dut.sim_reset()
     ref.apply( DefaultPassGroup() )
     ref.sim_reset()
 
-    for in_vector in input_list:
+    # Apply the input cycle by cycle.
+    for in_vector in input_test_vector:
       apply_input(dut, in_ports, in_vector)
       apply_input(ref, in_ports, in_vector)
 
-      dut.sim_eval_combinational()
-      ref.sim_eval_combinational()
-
-      check_output(dut, ref, out_ports)
+      # We cannot do eval_combinational because ref (VerilogIfcWithSpec) only
+      # contains one update_ff block!
+      # dut.sim_eval_combinational()
+      # ref.sim_eval_combinational()
 
       dut.sim_tick()
       ref.sim_tick()
+
+      check_output(dut, ref, out_ports)
 
   spec_test()

@@ -12,5 +12,5 @@ from pymtl3 import Placeholder, Component
 class VerilogPlaceholder( Placeholder ):
   pass
 
-class VerilogIfcWithSpec( VerilogPlaceholder, Component ):
+class VerilogIfcWithSpec( Component ):
   pass
