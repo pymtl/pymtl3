@@ -349,6 +349,27 @@ class VerilogVerilatorImportPass( BasePass ):
         if s.is_same_cfg( json.load( fd ), new_cfg ):
           is_config_cached = True
 
+    if not is_source_cached or not is_config_cached:
+      src = "cached" if is_source_cached else "not cached"
+      cfg = "cached" if is_config_cached else "not cached"
+      ip_cfg.vprint(f"{ip_cfg.translated_top_module} is not cached! Source is {src}; config is {cfg}", 2)
+
+      if not is_source_cached:
+        src_diff_reasons = []
+        if not is_same:
+          src_diff_reasons.append("source code is different")
+        if not os.path.exists(obj_dir):
+          src_diff_reasons.append("obj_dir does not exist")
+        if not os.path.exists(c_wrapper):
+          src_diff_reasons.append("c_wrapper does not exist")
+        if not os.path.exists(py_wrapper):
+          src_diff_reasons.append("py_wrapper does not exist")
+        if not os.path.exists(shared_lib):
+          src_diff_reasons.append("shared lib does not exist")
+        src_diff_reason = " and ".join(src_diff_reasons)
+
+        ip_cfg.vprint(f"  - source not cached because {src_diff_reason}", 2)
+
     return is_source_cached and is_config_cached, config_file, new_cfg
 
   #-----------------------------------------------------------------------
