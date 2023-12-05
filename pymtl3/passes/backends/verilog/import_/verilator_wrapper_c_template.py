@@ -99,6 +99,18 @@ V{component_name}_t * V{component_name}_create_model( const char *vcd_filename )
   context_ptr->randReset( {verilator_xinit_value} );
   context_ptr->randSeed( {verilator_xinit_seed} );
 
+  // Set the number of threads Verilator can use for simulation.
+  // Without setting the number of threads, Verilator by default uses
+  // std::thread::hardware_concurrency(). Although the thread pool should be
+  // freed when we call destroy_model(), some tools like hypothesis would
+  // spawn a larger number of threads because they create models in parallel.
+  // This may lead to std::system_error: resource temporarily unavailable.
+  // So ideally we want to use very few threads for hypothesis tests to avoid
+  // that error.
+  if ({verilator_set_thread_number}) {{
+    context_ptr->threads({verilator_thread_number});
+  }}
+
   m     = new V{component_name}_t;
   model = new V{vl_component_name}(context_ptr);
 

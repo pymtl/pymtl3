@@ -213,6 +213,14 @@ class VerilogVerilatorImportPass( BasePass ):
   #: Default value: ``""``
   vl_trace_on_demand_portname = MetadataKey(str)
 
+  #: The number of threads to be used by Verilator simulation. 0 means
+  #: use the default thread number in Verilator. Default value is 0.
+  #:
+  #: Type: ``int``; input
+  #:
+  #: Default value: ``0``
+  vl_thread_number = MetadataKey(int)
+
   #: Optional flags to be passed to the C compiler.
   #:
   #: Type: ``str``; input
@@ -519,6 +527,10 @@ class VerilogVerilatorImportPass( BasePass ):
     make_indent( port_inits, 1 )
     port_inits = '\n'.join( port_inits )
 
+    # Specify Verilator thread count
+    verilator_set_thread_number = 1 if int(ip_cfg.vl_thread_number) != 0 else 0
+    verilator_thread_number = int(ip_cfg.vl_thread_number)
+
     # Fill in the C wrapper template
     if dump:
       with open( wrapper_name, 'w' ) as output:
@@ -695,6 +707,7 @@ class VerilogVerilatorImportPass( BasePass ):
       'vl_xinit', 'vl_trace',
       'vl_trace_timescale', 'vl_trace_cycle_time',
       'vl_trace_on_demand', 'vl_trace_on_demand_portname',
+      'vl_thread_number',
       'c_flags', 'c_include_path', 'c_srcs',
       'ld_flags', 'ld_libs',
     ]

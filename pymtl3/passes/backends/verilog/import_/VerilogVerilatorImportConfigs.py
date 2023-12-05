@@ -105,6 +105,10 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     # enable signal.
     "vl_trace_on_demand_portname" : "",
 
+    # The number of threads Verilator can use for simulation. 0 means use
+    # Verilator's default thread count (std::thread::hardware_concurrency).
+    "vl_thread_number" : 0,
+
     # C-compilation options
     # These options will be passed to the C compiler to create a shared lib.
 
