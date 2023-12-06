@@ -1,36 +1,92 @@
-from os.path import dirname
+import pytest
+from hypothesis import given, settings
+from hypothesis.strategies import lists, tuples, composite, sampled_from
 
 from pymtl3 import *
-from pymtl3.passes.backends.verilog import VerilogIfcWithSpec, VerilogPlaceholderPass
-from pymtl3.stdlib.test_utils import run_spec_test
+from pymtl3.datatypes import strategies as pst
+from pymtl3.stdlib.test_utils import run_spec_sim
 
-def test_vadder():
+from .Adder import Adder
+from .RegIncr import RegIncr
 
-  class VAdder( VerilogIfcWithSpec ):
-    def construct( s ):
-      s.a = InPort(Bits32)
-      s.b = InPort(Bits32)
-      s.sum = OutPort(Bits32)
+#-----------------------------------------------------------------------
+# Directed parameters, directed values
+#-----------------------------------------------------------------------
 
-      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VAdder.v' )
+@pytest.mark.parametrize(
+  "alist, blist", [
+    # Parametrized test case #1
+    ([12, 41, 19], [13, 12, 15]),
+    # Parametrized test case #2
+    ([41, 88, 16], [12, 32, 12]),
+    # Parametrized test case #3
+    ([19, 91], [15, 88]),
+  ]
+)
+def test_adder_dp_dv( alist, blist ):
+  run_spec_sim( (Adder, 16), a=alist, b=blist )
 
-      @update_once
-      def upblk():
-        s.sum @= s.a + s.b
+@pytest.mark.parametrize(
+  "inlist", [
+    # Parametrized test case #1
+    ([12, 41, 19]),
+    # Parametrized test case #2
+    ([41, 88, 16]),
+    # Parametrized test case #3
+    ([19, 91]),
+  ]
+)
+def test_regincr_dp_dv( inlist ):
+  run_spec_sim( (RegIncr, 16), in_=inlist )
 
-  run_spec_test( VAdder )
+#-----------------------------------------------------------------------
+# Directed parameters, random values
+#-----------------------------------------------------------------------
 
-def test_vreg_incr():
+@given(
+  ablist = lists( tuples( pst.bits(16), pst.bits(16) ), min_size=10 )
+)
+@settings(deadline=None)
+def test_adder_dp_rv( ablist ):
+  a, b = zip(*ablist)
+  run_spec_sim( (Adder, 16), a=a, b=b )
 
-  class VRegIncr( VerilogIfcWithSpec ):
-    def construct( s ):
-      s.in_ = InPort(Bits32)
-      s.out = OutPort(Bits32)
+@given(
+  inlist = lists( pst.bits(16), min_size=5 )
+)
+@settings(deadline=None)
+def test_regincr_dp_rv( inlist ):
+  run_spec_sim( (RegIncr, 16), in_=inlist )
 
-      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VRegIncr.v' )
+#-----------------------------------------------------------------------
+# Random parameters, random values
+#-----------------------------------------------------------------------
 
-      @update_once
-      def upblk():
-        s.out @= s.in_ + 1
+@composite
+def nbits_and_ablist( draw ):
+  nbits = draw(sampled_from([1, 2, 8, 15, 32]))
+  ablist = draw(lists(tuples(pst.bits(nbits), pst.bits(nbits)), min_size=1))
+  return (nbits, ablist)
 
-  run_spec_test( VRegIncr )
+@given(
+  nbits_and_ablist = nbits_and_ablist()
+)
+@settings(deadline=None)
+def test_adder_rp_rv( nbits_and_ablist ):
+  nbits, ablist = nbits_and_ablist
+  a, b = zip(*ablist)
+  run_spec_sim( (Adder, nbits), a=a, b=b )
+
+@composite
+def nbits_and_inlist( draw ):
+  nbits = draw(sampled_from([1, 2, 8, 15, 32]))
+  inlist = draw(lists(pst.bits(nbits), min_size=1))
+  return (nbits, inlist)
+
+@given(
+  nbits_and_inlist = nbits_and_inlist()
+)
+@settings(deadline=None)
+def test_regincr_rp_rv( nbits_and_inlist ):
+  nbits, inlist = nbits_and_inlist
+  run_spec_sim( (RegIncr, nbits), in_=inlist )
