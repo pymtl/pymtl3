@@ -97,7 +97,7 @@ install Verilator from source using the following commands:
  $ cd ${HOME}/src
  $ git clone https://github.com/verilator/verilator.git
  $ cd verilator
- $ git checkout v4.228
+ $ git checkout v5.016
  $ ./configure
  $ make
  $ sudo make install
