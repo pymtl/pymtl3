@@ -14,9 +14,9 @@ import struct
 from examples.ex03_proc.NullXcel import NullXcelRTL
 from examples.ex03_proc.tinyrv0_encoding import assemble
 from pymtl3 import *
-from pymtl3.stdlib.mem.MagicMemoryCL import MagicMemoryCL, mk_mem_msg
+from pymtl3.stdlib.mem import MemoryFL, mk_mem_msg
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.stream import StreamSinkFL, StreamSourceFL
 
 #=========================================================================
 # TestHarness
@@ -60,23 +60,24 @@ class TestHarness(Component):
     s.commit_inst = OutPort()
     req, resp = mk_mem_msg( 8, 32, 32 )
 
-    s.src  = TestSrcCL ( Bits32, [], src_delay, src_delay  )
-    s.sink = TestSinkCL( Bits32, [], sink_delay, sink_delay )
+    s.src  = StreamSourceFL( Bits32, [], src_delay, src_delay )
+    s.sink = StreamSinkFL( Bits32, [], sink_delay, sink_delay )
     s.proc = proc_cls()
     s.xcel = xcel_cls()
 
-    s.mem  = MagicMemoryCL(2, stall_prob=mem_stall_prob, latency = mem_latency)
+    s.mem  = MemoryFL(2, mem_ifc_dtypes = [mk_mem_msg(8,32,32), mk_mem_msg(8,32,32)],
+                      stall_prob=mem_stall_prob, extra_latency = mem_latency)
 
     connect_pairs(
       s.proc.commit_inst, s.commit_inst,
 
       # Processor <-> Proc/Mngr
-      s.src.send, s.proc.mngr2proc,
-      s.proc.proc2mngr, s.sink.recv,
+      s.src.ostream, s.proc.mngr2proc,
+      s.proc.proc2mngr, s.sink.istream,
 
       # Processor <-> Memory
-      s.proc.imem,  s.mem.ifc[0],
-      s.proc.dmem,  s.mem.ifc[1],
+      s.proc.imem, s.mem.ifc[0],
+      s.proc.dmem, s.mem.ifc[1],
     )
 
     connect( s.proc.xcel, s.xcel.xcel )

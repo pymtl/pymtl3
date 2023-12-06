@@ -14,7 +14,7 @@ from pymtl3.passes.backends.yosys import YosysTranslationImportPass
 from pymtl3.stdlib.test_utils.test_helpers import finalize_verilator
 
 from ..ChecksumXcelRTL import ChecksumXcelRTL
-from .ChecksumXcelCL_test import mk_xcel_transaction
+from .ChecksumXcelRTL_test import mk_xcel_transaction
 
 #-------------------------------------------------------------------------
 # Wrap Xcel into a function
@@ -45,23 +45,23 @@ def checksum_xcel_vrtl( words ):
   for req in reqs:
 
     # Wait until xcel is ready to accept a request
-    dut.xcel.resp.rdy @= 1
-    while not dut.xcel.req.rdy:
-      dut.xcel.req.en @= 0
+    dut.xcel.respstream.rdy @= 1
+    while not dut.xcel.reqstream.rdy:
+      dut.xcel.reqstream.val @= 0
       dut.sim_tick()
 
     # Send a request
-    dut.xcel.req.en  @= 1
-    dut.xcel.req.msg @= req
+    dut.xcel.reqstream.val @= 1
+    dut.xcel.reqstream.msg @= req
     dut.sim_tick()
 
     # Wait for response
-    while not dut.xcel.resp.en:
-      dut.xcel.req.en @= 0
+    while not dut.xcel.respstream.val:
+      dut.xcel.reqstream.val @= 0
       dut.sim_tick()
 
     # Get the response message
-    resp_data = dut.xcel.resp.msg.data
+    resp_data = dut.xcel.respstream.msg.data
     dut.sim_tick()
 
   return resp_data

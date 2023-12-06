@@ -10,8 +10,9 @@ Author : Shunning Jiang
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL, SendIfcFL, GetIfcFL
-from pymtl3.stdlib.mem import MemMasterIfcCL, MemMasterIfcFL, MemMasterIfcRTL, mk_mem_msg
+from pymtl3.stdlib.mem import mk_mem_msg
+from pymtl3.stdlib.mem.ifcs import MemRequesterIfc
+from pymtl3.stdlib.stream.ifcs import IStreamIfc, OStreamIfc
 
 
 class ProcXcel( Component ):
@@ -30,24 +31,11 @@ class ProcXcel( Component ):
     s.xcel = XcelClass()
     s.xcel.xcel //= s.proc.xcel
 
-    if   isinstance( s.proc.imem, MemMasterIfcRTL ): # RTL proc
-      s.mngr2proc = RecvIfcRTL( Bits32 )
-      s.proc2mngr = SendIfcRTL( Bits32 )
-      s.imem = MemMasterIfcRTL( req_class, resp_class )
-      s.dmem = MemMasterIfcRTL( req_class, resp_class )
-
-    elif isinstance( s.proc.imem, MemMasterIfcCL ): # CL proc
-      s.mngr2proc = CalleeIfcCL( Type=Bits32 )
-      s.proc2mngr = CallerIfcCL( Type=Bits32 )
-      s.imem = MemMasterIfcCL( req_class, resp_class )
-      s.dmem = MemMasterIfcCL( req_class, resp_class )
-
-    elif isinstance( s.proc.imem, MemMasterIfcFL ): # FL proc
-      s.mngr2proc = GetIfcFL( Type=Bits32 )
-      s.proc2mngr = SendIfcFL( Type=Bits32 )
-      s.imem = MemMasterIfcFL()
-      s.dmem = MemMasterIfcFL()
-
+    assert isinstance( s.proc.imem, MemRequesterIfc )
+    s.mngr2proc = IStreamIfc( Bits32 )
+    s.proc2mngr = OStreamIfc( Bits32 )
+    s.imem = MemRequesterIfc( req_class, resp_class )
+    s.dmem = MemRequesterIfc( req_class, resp_class )
 
     s.mngr2proc //= s.proc.mngr2proc
     s.proc2mngr //= s.proc.proc2mngr

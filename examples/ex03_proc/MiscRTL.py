@@ -8,8 +8,8 @@ Author : Shunning Jiang
   Date : June 13, 2019
 """
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import GetIfcRTL, GiveIfcRTL
-from pymtl3.stdlib.basic_rtl import RegRst
+from pymtl3.stdlib.stream.ifcs import IStreamIfc, OStreamIfc
+from pymtl3.stdlib.primitive import RegRst
 
 from .TinyRV0InstRTL import *
 
@@ -31,10 +31,10 @@ class DropUnitRTL( Component ):
   def construct( s, dtype ):
 
     s.drop = InPort()
-    s.in_  = GetIfcRTL( dtype )
-    s.out  = GiveIfcRTL( dtype )
+    s.in_  = IStreamIfc( dtype )
+    s.out  = OStreamIfc( dtype )
 
-    s.out.ret //= s.in_.ret
+    s.out.msg //= s.in_.msg
 
     s.snoop_state = Wire()
 
@@ -49,11 +49,11 @@ class DropUnitRTL( Component ):
         s.snoop_state <<= SNOOP
 
       elif s.snoop_state == SNOOP:
-        if s.drop & ~s.in_.rdy:
+        if s.drop & ~s.in_.val:
           s.snoop_state <<= WAIT
 
       elif s.snoop_state == WAIT:
-        if s.in_.rdy:
+        if s.in_.val:
           s.snoop_state <<= SNOOP
 
     #------------------------------------------------------------------
@@ -62,16 +62,16 @@ class DropUnitRTL( Component ):
 
     @update
     def set_outputs():
-      s.out.rdy @= 0
-      s.in_.en  @= 0
+      s.out.val @= 0
+      s.in_.rdy @= 0
 
       if   s.snoop_state == SNOOP:
-        s.out.rdy @= s.in_.rdy & ~s.drop
-        s.in_.en  @= s.out.en
+        s.out.val @= s.in_.val & ~s.drop
+        s.in_.rdy @= s.out.rdy
 
       elif s.snoop_state == WAIT:
-        s.out.rdy @= 0
-        s.in_.en  @= s.in_.rdy
+        s.out.val @= 0
+        s.in_.rdy @= s.in_.val
 
 #-------------------------------------------------------------------------
 # Generate intermediate (imm) based on type

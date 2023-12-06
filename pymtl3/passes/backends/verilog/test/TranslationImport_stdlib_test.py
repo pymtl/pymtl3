@@ -15,10 +15,10 @@ finishing each test (no matter it fails or passes).
 from pymtl3.passes.PassGroups import DefaultPassGroup
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.stdlib.basic_rtl.test.arbiters_test import test_rr_arb_4 as _rr_arb_4
-from pymtl3.stdlib.basic_rtl.test.arbiters_test import test_rr_arb_en_4 as _rr_arb_en_4
-from pymtl3.stdlib.basic_rtl.test.crossbars_test import test_crossbar3 as _crossbar3
-from pymtl3.stdlib.basic_rtl.test.encoders_test import (
+from pymtl3.stdlib.primitive.test.arbiters_test import test_rr_arb_4 as _rr_arb_4
+from pymtl3.stdlib.primitive.test.arbiters_test import test_rr_arb_en_4 as _rr_arb_en_4
+from pymtl3.stdlib.primitive.test.crossbars_test import test_crossbar3 as _crossbar3
+from pymtl3.stdlib.primitive.test.encoders_test import (
     test_encoder_5_directed as _encoder5,
 )
 from pymtl3.stdlib.stream.test.queues_test import test_normal1_simple as _n1

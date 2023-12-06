@@ -14,7 +14,8 @@ from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 from pymtl3.passes.PlaceholderConfigs import expand
 
-from ..util.utility import get_hash_of_lean_verilog
+from ..errors import VerilogImportError
+from ..util.utility import get_hash_of_lean_verilog, wrap
 from .VerilogVerilatorImportPass import VerilogVerilatorImportPass
 
 
@@ -135,7 +136,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
 
     # We enforce the GNU makefile implicit rule that `LDLIBS` should only
     # include library linker flags/names such as `-lfoo`.
-    "ld_libs" : "",
+    "ld_libs" : "-lpthread",
 
     "c_flags" : "",
   }
@@ -274,6 +275,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     opt_level   = "-O3"
     loop_unroll = "--unroll-count 1000000"
     stmt_unroll = "--unroll-stmts 1000000"
+    thread      = "--threads 1"
     trace       = "--trace" if s.vl_trace else ""
     trace_max_width = f"--trace-max-width {s.vl_trace_max_width}" if s.vl_trace_max_width else ""
     trace_max_array = f"--trace-max-array {s.vl_trace_max_array}" if s.vl_trace_max_array else ""
@@ -285,7 +287,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     all_opts = [
       top_module, mk_dir, include, en_assert, opt_level, loop_unroll,
       # stmt_unroll, trace, warnings, flist, src, coverage,
-      stmt_unroll, trace, trace_max_width, trace_max_array, warnings, src, vlibs, coverage,
+      stmt_unroll, thread, trace, trace_max_width, trace_max_array, warnings, src, vlibs, coverage,
       line_cov, toggle_cov,
     ]
 
@@ -325,12 +327,14 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     # (7/9/2020): Use -O0 by default so that normally the tests are super fast and don't corrupt cffi,
     # but when the user gives a "fast" flag, it uses -O1.
     if s.fast:
-      c_flags = "-O1 -fno-guess-branch-probability -fno-reorder-blocks -fno-if-conversion -fno-if-conversion2 -fno-dce -fno-delayed-branch -fno-dse -fno-auto-inc-dec -fno-branch-count-reg -fno-combine-stack-adjustments -fno-cprop-registers -fno-forward-propagate -fno-inline-functions-called-once -fno-ipa-profile -fno-ipa-pure-const -fno-ipa-reference -fno-move-loop-invariants -fno-omit-frame-pointer -fno-split-wide-types -fno-tree-bit-ccp -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-fre -fno-tree-phiprop -fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-reassoc -fPIC -fno-gnu-unique -shared"
+      c_flags = "-O1"
     else:
-      c_flags = "-O0 -fno-guess-branch-probability -fno-reorder-blocks -fno-if-conversion -fno-if-conversion2 -fno-dce -fno-delayed-branch -fno-dse -fno-auto-inc-dec -fno-branch-count-reg -fno-combine-stack-adjustments -fno-cprop-registers -fno-forward-propagate -fno-inline-functions-called-once -fno-ipa-profile -fno-ipa-pure-const -fno-ipa-reference -fno-move-loop-invariants -fno-omit-frame-pointer -fno-split-wide-types -fno-tree-bit-ccp -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-fre -fno-tree-phiprop -fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-reassoc -fPIC -fno-gnu-unique -shared"
+      c_flags = "-O0"
 
     if not s.is_default("c_flags"):
       c_flags += f" {expand(s.c_flags)}"
+
+    c_flags += f" -fPIC -shared -std=c++11 -pthread"
 
     c_include_path = " ".join("-I"+p for p in s._get_all_includes() if p)
     out_file = s.get_shared_lib_path()
@@ -340,6 +344,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     coverage = "-DVM_COVERAGE" if s.vl_coverage or \
                                   s.vl_line_coverage or \
                                   s.vl_toggle_coverage else ""
+
     return f"g++ {c_flags} {c_include_path} {ld_flags}"\
            f" -o {out_file} {c_src_files} {ld_libs} {coverage}"
 
@@ -388,24 +393,25 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     return includes
 
   def _get_c_src_files( s ):
-    top_module = s.translated_top_module
+    top_module = s.translated_top_module.replace('__', '___05F')
     vl_mk_dir = s.vl_mk_dir
     vl_class_mk = f"{vl_mk_dir}/V{top_module}_classes.mk"
+    cxx_inputs = []
 
     # Add C wrapper
     o0 = []
     o1 = copy.copy(s.c_srcs) + [ s.get_c_wrapper_path() ]
+    objs = []
 
     # Add files listed in class makefile
     with open(vl_class_mk) as class_mk:
       all_lines = class_mk.readlines()
-      o1 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_FAST")
-      o1 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_FAST")
-      o1 += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_FAST")
-
-      o0 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_SLOW")
-      o0 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_SLOW")
-      o0 += s._get_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_SLOW")
+      o1 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_FAST" )
+      o1 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_FAST" )
+      o0 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_CLASSES_SLOW" )
+      o0 += s._get_srcs_from_vl_class_mk( all_lines, vl_mk_dir, "VM_SUPPORT_SLOW" )
+      objs += s._compile_vl_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_FAST" )
+      objs += s._compile_vl_srcs_from_vl_class_mk( all_lines, s.vl_include_dir, "VM_GLOBAL_SLOW" )
 
     with open(f"{top_module}_v__ALL_pickled.cpp", 'w') as out:
 
@@ -425,7 +431,9 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
           out.write('\n'.join( [ f'#include "{x}"' for x in o0 ]))
           out.write('\n#pragma GCC pop_options\n')
 
-    return [ f"{top_module}_v__ALL_pickled.cpp" ]
+    cxx_inputs += [ f"{top_module}_v__ALL_pickled.cpp" ]
+    cxx_inputs += objs
+    return cxx_inputs
 
   def _get_srcs_from_vl_class_mk( s, all_lines, path, label ):
     """Return all files under `path` directory in `label` section of `mk`."""
@@ -440,3 +448,24 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
           file_name = line.strip()[:-2]
           srcs.append( path + "/" + file_name + ".cpp" )
     return srcs
+
+  def _compile_vl_srcs_from_vl_class_mk( s, all_lines, path, label ):
+    """Return compiled objects from Verilator sources under `path` directory in `label` section of `mk`."""
+    srcs, found = [], False
+    for line in all_lines:
+      if line.startswith(label):
+        found = True
+      elif found:
+        if line.strip() == "":
+          found = False
+        else:
+          file_name = line.strip()[:-2]
+          srcs.append( (path + "/" + file_name + ".cpp", file_name) )
+
+    objs = []
+    cxx_includes = " ".join(map(lambda x: "-I"+x, s._get_all_includes()))
+    for src in srcs:
+      file_path, obj_name = src
+      objs.append(file_path)
+
+    return objs
