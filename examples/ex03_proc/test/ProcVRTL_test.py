@@ -13,7 +13,7 @@ import pytest
 
 from examples.ex03_proc.ProcRTL import ProcRTL
 from pymtl3 import *
-from pymtl3.passes.backends.yosys import *
+from pymtl3.passes.backends.verilog import *
 from pymtl3.passes.tracing import *
 from pymtl3.stdlib.test_utils.test_helpers import finalize_verilator
 
@@ -53,13 +53,13 @@ class ProcVRTL_Tests( BaseTests ):
     # Check command line arguments for vcd dumping
     if vcd_file_name:
       th.set_metadata( VcdGenerationPass.vcd_file_name, vcd_file_name )
-      th.proc.set_metadata( YosysVerilatorImportPass.vl_trace, True )
-      th.proc.set_metadata( YosysVerilatorImportPass.vl_trace_filename, vcd_file_name )
+      th.proc.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
+      th.proc.set_metadata( VerilogVerilatorImportPass.vl_trace_filename, vcd_file_name )
 
-    # Translate the DUT and import it back in using the yosys backend.
-    th.proc.set_metadata( YosysTranslationImportPass.enable, True )
+    # Translate the DUT and import it back in using the verilog backend.
+    th.proc.set_metadata( VerilogTranslationImportPass.enable, True )
 
-    th = YosysTranslationImportPass()( th )
+    th = VerilogTranslationImportPass()( th )
 
     # Create a simulator and run simulation
     th.apply( DefaultPassGroup(linetrace=True) )

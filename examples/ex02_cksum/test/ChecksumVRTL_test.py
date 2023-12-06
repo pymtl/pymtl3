@@ -8,7 +8,7 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 from pymtl3 import *
-from pymtl3.passes.backends.yosys import *
+from pymtl3.passes.backends.verilog import *
 from pymtl3.passes.tracing import *
 from pymtl3.stdlib.test_utils.test_helpers import finalize_verilator
 
@@ -32,10 +32,10 @@ def checksum_vrtl( words ):
   dut = ChecksumRTL()
   dut.elaborate()
 
-  # Translate the checksum unit and import it back in using the yosys
+  # Translate the checksum unit and import it back in using the verilog
   # backend
-  dut.set_metadata( YosysTranslationImportPass.enable, True )
-  dut = YosysTranslationImportPass()( dut )
+  dut.set_metadata( VerilogTranslationImportPass.enable, True )
+  dut = VerilogTranslationImportPass()( dut )
 
   # Create a simulator
   dut.elaborate()
@@ -99,17 +99,17 @@ class ChecksumVRTLSrcSink_Tests( BaseSrcSinkTests ):
     # Check command line arguments for vcd dumping
     if vcd_file_name:
       th.set_metadata( VcdGenerationPass.vcd_file_name, vcd_file_name )
-      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace, True )
-      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace_filename, vcd_file_name )
+      th.dut.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
+      th.dut.set_metadata( VerilogVerilatorImportPass.vl_trace_filename, vcd_file_name )
 
-    # Translate the DUT and import it back in using the yosys backend.
-    th.dut.set_metadata( YosysTranslationImportPass.enable, True )
+    # Translate the DUT and import it back in using the verilog backend.
+    th.dut.set_metadata( VerilogTranslationImportPass.enable, True )
 
     # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''
     # Apply the translation-import and simulation passes
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
-    th = YosysTranslationImportPass()( th )
+    th = VerilogTranslationImportPass()( th )
     th.apply( DefaultPassGroup(linetrace=False) )
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
