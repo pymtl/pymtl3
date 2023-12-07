@@ -5,5 +5,5 @@ from .test_helpers import (
     mk_test_case_table,
     run_sim,
     run_test_vector_sim,
-    run_spec_sim,
+    gen_vector_spec_test_harness,
 )

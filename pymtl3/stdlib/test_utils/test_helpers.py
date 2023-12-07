@@ -9,6 +9,7 @@ Author : Shunning Jiang
 """
 
 import collections
+import copy
 import re
 import hypothesis
 from hypothesis import strategies as st
@@ -20,6 +21,8 @@ from pymtl3.passes.backends.verilog import *
 from pymtl3.passes.backends.yosys.YosysTranslationImportPass import YosysTranslationImportPass
 from pymtl3.passes.backends.yosys.import_.YosysVerilatorImportPass import YosysVerilatorImportPass
 from pymtl3.passes.tracing import VcdGenerationPass, PrintTextWavePass
+
+from .spec_test_harness import SpecTestHarnessBase, SpecTestHarnessVector, SpecTestHarnessSrcSink
 
 #-------------------------------------------------------------------------
 # mk_test_case_table
@@ -417,62 +420,8 @@ run_test_vector_sim received an incorrect value!
     finalize_verilator( model )
 
 #-------------------------------------------------------------------------
-# run_spec_sim
+# spec test harness helpers
 #-------------------------------------------------------------------------
-# This is a specification test runner that exposes input test vector
-# generation to the users.
 
-def apply_input( model, in_ports, in_vector ):
-  # assert len(in_ports) == len(in_vector)
-  for i, name in enumerate(in_ports):
-    value = in_vector[i]
-    port = getattr(model, name)
-    port @= value
-
-def check_output( dut, ref, out_ports ):
-  for i, name in enumerate(out_ports):
-    dut_value = getattr(dut, name)
-    ref_value = getattr(ref, name)
-    assert dut_value == ref_value
-
-def run_spec_sim( dut_and_args, **kw_input_vectors ):
-  assert isinstance(dut_and_args, tuple), \
-      "run_spec_sim expects the first argument to be a tuple of DUT class and parameters!"
-
-  dut_class = dut_and_args[0]
-  if len(dut_and_args) > 1:
-    dut_args = dut_and_args[1:]
-  else:
-    dut_args = []
-
-  assert issubclass(dut_class, VerilogIfcWithSpec)
-
-  dut = dut_class(*dut_args)
-  dut.set_metadata( VerilogTranslationImportPass.enable, True )
-  dut.set_metadata( VerilogVerilatorImportPass.vl_thread_number, 1 )
-  dut.apply( VerilogPlaceholderPass() )
-  dut = VerilogTranslationImportPass()( dut )
-
-  ref = dut_class(*dut_args)
-  ref.elaborate()
-
-  # Reflect on both models to find input and output ports.
-  out_ports = [ x.get_field_name() for x in ref.get_output_value_ports() ]
-
-  dut.apply( DefaultPassGroup(linetrace=True) )
-  dut.sim_reset()
-  ref.apply( DefaultPassGroup(linetrace=False) )
-  ref.sim_reset()
-
-  # Apply the input cycle by cycle.
-  input_vector_keys = list(kw_input_vectors.keys())
-  for per_cycle_input_vector in zip(*list(kw_input_vectors.values())):
-    apply_input(dut, input_vector_keys, per_cycle_input_vector)
-    apply_input(ref, input_vector_keys, per_cycle_input_vector)
-
-    dut.sim_tick()
-    ref.sim_tick()
-
-    check_output(dut, ref, out_ports)
-
-  finalize_verilator(dut)
+def gen_vector_spec_test_harness( dut, input_vector_list_map, apply_input_func=None, check_output_func=None ):
+  return SpecTestHarnessVector( dut, input_vector_list_map, apply_input_func, check_output_func )

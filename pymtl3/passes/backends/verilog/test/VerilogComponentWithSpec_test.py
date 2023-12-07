@@ -4,7 +4,7 @@ from hypothesis.strategies import lists, tuples, composite, sampled_from
 
 from pymtl3 import *
 from pymtl3.datatypes import strategies as pst
-from pymtl3.stdlib.test_utils import run_spec_sim
+from pymtl3.stdlib.test_utils import gen_vector_spec_test_harness
 
 from .Adder import Adder
 from .RegIncr import RegIncr
@@ -12,6 +12,19 @@ from .RegIncr import RegIncr
 #-----------------------------------------------------------------------
 # Directed parameters, directed values
 #-----------------------------------------------------------------------
+
+def adder_apply_input_vector( model, input_vector_map ):
+  model.a @= input_vector_map["a"]
+  model.b @= input_vector_map["b"]
+
+def adder_check_output_vector( dut, ref ):
+  assert dut.sum == ref.sum
+
+def regincr_apply_input_vector( model, input_vector_map ):
+  model.in_ @= input_vector_map["in_"]
+
+def regincr_check_output_vector( dut, ref ):
+  assert dut.out == ref.out
 
 @pytest.mark.parametrize(
   "alist, blist", [
@@ -24,7 +37,16 @@ from .RegIncr import RegIncr
   ]
 )
 def test_adder_dp_dv( alist, blist ):
-  run_spec_sim( (Adder, 16), a=alist, b=blist )
+  th = gen_vector_spec_test_harness(
+         Adder(16),
+         input_vector_list_map = {
+           "a" : alist,
+           "b" : blist,
+         },
+         apply_input_func = adder_apply_input_vector,
+         check_output_func = adder_check_output_vector,
+       )
+  th.run_sim()
 
 @pytest.mark.parametrize(
   "inlist", [
@@ -37,7 +59,15 @@ def test_adder_dp_dv( alist, blist ):
   ]
 )
 def test_regincr_dp_dv( inlist ):
-  run_spec_sim( (RegIncr, 16), in_=inlist )
+  th = gen_vector_spec_test_harness(
+         RegIncr(16),
+         input_vector_list_map = {
+           "in_" : inlist,
+         },
+         apply_input_func = regincr_apply_input_vector,
+         check_output_func = regincr_check_output_vector,
+       )
+  th.run_sim()
 
 #-----------------------------------------------------------------------
 # Directed parameters, random values
@@ -48,15 +78,28 @@ def test_regincr_dp_dv( inlist ):
 )
 @settings(deadline=None)
 def test_adder_dp_rv( ablist ):
-  a, b = zip(*ablist)
-  run_spec_sim( (Adder, 16), a=a, b=b )
+  alist, blist = zip(*ablist)
+  th = gen_vector_spec_test_harness(
+         Adder(16),
+         input_vector_list_map = {
+           "a" : alist,
+           "b" : blist,
+         },
+       )
+  th.run_sim()
 
 @given(
   inlist = lists( pst.bits(16), min_size=5 )
 )
 @settings(deadline=None)
 def test_regincr_dp_rv( inlist ):
-  run_spec_sim( (RegIncr, 16), in_=inlist )
+  th = gen_vector_spec_test_harness(
+         RegIncr(16),
+         input_vector_list_map = {
+           "in_" : inlist,
+         },
+       )
+  th.run_sim()
 
 #-----------------------------------------------------------------------
 # Random parameters, random values
@@ -74,8 +117,15 @@ def nbits_and_ablist( draw ):
 @settings(deadline=None)
 def test_adder_rp_rv( nbits_and_ablist ):
   nbits, ablist = nbits_and_ablist
-  a, b = zip(*ablist)
-  run_spec_sim( (Adder, nbits), a=a, b=b )
+  alist, blist = zip(*ablist)
+  th = gen_vector_spec_test_harness(
+         Adder(nbits),
+         input_vector_list_map = {
+           "a" : alist,
+           "b" : blist,
+         },
+       )
+  th.run_sim()
 
 @composite
 def nbits_and_inlist( draw ):
@@ -89,4 +139,10 @@ def nbits_and_inlist( draw ):
 @settings(deadline=None)
 def test_regincr_rp_rv( nbits_and_inlist ):
   nbits, inlist = nbits_and_inlist
-  run_spec_sim( (RegIncr, nbits), in_=inlist )
+  th = gen_vector_spec_test_harness(
+         RegIncr(nbits),
+         input_vector_list_map = {
+           "in_" : inlist,
+         },
+       )
+  th.run_sim()
