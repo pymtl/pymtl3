@@ -73,8 +73,12 @@ jobs:
         # yosys backend (we run yosys tests in the second run). This is
         # necessary to avoid using the same component name for different
         # shared libraries (Verilog and Yosys backend translation result).
-        pytest --cov-report xml --cov=pymtl3 ../pymtl3 --ignore=../pymtl3/passes/backends/yosys --tb=short --hypothesis-profile CI
-        pytest --cov-report xml --cov=pymtl3 --cov-append ../pymtl3/passes/backends/yosys --tb=short --hypothesis-profile CI
+        pytest --cov-config=../.coveragerc --cov-report xml --cov=pymtl3 \
+            ../pymtl3 --ignore=../pymtl3/passes/backends/yosys --tb=short \
+            --hypothesis-profile CI
+        pytest --cov-config=../.coveragerc --cov-report xml --cov=pymtl3 --cov-append \
+            ../pymtl3/passes/backends/yosys --tb=short \
+            --hypothesis-profile CI
 
     - name: Upload code coverage report
       run: |
