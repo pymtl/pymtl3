@@ -14,8 +14,6 @@ import re
 from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes.backends.verilog import *
-from pymtl3.passes.backends.yosys.YosysTranslationImportPass import YosysTranslationImportPass
-from pymtl3.passes.backends.yosys.import_.YosysVerilatorImportPass import YosysVerilatorImportPass
 from pymtl3.passes.tracing import VcdGenerationPass, PrintTextWavePass
 
 #-------------------------------------------------------------------------
@@ -127,6 +125,9 @@ def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
         dut.set_metadata( VerilogVerilatorImportPass.vl_trace_on_demand_portname, on_demand_vcd_portname )
 
     elif test_yosys_verilog:
+      from pymtl3.passes.backends.yosys.YosysTranslationImportPass import YosysTranslationImportPass
+      from pymtl3.passes.backends.yosys.import_.YosysVerilatorImportPass import YosysVerilatorImportPass
+
       dut.set_metadata( YosysTranslationImportPass.enable, True )
       dut.set_metadata( YosysVerilatorImportPass.vl_xinit, test_yosys_verilog )
 
@@ -139,6 +140,7 @@ def config_model_with_cmdline_opts( top, cmdline_opts, duts ):
         dut.set_metadata( YosysVerilatorImportPass.vl_trace_on_demand_portname, on_demand_vcd_portname )
 
   if test_yosys_verilog:
+    from pymtl3.passes.backends.yosys.YosysTranslationImportPass import YosysTranslationImportPass
     top.apply( VerilogPlaceholderPass() )
     top = YosysTranslationImportPass()( top )
   else:
