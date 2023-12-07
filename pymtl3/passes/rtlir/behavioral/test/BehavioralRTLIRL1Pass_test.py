@@ -391,7 +391,7 @@ def test_Repr( do_test ):
     do_test( CaseReprComp )
 
 def test_Str( do_test ):
-  with expected_failure( PyMTLSyntaxError, "invalid operation: str" ):
+  with expected_failure( PyMTLSyntaxError, "invalid constant" ):
     do_test( CaseStrComp )
 
 def test_Classdef( do_test ):

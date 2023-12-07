@@ -509,7 +509,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: repr' )
 
   def visit_Str( s, node ):
-    raise PyMTLSyntaxError( s.blk, node, 'invalid operation: str' )
+    raise PyMTLSyntaxError( s.blk, node, 'invalid constant' )
 
   def visit_ClassDef( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: classdef' )
