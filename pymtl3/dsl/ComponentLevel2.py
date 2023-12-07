@@ -65,6 +65,19 @@ class ComponentLevel2( ComponentLevel1 ):
     inst._dsl.WR_U_constraints = defaultdict(set)
     inst._dsl.name_func = {}
 
+    # Check and make sure `construct` method exists.
+    if not hasattr(inst, "construct"):
+      raise NotImplementedError("construct method, where the design is built,"
+                                " is not implemented in {}".format( cls.__name__ ) )
+
+    # Keep track of the name that refers to `self` in `construct`.
+    args = inspect.getfullargspec(inst.construct).args
+    if len(args) == 0:
+      raise ValueError("the construct method does not have a positional argument"
+                       " that refers to self! (class {})".format( cls.__name__ ) )
+
+    inst._dsl.elab_self = args[0]
+
     return inst
 
   def _cache_func_meta( s, func, is_update_ff, given=None ):
@@ -211,7 +224,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
       # Now we turn names into actual objects
       for obj_name, nodelist, op in names:
-        if obj_name[0][0] == "s":
+        if obj_name[0][0] == s._dsl.elab_self:
           objs = set()
           lookup_variable( s, 1, 1 )
 

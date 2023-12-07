@@ -19,7 +19,7 @@ from pymtl3.dsl import (
     update,
     update_ff,
 )
-from pymtl3.dsl.errors import InvalidAPICallError
+from pymtl3.dsl.errors import InvalidAPICallError, UpdateBlockWriteError
 
 from .sim_utils import simple_sim_pass
 
@@ -404,6 +404,49 @@ def test_connect_upblk_orders():
   assert u[0].__name__ == "up_out"
   assert u[1].__name__ == "up_ff"
   assert u[2].__name__ == "up_out2"
+
+def test_elab_self_instead_of_s():
+
+  class A( Component ):
+    def construct( self ):
+      self.in_ = InPort( Bits32 )
+      self.out = OutPort( Bits32 )
+
+      @update_ff
+      def upblk():
+        self.out <<= self.in_
+
+  class Top( Component ):
+    def construct( self ):
+      self.in_ = InPort( Bits32 )
+
+      self.a = A()
+      self.b = A()
+
+      self.a.in_ //= self.in_
+      self.b.in_ //= self.a.out
+
+  a = Top()
+  a.elaborate()
+
+def test_elab_self_instead_of_s_blking_assign_in_update():
+
+  class Top( Component ):
+    def construct( self ):
+      self.in_ = InPort( Bits32 )
+      self.out = OutPort( Bits32 )
+
+      @update
+      def upblk():
+        self.out <<= self.in_
+
+  a = Top()
+  try:
+    a.elaborate()
+  except UpdateBlockWriteError as e:
+    return
+
+  raise Exception("Should have thrown UpdateBlockWriteError!")
 
 # def test_garbage_collection():
 
