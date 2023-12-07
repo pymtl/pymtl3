@@ -3378,7 +3378,8 @@ class CaseExtSliceComp:
     def construct( s ):
       @update
       def upblk():
-        42[ 1:2:3, 2:4:6 ]
+        a = None
+        a[ 1:2:3, 2:4:6 ]
   DUT = ExtSliceComp
 
 class CaseAddComponentComp:
