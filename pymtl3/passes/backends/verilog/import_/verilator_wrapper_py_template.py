@@ -59,7 +59,8 @@ class {component_name}( Component ):
       void V{component_name}_destroy_model( V{component_name}_t *);
       void V{component_name}_comb_eval( V{component_name}_t * );
       void V{component_name}_seq_eval( V{component_name}_t * );
-      void V{component_name}_assert_en( bool en );
+      void V{component_name}_assert_on( V{component_name}_t *, bool );
+      bool V{component_name}_has_assert_fired( V{component_name}_t * );
       {trace_c_def}
 
     """)
@@ -170,17 +171,12 @@ class {component_name}( Component ):
       # seq_eval will automatically tick clock in C land
       _ffi_inst_seq_eval( _ffi_m )
 
-  def assert_en( s, en ):
-    # TODO: for verilator, any assertion failure will cause the C simulator
-    # to abort, which results in a Python internal error. A better approach
-    # is to throw a Python exception at the time of assertion failure.
-    # Verilator allows user-defined `stop` function which is called when
-    # the simulation is expected to stop due to various reasons. We might
-    # be able to raise a Python exception through Python C API (although
-    # at this moment I'm not sure if the C API's are compatible between
-    # PyPy and CPython).
-    assert isinstance( en, bool )
-    s._ffi_inst.V{component_name}_assert_en( s._ffi_m, en )
+      if s._ffi_inst.V{component_name}_has_assert_fired( _ffi_m ):
+        raise AssertionError("A Verilog assertion fired in the Verilator simulation!")
+
+  def assert_on( s, enable ):
+    assert isinstance( enable, bool )
+    s._ffi_inst.V{component_name}_assert_on( s._ffi_m, enable )
 
   def line_trace( s ):
     if {external_trace}:

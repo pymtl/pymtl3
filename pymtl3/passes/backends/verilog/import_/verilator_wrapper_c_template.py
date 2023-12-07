@@ -73,7 +73,8 @@ extern "C" {{
   void V{component_name}_destroy_model( V{component_name}_t *);
   void V{component_name}_comb_eval( V{component_name}_t * );
   void V{component_name}_seq_eval( V{component_name}_t * );
-  void V{component_name}_assert_en( V{component_name}_t *, bool );
+  void V{component_name}_assert_on( V{component_name}_t *, bool );
+  bool V{component_name}_has_assert_fired( V{component_name}_t * );
 
   #if VLINETRACE
   void V{component_name}_line_trace( V{component_name}_t *, char * );
@@ -98,6 +99,11 @@ V{component_name}_t * V{component_name}_create_model( const char *vcd_filename )
   context_ptr->debug(0);
   context_ptr->randReset( {verilator_xinit_value} );
   context_ptr->randSeed( {verilator_xinit_seed} );
+
+  // We enable assertions by default. We also prevent Verilator from calling
+  // the fatal std::abort() on error by default.
+  context_ptr->assertOn(true);
+  context_ptr->fatalOnError(false);
 
   m     = new V{component_name}_t;
   model = new V{vl_component_name}(context_ptr);
@@ -260,15 +266,34 @@ void V{component_name}_seq_eval( V{component_name}_t * m ) {{
 }}
 
 //------------------------------------------------------------------------
-// assert_en()
+// assert_on()
 //------------------------------------------------------------------------
-// Enable or disable assertions controlled by --assert
+// Enable or disable assertions controlled by --assert. Assertions are
+// enabled by default.
 
-void V{component_name}_assert_en( V{component_name}_t * m, bool en ) {{
+void V{component_name}_assert_on( V{component_name}_t * m, bool enable ) {{
 
   VerilatedContext * context_ptr = (VerilatedContext *) m->_cffi_context_ptr;
 
-  context_ptr->assertOn(en);
+  context_ptr->assertOn(enable);
+
+  // We prevent the fatal std::abort() call on assertion failure. Instead,
+  // we query the error and finish status in the context pointer to determine
+  // if an assertion has fired.
+  context_ptr->fatalOnError(!enable);
+
+}}
+
+//------------------------------------------------------------------------
+// has_assert_fired()
+//------------------------------------------------------------------------
+// Return true if an assertion has fired in the current context.
+
+bool V{component_name}_has_assert_fired( V{component_name}_t * m ) {{
+
+  VerilatedContext * context_ptr = (VerilatedContext *) m->_cffi_context_ptr;
+
+  return context_ptr->gotError() && context_ptr->gotFinish();
 
 }}
 
