@@ -150,9 +150,9 @@ class MemoryFL( Component ):
     s.resp_qs    = [ InelasticDelayPipe( resp_classes[i], extra_latency+1 ) for i in range(nports) ]
 
     for i in range(nports):
-      s.req_stalls[i].istream //= s.ifc[i].reqstream
+      s.req_stalls[i].istream //= s.ifc[i].req
       # s.req_stalls[i].ostream //= s.req_qs[i].istream
-      s.resp_qs[i].ostream    //= s.ifc[i].respstream
+      s.resp_qs[i].ostream    //= s.ifc[i].rsp
 
       s.req_stalls[i].ostream.rdy //= s.resp_qs[i].istream.rdy
       s.req_stalls[i].ostream.val //= s.resp_qs[i].istream.val
@@ -211,6 +211,5 @@ class MemoryFL( Component ):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    # print()
-    return "|".join( f"{s.req_stalls[i].line_trace()}{s.ifc[i].reqstream}>{s.ifc[i].respstream}{s.resp_qs[i].line_trace()}"
+    return "|".join( f"{s.req_stalls[i].line_trace()}{s.ifc[i].req}>{s.ifc[i].rsp}{s.resp_qs[i].line_trace()}"
                         for i in range(len(s.ifc)) )

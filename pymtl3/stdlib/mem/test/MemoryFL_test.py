@@ -32,8 +32,8 @@ class TestHarness( Component ):
 
     # Connections
     for i in range(nports):
-      connect( s.srcs[i].ostream, s.mem.ifc[i].reqstream )
-      connect( s.mem.ifc[i].respstream, s.sinks[i].istream )
+      connect( s.srcs[i].ostream, s.mem.ifc[i].req )
+      connect( s.mem.ifc[i].rsp, s.sinks[i].istream )
 
   def done( s ):
     return all([x.done() for x in s.srcs] + [x.done() for x in s.sinks])

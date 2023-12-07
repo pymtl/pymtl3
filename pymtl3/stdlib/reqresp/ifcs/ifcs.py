@@ -16,19 +16,19 @@ class RequesterIfc( Interface ):
   def construct( s, ReqType, RespType ):
     s.ReqType  = ReqType
     s.RespType = RespType
-    s.reqstream  = OStreamIfc( Type=ReqType )
-    s.respstream = IStreamIfc( Type=RespType )
+    s.req = OStreamIfc( Type=ReqType )
+    s.rsp = IStreamIfc( Type=RespType )
 
   def __str__( s ):
-    return f"{s.reqstream}|{s.respstream}"
+    return f"{s.req}|{s.rsp}"
 
 class ResponderIfc( Interface ):
 
   def construct( s, ReqType, RespType ):
     s.ReqType  = ReqType
     s.RespType = RespType
-    s.reqstream  = IStreamIfc( Type=ReqType )
-    s.respstream = OStreamIfc( Type=RespType )
+    s.req = IStreamIfc( Type=ReqType )
+    s.rsp = OStreamIfc( Type=RespType )
 
   def __str__( s ):
-    return f"{s.reqstream}|{s.respstream}"
+    return f"{s.req}|{s.rsp}"

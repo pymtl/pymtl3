@@ -42,7 +42,7 @@ class ChecksumXcelRTL( Component ):
 
     # Connections
 
-    s.xcel.reqstream //= s.in_q.istream
+    s.xcel.req //= s.in_q.istream
     s.checksum_unit.istream.msg[0 :32 ] //= s.reg_file[0].out
     s.checksum_unit.istream.msg[32:64 ] //= s.reg_file[1].out
     s.checksum_unit.istream.msg[64:96 ] //= s.reg_file[2].out
@@ -52,7 +52,7 @@ class ChecksumXcelRTL( Component ):
 
     @update
     def up_start_pulse():
-      s.start_pulse @=   (s.xcel.respstream.val & s.xcel.respstream.rdy) & \
+      s.start_pulse @=   (s.xcel.rsp.val & s.xcel.rsp.rdy) & \
                        ( s.in_q.ostream.msg.type_ == XcelMsgType.WRITE ) & \
                        ( s.in_q.ostream.msg.addr == 4 )
 
@@ -82,28 +82,28 @@ class ChecksumXcelRTL( Component ):
     def up_fsm_output():
       if s.state == s.XCFG:
         s.in_q.ostream.rdy @= s.in_q.ostream.val
-        s.xcel.respstream.val @= s.in_q.ostream.val
+        s.xcel.rsp.val @= s.in_q.ostream.val
         s.checksum_unit.istream.val @= s.start_pulse & s.checksum_unit.istream.rdy
         s.checksum_unit.ostream.rdy @= 1
 
       elif s.state == s.WAIT:
         s.in_q.ostream.rdy @= 0
-        s.xcel.respstream.val @= 0
+        s.xcel.rsp.val @= 0
         s.checksum_unit.istream.val @= s.checksum_unit.istream.rdy
         s.checksum_unit.ostream.rdy @= 1
 
       else: # s.state == s.BUSY:
         s.in_q.ostream.rdy  @= 0
-        s.xcel.respstream.val @= 0
+        s.xcel.rsp.val @= 0
         s.checksum_unit.istream.val @= 0
         s.checksum_unit.ostream.rdy @= 1
 
     @update
     def up_resp_msg():
-      s.xcel.respstream.msg.type_ @= s.in_q.ostream.msg.type_
-      s.xcel.respstream.msg.data  @= 0
+      s.xcel.rsp.msg.type_ @= s.in_q.ostream.msg.type_
+      s.xcel.rsp.msg.data  @= 0
       if s.in_q.ostream.msg.type_ == XcelMsgType.READ:
-        s.xcel.respstream.msg.data @= s.reg_file[ s.in_q.ostream.msg.addr[0:3] ].out
+        s.xcel.rsp.msg.data @= s.reg_file[ s.in_q.ostream.msg.addr[0:3] ].out
 
     @update
     def up_wr_regfile():
@@ -127,4 +127,4 @@ class ChecksumXcelRTL( Component ):
       "BUSY" if s.state == s.BUSY else
       "XXXX"
     )
-    return "{}(RTL:{}){}".format( s.xcel.reqstream, state_str, s.xcel.respstream )
+    return "{}(RTL:{}){}".format( s.xcel.req, state_str, s.xcel.rsp )

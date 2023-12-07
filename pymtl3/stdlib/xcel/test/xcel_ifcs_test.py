@@ -45,39 +45,39 @@ class SomeRequester( Component ):
     def up_rtl_addr():
       if s.reset:
         s.addr <<= AddrType(0)
-      elif s.xcel.reqstream.val and not s.flag:
+      elif s.xcel.req.val and not s.flag:
         s.addr <<= s.addr + AddrType(1)
 
     @update_ff
     def up_rtl_flag():
       if s.reset:
         s.flag <<= Bits1(1)
-      elif s.xcel.reqstream.val:
+      elif s.xcel.req.val:
         s.flag <<= ~s.flag
 
     @update_ff
     def up_rtl_count():
       if s.reset:
         s.count <<= Bits16(0)
-      elif s.xcel.respstream.val and s.xcel.respstream.msg.type_ == XcelMsgType.READ:
+      elif s.xcel.rsp.val and s.xcel.rsp.msg.type_ == XcelMsgType.READ:
         s.count <<= s.count + Bits16(1)
 
     @update
     def up_req():
-      s.xcel.reqstream.val @= ~s.reset & s.xcel.reqstream.rdy
-      s.xcel.reqstream.msg.type_ @= XcelMsgType.WRITE if s.flag else XcelMsgType.READ
-      s.xcel.reqstream.msg.addr  @= s.addr
-      s.xcel.reqstream.msg.data  @= 0xface0000 | int(s.addr)
+      s.xcel.req.val @= ~s.reset & s.xcel.req.rdy
+      s.xcel.req.msg.type_ @= XcelMsgType.WRITE if s.flag else XcelMsgType.READ
+      s.xcel.req.msg.addr  @= s.addr
+      s.xcel.req.msg.data  @= 0xface0000 | int(s.addr)
 
     @update
     def up_resp():
-      s.xcel.respstream.rdy @= 1
+      s.xcel.rsp.rdy @= 1
 
   def done( s ):
     return s.count == s.nregs
 
   def line_trace( s ):
-    return "{}({}){}".format( s.xcel.reqstream, s.flag, s.xcel.respstream )
+    return "{}({}){}".format( s.xcel.req, s.flag, s.xcel.rsp )
 
 class SomeResponder( Component ):
 
@@ -101,13 +101,13 @@ class SomeResponder( Component ):
 
     s.reg_file = m = RegisterFile( DataType, nregs )
     m.raddr[0] //= s.req_q.ostream.msg.addr
-    m.rdata[0] //= s.xcel.respstream.msg.data
+    m.rdata[0] //= s.xcel.rsp.msg.data
     m.wen[0]   //= s.wen
     m.waddr[0] //= s.req_q.ostream.msg.addr
     m.wdata[0] //= s.req_q.ostream.msg.data
 
-    connect( s.xcel.reqstream,            s.req_q.istream           )
-    connect( s.xcel.respstream.msg.type_, s.req_q.ostream.msg.type_ )
+    connect( s.xcel.req,           s.req_q.istream           )
+    connect( s.xcel.rsp.msg.type_, s.req_q.ostream.msg.type_ )
 
     @update
     def up_wen():
@@ -115,8 +115,8 @@ class SomeResponder( Component ):
 
     @update
     def up_resp():
-      s.xcel.respstream.val @= s.req_q.ostream.val & s.xcel.respstream.rdy
-      s.req_q.ostream.rdy @= s.req_q.ostream.val & s.xcel.respstream.rdy
+      s.xcel.rsp.val @= s.req_q.ostream.val & s.xcel.rsp.rdy
+      s.req_q.ostream.rdy @= s.req_q.ostream.val & s.xcel.rsp.rdy
 
   def line_trace( s ):
     return str(s.xcel)

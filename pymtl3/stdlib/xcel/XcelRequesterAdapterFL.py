@@ -48,7 +48,7 @@ class XcelRequesterAdapterFL( Component ):
 
     @update_ff
     def up_req_sent():
-      s.req_sent <<= s.requester.reqstream.val & s.requester.reqstream.rdy
+      s.req_sent <<= s.requester.req.val & s.requester.req.rdy
 
     @update
     def up_clear_req():
@@ -58,20 +58,20 @@ class XcelRequesterAdapterFL( Component ):
     @update_once
     def up_send_req():
       if s.req_entry is None:
-        s.requester.reqstream.val @= 0
+        s.requester.req.val @= 0
       else:
-        s.requester.reqstream.val @= 1
-        s.requester.reqstream.msg @= s.req_entry
+        s.requester.req.val @= 1
+        s.requester.req.msg @= s.req_entry
 
     # resp path
     @update_once
     def up_resp_rdy():
-      s.requester.respstream.rdy @= (s.resp_entry is None)
+      s.requester.rsp.rdy @= (s.resp_entry is None)
 
     @update_once
     def up_resp_msg():
-      if (s.resp_entry is None) & s.requester.respstream.val:
-        s.resp_entry = clone_deepcopy( s.requester.respstream.msg )
+      if (s.resp_entry is None) & s.requester.rsp.val:
+        s.resp_entry = clone_deepcopy( s.requester.rsp.msg )
 
     s.add_constraints( U( up_clear_req ) < M(s.read),
                        U( up_clear_req ) < M(s.write),

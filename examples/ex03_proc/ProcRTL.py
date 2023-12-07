@@ -72,11 +72,11 @@ class ProcRTL( Component ):
 
     # connect all the queues
 
-    s.imemreq_q.ostream   //= s.imem.reqstream
-    s.imemresp_q.istream  //= s.imem.respstream
-    s.dmemresp_q.istream  //= s.dmem.respstream
+    s.imemreq_q.ostream   //= s.imem.req
+    s.imemresp_q.istream  //= s.imem.rsp
+    s.dmemresp_q.istream  //= s.dmem.rsp
     s.mngr2proc_q.istream //= s.mngr2proc
-    s.xcelresp_q.istream  //= s.xcel.respstream
+    s.xcelresp_q.istream  //= s.xcel.rsp
 
     # Control
 
@@ -90,17 +90,17 @@ class ProcRTL( Component ):
     m.imemresp_rdy  //= s.imemresp_drop.out.rdy
 
     # dmem port
-    m.dmemreq_val   //= s.dmem.reqstream.val
-    m.dmemreq_rdy   //= s.dmem.reqstream.rdy
-    m.dmemreq_type  //= s.dmem.reqstream.msg.type_
+    m.dmemreq_val   //= s.dmem.req.val
+    m.dmemreq_rdy   //= s.dmem.req.rdy
+    m.dmemreq_type  //= s.dmem.req.msg.type_
     m.dmemresp_val  //= s.dmemresp_q.ostream.val
     m.dmemresp_rdy  //= s.dmemresp_q.ostream.rdy
 
     # xcel port
-    m.xcelreq_type  //= s.xcel.reqstream.msg.type_
+    m.xcelreq_type  //= s.xcel.req.msg.type_
 
-    m.xcelreq_val   //= s.xcel.reqstream.val
-    m.xcelreq_rdy   //= s.xcel.reqstream.rdy
+    m.xcelreq_val   //= s.xcel.req.val
+    m.xcelreq_rdy   //= s.xcel.req.rdy
     m.xcelresp_val  //= s.xcelresp_q.ostream.val
     m.xcelresp_rdy  //= s.xcelresp_q.ostream.rdy
 
@@ -122,13 +122,13 @@ class ProcRTL( Component ):
     m.imemresp_data //= s.imemresp_drop.out.msg
 
     # dmem ports
-    m.dmemreq_addr  //= s.dmem.reqstream.msg.addr
-    m.dmemreq_data  //= s.dmem.reqstream.msg.data
+    m.dmemreq_addr  //= s.dmem.req.msg.addr
+    m.dmemreq_data  //= s.dmem.req.msg.data
     m.dmemresp_data //= s.dmemresp_q.ostream.msg.data
 
     # xcel ports
-    m.xcelreq_addr  //= s.xcel.reqstream.msg.addr
-    m.xcelreq_data  //= s.xcel.reqstream.msg.data
+    m.xcelreq_addr  //= s.xcel.req.msg.addr
+    m.xcelreq_data  //= s.xcel.req.msg.data
     m.xcelresp_data //= s.xcelresp_q.ostream.msg.data
 
     # mngr
