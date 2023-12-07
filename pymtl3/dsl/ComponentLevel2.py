@@ -70,7 +70,7 @@ class ComponentLevel2( ComponentLevel1 ):
       raise NotImplementedError("construct method, where the design is built,"
                                 " is not implemented in {}".format( cls.__name__ ) )
 
-    # Keep track of the name that refers to `self` in `elaborate`.
+    # Keep track of the name that refers to `self` in `construct`.
     args = inspect.getfullargspec(inst.construct).args
     if len(args) == 0:
       raise ValueError("the construct method does not have a positional argument"
