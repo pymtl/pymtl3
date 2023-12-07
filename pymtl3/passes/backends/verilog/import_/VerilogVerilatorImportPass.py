@@ -699,21 +699,11 @@ class VerilogVerilatorImportPass( BasePass ):
 
     c_dim = s._get_c_dim( port )
     nbits = s._get_c_nbits( port )
-
-    # According to the C++ spec, unsigned char, unsigned short, and unsigned
-    # long long have the width of 8, 16, 64 across the four most popular
-    # data models (LP32, ILP32, LLP64, LP64); unsigned long has width 32
-    # with data model LP32, ILP32, LLP64 but not LP64.
-    UNSIGNED_8  = 'unsigned char'
-    UNSIGNED_16 = 'unsigned short'
-    UNSIGNED_32 = 'unsigned int' if sys.maxsize > 2**31-1 else 'unsigned long'
-    UNSIGNED_64 = 'unsigned long long'
-
-    if    nbits <= 8:  data_type = UNSIGNED_8
-    elif  nbits <= 16: data_type = UNSIGNED_16
-    elif  nbits <= 32: data_type = UNSIGNED_32
-    elif  nbits <= 64: data_type = UNSIGNED_64
-    else:              data_type = UNSIGNED_32
+    if    nbits <= 8:  data_type = 'uint8_t'
+    elif  nbits <= 16: data_type = 'uint16_t'
+    elif  nbits <= 32: data_type = 'uint32_t'
+    elif  nbits <= 64: data_type = 'uint64_t'
+    else:              data_type = 'uint32_t'
     name = s._verilator_name( name )
     return f'{data_type} * {name}{c_dim};'
 
