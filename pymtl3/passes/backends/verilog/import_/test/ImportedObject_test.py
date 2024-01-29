@@ -547,3 +547,33 @@ def test_vl_assertion( do_test ):
     a.finalize()
 
   raise Exception("Should have thrown a Verilator assertion error!")
+
+def test_vl_infer_external_trace_generator( do_test ):
+  class VRegTraceGenerator( Component, VerilogPlaceholder ):
+    def construct( s, p_nbits=32 ):
+      s.in_ = InPort( p_nbits )
+      s.out = OutPort( p_nbits )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VRegTraceGenerator.v' )
+      s.set_metadata( VerilogPlaceholderPass.port_map, {
+          s.in_ : "d", s.out : "q",
+      } )
+      s.set_metadata( VerilogTranslationImportPass.enable, True )
+  a = VRegTraceGenerator()
+  a.elaborate()
+  a.apply( VerilogPlaceholderPass() )
+  a = VerilogTranslationImportPass()( a )
+  a.apply( DefaultPassGroup(linetrace=True) )
+
+  assert a.line_trace() == 'q =          0'
+  a.in_ @= Bits32(1)
+  a.sim_tick()
+  assert a.line_trace() == 'q =          1'
+  a.in_ @= Bits32(2)
+  a.sim_tick()
+  assert a.line_trace() == 'q =          2'
+  a.in_ @= Bits32(-1)
+  a.sim_tick()
+  # 0xFFFFFFFF unsigned
+  assert a.line_trace() == 'q = 4294967295'
+  a.sim_tick()
+  a.finalize()

@@ -346,7 +346,7 @@ void V{component_name}_line_trace( V{component_name}_t * m, char* str ) {{
   // Verilator's internal implementation. It is recommended to get scope through
   // a dotted hierarchical name as shown below.
 
-  const svScope dut_scope = svGetScopeFromName("TOP.{vl_component_name}.v");
+  const svScope dut_scope = svGetScopeFromName("TOP.{component_name}.v");
   assert( dut_scope );
   svSetScope( dut_scope );
 
