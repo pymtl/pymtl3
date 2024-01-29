@@ -524,3 +524,26 @@ def test_incr_on_demand_vcd( do_test ):
     a.sim_tick()
 
   a.finalize()
+
+def test_vl_assertion( do_test ):
+  class VAssert( Component, VerilogPlaceholder ):
+    def construct( s ):
+      s.in_ = InPort( 10 )
+      s.out = OutPort( 10 )
+      s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VAssert.v' )
+  a = VAssert()
+  a.elaborate()
+  a.apply( VerilogPlaceholderPass() )
+  a = VerilogTranslationImportPass()( a )
+  a.apply( DefaultPassGroup(linetrace=True) )
+
+  try:
+    for i in range(16):
+      a.in_ @= Bits10(i)
+      a.sim_tick()
+  except AssertionError as e:
+    return
+  finally:
+    a.finalize()
+
+  raise Exception("Should have thrown a Verilator assertion error!")
