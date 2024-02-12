@@ -131,8 +131,14 @@ class VerilogPlaceholderPass( PlaceholderPass ):
       # Only try to infer the name of Verilog source file if both
       # flist and the source file are not specified.
       if not cfg.src_file and not cfg.v_flist:
-        parent_dir = os.path.dirname(inspect.getfile(m.__class__))
-        cfg.src_file = f"{parent_dir}{os.sep}{cfg.top_module}.v"
+        # parent_dir = os.path.dirname(inspect.getfile(m.__class__))
+        # cfg.src_file = f"{parent_dir}{os.sep}{cfg.top_module}.v"
+
+        # Use the file in which m.__class__ is defined as src_file.
+        file_path = os.path.abspath(inspect.getfile(m.__class__))
+        parent_dir = os.path.dirname(file_path)
+        module_name = os.path.splitext(os.path.basename(file_path))[0]
+        cfg.src_file = f"{parent_dir}{os.sep}{module_name}.v"
 
       # What is the original file/flist of the pickled source file?
       if cfg.src_file:

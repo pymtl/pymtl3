@@ -10,6 +10,9 @@ from pymtl3.passes.backends.generic.behavioral.BehavioralTranslatorL4 import (
 )
 from pymtl3.passes.rtlir import RTLIRType as rt
 
+from pymtl3.passes.backends.verilog.VerilogPlaceholder import VerilogPlaceholder
+from pymtl3.passes.backends.verilog.VerilogPlaceholderPass import VerilogPlaceholderPass
+
 from ...errors import VerilogTranslationError
 from .VBehavioralTranslatorL3 import (
     BehavioralRTLIRToVVisitorL3,
@@ -45,9 +48,11 @@ class BehavioralRTLIRToVVisitorL4( BehavioralRTLIRToVVisitorL3 ):
       value = s.visit( node.value )
       attr = node.attr
       s.check_res( node, attr )
+      s._update_node_attr( node )
+      sep = s._get_separator_symbol( node.value._owning_component )
       return s.process_unpacked_q( node,
-                f'{value}__{attr}',
-                f'{value}__{attr}{{}}' )
+                f'{value}{sep}{attr}',
+                f'{value}{sep}{attr}{{}}' )
     else:
       return super().visit_Attribute( node )
 
@@ -61,7 +66,22 @@ class BehavioralRTLIRToVVisitorL4( BehavioralRTLIRToVVisitorL3 ):
       idx = s.visit( node.idx )
       s._unpacked_q.appendleft(idx)
       value = s.visit( node.value )
+      s._update_node_index( node )
       return value
 
     else:
       return super().visit_Index( node )
+
+  #-----------------------------------------------------------------------
+  # Helpers
+  #-----------------------------------------------------------------------
+
+  @staticmethod
+  def _get_separator_symbol( m ):
+    if isinstance( m, VerilogPlaceholder ):
+      # If the given component is a placeholder, we use whatever separator
+      # symbol the user provides through placeholder configuration.
+      ph_cfg = m.get_metadata( VerilogPlaceholderPass.placeholder_config )
+      return ph_cfg.separator
+    # Otherwise we default to a double underscore.
+    return "__"

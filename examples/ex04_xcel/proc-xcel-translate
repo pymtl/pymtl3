@@ -3,9 +3,9 @@
 # proc-xcel-translate [options]
 #=========================================================================
 # This script imports the RTL processor-accelerator unit and translate it
-# into yosys-compatible SystemVerilog. The generated SystemVerilog file
-# will be dumped into the current directory ( if no output directory is
-# specified ) or the specified output directory.
+# into SystemVerilog. The generated SystemVerilog file will be dumped into
+# the current directory ( if no output directory is specified ) or the
+# specified output directory.
 #
 #  -h --help           Display this message
 #
@@ -34,8 +34,8 @@ from examples.ex03_proc.ProcRTL import ProcRTL
 from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
 from examples.ex04_xcel.ProcXcel import ProcXcel
 
-# Import the translation pass from yosys backend
-from pymtl3.passes.backends.yosys import YosysTranslationPass
+# Import the translation pass from Verilog backend
+from pymtl3.passes.backends.verilog import VerilogTranslationPass
 
 #=========================================================================
 # Command line processing
@@ -105,7 +105,7 @@ A valid output directory should be alloy-asic/designs/<design_name>/rtl
 
   # Tag the processor-accelerator unit as to be translated
 
-  proc_xcel.set_metadata( YosysTranslationPass.enable, True )
+  proc_xcel.set_metadata( VerilogTranslationPass.enable, True )
 
   # Perform translation
 
@@ -113,12 +113,12 @@ A valid output directory should be alloy-asic/designs/<design_name>/rtl
 
   try:
     proc_xcel.elaborate()
-    proc_xcel.apply( YosysTranslationPass() )
+    proc_xcel.apply( VerilogTranslationPass() )
     success = True
   finally:
     if success:
       path = os.getcwd() + \
-             f"/{proc_xcel.get_metadata(YosysTranslationPass.translated_filename)}"
+             f"/{proc_xcel.get_metadata(VerilogTranslationPass.translated_filename)}"
 
       if opts.output_dir:
         # Upon success, symlink the file to outputs/design.v which is the

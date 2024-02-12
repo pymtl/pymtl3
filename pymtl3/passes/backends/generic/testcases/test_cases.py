@@ -74,7 +74,7 @@ CaseTwoUpblksSliceComp = set_attributes( CaseTwoUpblksSliceComp,
     'freevars:\n',
     'REF_SRC',
     '''\
-        component DUT
+        component TwoUpblksSliceComp
         (
         port_decls:
           port_decl: in_ Port of Vector4
@@ -110,7 +110,7 @@ CaseTwoUpblksFreevarsComp = set_attributes( CaseTwoUpblksFreevarsComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component TwoUpblksFreevarsComp
         (
         port_decls:
           port_decl: out Array[2] of Port
@@ -147,7 +147,7 @@ CaseBits32TmpWireComp = set_attributes( CaseBits32TmpWireComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component Bits32TmpWireComp
         (
         port_decls:
           port_decl: in_ Port of Vector32
@@ -185,7 +185,7 @@ CaseBits32TmpWireAliasComp = set_attributes( CaseBits32TmpWireAliasComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component Bits32TmpWireAliasComp
         (
         port_decls:
           port_decl: in_ Port of Vector32
@@ -224,7 +224,7 @@ CaseBits32MultiTmpWireComp = set_attributes( CaseBits32MultiTmpWireComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component Bits32MultiTmpWireComp
         (
         port_decls:
           port_decl: in_ Port of Vector32
@@ -264,7 +264,7 @@ CaseBits32FreeVarToTmpVarComp = set_attributes( CaseBits32FreeVarToTmpVarComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component Bits32FreeVarToTmpVarComp
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -300,7 +300,7 @@ CaseBits32ConstBitsToTmpVarComp = set_attributes( CaseBits32ConstBitsToTmpVarCom
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component Bits32ConstBitsToTmpVarComp
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -335,7 +335,7 @@ CaseBits32ConstIntToTmpVarComp = set_attributes( CaseBits32ConstIntToTmpVarComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component Bits32ConstIntToTmpVarComp
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -371,7 +371,7 @@ CaseStructTmpWireComp = set_attributes( CaseStructTmpWireComp,
     'REF_SRC',
     '''\
         struct Bits32Foo__foo_32
-        component DUT
+        component StructTmpWireComp
         (
         port_decls:
           port_decl: in_ Port of Struct Bits32Foo__foo_32
@@ -411,7 +411,7 @@ CaseTwoUpblksStructTmpWireComp = set_attributes( CaseTwoUpblksStructTmpWireComp,
     '''\
         struct Bits32Foo__foo_32
         struct Bits32Bar__bar_32
-        component DUT
+        component TwoUpblksStructTmpWireComp
         (
         port_decls:
           port_decl: in_bar Port of Struct Bits32Bar__bar_32
@@ -451,7 +451,7 @@ CaseBits32IfcTmpVarOutComp = set_attributes( CaseBits32IfcTmpVarOutComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component Bits32IfcTmpVarOutComp
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -490,7 +490,7 @@ CaseStructIfcTmpVarOutComp = set_attributes( CaseStructIfcTmpVarOutComp,
     'REF_SRC',
     '''\
         struct Bits32Foo__foo_32
-        component DUT
+        component StructIfcTmpVarOutComp
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -546,7 +546,7 @@ CaseSubCompTmpDrivenComp = set_attributes( CaseSubCompTmpDrivenComp,
 
         endcomponent
 
-        component DUT
+        component SubCompTmpDrivenComp
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -605,7 +605,7 @@ CaseSubCompFreeVarDrivenComp = set_attributes( CaseSubCompFreeVarDrivenComp,
 
         endcomponent
 
-        component DUT
+        component SubCompFreeVarDrivenComp
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -631,10 +631,10 @@ CaseSubCompFreeVarDrivenComp = set_attributes( CaseSubCompFreeVarDrivenComp,
 
 CaseComponentArgsComp = set_attributes( CaseComponentArgsComp,
     'REF_NAME',
-    'DUT__foo_0__bar_002a',
+    'ComponentArgsComp__foo_0__bar_002a',
     'REF_SRC',
     '''\
-        component A__foo_0__bar_002a
+        component ComponentArgsComp__foo_0__bar_002a
         (
         port_decls:
         interface_decls:
@@ -653,10 +653,10 @@ CaseComponentArgsComp = set_attributes( CaseComponentArgsComp,
 
 CaseComponentDefaultArgsComp = set_attributes( CaseComponentDefaultArgsComp,
     'REF_NAME',
-    'DUT__foo_0__bar_002a',
+    'ComponentDefaultArgsComp__foo_0__bar_002a',
     'REF_SRC',
     '''\
-        component A__foo_0__bar_002a
+        component ComponentDefaultArgsComp__foo_0__bar_002a
         (
         port_decls:
         interface_decls:
@@ -675,10 +675,10 @@ CaseComponentDefaultArgsComp = set_attributes( CaseComponentDefaultArgsComp,
 
 CaseMixedDefaultArgsComp = set_attributes( CaseMixedDefaultArgsComp,
     'REF_NAME',
-    'DUT__foo_0__bar_002a__woo_00000000',
+    'MixedDefaultArgsComp__foo_0__bar_002a__woo_00000000',
     'REF_SRC',
     '''\
-        component A__foo_0__bar_002a__woo_00000000
+        component MixedDefaultArgsComp__foo_0__bar_002a__woo_00000000
         (
         port_decls:
         interface_decls:
@@ -697,7 +697,7 @@ CaseMixedDefaultArgsComp = set_attributes( CaseMixedDefaultArgsComp,
 
 CaseBits32PortOnly = set_attributes( CaseBits32PortOnly,
     'REF_NAME',
-    'DUT',
+    'Bits32PortOnly',
     'REF_PORT',
     '''\
         port_decls:
@@ -713,7 +713,7 @@ CaseBits32PortOnly = set_attributes( CaseBits32PortOnly,
     [ (rdt.Vector(1), 'Vector1'), (rdt.Vector(32), 'Vector32') ],
     'REF_SRC',
     '''\
-        component DUT
+        component Bits32PortOnly
         (
         port_decls:
           port_decl: in_ Port of Vector32
@@ -733,7 +733,7 @@ CaseBits32PortOnly = set_attributes( CaseBits32PortOnly,
 
 CaseBits32x5PortOnly = set_attributes( CaseBits32x5PortOnly,
     'REF_NAME',
-    'DUT',
+    'Bits32x5PortOnly',
     'REF_PORT',
     '''\
         port_decls:
@@ -741,7 +741,7 @@ CaseBits32x5PortOnly = set_attributes( CaseBits32x5PortOnly,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component Bits32x5PortOnly
         (
         port_decls:
           port_decl: in_ Array[5] of Port
@@ -761,7 +761,7 @@ CaseBits32x5PortOnly = set_attributes( CaseBits32x5PortOnly,
 
 CaseWiresDrivenComp = set_attributes( CaseWiresDrivenComp,
     'REF_NAME',
-    'DUT',
+    'WiresDrivenComp',
     'REF_PORT',
     'port_decls:\n',
     'REF_WIRE',
@@ -772,7 +772,7 @@ CaseWiresDrivenComp = set_attributes( CaseWiresDrivenComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component WiresDrivenComp
         (
         port_decls:
         interface_decls:
@@ -794,7 +794,7 @@ CaseWiresDrivenComp = set_attributes( CaseWiresDrivenComp,
 
 CaseBits32Wirex5DrivenComp = set_attributes( CaseBits32Wirex5DrivenComp,
     'REF_NAME',
-    'DUT',
+    'Bits32Wirex5DrivenComp',
     'REF_PORT',
     'port_decls:\n',
     'REF_WIRE',
@@ -804,7 +804,7 @@ CaseBits32Wirex5DrivenComp = set_attributes( CaseBits32Wirex5DrivenComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component Bits32Wirex5DrivenComp
         (
         port_decls:
         interface_decls:
@@ -825,7 +825,7 @@ CaseBits32Wirex5DrivenComp = set_attributes( CaseBits32Wirex5DrivenComp,
 
 CaseBits32ClosureConstruct = set_attributes( CaseBits32ClosureConstruct,
     'REF_NAME',
-    'DUT',
+    'Bits32ClosureConstruct',
     'REF_PORT',
     '''\
         port_decls:
@@ -842,7 +842,7 @@ CaseBits32ClosureConstruct = set_attributes( CaseBits32ClosureConstruct,
     # Note that const_decls become emtpy because the constant s.fvar_ref
     # was not used in any upblks!
     '''\
-        component DUT
+        component Bits32ClosureConstruct
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -874,7 +874,7 @@ CaseBits32ClosureConstruct = set_attributes( CaseBits32ClosureConstruct,
 
 CaseBits32ArrayClosureConstruct = set_attributes( CaseBits32ArrayClosureConstruct,
     'REF_NAME',
-    'DUT',
+    'Bits32ArrayClosureConstruct',
     'REF_PORT',
     '''\
         port_decls:
@@ -886,7 +886,7 @@ CaseBits32ArrayClosureConstruct = set_attributes( CaseBits32ArrayClosureConstruc
     'const_decls:\n',
     'REF_SRC',
     '''\
-        component DUT
+        component Bits32ArrayClosureConstruct
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -914,7 +914,7 @@ CaseBits32ArrayClosureConstruct = set_attributes( CaseBits32ArrayClosureConstruc
 
 CaseConnectBitSelToOutComp = set_attributes( CaseConnectBitSelToOutComp,
     'REF_NAME',
-    'DUT',
+    'ConnectBitSelToOutComp',
     'REF_PORT',
     '''\
         port_decls:
@@ -932,7 +932,7 @@ CaseConnectBitSelToOutComp = set_attributes( CaseConnectBitSelToOutComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component ConnectBitSelToOutComp
         (
         port_decls:
           port_decl: in_ Port of Vector32
@@ -954,7 +954,7 @@ CaseConnectBitSelToOutComp = set_attributes( CaseConnectBitSelToOutComp,
 
 CaseConnectSliceToOutComp = set_attributes( CaseConnectSliceToOutComp,
     'REF_NAME',
-    'DUT',
+    'ConnectSliceToOutComp',
     'REF_PORT',
     '''\
         port_decls:
@@ -972,7 +972,7 @@ CaseConnectSliceToOutComp = set_attributes( CaseConnectSliceToOutComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component ConnectSliceToOutComp
         (
         port_decls:
           port_decl: in_ Port of Vector32
@@ -994,7 +994,7 @@ CaseConnectSliceToOutComp = set_attributes( CaseConnectSliceToOutComp,
 
 CaseConnectPortIndexComp = set_attributes( CaseConnectPortIndexComp,
     'REF_NAME',
-    'DUT',
+    'ConnectPortIndexComp',
     'REF_PORT',
     '''\
         port_decls:
@@ -1012,7 +1012,7 @@ CaseConnectPortIndexComp = set_attributes( CaseConnectPortIndexComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component ConnectPortIndexComp
         (
         port_decls:
           port_decl: in_ Array[5] of Port
@@ -1034,7 +1034,7 @@ CaseConnectPortIndexComp = set_attributes( CaseConnectPortIndexComp,
 
 CaseConnectInToWireComp = set_attributes( CaseConnectInToWireComp,
     'REF_NAME',
-    'DUT',
+    'ConnectInToWireComp',
     'REF_PORT',
     '''\
         port_decls:
@@ -1060,7 +1060,7 @@ CaseConnectInToWireComp = set_attributes( CaseConnectInToWireComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component ConnectInToWireComp
         (
         port_decls:
           port_decl: in_ Array[5] of Port
@@ -1088,7 +1088,7 @@ CaseConnectInToWireComp = set_attributes( CaseConnectInToWireComp,
 
 CaseConnectConstToOutComp = set_attributes( CaseConnectConstToOutComp,
     'REF_NAME',
-    'DUT',
+    'ConnectConstToOutComp',
     'REF_PORT',
     '''\
         port_decls:
@@ -1108,7 +1108,7 @@ CaseConnectConstToOutComp = set_attributes( CaseConnectConstToOutComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component ConnectConstToOutComp
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -1129,7 +1129,7 @@ CaseConnectConstToOutComp = set_attributes( CaseConnectConstToOutComp,
 
 CaseStructPortOnly = set_attributes( CaseStructPortOnly,
     'REF_NAME',
-    'DUT',
+    'StructPortOnly',
     'REF_PORT',
     '''\
         port_decls:
@@ -1144,7 +1144,7 @@ CaseStructPortOnly = set_attributes( CaseStructPortOnly,
     'REF_SRC',
     '''\
         struct Bits32Foo__foo_32
-        component DUT
+        component StructPortOnly
         (
         port_decls:
           port_decl: in_ Port of Struct Bits32Foo__foo_32
@@ -1166,7 +1166,7 @@ CaseStructPortOnly = set_attributes( CaseStructPortOnly,
 
 CaseStructWireDrivenComp = set_attributes( CaseStructWireDrivenComp,
     'REF_NAME',
-    'DUT',
+    'StructWireDrivenComp',
     'REF_PORT',
     'port_decls:\n',
     'REF_WIRE',
@@ -1181,7 +1181,7 @@ CaseStructWireDrivenComp = set_attributes( CaseStructWireDrivenComp,
     'REF_SRC',
     '''\
         struct Bits32Foo__foo_32
-        component DUT
+        component StructWireDrivenComp
         (
         port_decls:
         interface_decls:
@@ -1204,7 +1204,7 @@ CaseStructWireDrivenComp = set_attributes( CaseStructWireDrivenComp,
 
 CaseStructConstComp = set_attributes( CaseStructConstComp,
     'REF_NAME',
-    'DUT',
+    'StructConstComp',
     'REF_PORT',
     'port_decls:\n',
     'REF_WIRE',
@@ -1218,7 +1218,7 @@ CaseStructConstComp = set_attributes( CaseStructConstComp,
     'connections:\n',
     'REF_SRC',
     '''\
-        component DUT
+        component StructConstComp
         (
         port_decls:
         interface_decls:
@@ -1239,7 +1239,7 @@ CaseStructConstComp = set_attributes( CaseStructConstComp,
 
 CaseStructx5PortOnly = set_attributes( CaseStructx5PortOnly,
     'REF_NAME',
-    'DUT',
+    'Structx5PortOnly',
     'REF_PORT',
     '''\
         port_decls:
@@ -1254,7 +1254,7 @@ CaseStructx5PortOnly = set_attributes( CaseStructx5PortOnly,
     'REF_SRC',
     '''\
         struct Bits32Foo__foo_32
-        component DUT
+        component Structx5PortOnly
         (
         port_decls:
           port_decl: in_ Array[5] of Port
@@ -1276,7 +1276,7 @@ CaseStructx5PortOnly = set_attributes( CaseStructx5PortOnly,
 
 CaseNestedStructPortOnly = set_attributes( CaseNestedStructPortOnly,
     'REF_NAME',
-    'DUT',
+    'NestedStructPortOnly',
     'REF_PORT',
     '''\
         port_decls:
@@ -1292,7 +1292,7 @@ CaseNestedStructPortOnly = set_attributes( CaseNestedStructPortOnly,
     '''\
         struct Bits32Foo__foo_32
         struct NestedBits32Foo__foo_Bits32Foo__foo_32
-        component DUT
+        component NestedStructPortOnly
         (
         port_decls:
           port_decl: in_ Port of Struct NestedBits32Foo__foo_Bits32Foo__foo_32
@@ -1317,7 +1317,7 @@ CaseNestedStructPortOnly = set_attributes( CaseNestedStructPortOnly,
 
 CaseNestedPackedArrayStructComp = set_attributes( CaseNestedPackedArrayStructComp,
     'REF_NAME',
-    'DUT',
+    'NestedPackedArrayStructComp',
     'REF_PORT',
     '''\
         port_decls:
@@ -1337,7 +1337,7 @@ CaseNestedPackedArrayStructComp = set_attributes( CaseNestedPackedArrayStructCom
     '''\
         struct Bits32x5Foo__foo_32x5
         struct NestedStructPackedArray__foo_Bits32x5Foo__foo_32x5x5
-        component DUT
+        component NestedPackedArrayStructComp
         (
         port_decls:
           port_decl: in_ Port of Struct NestedStructPackedArray__foo_Bits32x5Foo__foo_32x5x5
@@ -1364,7 +1364,7 @@ CaseNestedPackedArrayStructComp = set_attributes( CaseNestedPackedArrayStructCom
 
 CaseConnectValRdyIfcComp = set_attributes( CaseConnectValRdyIfcComp,
     'REF_NAME',
-    'DUT',
+    'ConnectValRdyIfcComp',
     'REF_IFC',
     '''\
         interface_decls:
@@ -1388,7 +1388,7 @@ CaseConnectValRdyIfcComp = set_attributes( CaseConnectValRdyIfcComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component ConnectValRdyIfcComp
         (
         port_decls:
         interface_decls:
@@ -1420,7 +1420,7 @@ CaseConnectValRdyIfcComp = set_attributes( CaseConnectValRdyIfcComp,
 
 CaseArrayBits32IfcInComp = set_attributes( CaseArrayBits32IfcInComp,
     'REF_NAME',
-    'DUT',
+    'ArrayBits32IfcInComp',
     'REF_IFC',
     '''\
         interface_decls:
@@ -1435,7 +1435,7 @@ CaseArrayBits32IfcInComp = set_attributes( CaseArrayBits32IfcInComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component ArrayBits32IfcInComp
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -1459,7 +1459,7 @@ CaseArrayBits32IfcInComp = set_attributes( CaseArrayBits32IfcInComp,
 
 CaseConnectArrayNestedIfcComp = set_attributes( CaseConnectArrayNestedIfcComp,
     'REF_NAME',
-    'DUT',
+    'ConnectArrayNestedIfcComp',
     'REF_IFC',
     '''\
         interface_decls:
@@ -1486,7 +1486,7 @@ CaseConnectArrayNestedIfcComp = set_attributes( CaseConnectArrayNestedIfcComp,
     ''',
     'REF_SRC',
     '''\
-        component DUT
+        component ConnectArrayNestedIfcComp
         (
         port_decls:
         interface_decls:
@@ -1521,7 +1521,7 @@ CaseConnectArrayNestedIfcComp = set_attributes( CaseConnectArrayNestedIfcComp,
 
 CaseBits32ConnectSubCompAttrComp = set_attributes( CaseBits32ConnectSubCompAttrComp,
     'REF_NAME',
-    'DUT',
+    'Bits32ConnectSubCompAttrComp',
     'REF_CONN',
     '''\
         connections:
@@ -1554,7 +1554,7 @@ CaseBits32ConnectSubCompAttrComp = set_attributes( CaseBits32ConnectSubCompAttrC
 
         endcomponent
 
-        component DUT
+        component Bits32ConnectSubCompAttrComp
         (
         port_decls:
           port_decl: out Port of Vector32
@@ -1579,7 +1579,7 @@ CaseBits32ConnectSubCompAttrComp = set_attributes( CaseBits32ConnectSubCompAttrC
 
 CaseConnectSubCompIfcHierarchyComp = set_attributes( CaseConnectSubCompIfcHierarchyComp,
     'REF_NAME',
-    'DUT',
+    'ConnectSubCompIfcHierarchyComp',
     'REF_CONN',
     '''\
         connections:
@@ -1627,7 +1627,7 @@ CaseConnectSubCompIfcHierarchyComp = set_attributes( CaseConnectSubCompIfcHierar
 
         endcomponent
 
-        component DUT
+        component ConnectSubCompIfcHierarchyComp
         (
         port_decls:
           port_decl: out Port of Vector32

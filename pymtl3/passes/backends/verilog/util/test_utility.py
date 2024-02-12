@@ -15,7 +15,6 @@ from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.stdlib.test_utils import TestVectorSimulator
 
-from ...yosys import YosysTranslationImportPass
 from .. import VerilogTranslationImportPass
 
 #=========================================================================
@@ -313,6 +312,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "verilo
     dut.set_metadata( VerilogTranslationImportPass.enable, True )
     imported_obj = VerilogTranslationImportPass()( dut )
   elif backend == "yosys":
+    from ...yosys import YosysTranslationImportPass
     dut.set_metadata( YosysTranslationImportPass.enable, True )
     imported_obj = YosysTranslationImportPass()( dut )
 

@@ -22,8 +22,6 @@ import os
 import sys
 
 from pymtl3 import *
-from pymtl3.stdlib.mem import MagicMemoryCL
-from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 
 # Hack to add project root to python path
 sim_dir = os.path.dirname( os.path.abspath( __file__ ) )
@@ -34,8 +32,6 @@ while sim_dir:
   sim_dir = os.path.dirname(sim_dir)
 
 from examples.ex03_proc.NullXcel import NullXcelRTL
-from examples.ex03_proc.ProcCL import ProcCL
-from examples.ex03_proc.ProcFL import ProcFL
 from examples.ex03_proc.ProcRTL import ProcRTL
 from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage
 from examples.ex03_proc.tinyrv0_encoding import assemble
@@ -80,8 +76,6 @@ def parse_cmdline():
   return opts
 
 impl_dict = {
-  "fl" : ProcFL,
-  "cl" : ProcCL,
   "rtl": ProcRTL,
 }
 
@@ -116,23 +110,23 @@ def main():
   # Create test harness and elaborate
 
   if opts.delay:
-    model = TestHarness( impl_dict[ opts.impl ], NullXcelRTL, 0,
+    model = TestHarness( impl_dict[ opts.impl ], NullXcelRTL,
                         # src sink memstall memlat
                           3,  4,   0.5,     4 )
   else:
-    model = TestHarness( impl_dict[ opts.impl ], NullXcelRTL, 0,
+    model = TestHarness( impl_dict[ opts.impl ], NullXcelRTL,
                         # src sink memstall memlat
                           0,  0,   0,       1 )
 
   # Apply translation pass and import pass if required
 
   if opts.translate:
-    from pymtl3.passes.backends.yosys import YosysTranslationImportPass
+    from pymtl3.passes.backends.verilog import VerilogTranslationImportPass
     model.elaborate()
-    model.proc.set_metadata( YosysTranslationImportPass.enable, True )
-    model = YosysTranslationImportPass()( model )
+    model.proc.set_metadata( VerilogTranslationImportPass.enable, True )
+    model = VerilogTranslationImportPass()( model )
 
-  model.apply( DefaultPassGroup(print_line_trace=opts.trace) )
+  model.apply( DefaultPassGroup(linetrace=opts.trace) )
 
   # Load the program into the model
 

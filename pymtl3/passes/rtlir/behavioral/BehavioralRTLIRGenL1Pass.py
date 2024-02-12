@@ -435,6 +435,14 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     ret.ast = node
     return ret
 
+  def visit_Constant( s, node ):
+    val = node.value
+    if isinstance( val, int ):
+      ret = bir.Number( val )
+      ret.ast = node
+      return ret
+    raise PyMTLSyntaxError( s.blk, node, 'invalid constant: not an integer!' )
+
   def visit_If( s, node ): raise NotImplementedError()
 
   def visit_For( s, node ): raise NotImplementedError()
@@ -501,7 +509,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: repr' )
 
   def visit_Str( s, node ):
-    raise PyMTLSyntaxError( s.blk, node, 'invalid operation: str' )
+    raise PyMTLSyntaxError( s.blk, node, 'invalid constant' )
 
   def visit_ClassDef( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: classdef' )
@@ -646,3 +654,6 @@ class ConstantExtractor( ast.NodeVisitor ):
 
   def visit_Num( s, node ):
     return node.n
+
+  def visit_Constant( s, node ):
+    return node.value

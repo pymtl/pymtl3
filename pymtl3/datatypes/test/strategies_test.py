@@ -223,7 +223,7 @@ def test_nnested_point_limited():
   @hypothesis.given(
     bs = pst.bitstructs(NNestedPoint, limit_dict)
   )
-  @hypothesis.settings( max_examples=16 )
+  @hypothesis.settings( max_examples=30 )
   def actual_test( bs ):
     assert isinstance( bs, NNestedPoint )
     assert 0xe0 <= bs.p1.x < 0xef

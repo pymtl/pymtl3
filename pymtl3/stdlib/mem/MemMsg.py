@@ -55,6 +55,7 @@ def mk_mem_req_msg( o, a, d ):
 
   @bitstruct
   class MemReqMsg:
+
     type_  : Bits4
     opaque : mk_bits( o           )
     addr   : mk_bits( a           )
@@ -78,6 +79,7 @@ def mk_mem_resp_msg( o, d ):
 
   @bitstruct
   class MemRespMsg:
+
     type_  : Bits4
     opaque : mk_bits( o           )
     test   : Bits2

@@ -14,6 +14,8 @@ module test_VRegTrace(
   logic [512*8-1:0] q_str;
   `VC_TRACE_BEGIN
   begin
+    // PP: we should not use $ system tasks because
+    // they seem to be generating segfaults at end of pytest??
     /* $display("q = %d\n", q); */
     $sformat(q_str, "%d", q);
     vc_trace.append_str( trace_str, "q = " );

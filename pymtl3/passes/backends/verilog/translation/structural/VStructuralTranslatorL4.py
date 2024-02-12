@@ -25,10 +25,10 @@ class VStructuralTranslatorL4(
   # Declarations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_subcomp_port_decls( s, _port_decls ):
+  def rtlir_tr_subcomp_port_decls( s, m, c, _port_decls ):
     return _port_decls
 
-  def rtlir_tr_subcomp_port_decl( s, m, c_id, c_rtype, c_array_type, port_id,
+  def rtlir_tr_subcomp_port_decl( s, m, c, c_id, c_rtype, c_array_type, port_id,
       port_rtype, port_dtype, port_array_type ):
     obj = c_rtype.obj
     if obj.has_metadata(s._placeholder_pass.placeholder_config):
@@ -50,19 +50,22 @@ class VStructuralTranslatorL4(
         'unpacked_type' : port_array_type['unpacked_type'],
     }
 
-  def rtlir_tr_subcomp_ifc_port_decls( s, _ifc_port_decls ):
+  def rtlir_tr_subcomp_ifc_port_decls( s, m, c, _ifc_port_decls ):
     return sum(_ifc_port_decls, [])
 
-  def rtlir_tr_subcomp_ifc_port_decl( s, m, c_id, c_rtype, c_array_type,
+  def rtlir_tr_subcomp_ifc_port_decl( s, m, c, c_id, c_rtype, c_array_type,
       ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_array_type ):
+    sep = s._get_separator_symbol( c )
     if isinstance( port_rtype, rt.Port ):
       obj = c_rtype.obj
       if obj.has_metadata(s._placeholder_pass.placeholder_config):
         pmap = obj.get_metadata(s._placeholder_pass.placeholder_config).get_port_map()
       else:
         pmap = lambda x: x
-      vname = f'{ifc_id}__{port_id}'
-      pyname = vname.replace('__', '.')
+
+      vname = f'{ifc_id}{sep}{port_id}'
+      pyname = f'{ifc_id}.{port_id}'
+
       # `pmap` is a function that maps the _full name_ of a port object to its
       # Verilog name. `pyname` is simply a name in the local scope. We need to
       # build up the full name by concatenating `str(obj)` and `pyname`.
@@ -99,27 +102,29 @@ class VStructuralTranslatorL4(
             'n_dim' : ifc_array_type['n_dim'] + port_array_type['n_dim'],
         }
 
-        ret += s.rtlir_tr_subcomp_ifc_port_decl( m,
+        ret += s.rtlir_tr_subcomp_ifc_port_decl( m, c,
                   # Component: nested interface does not change the component
                   c_id, c_rtype, c_array_type,
                   # Interface: nested interface appends its id and array_type
-                  f'{ifc_id}__{port_id}', port_rtype, combined_ifc_array_type,
+                  f'{ifc_id}{sep}{port_id}', port_rtype, combined_ifc_array_type,
                   # Port: use the id, rtype, and array_type of the port
                   _port_id, _port_rtype, s.rtlir_tr_unpacked_array_type(_port_array_rtype))
       return ret
 
-  def rtlir_tr_subcomp_ifc_decls( s, _ifc_decls ):
+  def rtlir_tr_subcomp_ifc_decls( s, m, c, _ifc_decls ):
     return sum(_ifc_decls, [])
 
-  def rtlir_tr_subcomp_ifc_decl( s, m, c_id, c_rtype, c_array_type,
+  def rtlir_tr_subcomp_ifc_decl( s, m, c, c_id, c_rtype, c_array_type,
       ifc_id, ifc_rtype, ifc_array_type, ports ):
     return ports
 
-  def rtlir_tr_subcomp_decls( s, subcomps ):
+  def rtlir_tr_subcomp_decls( s, m, subcomps ):
     subcomp_decls = sum( subcomps, [] )
     return '\n\n'.join( subcomp_decls )
 
-  def rtlir_tr_subcomp_decl( s, m, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
+  def rtlir_tr_subcomp_decl( s, m, c, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
+
+    sep = s._get_separator_symbol( c )
 
     def pretty_comment( string ):
       comments = [
@@ -130,7 +135,7 @@ class VStructuralTranslatorL4(
       return '\n'.join(comments)
 
     def gen_subcomp_array_decl( c_id, port_conns, ifc_conns, n_dim, c_n_dim ):
-      nonlocal m, s
+      nonlocal s, m, c, sep
       tplt = dedent(
           """\
             {c_name} {c_id}
@@ -191,7 +196,7 @@ class VStructuralTranslatorL4(
           comma = ',\n' if i != len(conns)-1 else ''
           port_name = dscp['id']
           ph_port_name = dscp['ph_id']
-          port_wire = f"{orig_c_id}__{dscp['id']}{unpacked_str}"
+          port_wire = f"{orig_c_id}{sep}{dscp['id']}{unpacked_str}"
           if (port_name == 'clk' and no_clk) or (port_name == 'reset' and no_reset):
             comma = ',\n' if i != len(conns)-1 else '\n'
             newline = '\n' if i != len(conns)-1 else ''
@@ -218,7 +223,7 @@ class VStructuralTranslatorL4(
 
     for dscp in port_conns + ifc_conns:
       defs.append(pretty_concat(dscp['data_type'], dscp['packed_type'],
-        f"{c_id}__{dscp['id']}", f"{c_array_type['unpacked_type']}{dscp['unpacked_type']}", ';'))
+        f"{c_id}{sep}{dscp['id']}", f"{c_array_type['unpacked_type']}{dscp['unpacked_type']}", ';'))
 
     make_indent( defs, 1 )
     defs = ['\n'.join(defs)]
@@ -234,12 +239,13 @@ class VStructuralTranslatorL4(
   # Signal operations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_component_array_index( s, base_signal, index, status ):
+  def rtlir_tr_component_array_index( s, m, base_signal, index, status ):
     s._rtlir_tr_unpacked_q.append( index )
     return base_signal
 
-  def rtlir_tr_subcomp_attr( s, base_signal, attr, status ):
+  def rtlir_tr_subcomp_attr( s, m, c, base_signal, attr, status ):
+    sep = s._get_separator_symbol( c )
     return s._rtlir_tr_process_unpacked(
-              f'{base_signal}__{attr}',
-              f'{base_signal}__{attr}{{}}',
+              f'{base_signal}{sep}{attr}',
+              f'{base_signal}{sep}{attr}{{}}',
               status, ('status') )

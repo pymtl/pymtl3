@@ -4,7 +4,7 @@
 # Author : Peitian Pan
 # Date   : March 12, 2019
 """Translate a PyMTL component hierarhcy into SystemVerilog source code."""
-import os
+import os, tempfile
 
 from pymtl3 import MetadataKey
 from pymtl3.passes.BasePass import BasePass
@@ -144,61 +144,42 @@ class VerilogTranslationPass( BasePass ):
           filename = fname.split('.sv')[0]
         else:
           filename = fname
+      else:
+        filename = f"{module_name}__pickled"
 
-        output_file = filename + '.v'
-        temporary_file = filename + '.v.tmp'
+      output_file = filename + '.v'
 
-        # First write the file to a temporary file
-        is_same = False
-        with open( temporary_file, 'w' ) as output:
-          output.write( s.translator.hierarchy.src )
-          output.flush()
-          os.fsync( output )
-          output.close()
+      # Create a temporary file under the current directory.
+      is_same = False
+      tmp_fd, tmp_path = tempfile.mkstemp(dir=os.curdir, text=True)
+
+      with open(tmp_path, "w+") as tmp_file:
+        tmp_file.write( s.translator.hierarchy.src )
+        tmp_file.flush()
+        tmp_file.seek(0)
+        os.fsync( tmp_file )
 
         # `is_same` is set if there exists a file that has the same filename as
-        # `output_file`, and that file is the same as the temporary file
+        # `output_file`, and that file is the same as the temporary file.
         if ( os.path.exists(output_file) ):
-          is_same = verilog_cmp( temporary_file, output_file )
+          is_same = verilog_cmp( tmp_file, output_file )
 
-        # Rename the temporary file to the output file
-        os.rename( temporary_file, output_file )
+        if not is_same:
+          # Rename the temporary file to the output file. os.replace() is an
+          # atomic operation as required by POSIX.
+          os.replace( tmp_path, output_file )
 
-        # Expose some attributes about the translation process
+        # Expose some attributes about the translation process.
         m.set_metadata( c.is_same,               is_same      )
         m.set_metadata( c.translator,            s.translator )
         m.set_metadata( c.translated,            True         )
         m.set_metadata( c.translated_filename,   output_file  )
         m.set_metadata( c.translated_top_module, module_name  )
 
-      else:
-        filename = f"{module_name}__pickled"
-
-      output_file = filename + '.v'
-      temporary_file = filename + '.v.tmp'
-
-      # First write the file to a temporary file
-      is_same = False
-      with open( temporary_file, 'w' ) as output:
-        output.write( s.translator.hierarchy.src )
-        output.flush()
-        os.fsync( output )
-        output.close()
-
-      # `is_same` is set if there exists a file that has the same filename as
-      # `output_file`, and that file is the same as the temporary file
-      if ( os.path.exists(output_file) ):
-        is_same = verilog_cmp( temporary_file, output_file )
-
-      # Rename the temporary file to the output file
-      os.rename( temporary_file, output_file )
-
-      # Expose some attributes about the translation process
-      m.set_metadata( c.is_same,               is_same      )
-      m.set_metadata( c.translator,            s.translator )
-      m.set_metadata( c.translated,            True         )
-      m.set_metadata( c.translated_filename,   output_file  )
-      m.set_metadata( c.translated_top_module, module_name  )
+      # Clean up the temporary file.
+      os.close( tmp_fd )
+      if os.path.exists( tmp_path ):
+        os.remove( tmp_path )
 
     else:
       for child in m.get_child_components(repr):
