@@ -176,6 +176,21 @@ class VerilogVerilatorImportPass( BasePass ):
   #: Default value: ``False``
   vl_trace            = MetadataKey(bool)
 
+  #: Set trace format.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ``str``
+  vl_trace_format     = MetadataKey(str)
+
+  #: Enable Verilator Struct tracing.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
+  vl_trace_struct     = MetadataKey(bool)
+
+
   #: Filename of Verilator VCD tracing.
   #:
   #: Type: ``str``; input
@@ -470,6 +485,8 @@ class VerilogVerilatorImportPass( BasePass ):
     verilator_xinit_value = ip_cfg.get_vl_xinit_value()
     verilator_xinit_seed = ip_cfg.get_vl_xinit_seed()
     has_clk = int(ph_cfg.has_clk)
+    vl_trace_format = ip_cfg.vl_trace_format
+    header_file_trace_format = ip_cfg.vl_trace_format.lower()
 
     # On-demand VCD dumping configs
     on_demand_dump_vcd = int(ip_cfg.vl_trace_on_demand)
@@ -607,6 +624,7 @@ class VerilogVerilatorImportPass( BasePass ):
           vl_trace_filename     = ip_cfg.vl_trace_filename,
           external_trace        = int(ip_cfg.vl_line_trace),
           trace_c_def           = external_trace_c_def,
+          vl_trace_format       = ip_cfg.vl_trace_format.lower(),
         )
         output.write( py_wrapper )
 
