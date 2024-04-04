@@ -56,6 +56,9 @@ class Bits:
                             f"(Bits{nbits} only accepts {hex(lo)} <= value <= {hex(up)})" )
       self._uint = v & up
 
+  def __len__(self) -> int:
+    return self._nbits
+
   # PyMTL simulation specific
 
   def __ilshift__( self, v ):
