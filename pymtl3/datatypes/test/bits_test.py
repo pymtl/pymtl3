@@ -764,4 +764,3 @@ def test_bin_oct_hex():
 def test_len_interface():
   a = Bits(4, 0)
   assert len(a) == 4
-  
