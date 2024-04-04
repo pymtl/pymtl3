@@ -689,7 +689,7 @@ class VerilogVerilatorImportPass( BasePass ):
       'vl_line_trace', 'vl_coverage', 'vl_line_coverage', 'vl_toggle_coverage',
       'vl_mk_dir', 'vl_enable_assert',
       'vl_W_lint', 'vl_W_style', 'vl_W_fatal', 'vl_Wno_list',
-      'vl_xinit', 'vl_trace',
+      'vl_xinit', 'vl_trace', 'vl_trace_format', 'vl_trace_struct',
       'vl_trace_timescale', 'vl_trace_cycle_time',
       'vl_trace_on_demand', 'vl_trace_on_demand_portname',
       'c_flags', 'c_include_path', 'c_srcs',
