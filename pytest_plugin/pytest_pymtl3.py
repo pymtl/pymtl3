@@ -66,11 +66,6 @@ def pytest_configure(config):
 def pytest_unconfigure(config):
   pass
 
-def pytest_cmdline_preparse(config, args):
-  """Don't write *.pyc and __pycache__ files."""
-  import sys
-  sys.dont_write_bytecode = True
-
 def pytest_runtest_setup(item):
   if _any_opts_present(item.config) and 'cmdline_opts' not in item.fixturenames:
     pytest.skip("'cmdline_opts' is required by pytest commandline but not used")
