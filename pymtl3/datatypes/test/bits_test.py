@@ -704,6 +704,12 @@ def test_slice_bits():
   with pytest.raises( IndexError ):
     assert data[x:x] == 0b1
 
+def test_slice_bits_int():
+  data = Bits(8, 0b1101)
+  assert data[:2] == 0b01
+  assert data[2:] == 0b11
+
+
 def test_clone():
   a = Bits(4,3)
   b = a.clone()
