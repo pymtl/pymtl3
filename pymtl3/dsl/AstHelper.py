@@ -61,8 +61,7 @@ class DetectVarNames( ast.NodeVisitor ):
         if   x in self.globals: up = (False, x)
         elif x in self.closure: up = (True, x)
 
-      if low is not None and up is not None:
-        slices.append( slice(low, up) )
+      slices.append( slice(low, up) )
       # FIXME
       # else:
 
@@ -160,8 +159,7 @@ class DetectVarNames( ast.NodeVisitor ):
         if   x in self.globals: up = (False, x)
         elif x in self.closure: up = (True, x)
 
-      if low is not None and up is not None:
-        slices.append( slice(low, up) )
+      slices.append( slice(low, up) )
       # FIXME
       # else:
 
