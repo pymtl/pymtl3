@@ -89,6 +89,18 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   #: Default value: ``'_'``
   separator  = MetadataKey(str)
 
+  #: has clk
+  has_clk    = MetadataKey(bool)
+
+  #: has reset
+  has_reset  = MetadataKey(bool)
+
+  #: clk name
+  clk_name   = MetadataKey(str)
+
+  #: reset name
+  reset_name = MetadataKey(str)
+
   @staticmethod
   def get_placeholder_config():
     from pymtl3.passes.backends.verilog.VerilogPlaceholderConfigs import (
@@ -338,10 +350,17 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     ]
 
     # Connections between top module and inner module
-    connect_ports = [
+    connect_ports = []
+    if s.has_clk:
+      connect_ports.append(f"    .{cfg.clk_name}( clk )," )
+
+    if s.has_reset:
+      connect_ports.append(f"    .{cfg.reset_name}( reset )," )
+    connect_ports.extend([
       f"    .{name}( {name} ){'' if idx == len(rtlir_ports)-1 else ','}"\
       for idx, (_, name, p, _) in enumerate(rtlir_ports) if name
-    ]
+    ])
+
 
     lines = [
       f"module {cfg.pickled_top_module}",
