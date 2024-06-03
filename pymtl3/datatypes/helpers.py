@@ -9,6 +9,7 @@ Author : Shunning Jiang
 Date   : Nov 3, 2017
 """
 import math
+import types
 
 from .bits_import import *
 
@@ -18,7 +19,14 @@ except:
   def concat( *args ):
     value = nbits = 0
 
+    if len(args) == 1:
+      if isinstance(args[0], list):
+        args = args[0]
+      elif isinstance(args[0], types.GeneratorType):
+        args = args[0]
+
     for x in args:
+      print(x)
       xnb = x.nbits
       nbits += xnb
       value = (value << xnb) | x.uint()
