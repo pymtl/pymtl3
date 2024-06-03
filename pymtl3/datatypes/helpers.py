@@ -26,7 +26,6 @@ except:
         args = args[0]
 
     for x in args:
-      print(x)
       xnb = x.nbits
       nbits += xnb
       value = (value << xnb) | x.uint()
