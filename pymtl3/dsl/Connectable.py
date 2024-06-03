@@ -261,6 +261,8 @@ class Signal( NamedObject, Connectable ):
       start, stop = idx, idx + 1
     elif isinstance( idx, slice ):
       start, stop = idx.start, idx.stop
+      if start is None: start = 0
+      if stop  is None: stop  = s._dsl.Type.nbits
     else: assert False, f"The slice {idx} is invalid"
 
     if s._dsl.slice is None:

@@ -127,9 +127,7 @@ def test_write_two_slices_and_bit():
       def up_rd_A():
         print(s.A[0:17])
 
-  m = Top()
-  m.elaborate()
-  simple_sim_pass( m, 0x123 )
+  _test_model( Top )
 
   # assert len(m._all_constraints) == 2
   # _, x = list(m._all_constraints)[0]
@@ -164,6 +162,23 @@ def test_write_slices_and_bit_overlapped():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
+
+# test slicing without specified width
+def test_write_two_slices_and_bit_without_specifying_width():
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.A  = Wire( Bits32 )
+
+      @update
+      def up_wr_0_16():
+        s.A[:16] @= 0xff
+
+      @update
+      def up_wr_16_32():
+        s.A[16:] @= 0xff
+
+  _test_model(Top)
 
 # write a slice and there are two reader
 def test_multiple_readers():
