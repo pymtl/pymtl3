@@ -326,7 +326,7 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     if not s.is_default("c_flags"):
       c_flags += f" {expand(s.c_flags)}"
 
-    c_flags += f" -fPIC -shared -std=c++11 -pthread"
+    c_flags += f" -fPIC -shared -std=c++14 -pthread"
 
     c_include_path = " ".join("-I"+p for p in s._get_all_includes() if p)
     out_file = s.get_shared_lib_path()
