@@ -85,6 +85,15 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     # Expects a boolean value
     "vl_trace" : False,
 
+    # trace format
+    # Expects a str value
+    # "Vcd" or "Fst
+    "vl_trace_format" : "Vcd",
+
+    # --trace-struct
+    # Expects a boolean value
+    "vl_trace_struct" : False,
+
     # The output filename of Verilator VCD tracing
     # default is {component_name}.verilator1
     "vl_trace_filename" : "",
@@ -138,10 +147,10 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
   Checkers = {
     ("enable", "verbose", "vl_enable_assert", "vl_line_trace", "vl_W_lint", "vl_W_style",
      "vl_W_fatal", "vl_trace", "vl_coverage", "vl_line_coverage", "vl_toggle_coverage",
-     "vl_trace_on_demand"):
+     "vl_trace_on_demand", "vl_trace_struct"):
       Checker( lambda v: isinstance(v, bool), "expects a boolean" ),
 
-    ("c_flags", "ld_flags", "ld_libs", "vl_trace_filename", "vl_trace_on_demand_portname"):
+    ("c_flags", "ld_flags", "ld_libs", "vl_trace_filename", "vl_trace_on_demand_portname", "vl_trace_format"):
       Checker( lambda v: isinstance(v, str),  "expects a string" ),
 
     "vl_Wno_list": Checker( lambda v: isinstance(v, list) and all(w in VerilogPlaceholderConfigs.Warnings for w in v),
@@ -270,7 +279,11 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     loop_unroll = "--unroll-count 1000000"
     stmt_unroll = "--unroll-stmts 1000000"
     thread      = "--threads 1"
-    trace       = "--trace" if s.vl_trace else ""
+    if s.vl_trace_format == "vcd":
+      trace       = "--trace" if s.vl_trace else ""
+    else:
+      trace       = "--trace-fst" if s.vl_trace else ""
+    trace_struct = "-trace-structs" if s.vl_trace_struct else ""
     coverage    = "--coverage" if s.vl_coverage else ""
     line_cov    = "--coverage-line" if s.vl_line_coverage else ""
     toggle_cov  = "--coverage-toggle" if s.vl_toggle_coverage else ""
@@ -279,10 +292,9 @@ class VerilogVerilatorImportConfigs( BasePassConfigs ):
     all_opts = [
       top_module, mk_dir, include, en_assert, opt_level, loop_unroll,
       # stmt_unroll, trace, warnings, flist, src, coverage,
-      stmt_unroll, thread, trace, warnings, src, vlibs, coverage,
+      stmt_unroll, thread, trace, trace_struct, warnings, src, vlibs, coverage,
       line_cov, toggle_cov,
     ]
-
     return f"verilator --cc {' '.join(opt for opt in all_opts if opt)}"
 
   def create_cc_cmd( s ):

@@ -11,7 +11,7 @@ template = \
 #include "stdio.h"
 #include "stdint.h"
 #include "verilated.h"
-#include "verilated_vcd_c.h"
+#include "verilated_{header_file_trace_format}_c.h"
 
 // set to true if the model has clk signal
 #define HAS_CLK {has_clk}
@@ -119,7 +119,7 @@ V{component_name}_t * V{component_name}_create_model( const char *vcd_filename )
   if ( strlen( vcd_filename ) != 0 ) {{
     m->_cffi_vcd_en = 1;
     context_ptr->traceEverOn( true );
-    VerilatedVcdC * tfp = new VerilatedVcdC();
+    Verilated{vl_trace_format}C * tfp = new Verilated{vl_trace_format}C();
 
     model->trace( tfp, 99 );
     tfp->spTrace()->set_time_resolution( "{vcd_timescale}" );
@@ -160,7 +160,7 @@ void V{component_name}_destroy_model( V{component_name}_t * m ) {{
   #if DUMP_VCD
   if ( m->_cffi_vcd_en ) {{
     // printf("DESTROYING %d\\n", m->_cffi_trace_time);
-    VerilatedVcdC * tfp = (VerilatedVcdC *) m->_cffi_tfp;
+    Verilated{vl_trace_format}C * tfp = (Verilated{vl_trace_format}C *) m->_cffi_tfp;
     tfp->close();
     delete tfp;
   }}
@@ -226,7 +226,7 @@ void V{component_name}_seq_eval( V{component_name}_t * m ) {{
     #endif
 
     // dump current signal values
-    VerilatedVcdC * tfp = (VerilatedVcdC *) m->_cffi_tfp;
+    Verilated{vl_trace_format}C * tfp = (Verilated{vl_trace_format}C *) m->_cffi_tfp;
     tfp->dump( m->_cffi_trace_time );
     tfp->flush();
 
