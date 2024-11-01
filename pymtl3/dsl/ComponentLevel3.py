@@ -146,8 +146,8 @@ class ComponentLevel3( ComponentLevel2 ):
                     lineno=1+idx, col_offset=5+len(var),
                   ),
                   slice=ast.Index(
-                    value=ast.Num(
-                      n=idx,
+                    value=ast.Constant(
+                      value=idx,
                       lineno=1+idx, col_offset=19+len(var),
                     ),
                   ),

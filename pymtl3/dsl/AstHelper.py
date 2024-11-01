@@ -145,15 +145,15 @@ class DetectVarNames( ast.NodeVisitor ):
 
       low = up = None
 
-      if isinstance( lower, ast.Num ):
-        low = node.slice.lower.n
+      if isinstance( lower, ast.Constant ):
+        low = node.slice.lower.value
       elif isinstance( lower, ast.Name ):
         x = lower.id
         if   x in self.globals: low = (False, x)
         elif x in self.closure: low = (True, x)
 
-      if isinstance( upper, ast.Num ):
-        up = node.slice.upper.n
+      if isinstance( upper, ast.Constant ):
+        up = node.slice.upper.value
       elif isinstance( upper, ast.Name ):
         x = upper.id
         if   x in self.globals: up = (False, x)
@@ -175,8 +175,8 @@ class DetectVarNames( ast.NodeVisitor ):
 
         if isinstance( v, ast.Attribute ): # s.sel, may be constant
           self.visit( v )
-        elif isinstance( v, ast.Num ):
-          n = v.n
+        elif isinstance( v, ast.Constant ):
+          n = v.value
         elif isinstance( v, ast.Name ):
           x = v.id
           if   x in self.globals: n = (False, x)
