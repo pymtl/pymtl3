@@ -8,6 +8,7 @@
 from collections import deque
 from contextlib import contextmanager
 
+from pymtl3.dsl.Component import Component
 from pymtl3.datatypes import Bits, Bits32
 from pymtl3.passes.backends.generic.behavioral.BehavioralTranslatorL1 import (
     BehavioralTranslatorL1,
@@ -118,6 +119,8 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # Customized epilogue processing
     method = 'visit_' + node.__class__.__name__
     visitor = getattr( s, method, s.generic_visit )
+    node._owning_component = None
+    node._obj = None
     ret = visitor( node, *args )
     return s.process_epilogue( node, ret )
 
@@ -237,7 +240,11 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_Assign( s, node ):
     for target in node.targets:
       target._top_expr = True
+      target._owning_component = None
+      target._obj = None
     node.value._top_expr = True
+    node.value._owning_component = None
+    node.value._obj = None
 
     with s.register_assign_LHS():
       targets     = [ s.visit( target ) for target in node.targets ]
@@ -471,6 +478,7 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     value = s.visit( node.value )
 
     s.check_res( node, attr )
+    s._update_node_attr( node )
 
     if isinstance( node.value, bir.Base ):
       # The base of this attribute node is the component 's'.
@@ -496,7 +504,8 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
 
     idx   = s.visit( node.idx )
     value = s.visit( node.value )
-    Type = node.value.Type
+    Type  = node.value.Type
+    s._update_node_index( node )
 
     # Unpacked index
     if isinstance( Type, rt.Array ):
@@ -576,6 +585,8 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Base( s, node ):
+    node._owning_component = node.base
+    node._obj = node.base
     return str( node.base )
 
   #-----------------------------------------------------------------------
@@ -606,3 +617,32 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
 
   def visit_LoopVarDecl( s, node ):
     raise VerilogTranslationError( s.blk, node, "LoopVarDecl not supported at L1" )
+
+  #-----------------------------------------------------------------------
+  # Helpers
+  #-----------------------------------------------------------------------
+
+  def _update_node_attr( s, node ):
+    # Update _owning_component and _obj.
+    if hasattr( node.value._obj, node.attr ):
+      node._obj = getattr(node.value._obj, node.attr)
+      if isinstance(node._obj, Component):
+        node._owning_component = node._obj
+      else:
+        node._owning_component = node.value._owning_component
+    else:
+      node._obj = None
+      node._owning_component = node.value._owning_component
+
+  def _update_node_index( s, node ):
+    # Update _owning_component and _obj.
+    if isinstance(node.value._obj, list) and len(node.value._obj) > 0:
+      node._obj = node.value._obj[0]
+      if isinstance(node._obj, Component):
+        node._owning_component = node._obj
+      else:
+        node._owning_component = node.value._owning_component
+    else:
+      node._obj = None
+      node._owning_component = node.value._owning_component
+

@@ -251,13 +251,18 @@ class Signal( NamedObject, Connectable ):
 
   def __getitem__( s, idx ):
     if not issubclass( s._dsl.Type, Bits ):
-      raise InvalidConnectionError( "We don't allow slicing on non-Bits signals." )
+      host = s.get_host_component()
+      name = s.get_field_name()
+      type_name = s._dsl.Type.__name__
+      raise InvalidConnectionError( f"Slicing on Bitstruct signal ({name} of {type_name} in {str(host)}) is not allowed!" )
 
     # Turn index into a slice
     if isinstance( idx, int ):
       start, stop = idx, idx + 1
     elif isinstance( idx, slice ):
       start, stop = idx.start, idx.stop
+      if start is None: start = 0
+      if stop  is None: stop  = s._dsl.Type.nbits
     else: assert False, f"The slice {idx} is invalid"
 
     if s._dsl.slice is None:

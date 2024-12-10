@@ -45,14 +45,14 @@ def test_bring_up_non_top_debug_signal():
     def construct( s ):
       s.corechip = CoreChip()
 
-  class Top(Component):
+  class AddDebugSignalTop(Component):
     def construct( s ):
       s.fullchip = FullChip()
 
     def line_trace( s ):
       return str(s.debug_0)
 
-  top1 = Top()
+  top1 = AddDebugSignalTop()
   top1.set_param( "top.fullchip.corechip.tile0.core.dpath.mult.construct", init=0x100 )
   # top.set_param( "top.fullchip.corechip.tile1.core.dpath.mult.construct", init=0x888 )
   top1.elaborate()
@@ -67,7 +67,7 @@ def test_bring_up_non_top_debug_signal():
   for i in range(10):
     top1.sim_tick()
 
-  top2 = Top()
+  top2 = AddDebugSignalTop()
   top2.set_param( "top.fullchip.corechip.tile0.core.dpath.mult.construct", init=0x100 )
   # top2.set_param( "top.fullchip.corechip.tile1.core.dpath.mult.construct", init=0x888 )
   top2.elaborate()

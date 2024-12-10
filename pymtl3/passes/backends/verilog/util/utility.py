@@ -61,10 +61,15 @@ def get_file_hash( file_path ):
     hash_inst.update(string)
     return hash_inst.hexdigest()
 
-def get_lean_verilog_file( file_path ):
-  with open(file_path) as fd:
-    file_v = [x for x in fd.readlines() if x != '\n' and not x.startswith('//')]
-  return file_v
+def get_lean_verilog( fd ):
+  return [x for x in fd.readlines() if x != '\n' and not x.startswith('//')]
+
+def get_lean_verilog_file( file_path_or_fd ):
+  if hasattr( file_path_or_fd, 'readlines' ):
+    return get_lean_verilog(file_path_or_fd)
+  else:
+    with open(file_path_or_fd) as fd:
+      return get_lean_verilog(fd)
 
 def get_hash_of_lean_verilog( file_path ):
   hash_inst = blake2b()

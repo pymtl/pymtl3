@@ -12,16 +12,16 @@ import pytest
 
 from pymtl3 import *
 from pymtl3.stdlib.test_utils import TestVectorSimulator, run_sim
-from ..SourceRTL import SourceRTL
-from ..SinkRTL import SinkRTL
+from ..StreamSourceFL import StreamSourceFL
+from ..StreamSinkFL import StreamSinkFL
 
 from ..queues import (
-    BypassQueue1EntryRTL,
-    BypassQueueRTL,
-    NormalQueue1EntryRTL,
-    NormalQueueRTL,
-    PipeQueue1EntryRTL,
-    PipeQueueRTL,
+    StreamBypassQueue1Entry,
+    StreamBypassQueue,
+    StreamNormalQueue1Entry,
+    StreamNormalQueue,
+    StreamPipeQueue1Entry,
+    StreamPipeQueue,
 )
 
 #-------------------------------------------------------------------------
@@ -33,14 +33,14 @@ def run_tv_test( dut, test_vectors, cmdline_opts  ):
   # Define input/output functions
 
   def tv_in( dut, tv ):
-    dut.recv.val @= tv[0]
-    dut.recv.msg @= tv[2]
-    dut.send.rdy @= tv[4]
+    dut.istream.val @= tv[0]
+    dut.istream.msg @= tv[2]
+    dut.ostream.rdy @= tv[4]
 
   def tv_out( dut, tv ):
-    if tv[1] != '?': assert dut.recv.rdy == tv[1]
-    if tv[3] != '?': assert dut.send.val == tv[3]
-    if tv[5] != '?': assert dut.send.msg == tv[5]
+    if tv[1] != '?': assert dut.istream.rdy == tv[1]
+    if tv[3] != '?': assert dut.ostream.val == tv[3]
+    if tv[5] != '?': assert dut.ostream.msg == tv[5]
 
   # Run the test
 
@@ -51,7 +51,7 @@ def test_normal_behavior( cmdline_opts ):
 
   B1  = mk_bits(1)
   B32 = mk_bits(32)
-  run_tv_test( NormalQueueRTL( Bits32, 2 ), [
+  run_tv_test( StreamNormalQueue( Bits32, 2 ), [
     #  recv.val recv.rdy recv.msg  send.val send.rdy send.msg
     [  1,       1,       0x123,    0,       0,       '?'   ],
     [  1,       1,       0x345,    1,       0,       0x123 ],
@@ -74,12 +74,12 @@ class TestHarness( Component ):
 
   def construct( s, MsgType, QueueType, src_msgs, sink_msgs ):
 
-    s.src  = SourceRTL( MsgType, src_msgs )
+    s.src  = StreamSourceFL( MsgType, src_msgs )
     s.dut  = QueueType( MsgType )
-    s.sink = SinkRTL( MsgType, sink_msgs )
+    s.sink = StreamSinkFL( MsgType, sink_msgs )
 
-    s.src.send //= s.dut.recv
-    s.dut.send //= s.sink.recv
+    s.src.ostream //= s.dut.istream
+    s.dut.ostream //= s.sink.istream
 
   def done( s ):
     return s.src.done() and s.sink.done()
@@ -100,74 +100,74 @@ arrival_bypass = [ 2, 3, 4, 5 ]
 
 
 def test_normal1_simple( cmdline_opts ):
-  th = TestHarness( Bits16, NormalQueueRTL, test_msgs, test_msgs )
+  th = TestHarness( Bits16, StreamNormalQueue, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", arrival_time = arrival_normal )
   th.set_param( "top.dut.construct", num_entries = 1 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 def test_normal2_simple( cmdline_opts ):
-  th = TestHarness( Bits16, NormalQueueRTL, test_msgs, test_msgs )
+  th = TestHarness( Bits16, StreamNormalQueue, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", arrival_time = arrival_pipe )
   th.set_param( "top.dut.construct", num_entries = 2 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 def test_normal3_simple( cmdline_opts ):
-  th = TestHarness( Bits16, NormalQueueRTL, test_msgs, test_msgs )
+  th = TestHarness( Bits16, StreamNormalQueue, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", arrival_time = arrival_pipe )
   th.set_param( "top.dut.construct", num_entries = 3 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 def test_pipe1_simple( cmdline_opts ):
-  th = TestHarness( Bits16, PipeQueueRTL, test_msgs, test_msgs )
+  th = TestHarness( Bits16, StreamPipeQueue, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", arrival_time = arrival_pipe )
   th.set_param( "top.dut.construct", num_entries = 1 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 def test_pipe1_backpressure( cmdline_opts ):
-  th = TestHarness( Bits16, PipeQueueRTL, test_msgs, test_msgs )
+  th = TestHarness( Bits16, StreamPipeQueue, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", initial_delay = 20 )
   th.set_param( "top.dut.construct", num_entries = 1 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 def test_pipe2_backpressure( cmdline_opts ):
-  th = TestHarness( Bits16, PipeQueueRTL, test_msgs, test_msgs )
+  th = TestHarness( Bits16, StreamPipeQueue, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", initial_delay = 20 )
   th.set_param( "top.dut.construct", num_entries = 2 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 def test_pipe3_backpressure( cmdline_opts ):
-  th = TestHarness( Bits16, PipeQueueRTL, test_msgs, test_msgs )
+  th = TestHarness( Bits16, StreamPipeQueue, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", initial_delay = 20 )
   th.set_param( "top.dut.construct", num_entries = 3 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 def test_bypass1_simple( cmdline_opts ):
-  th = TestHarness( Bits16, BypassQueueRTL, test_msgs, test_msgs )
+  th = TestHarness( Bits16, StreamBypassQueue, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", arrival_time = arrival_bypass )
   th.set_param( "top.dut.construct", num_entries = 1 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 def test_bypass1_backpressure( cmdline_opts ):
-  th = TestHarness( Bits16, BypassQueueRTL, test_msgs, test_msgs )
+  th = TestHarness( Bits16, StreamBypassQueue, test_msgs, test_msgs )
   th.set_param( "top.sink.construct", initial_delay = 20 )
   th.set_param( "top.dut.construct", num_entries = 1 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 def test_bypass2_sparse( cmdline_opts ):
-  th = TestHarness( Bits16, BypassQueueRTL, test_msgs, test_msgs )
+  th = TestHarness( Bits16, StreamBypassQueue, test_msgs, test_msgs )
   th.set_param( "top.src.construct", interval_delay = 3 )
   th.set_param( "top.dut.construct", num_entries = 2 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 def test_bypass3_sparse( cmdline_opts ):
-  th = TestHarness( Bits16, BypassQueueRTL, test_msgs, test_msgs )
+  th = TestHarness( Bits16, StreamBypassQueue, test_msgs, test_msgs )
   th.set_param( "top.src.construct", interval_delay = 3 )
   th.set_param( "top.dut.construct", num_entries = 3 )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 @pytest.mark.parametrize(
   'QType, num_entries',
-  product( [ NormalQueueRTL, PipeQueueRTL, BypassQueueRTL ], [ 8, 10, 12, 16 ] )
+  product( [ StreamNormalQueue, StreamPipeQueue, StreamBypassQueue ], [ 8, 10, 12, 16 ] )
 )
 def test_large_backpressure( QType, num_entries, cmdline_opts ):
   msgs = test_msgs * 8
@@ -177,14 +177,14 @@ def test_large_backpressure( QType, num_entries, cmdline_opts ):
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 @pytest.mark.parametrize(
-  'QType', [ NormalQueue1EntryRTL, PipeQueue1EntryRTL, BypassQueue1EntryRTL ]
+  'QType', [ StreamNormalQueue1Entry, StreamPipeQueue1Entry, StreamBypassQueue1Entry ]
 )
 def test_single_simple( QType, cmdline_opts ):
   th = TestHarness( Bits16, QType, test_msgs, test_msgs )
   run_sim( th, cmdline_opts, duts=['dut'] )
 
 @pytest.mark.parametrize(
-  'QType', [ NormalQueue1EntryRTL, PipeQueue1EntryRTL, BypassQueue1EntryRTL ]
+  'QType', [ StreamNormalQueue1Entry, StreamPipeQueue1Entry, StreamBypassQueue1Entry ]
 )
 def test_single_backpressure( QType, cmdline_opts ):
   th = TestHarness( Bits16, QType, test_msgs, test_msgs )
@@ -194,7 +194,7 @@ def test_single_backpressure( QType, cmdline_opts ):
 
 @pytest.mark.parametrize(
   'QType, num_entries',
-  product( [ NormalQueueRTL, PipeQueueRTL, BypassQueueRTL ], [ 8, 10, 12, 16 ] )
+  product( [ StreamNormalQueue, StreamPipeQueue, StreamBypassQueue ], [ 8, 10, 12, 16 ] )
 )
 def test_large_delay( QType, num_entries, cmdline_opts ):
   msgs = test_msgs * 8

@@ -1,0 +1,4 @@
+# Disable warnings about could not parsing files because PyMTL generates
+# code (especially for update blocks) on the fly.
+[run]
+disable_warnings = couldnt-parse

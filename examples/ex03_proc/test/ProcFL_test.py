@@ -1,8 +1,8 @@
 """
 =========================================================================
-ProcFL_test.py
+ProcRTL_test.py
 =========================================================================
-Includes test cases for the functional level TinyRV0 processor.
+Includes test cases for the RTL TinyRV0 processor.
 
 Author : Shunning Jiang, Yanghui Ou
   Date : June 12, 2019
@@ -31,13 +31,9 @@ from .harness import TestHarness, asm_test, assemble
 
 random.seed(0xdeadbeef)
 
-
 #-------------------------------------------------------------------------
 # ProcFL_Tests
 #-------------------------------------------------------------------------
-# We group all our test cases into a class so that we can easily reuse
-# these test cases in our CL and RTL tests. We can simply inherit from
-# this test class and overwrite the ProcType of the test class.
 
 @pytest.mark.usefixtures("cmdline_opts")
 class ProcFL_Tests:

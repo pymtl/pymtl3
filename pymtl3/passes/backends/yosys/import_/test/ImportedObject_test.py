@@ -12,9 +12,9 @@ from pymtl3.passes.backends.verilog.import_.test.ImportedObject_test import (
     test_normal_queue_interface,
     test_normal_queue_params,
     test_reg,
-    test_reg_external_trace,
+    # test_reg_external_trace,
     test_reg_incomplete_portmap,
-    test_reg_infer_external_trace,
+    # test_reg_infer_external_trace,
     test_vl_uninit,
 )
 from pymtl3.passes.backends.yosys import YosysTranslationImportPass

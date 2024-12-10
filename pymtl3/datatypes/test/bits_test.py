@@ -704,6 +704,12 @@ def test_slice_bits():
   with pytest.raises( IndexError ):
     assert data[x:x] == 0b1
 
+def test_slice_bits_int():
+  data = Bits(8, 0b1101)
+  assert data[:2] == 0b01
+  assert data[2:] == 0b11
+
+
 def test_clone():
   a = Bits(4,3)
   b = a.clone()
@@ -760,3 +766,7 @@ def test_bin_oct_hex():
   assert Bits(15,35).bin() == "0b000000000100011"
   assert Bits(15,35).oct() == "0o00043"
   assert Bits(15,35).hex() == "0x0023"
+
+def test_len_interface():
+  a = Bits(4, 0)
+  assert len(a) == 4

@@ -56,6 +56,9 @@ class Bits:
                             f"(Bits{nbits} only accepts {hex(lo)} <= value <= {hex(up)})" )
       self._uint = v & up
 
+  def __len__(self) -> int:
+    return self._nbits
+
   # PyMTL simulation specific
 
   def __ilshift__( self, v ):
@@ -133,6 +136,8 @@ class Bits:
         raise IndexError( "Index cannot contain step" )
       try:
         start, stop = int(idx.start or 0), int(idx.stop or self._nbits)
+        if start is None: start = 0
+        if stop is None: stop = self._nbits
         assert 0 <= start < stop <= self._nbits
       except:
         raise IndexError( f"Invalid access: [{idx.start}:{idx.stop}] in a Bits{self._nbits} instance" )

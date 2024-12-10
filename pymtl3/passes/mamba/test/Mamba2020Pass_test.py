@@ -50,7 +50,6 @@ def test_very_deep_dag():
     assert A.out == T * N
     A.sim_tick()
     T += 1
-  return A
 
 def test_combinational_loop():
 

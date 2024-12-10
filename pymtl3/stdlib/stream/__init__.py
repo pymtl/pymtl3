@@ -1,7 +1,10 @@
-from .SinkRTL import SinkRTL
-from .SourceRTL import SourceRTL
+from .StreamSinkFL import StreamSinkFL
+from .StreamSourceFL import StreamSourceFL
 from . import ifcs
-from .queue_adapters import RecvQueueAdapter, SendQueueAdapter
-from .queues import NormalQueueRTL, PipeQueueRTL, BypassQueueRTL
-from .magic_memory import MagicMemoryRTL
-from . import fl
+from .queues import StreamNormalQueue, StreamPipeQueue, StreamBypassQueue
+from .IStreamDeqAdapterFL import IStreamDeqAdapterFL
+from .OStreamEnqAdapterFL import OStreamEnqAdapterFL
+from .IStreamNonBlockingAdapterFL import IStreamNonBlockingAdapterFL
+from .OStreamNonBlockingAdapterFL import OStreamNonBlockingAdapterFL
+from .IStreamBlockingAdapterFL import IStreamBlockingAdapterFL
+from .OStreamBlockingAdapterFL import OStreamBlockingAdapterFL
