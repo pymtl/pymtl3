@@ -1,11 +1,19 @@
 template = \
 '''
-// VT_INPUT_DELAY, VTB_OUTPUT_ASSERT_DELAY are timestamps relative to the rising edge.
-`define VTB_INPUT_DELAY 1
-`define VTB_OUTPUT_ASSERT_DELAY 3
+// VTB_CYCLE_TIME   : clock period in ns
+// VTB_INPUT_DELAY  : how long after rising clk edge should we write inputs
+// VTB_OUTPUT_DELAY : how long before rising clk edge should we check outputs
+// VTB_OUTPUT_ASSERT_DELAY = VTB_CYCLE_TIME - VTB_OUTPUT_DELAY
+//  setting VTB_OUTPUT_ASSERT_DELAY takes priority over VTB_OUTPUT_DELAY
 
-// CYCLE_TIME and INTRA_CYCLE_TIME are duration of time.
-`define CYCLE_TIME 4
+`define CYCLE_TIME 10
+`define VTB_INPUT_DELAY 1
+`define VTB_OUTPUT_DELAY 1
+
+`ifndef VTB_OUTPUT_ASSERT_DELAY
+`define VTB_OUTPUT_ASSERT_DELAY (`CYCLE_TIME-`VTB_OUTPUT_DELAY)
+`endif
+
 `define INTRA_CYCLE_TIME (`VTB_OUTPUT_ASSERT_DELAY-`VTB_INPUT_DELAY)
 
 `timescale 1ns/1ns
