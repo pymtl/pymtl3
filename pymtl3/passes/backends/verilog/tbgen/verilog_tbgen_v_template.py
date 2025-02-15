@@ -51,7 +51,7 @@ template = \
     `VTB_TEST_FAIL(lineno, out, ref, port_name) \\
   end
 
-module {harness_name};
+module Top;
   // convention
   logic clk;
   logic reset;
