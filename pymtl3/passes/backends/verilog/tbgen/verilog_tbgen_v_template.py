@@ -72,8 +72,7 @@ module Top;
   end
   endtask
 
-  // use 25% clock cycle, so #1 for setup #2 for sim #1 for hold
-  always #(`CYCLE_TIME/2) clk = ~clk;
+  always #((`CYCLE_TIME*1.0)/2) clk = ~clk;
 
   // DUT name
   // By default we use the translated name of the Verilog component. But you can change
@@ -103,7 +102,7 @@ module Top;
     cycle_count = 0;
     clk   = 1'b0; // NEED TO DO THIS TO HAVE FALLING EDGE AT TIME 0
     reset = 1'b1; // TODO reset active low/high
-    #(`CYCLE_TIME/2);
+    #((`CYCLE_TIME*1.0)/2);
 
     // Now we are talking
     #`VTB_INPUT_DELAY;
