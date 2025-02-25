@@ -138,6 +138,9 @@ class VerilogTBGenPass( BasePass ):
           dut_reset_decl    = '.reset(reset)' if x._ph_cfg.has_reset else '',
           dut_signal_decls  = ",\n    ".join(dut_signal_decls), # logic [31:0] xxx, -- packed array, # .x(x), -- packed array
           cases_file_name   = f"{dut_name}_{case_name}_tb.v.cases",
+          saif_file_name    = f"{dut_name}_{case_name}.saif",
+          saif_roi_define   = "",
+          saif_roi_signal   = "saif_roi_not_enabled",
         ))
 
       case_file = open( f"{dut_name}_{case_name}_tb.v.cases", "w" )

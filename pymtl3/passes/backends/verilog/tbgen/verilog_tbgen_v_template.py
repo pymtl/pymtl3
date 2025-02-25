@@ -72,6 +72,26 @@ module Top;
   end
   endtask
 
+  {saif_roi_define}
+  `ifdef VTB_DUMP_SAIF
+  `ifdef VTB_DUMP_SAIF_ROI
+  always @(posedge {saif_roi_signal} ) begin
+    if ( !reset ) begin
+      $set_gate_level_monitoring( "on" );
+      $set_toggle_region( DUT );
+      $toggle_start;
+    end
+  end
+
+  always @(negedge {saif_roi_signal} ) begin
+    if ( !reset ) begin
+      $toggle_stop;
+      $toggle_report( "{saif_file_name}", 1e-12, DUT );
+    end
+  end
+  `endif
+  `endif
+
   always #((`CYCLE_TIME*1.0)/2) clk = ~clk;
 
   // DUT name
@@ -113,7 +133,22 @@ module Top;
     // 2 cycles plus input delay
     reset = 1'b0;
 
+    `ifdef VTB_DUMP_SAIF
+    `ifndef VTB_DUMP_SAIF_ROI
+    $set_gate_level_monitoring( "on" );
+    $set_toggle_region( DUT );
+    $toggle_start;
+    `endif
+    `endif
+
     `include "{cases_file_name}"
+
+    `ifdef VTB_DUMP_SAIF
+    `ifndef VTB_DUMP_SAIF_ROI
+    $toggle_stop;
+    $toggle_report( "{saif_file_name}", 1e-12, DUT );
+    `endif
+    `endif
 
     $display("");
     $display("  [ passed ]");
