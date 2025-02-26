@@ -18,6 +18,8 @@ template = \
 
 `timescale 1ns/1ns
 
+`define STRINGIFY(x) `"x`"
+
 `define T({args_strs}) \\
         t({args_strs},`__LINE__)
 
@@ -86,7 +88,7 @@ module Top;
   always @(negedge {saif_roi_signal} ) begin
     if ( !reset ) begin
       $toggle_stop;
-      $toggle_report( "`VTB_DUMP_SAIF", 1e-12, DUT );
+      $toggle_report( `STRINGIFY(`VTB_DUMP_SAIF), 1e-12, DUT );
     end
   end
   `endif
@@ -146,7 +148,7 @@ module Top;
     `ifdef VTB_DUMP_SAIF
     `ifndef VTB_DUMP_SAIF_ROI
     $toggle_stop;
-    $toggle_report( "`VTB_DUMP_SAIF", 1e-12, DUT );
+    $toggle_report( `STRINGIFY(`VTB_DUMP_SAIF), 1e-12, DUT );
     `endif
     `endif
 
