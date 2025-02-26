@@ -137,11 +137,8 @@ class VerilogTBGenPass( BasePass ):
         saif_roi_define = ""
         saif_roi_signal = "saif_roi_not_enabled"
         if top.has_metadata( self.saif_roi_signal ):
-          print(f"saif_roi_signal {top.get_metadata(self.saif_roi_signal)}")
           saif_roi_define = "`define VTB_DUMP_SAIF_ROI"
           saif_roi_signal = top.get_metadata(self.saif_roi_signal)
-        else:
-          print(f"saif_roi_signal undefined")
 
         output.write( tb_template.format(
           args_strs         = ",".join([f"a{i}" for i in range(len(task_signal_decls))]),
