@@ -86,7 +86,7 @@ module Top;
   always @(negedge {saif_roi_signal} ) begin
     if ( !reset ) begin
       $toggle_stop;
-      $toggle_report( "{saif_file_name}", 1e-12, DUT );
+      $toggle_report( "`VTB_DUMP_SAIF", 1e-12, DUT );
     end
   end
   `endif
@@ -146,7 +146,7 @@ module Top;
     `ifdef VTB_DUMP_SAIF
     `ifndef VTB_DUMP_SAIF_ROI
     $toggle_stop;
-    $toggle_report( "{saif_file_name}", 1e-12, DUT );
+    $toggle_report( "`VTB_DUMP_SAIF", 1e-12, DUT );
     `endif
     `endif
 
