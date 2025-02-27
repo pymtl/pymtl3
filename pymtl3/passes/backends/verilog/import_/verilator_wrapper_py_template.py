@@ -125,9 +125,9 @@ class {component_name}( Component ):
   def construct( s, *args, **kwargs ):
     # Set up the VCD file name
     verilator_vcd_file = ""
-    if s.has_metadata( VerilogVerilatorImportPass.vl_trace ):
-      if s.has_metadata( VerilogVerilatorImportPass.vl_trace_filename ):
-        verilator_vcd_file = f"{{s.has_metadata(VerilogVerilatorImportPass.vl_trace_filename)}}.verilator1.vcd"
+    if int(s._ip_cfg.vl_trace):
+      if bool(s._ip_cfg.vl_trace_filename):
+        verilator_vcd_file = f"{{s._ip_cfg.vl_trace_filename}}.verilator1.vcd"
       else:
         verilator_vcd_file = "{component_name}.verilator1.vcd"
 
