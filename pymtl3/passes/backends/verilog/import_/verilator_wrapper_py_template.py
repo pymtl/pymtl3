@@ -18,6 +18,7 @@ from cffi import FFI
 
 from pymtl3.datatypes import *
 from pymtl3.dsl import Component, connect, InPort, OutPort, Wire, update, update_ff
+from pymtl3.passes.backends.verilog import *
 
 #-------------------------------------------------------------------------
 # {component_name}
@@ -124,9 +125,9 @@ class {component_name}( Component ):
   def construct( s, *args, **kwargs ):
     # Set up the VCD file name
     verilator_vcd_file = ""
-    if {dump_vcd}:
-      if {has_vl_trace_filename}:
-        verilator_vcd_file = "{vl_trace_filename}.verilator1.vcd"
+    if s.has_metadata( VerilogVerilatorImportPass.vl_trace ):
+      if s.has_metadata( VerilogVerilatorImportPass.vl_trace_filename ):
+        verilator_vcd_file = f"{{s.has_metadata(VerilogVerilatorImportPass.vl_trace_filename)}}.verilator1.vcd"
       else:
         verilator_vcd_file = "{component_name}.verilator1.vcd"
 
