@@ -1,14 +1,16 @@
 template = \
 '''
-// VTB_CYCLE_TIME   : clock period in ns
-// VTB_INPUT_DELAY  : how long after rising clk edge should we write inputs
-// VTB_OUTPUT_DELAY : how long before rising clk edge should we check outputs
-// VTB_OUTPUT_ASSERT_DELAY = VTB_CYCLE_TIME - VTB_OUTPUT_DELAY
+// CYCLE_TIME          : clock period in ns
+// VTB_CLK_INS_SRC_LAT : clock insertion source latency in ns
+// VTB_INPUT_DELAY     : how long after rising clk edge should we write inputs
+// VTB_OUTPUT_DELAY    : how long before rising clk edge should we check outputs
+// VTB_OUTPUT_ASSERT_DELAY = CYCLE_TIME - VTB_OUTPUT_DELAY
 //  setting VTB_OUTPUT_ASSERT_DELAY takes priority over VTB_OUTPUT_DELAY
 
 `define CYCLE_TIME 10
 `define VTB_INPUT_DELAY 1
 `define VTB_OUTPUT_DELAY 1
+`define VTB_CLK_INS_SRC_LAT 0
 
 `ifndef VTB_OUTPUT_ASSERT_DELAY
 `define VTB_OUTPUT_ASSERT_DELAY (`CYCLE_TIME-`VTB_OUTPUT_DELAY)
@@ -121,18 +123,28 @@ module Top;
     assert(`VTB_OUTPUT_ASSERT_DELAY <= `CYCLE_TIME)
       else $fatal("\\n=====\\n\\nVTB_OUTPUT_ASSERT_DELAY should be smaller than or equal to CYCLE_TIME\\n\\n=====\\n");
 
+    $display("CYCLE_TIME = %f",`CYCLE_TIME);
+    $display("VTB_CLK_INS_SRC_LAT = %f",`VTB_CLK_INS_SRC_LAT);
+    $display("VTB_INPUT_DELAY = %f",`VTB_INPUT_DELAY);
+    $display("VTB_OUTPUT_ASSERT_DELAY = %f",`VTB_OUTPUT_ASSERT_DELAY);
+    $display("INTRA_CYCLE_TIME = %f",`INTRA_CYCLE_TIME);
+
     cycle_count = 0;
     clk   = 1'b0; // NEED TO DO THIS TO HAVE FALLING EDGE AT TIME 0
     reset = 1'b1; // TODO reset active low/high
     #((`CYCLE_TIME*1.0)/2);
 
-    // Now we are talking
+    // Delay input data by clock insertion source latency + input delay
+
+    #(-(`VTB_CLK_INS_SRC_LAT));
     #`VTB_INPUT_DELAY;
+
+    // Reset sequence
+
     #`CYCLE_TIME;
     cycle_count = 1;
     #`CYCLE_TIME;
     cycle_count = 2;
-    // 2 cycles plus input delay
     reset = 1'b0;
 
     `ifdef VTB_DUMP_SAIF
