@@ -176,9 +176,11 @@ class MemoryFL( Component ):
 
           elif  req.type_ == MemMsgType.WRITE:
             s.mem.write( req.addr, len_, req.data[0:len_<<3] )
-            # FIXME do we really set len=0 in response when doing subword wr?
-            # resp = resp_classes[i]( req.type_, req.opaque, 0, req.len, 0 )
-            resp = resp_classes[i]( req.type_, req.opaque, 0, 0, 0 )
+            # FIXME do we really set len=0 in response when doing subword
+            # wr? For now I am switching this back to response with the
+            # request length. -cbatten
+            # resp = resp_classes[i]( req.type_, req.opaque, 0, 0, 0 )
+            resp = resp_classes[i]( req.type_, req.opaque, 0, req.len, 0 )
 
           elif  req.type_ == MemMsgType.AMO_ADD   or \
                 req.type_ == MemMsgType.AMO_AND   or \
