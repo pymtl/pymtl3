@@ -3,9 +3,9 @@
 # cksum-translate [options]
 #=========================================================================
 # This script imports the RTL checksum unit from ChecksumRTL.py and
-# translate it into yosys-compatible SystemVerilog. The generated
-# SystemVerilog file will be dumped into the current directory ( if no
-# output directory is specified ) or the specified output directory.
+# translate it into SystemVerilog. The generated SystemVerilog file will
+# be dumped into the current directory ( if no output directory is
+# specified ) or the specified output directory.
 #
 #  -h --help           Display this message
 #
@@ -18,8 +18,8 @@ import argparse
 import os
 import sys
 
-# Import the translation pass from yosys backend
-from pymtl3.passes.backends.yosys import YosysTranslationPass
+# Import the translation pass from verilog backend
+from pymtl3.passes.backends.verilog import VerilogTranslationPass
 
 # Hack to add project root to python path
 cur_dir = os.path.dirname( os.path.abspath( __file__ ) )
@@ -82,7 +82,7 @@ def main():
 
   # Tag the checksum unit as to be translated
 
-  cksum.set_metadata( YosysTranslationPass.enable, True )
+  cksum.set_metadata( VerilogTranslationPass.enable, True )
 
   # Perform translation
 
@@ -90,12 +90,12 @@ def main():
 
   try:
     cksum.elaborate()
-    cksum.apply( YosysTranslationPass() )
+    cksum.apply( VerilogTranslationPass() )
     success = True
   finally:
     if success:
       path = os.getcwd() + \
-             f"/{cksum.get_metadata(YosysTranslationPass.translated_filename)}"
+             f"/{cksum.get_metadata(VerilogTranslationPass.translated_filename)}"
       print("\nTranslation finished successfully!")
       print(f"You can find the generated SystemVerilog file at {path}.")
     else:

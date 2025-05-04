@@ -324,12 +324,12 @@ class Component( BaseRTLIRType ):
     # _dsl.kwargs: all named arguments supplied to construct()
     try:
       argspec = inspect.getfullargspec( obj.construct )
-      assert not argspec.varkw, "keyword args are not allowed for construct!"
-      assert not argspec.kwonlyargs, "keyword args are not allowed for construct!"
+      assert not argspec.varkw, f"In object {obj}: keyword args are not allowed for construct!"
+      assert not argspec.kwonlyargs, f"In object {obj}: keyword args are not allowed for construct!"
     except AttributeError:
       argspec = inspect.getargspec( obj.construct )
-      assert not argspec.keywords, "keyword args are not allowed for construct!"
-    assert not argspec.varargs, "varargs are not allowed for construct!"
+      assert not argspec.keywords, f"In object {obj}: keyword args are not allowed for construct!"
+    assert not argspec.varargs, f"In object {obj}: varargs are not allowed for construct!"
     arg_names = argspec.args[1:]
 
     defaults = argspec.defaults or ()

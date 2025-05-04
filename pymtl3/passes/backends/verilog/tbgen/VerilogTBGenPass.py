@@ -31,6 +31,13 @@ class VerilogTBGenPass( BasePass ):
   #: Default value: ""
   case_name = MetadataKey(str)
 
+  #: tbgen saif enable port name
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ""
+  saif_roi_signal = MetadataKey(str)
+
   vtbgen_hooks = MetadataKey(list)
 
   def __call__( self, top ):
@@ -126,6 +133,13 @@ class VerilogTBGenPass( BasePass ):
       dut_name = x._ip_cfg.translated_top_module
 
       with open( f"{dut_name}_{case_name}_tb.v", 'w' ) as output:
+
+        saif_roi_define = ""
+        saif_roi_signal = "saif_roi_not_enabled"
+        if top.has_metadata( self.saif_roi_signal ):
+          saif_roi_define = "`define VTB_DUMP_SAIF_ROI"
+          saif_roi_signal = top.get_metadata(self.saif_roi_signal)
+
         output.write( tb_template.format(
           args_strs         = ",".join([f"a{i}" for i in range(len(task_signal_decls))]),
           harness_name      = dut_name + "_tb",
@@ -138,6 +152,9 @@ class VerilogTBGenPass( BasePass ):
           dut_reset_decl    = '.reset(reset)' if x._ph_cfg.has_reset else '',
           dut_signal_decls  = ",\n    ".join(dut_signal_decls), # logic [31:0] xxx, -- packed array, # .x(x), -- packed array
           cases_file_name   = f"{dut_name}_{case_name}_tb.v.cases",
+          saif_file_name    = f"{dut_name}_{case_name}.saif",
+          saif_roi_define   = saif_roi_define,
+          saif_roi_signal   = saif_roi_signal,
         ))
 
       case_file = open( f"{dut_name}_{case_name}_tb.v.cases", "w" )

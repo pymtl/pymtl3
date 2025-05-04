@@ -1,14 +1,26 @@
 template = \
 '''
-// VT_INPUT_DELAY, VTB_OUTPUT_ASSERT_DELAY are timestamps relative to the rising edge.
-`define VTB_INPUT_DELAY 1
-`define VTB_OUTPUT_ASSERT_DELAY 3
+// CYCLE_TIME          : clock period in ns
+// VTB_CLK_INS_SRC_LAT : clock insertion source latency in ns
+// VTB_INPUT_DELAY     : how long after rising clk edge should we write inputs
+// VTB_OUTPUT_DELAY    : how long before rising clk edge should we check outputs
+// VTB_OUTPUT_ASSERT_DELAY = CYCLE_TIME - VTB_OUTPUT_DELAY
+//  setting VTB_OUTPUT_ASSERT_DELAY takes priority over VTB_OUTPUT_DELAY
 
-// CYCLE_TIME and INTRA_CYCLE_TIME are duration of time.
-`define CYCLE_TIME 4
+`define CYCLE_TIME 10
+`define VTB_INPUT_DELAY 1
+`define VTB_OUTPUT_DELAY 1
+`define VTB_CLK_INS_SRC_LAT 0
+
+`ifndef VTB_OUTPUT_ASSERT_DELAY
+`define VTB_OUTPUT_ASSERT_DELAY (`CYCLE_TIME-`VTB_OUTPUT_DELAY)
+`endif
+
 `define INTRA_CYCLE_TIME (`VTB_OUTPUT_ASSERT_DELAY-`VTB_INPUT_DELAY)
 
 `timescale 1ns/1ns
+
+`define STRINGIFY(x) `"x`"
 
 `define T({args_strs}) \\
         t({args_strs},`__LINE__)
@@ -43,7 +55,7 @@ template = \
     `VTB_TEST_FAIL(lineno, out, ref, port_name) \\
   end
 
-module {harness_name};
+module Top;
   // convention
   logic clk;
   logic reset;
@@ -64,8 +76,27 @@ module {harness_name};
   end
   endtask
 
-  // use 25% clock cycle, so #1 for setup #2 for sim #1 for hold
-  always #(`CYCLE_TIME/2) clk = ~clk;
+  {saif_roi_define}
+  `ifdef VTB_DUMP_SAIF
+  `ifdef VTB_DUMP_SAIF_ROI
+  always @(posedge {saif_roi_signal} ) begin
+    if ( !reset ) begin
+      $set_gate_level_monitoring( "on" );
+      $set_toggle_region( DUT );
+      $toggle_start;
+    end
+  end
+
+  always @(negedge {saif_roi_signal} ) begin
+    if ( !reset ) begin
+      $toggle_stop;
+      $toggle_report( `STRINGIFY(`VTB_DUMP_SAIF), 1e-12, DUT );
+    end
+  end
+  `endif
+  `endif
+
+  always #((`CYCLE_TIME*1.0)/2) clk = ~clk;
 
   // DUT name
   // By default we use the translated name of the Verilog component. But you can change
@@ -92,21 +123,46 @@ module {harness_name};
     assert(`VTB_OUTPUT_ASSERT_DELAY <= `CYCLE_TIME)
       else $fatal("\\n=====\\n\\nVTB_OUTPUT_ASSERT_DELAY should be smaller than or equal to CYCLE_TIME\\n\\n=====\\n");
 
+    $display("CYCLE_TIME = %f",`CYCLE_TIME);
+    $display("VTB_CLK_INS_SRC_LAT = %f",`VTB_CLK_INS_SRC_LAT);
+    $display("VTB_INPUT_DELAY = %f",`VTB_INPUT_DELAY);
+    $display("VTB_OUTPUT_ASSERT_DELAY = %f",`VTB_OUTPUT_ASSERT_DELAY);
+    $display("INTRA_CYCLE_TIME = %f",`INTRA_CYCLE_TIME);
+
     cycle_count = 0;
     clk   = 1'b0; // NEED TO DO THIS TO HAVE FALLING EDGE AT TIME 0
     reset = 1'b1; // TODO reset active low/high
-    #(`CYCLE_TIME/2);
+    #((`CYCLE_TIME*1.0)/2);
 
-    // Now we are talking
+    // Delay input data by clock insertion source latency + input delay
+
+    #(-(`VTB_CLK_INS_SRC_LAT));
     #`VTB_INPUT_DELAY;
+
+    // Reset sequence
+
     #`CYCLE_TIME;
     cycle_count = 1;
     #`CYCLE_TIME;
     cycle_count = 2;
-    // 2 cycles plus input delay
     reset = 1'b0;
 
+    `ifdef VTB_DUMP_SAIF
+    `ifndef VTB_DUMP_SAIF_ROI
+    $set_gate_level_monitoring( "on" );
+    $set_toggle_region( DUT );
+    $toggle_start;
+    `endif
+    `endif
+
     `include "{cases_file_name}"
+
+    `ifdef VTB_DUMP_SAIF
+    `ifndef VTB_DUMP_SAIF_ROI
+    $toggle_stop;
+    $toggle_report( `STRINGIFY(`VTB_DUMP_SAIF), 1e-12, DUT );
+    `endif
+    `endif
 
     $display("");
     $display("  [ passed ]");

@@ -11,8 +11,8 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
-from pymtl3.stdlib.queues import PipeQueueRTL
+from pymtl3.stdlib.stream.ifcs import IStreamIfc, OStreamIfc
+from pymtl3.stdlib.stream import StreamPipeQueue
 
 #-------------------------------------------------------------------------
 # Step unit
@@ -55,8 +55,8 @@ class ChecksumRTL( Component ):
 
     # Interface
 
-    s.recv  = RecvIfcRTL( Bits128 )
-    s.send  = SendIfcRTL( Bits32  )
+    s.istream = IStreamIfc( Bits128 )
+    s.ostream = OStreamIfc( Bits32  )
 
     # Component
 
@@ -64,17 +64,17 @@ class ChecksumRTL( Component ):
     s.sum1  = Wire( Bits32 )
     s.sum2  = Wire( Bits32 )
 
-    s.in_q  = PipeQueueRTL( Bits128, num_entries=1 )
+    s.in_q  = StreamPipeQueue( Bits128, num_entries=1 )
     s.steps = [ StepUnit() for _ in range( 8 ) ]
 
     # Register input
 
-    connect( s.recv, s.in_q.enq )
+    connect( s.istream, s.in_q.istream )
 
     # Decompose input message into 8 words
 
     for i in range( 8 ):
-      s.words[i] //= s.in_q.deq.ret[i*16:(i+1)*16]
+      s.words[i] //= s.in_q.ostream.msg[i*16:(i+1)*16]
 
     # Connect step units
 
@@ -91,14 +91,14 @@ class ChecksumRTL( Component ):
     s.sum2 //= s.steps[-1].sum2_out
 
     @update
-    def up_rtl_send():
-      go = s.in_q.deq.rdy & s.send.rdy
-      s.send.en     @= go
-      s.in_q.deq.en @= go
+    def up_rtl_ostream():
+      go = s.in_q.ostream.val & s.ostream.rdy
+      s.ostream.val @= go
+      s.in_q.ostream.rdy @= go
 
     @update
     def up_rtl_sum():
-      s.send.msg @= ( s.sum2 << 16 ) | s.sum1
+      s.ostream.msg @= ( s.sum2 << 16 ) | s.sum1
 
   def line_trace( s ):
-    return "{}(){}".format( s.recv, s.send )
+    return "{}(){}".format( s.istream, s.ostream )

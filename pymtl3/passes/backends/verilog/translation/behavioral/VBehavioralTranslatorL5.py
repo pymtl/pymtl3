@@ -47,9 +47,11 @@ class BehavioralRTLIRToVVisitorL5( BehavioralRTLIRToVVisitorL4 ):
       value = s.visit( node.value )
       attr = node.attr
       s.check_res( node, attr )
+      s._update_node_attr( node )
+      sep = s._get_separator_symbol( node._owning_component )
       return s.process_unpacked_q( node,
-                f'{value}__{attr}',
-                f'{value}__{attr}{{}}' )
+                f'{value}{sep}{attr}',
+                f'{value}{sep}{attr}{{}}' )
 
     return super().visit_Attribute( node )
 
@@ -63,6 +65,7 @@ class BehavioralRTLIRToVVisitorL5( BehavioralRTLIRToVVisitorL4 ):
       idx = s.visit( node.idx )
       s._unpacked_q.appendleft(idx)
       value = s.visit( node.value )
+      s._update_node_index( node )
       return value
 
     else:

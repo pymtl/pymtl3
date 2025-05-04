@@ -23,19 +23,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ 3.6, 3.7, 3.8, 3.9 ] # FIXME github recognizes 3.10 as 3.1 lol
+        python-version: [ "3.7", "3.8", "3.9", "3.10", "3.11", "3.12" ]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Verilator
       run: |
-        wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.036.tar.gz
-        tar -C ${HOME} -xzf verilator-travis-4.036.tar.gz
+        wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-github-actions-5.016.tar.gz
+        tar -C ${HOME} -xzf verilator-github-actions-5.016.tar.gz
+        # We need to create a symlink to verilator/share/verilator/include.
+        # This is because the Verilator binaries are compiled on an EC2
+        # instance, and that the executable contains hard-coded paths which can
+        # only be bypassed by defining $VERILATOR_ROOT. See a similar issue at:
+        # https://github.com/verilator/verilator/issues/4035
+        # But when $VERILATOR_ROOT is present, Verilator assumes a different
+        # directory hierarchy by looking into $VERILATOR_ROOT/include, which is
+        # different from verilator/share/verilator/include. Verilator devs have
+        # mentioned this will be annoying to fix and I don't quite understand
+        # why; my current workaround is to symlink the correct include
+        # directory into the place Verilator is looking at.
+        ln -s ${HOME}/verilator/share/verilator/include ${HOME}/verilator/include
         echo "VERILATOR_ROOT=${HOME}/verilator" >> $GITHUB_ENV
         echo "PYMTL_VERILATOR_INCLUDE_DIR=${HOME}/verilator/share/verilator/include" >> $GITHUB_ENV
         echo "${HOME}/verilator/bin" >> $GITHUB_PATH
@@ -43,6 +55,7 @@ jobs:
     - name: Check Verilator
       run: |
         echo ${VERILATOR_ROOT}
+        ls ${VERILATOR_ROOT}/include
         echo ${PYMTL_VERILATOR_INCLUDE_DIR}
         verilator --version
 
@@ -55,8 +68,17 @@ jobs:
 
     - name: Test with pytest
       run: |
-        mkdir build && cd build
-        pytest --cov-report xml --cov=pymtl3 .. --tb=short --hypothesis-profile CI
+        mkdir -p build && cd build
+        # Run all unit tests under pymtl3 directory except for those in the
+        # yosys backend (we run yosys tests in the second run). This is
+        # necessary to avoid using the same component name for different
+        # shared libraries (Verilog and Yosys backend translation result).
+        pytest --cov-config=../.coveragerc --cov-report xml --cov=pymtl3 \
+            ../pymtl3 --ignore=../pymtl3/passes/backends/yosys --tb=short \
+            --hypothesis-profile CI
+        pytest --cov-config=../.coveragerc --cov-report xml --cov=pymtl3 --cov-append \
+            ../pymtl3/passes/backends/yosys --tb=short \
+            --hypothesis-profile CI
 
     - name: Upload code coverage report
       run: |

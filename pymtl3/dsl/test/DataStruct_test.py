@@ -6,12 +6,13 @@ DataStruct_test.py
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
-from pymtl3.datatypes import Bits16, Bits32, bitstruct
+from pymtl3.datatypes import Bits16, Bits32, Bits64, bitstruct
 from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel2 import update_ff
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.errors import (
+    InvalidConnectionError,
     MultiWriterError,
     NoWriterError,
     UpdateFFBlockWriteError,
@@ -581,3 +582,24 @@ def test_ff_cannot_write_to_struct_field():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown UpdateFFNonTopLevelSignalError.")
+
+def test_slicing_on_non_bits_error_msg():
+
+  class Bitstruct2Bits( ComponentLevel3 ):
+    def construct( s ):
+      s.pt_bitstruct = InPort ( SomeMsg )
+      s.pt_bits      = OutPort( Bits64  )
+      @update
+      def upblk():
+        s.pt_bits @= s.pt_bitstruct[0:64]
+
+  m = Bitstruct2Bits()
+  try:
+    m.elaborate()
+  except InvalidConnectionError as e:
+    err_msg = str(e)
+    print("{} is thrown\n{}".format( e.__class__.__name__, err_msg ))
+    assert "SomeMsg" in err_msg
+    assert "pt_bitstruct" in err_msg
+    return
+  raise Exception("Should've thrown InvalidConnectionError.")

@@ -56,7 +56,7 @@ class YosysStructuralTranslatorL3(
   # Declarations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_interface_port_decls( s, _port_decls ):
+  def rtlir_tr_interface_port_decls( s, m, _port_decls ):
     port_decl_list = sum( _port_decls, [] )
     port_decls, wire_decls, connections = [], [], []
     for dct in port_decl_list:
@@ -106,7 +106,7 @@ class YosysStructuralTranslatorL3(
       n_dim = port_array_type["n_dim"]
       return _gen_ifc( port_id, port_rtype, n_dim )
 
-  def rtlir_tr_interface_decls( s, ifc_decls ):
+  def rtlir_tr_interface_decls( s, m, ifc_decls ):
     port_decls, wire_decls, connections = [], [], []
     for ifc_decl in ifc_decls:
       port_decls += ifc_decl["port_decls"]
@@ -121,7 +121,7 @@ class YosysStructuralTranslatorL3(
       "connections" : "\n".join( connections ),
     }
 
-  def rtlir_tr_interface_decl( s, ifc_id, ifc_rtype, array_type, ports ):
+  def rtlir_tr_interface_decl( s, m, ifc_id, ifc_rtype, array_type, ports ):
     ifc_ndim = array_type["n_dim"]
     wire_template = "logic {packed_type: <8} {id_}{array_dim_str};"
 
@@ -167,13 +167,13 @@ class YosysStructuralTranslatorL3(
   # Signal operations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_interface_array_index( s, base_signal, index, status ):
+  def rtlir_tr_interface_array_index( s, m, base_signal, index, status ):
     # Interface array index
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
     return f"{base_signal}[{index}]"
 
-  def rtlir_tr_interface_attr( s, base_signal, attr, status ):
+  def rtlir_tr_interface_attr( s, m, base_signal, attr, status ):
     # Interface attribute
     s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )

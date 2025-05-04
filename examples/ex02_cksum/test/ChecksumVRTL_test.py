@@ -8,9 +8,8 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 from pymtl3 import *
-from pymtl3.passes.backends.yosys import *
+from pymtl3.passes.backends.verilog import *
 from pymtl3.passes.tracing import *
-from pymtl3.stdlib.test_utils import TestSinkCL, TestSrcCL
 from pymtl3.stdlib.test_utils.test_helpers import finalize_verilator
 
 from ..ChecksumFL import checksum
@@ -33,10 +32,10 @@ def checksum_vrtl( words ):
   dut = ChecksumRTL()
   dut.elaborate()
 
-  # Translate the checksum unit and import it back in using the yosys
+  # Translate the checksum unit and import it back in using the verilog
   # backend
-  dut.set_metadata( YosysTranslationImportPass.enable, True )
-  dut = YosysTranslationImportPass()( dut )
+  dut.set_metadata( VerilogTranslationImportPass.enable, True )
+  dut = VerilogTranslationImportPass()( dut )
 
   # Create a simulator
   dut.elaborate()
@@ -44,21 +43,21 @@ def checksum_vrtl( words ):
   dut.sim_reset()
 
   # Wait until the checksum unit is ready to receive input
-  dut.send.rdy @= 1
-  while not dut.recv.rdy:
+  dut.ostream.rdy @= 1
+  while not dut.istream.rdy:
     dut.sim_tick()
 
   # Feed in the input
-  dut.recv.en  @= 1
-  dut.recv.msg @= bits_in
+  dut.istream.val @= 1
+  dut.istream.msg @= bits_in
   dut.sim_tick()
 
   # Wait until the checksum unit is about to send the message
-  while not dut.send.en:
+  while not dut.ostream.val:
     dut.sim_tick()
 
   # Return the result
-  return dut.send.msg
+  return dut.ostream.msg
 
 #-------------------------------------------------------------------------
 # Reuse functionality from CL test suite
@@ -100,17 +99,17 @@ class ChecksumVRTLSrcSink_Tests( BaseSrcSinkTests ):
     # Check command line arguments for vcd dumping
     if vcd_file_name:
       th.set_metadata( VcdGenerationPass.vcd_file_name, vcd_file_name )
-      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace, True )
-      th.dut.set_metadata( YosysVerilatorImportPass.vl_trace_filename, vcd_file_name )
+      th.dut.set_metadata( VerilogVerilatorImportPass.vl_trace, True )
+      th.dut.set_metadata( VerilogVerilatorImportPass.vl_trace_filename, vcd_file_name )
 
-    # Translate the DUT and import it back in using the yosys backend.
-    th.dut.set_metadata( YosysTranslationImportPass.enable, True )
+    # Translate the DUT and import it back in using the verilog backend.
+    th.dut.set_metadata( VerilogTranslationImportPass.enable, True )
 
     # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''
     # Apply the translation-import and simulation passes
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
-    th = YosysTranslationImportPass()( th )
+    th = VerilogTranslationImportPass()( th )
     th.apply( DefaultPassGroup(linetrace=False) )
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\

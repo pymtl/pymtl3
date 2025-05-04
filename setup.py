@@ -87,6 +87,7 @@ setup(
     'cffi',
     'greenlet',
     'py',
+    'fasteners',
   ],
 
   entry_points = {
