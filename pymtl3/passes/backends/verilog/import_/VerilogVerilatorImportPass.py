@@ -389,19 +389,40 @@ class VerilogVerilatorImportPass( BasePass ):
         port_cdefs = s.create_verilator_c_wrapper( m, ph_cfg, ip_cfg, ports )
         s.create_shared_lib( m, ph_cfg, ip_cfg )
         symbols = s.create_py_wrapper( m, ph_cfg, ip_cfg, rtype, ports, port_cdefs )
+        imp = s.import_component( m, ph_cfg, ip_cfg, symbols )
 
       lock.release()
 
     else:
       ip_cfg.vprint(f"{ip_cfg.translated_top_module} is cached!", 2)
 
-    # Re-generate the necessary data structure but don't dump to files
-    # because they have been cached.
     if cached:
+      # If the shared library is cached, there's no point re-generating
+      # the C wrapper because it's been compiled into the .so file.
       port_cdefs = s.create_verilator_c_wrapper( m, ph_cfg, ip_cfg, ports, dump=False )
-      symbols = s.create_py_wrapper( m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, dump=False )
 
-    imp = s.import_component( m, ph_cfg, ip_cfg, symbols )
+      # However, the Python wrapper may be different even though the .so
+      # is cached (e.g., when the Verilator VCD file name is different
+      # because of different test names). We still need to dump the Python
+      # wrapper when that happens.
+      # AFAIK the Verilator VCD file name is the only thing in the Python
+      # wrapper that can be different when the .so is cached, so we gate
+      # the Python wrapper dump by this condition. A lock among processes
+      # is needed here to avoid racing while writing the Python wrapper
+      # and import (a nicer looking way to do this here is to use a
+      # context to enforce lock acquire/release).
+      dump_py_wrapper = ip_cfg.vl_trace and ip_cfg.vl_trace_filename != ""
+
+      if dump_py_wrapper:
+        lock = InterProcessLock("_verilog_import_pass_py_wrapper.lock")
+        lock.acquire()
+
+      symbols = s.create_py_wrapper( m, ph_cfg, ip_cfg, rtype, ports,
+                                     port_cdefs, dump_py_wrapper )
+      imp = s.import_component( m, ph_cfg, ip_cfg, symbols )
+
+      if dump_py_wrapper:
+        lock.release()
 
     imp._ip_cfg = ip_cfg
     imp._ph_cfg = ph_cfg
