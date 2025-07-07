@@ -529,3 +529,7 @@ class Bits:
   def hex( self ):
     str = "{:x}".format(int(self._uint)).zfill(((self._nbits-1)//4)+1)
     return "0x"+str
+
+  def bin_vcd(self):
+    str = "{:b}".format(int(self._uint)).zfill(self._nbits)
+    return str
