@@ -202,9 +202,9 @@ class VcdGenerationPass( BasePass ):
     for i, net in enumerate(trimmed_value_nets):
       # Convert everything to Bits to get around lack of bit struct support.
       # The first cycle VCD contains the default value
-      bin_str = net[0]._dsl.Type().to_bits().bin()
+      bin_str = net[0]._dsl.Type().to_bits().to_vcd_str()
 
-      print( f"b{bin_str} {net_symbol_mapping[i]}", file=vcd_file )
+      print( f"{bin_str}{net_symbol_mapping[i]}", file=vcd_file )
 
       # Set this to be the last cycle value str
       last_values[i] = bin_str
@@ -221,7 +221,7 @@ class VcdGenerationPass( BasePass ):
                       if i != vcd_clock_net_idx ]
 
     # Flip clock for the first cycle
-    print( '\n#0\nb0b1 {}\n'.format( clock_symbol ), file=vcd_file, flush=True )
+    print( '\n#0\n1{}\n'.format( clock_symbol ), file=vcd_file, flush=True )
 
     # Returns a dump_vcd function that is ready to be appended to _sched.
     # TODO: type check?
@@ -243,21 +243,21 @@ class VcdGenerationPass( BasePass ):
         except Exception as e:
           raise TypeError(f'{e}\n - {signal} becomes another type. Please check your code.')
 
-        net_bits_bin_str = net_bits_bin.bin()
+        net_bits_bin_str = net_bits_bin.to_vcd_str()
         # `last_value` is the string form of a Bits object in binary
-        # e.g. '0b000' == Bits3(0).bin()
+        # e.g. '000' == Bits3(0).to_vcd_str()
         # We store strings instead of values ...
         if last_values[i] != net_bits_bin_str:
           last_values[i] = net_bits_bin_str
-          print( f'b{net_bits_bin_str} {symbol}', file=vcd_file )
+          print( f'{net_bits_bin_str}{symbol}', file=vcd_file )
 
       # Flop clock at the end of cycle
       next_neg_edge = 100 * vcd_sim_ncycles + 50
-      print( f'\n#{next_neg_edge}\nb0b0 {clock_symbol}', file=vcd_file )
+      print( f'\n#{next_neg_edge}\n0{clock_symbol}', file=vcd_file )
 
       # Flip clock of the next cycle
       next_pos_edge = next_neg_edge + 50
-      print( f'#{next_pos_edge}\nb0b1 {clock_symbol}\n', file=vcd_file, flush=True )
+      print( f'#{next_pos_edge}\n1{clock_symbol}\n', file=vcd_file, flush=True )
       vcd_sim_ncycles += 1
 
     def gen_dump_vcd( s ):
