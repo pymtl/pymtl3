@@ -11,19 +11,11 @@ on:
 
 jobs:
   build:
-    # The latest ubuntu release may exclude Python versions that have reached
-    # the end of life. An example of this is the upgrade from ubuntu-20.04 to
-    # ubuntu-22.04: support for Python 3.6.* and 3.7.* has been dropped and
-    # this broke our Github actions. We should periodically revisit this to
-    # make sure PyMTL works on the latest ubuntu LTS release. As of now I'm
-    # targeting ubuntu-20.04 because lots of PyMTL users still work with
-    # Python 3.6 and 3.7.
-    # runs-on: ubuntu-latest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ 3.6, 3.7, 3.8, 3.9 ] # FIXME github recognizes 3.10 as 3.1 lol
+        python-version: [ 3.8, 3.9 ] # FIXME github recognizes 3.10 as 3.1 lol
 
     steps:
     - uses: actions/checkout@v2
