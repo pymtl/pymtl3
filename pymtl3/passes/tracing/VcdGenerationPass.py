@@ -202,9 +202,9 @@ class VcdGenerationPass( BasePass ):
     for i, net in enumerate(trimmed_value_nets):
       # Convert everything to Bits to get around lack of bit struct support.
       # The first cycle VCD contains the default value
-      bin_str = net[0]._dsl.Type().to_bits().bin_vcd()
+      bin_str = net[0]._dsl.Type().to_bits().to_vcd_str()
 
-      print( f"b{bin_str} {net_symbol_mapping[i]}", file=vcd_file )
+      print( f"{bin_str}{net_symbol_mapping[i]}", file=vcd_file )
 
       # Set this to be the last cycle value str
       last_values[i] = bin_str
@@ -243,13 +243,13 @@ class VcdGenerationPass( BasePass ):
         except Exception as e:
           raise TypeError(f'{e}\n - {signal} becomes another type. Please check your code.')
 
-        net_bits_bin_str = net_bits_bin.bin_vcd()
+        net_bits_bin_str = net_bits_bin.to_vcd_str()
         # `last_value` is the string form of a Bits object in binary
-        # e.g. '000' == Bits3(0).bin_vcd()
+        # e.g. '000' == Bits3(0).to_vcd_str()
         # We store strings instead of values ...
         if last_values[i] != net_bits_bin_str:
           last_values[i] = net_bits_bin_str
-          print( f'b{net_bits_bin_str} {symbol}', file=vcd_file )
+          print( f'{net_bits_bin_str}{symbol}', file=vcd_file )
 
       # Flop clock at the end of cycle
       next_neg_edge = 100 * vcd_sim_ncycles + 50

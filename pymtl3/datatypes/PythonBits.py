@@ -530,7 +530,18 @@ class Bits:
     str = "{:x}".format(int(self._uint)).zfill(((self._nbits-1)//4)+1)
     return "0x"+str
 
-  def bin_vcd( self ):
-    str = "{:b}".format(int(self._uint)).zfill(self._nbits)
+  # Output string suitable for use in VCD file. Single-bit nets are
+  # encoded as a single 0/1 with no trailing space. Multi-bit nets are
+  # encoded as b0000 (where 0000 are the values for a four-bit net) and a
+  # trailing space. This enables the symbol to be concatentated at the
+  # end of this string and we either have the required space (i.e., for
+  # multi-bit nets) or we do not have any space (i.e., for single-bit
+  # nets). -cbatten
+
+  def to_vcd_str( self ):
+    if self._nbits == 1:
+      str = f"{int(self._uint):b}"
+    else:
+      str = f"b{int(self._uint):0{self._nbits}b} "
     return str
 
