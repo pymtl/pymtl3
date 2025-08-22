@@ -760,3 +760,5 @@ def test_bin_oct_hex():
   assert Bits(15,35).bin() == "0b000000000100011"
   assert Bits(15,35).oct() == "0o00043"
   assert Bits(15,35).hex() == "0x0023"
+  assert Bits(15,35).bin_vcd() == "000000000100011"
+
