@@ -76,6 +76,14 @@ extern "C" {{
   void V{component_name}_assert_on( V{component_name}_t *, bool );
   bool V{component_name}_has_assert_fired( V{component_name}_t * );
 
+  // Global VerilatedContext to be shared among all instances of the
+  // current model. This context object is guarded by a reference
+  // counter, which is decremented each time there's a call to
+  // destroy_model(). The context gets released when the counter reaches
+  // zero. -peitian
+  VerilatedContext * g_context_ptr = nullptr;
+  int g_context_ptr_use_cnt = 0;
+
   #if VLINETRACE
   void V{component_name}_line_trace( V{component_name}_t *, char * );
   #endif
@@ -92,9 +100,12 @@ V{component_name}_t * V{component_name}_create_model( const char *vcd_filename )
 
   V{component_name}_t  * m;
   V{vl_component_name} * model;
-  VerilatedContext     * context_ptr;
 
-  context_ptr = new VerilatedContext;
+  if (g_context_ptr_use_cnt == 0) {{
+    g_context_ptr = new VerilatedContext;
+  }}
+  g_context_ptr_use_cnt += 1;
+  VerilatedContext * context_ptr = g_context_ptr;
 
   context_ptr->debug(0);
   context_ptr->randReset( {verilator_xinit_value} );
@@ -167,7 +178,12 @@ void V{component_name}_destroy_model( V{component_name}_t * m ) {{
   #endif
 
   delete model;
-  delete context_ptr;
+
+  g_context_ptr_use_cnt -= 1;
+  if (g_context_ptr_use_cnt == 0) {{
+    delete context_ptr;
+  }}
+
   delete m;
 
 }}
