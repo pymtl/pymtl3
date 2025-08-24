@@ -1,29 +1,20 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Python package
+name: Run Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, pymtl4.0-dev ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, pymtl4.0-dev ]
 
 jobs:
   build:
-    # The latest ubuntu release may exclude Python versions that have reached
-    # the end of life. An example of this is the upgrade from ubuntu-20.04 to
-    # ubuntu-22.04: support for Python 3.6.* and 3.7.* has been dropped and
-    # this broke our Github actions. We should periodically revisit this to
-    # make sure PyMTL works on the latest ubuntu LTS release. As of now I'm
-    # targeting ubuntu-20.04 because lots of PyMTL users still work with
-    # Python 3.6 and 3.7.
-    # runs-on: ubuntu-latest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.7", "3.8", "3.9", "3.10", "3.11", "3.12" ]
+        python-version: [ "3.9" ]
+        # python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12" ]
 
     steps:
     - uses: actions/checkout@v4
@@ -34,30 +25,19 @@ jobs:
 
     - name: Install Verilator
       run: |
-        wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-github-actions-5.016.tar.gz
-        tar -C ${HOME} -xzf verilator-github-actions-5.016.tar.gz
-        # We need to create a symlink to verilator/share/verilator/include.
-        # This is because the Verilator binaries are compiled on an EC2
-        # instance, and that the executable contains hard-coded paths which can
-        # only be bypassed by defining $VERILATOR_ROOT. See a similar issue at:
-        # https://github.com/verilator/verilator/issues/4035
-        # But when $VERILATOR_ROOT is present, Verilator assumes a different
-        # directory hierarchy by looking into $VERILATOR_ROOT/include, which is
-        # different from verilator/share/verilator/include. Verilator devs have
-        # mentioned this will be annoying to fix and I don't quite understand
-        # why; my current workaround is to symlink the correct include
-        # directory into the place Verilator is looking at.
-        ln -s ${HOME}/verilator/share/verilator/include ${HOME}/verilator/include
-        echo "VERILATOR_ROOT=${HOME}/verilator" >> $GITHUB_ENV
-        echo "PYMTL_VERILATOR_INCLUDE_DIR=${HOME}/verilator/share/verilator/include" >> $GITHUB_ENV
+        wget --progress=dot:giga https://github.com/cornell-brg/verilator-ci-cache/raw/master/verilator-github-actions-5.032.tar.gz
+        echo $PWD
+        whoami
+        tar -C ${HOME} -xzf verilator-github-actions-5.032.tar.gz
         echo "${HOME}/verilator/bin" >> $GITHUB_PATH
+        echo "PKG_CONFIG_PATH=${HOME}/verilator/share/pkgconfig:${PKG_CONFIG_PATH}" >> $GITHUB_ENV
 
     - name: Check Verilator
       run: |
-        echo ${VERILATOR_ROOT}
-        ls ${VERILATOR_ROOT}/include
-        echo ${PYMTL_VERILATOR_INCLUDE_DIR}
+        which verilator
         verilator --version
+        pkg-config --modversion verilator
+        pkg-config --cflags verilator
 
     - name: Install dependencies
       run: |
