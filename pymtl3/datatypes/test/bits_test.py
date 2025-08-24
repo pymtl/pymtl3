@@ -770,3 +770,23 @@ def test_bin_oct_hex():
 def test_len_interface():
   a = Bits(4, 0)
   assert len(a) == 4
+
+def test_to_vcd_str():
+
+  assert Bits(1,0).to_vcd_str() == "0"
+  assert Bits(1,1).to_vcd_str() == "1"
+  assert Bits(1,0).to_vcd_str() == "0"
+  assert Bits(1,1).to_vcd_str() == "1"
+
+  assert Bits(2,0).to_vcd_str() == "b00 "
+  assert Bits(2,1).to_vcd_str() == "b01 "
+  assert Bits(2,2).to_vcd_str() == "b10 "
+  assert Bits(2,3).to_vcd_str() == "b11 "
+  assert Bits(2,0).to_vcd_str() == "b00 "
+  assert Bits(2,1).to_vcd_str() == "b01 "
+  assert Bits(2,2).to_vcd_str() == "b10 "
+  assert Bits(2,3).to_vcd_str() == "b11 "
+
+  assert Bits(15,35).to_vcd_str() == "b000000000100011 "
+  assert Bits(15,35).to_vcd_str() == "b000000000100011 "
+
