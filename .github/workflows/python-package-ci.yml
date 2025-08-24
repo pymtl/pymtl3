@@ -25,7 +25,7 @@ jobs:
 
     - name: Install Verilator
       run: |
-        wget --progress=dot:giga https://github.com/cornell-brg/verilator-ci-cache/raw/master/verilator-github-actions-5.032.tar.gz
+        wget --progress=dot:giga https://github.com/pymtl/verilator-ci-cache/raw/master/verilator-github-actions-5.032.tar.gz
         echo $PWD
         whoami
         tar -C ${HOME} -xzf verilator-github-actions-5.032.tar.gz
