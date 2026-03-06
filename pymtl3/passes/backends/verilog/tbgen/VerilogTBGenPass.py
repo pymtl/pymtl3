@@ -148,8 +148,19 @@ class VerilogTBGenPass( BasePass ):
           task_assign_strs  = ";\n    ".join(task_assign_strs), # x = in__x; -- unpacked
           task_check_strs   = ";\n    ".join(task_check_strs), # ERR( lineno, 'x', x, ref_x ) -- unpacked
           dut_name          = dut_name,
-          dut_clk_decl      = '.clk(clk)' if x._ph_cfg.has_clk else '',
-          dut_reset_decl    = '.reset(reset)' if x._ph_cfg.has_reset else '',
+
+          # The placeholder pass always adds a clock or reset to the
+          # wrapper even if the actual Verilog module does not have a
+          # clock/reset. So we need to hook them up in the test bench no
+          # matter what. -cbatten
+          #
+          #   dut_clk_decl      = '.clk(clk)' if x._ph_cfg.has_clk else '',
+          #   dut_reset_decl    = '.reset(reset)' if x._ph_cfg.has_reset else '',
+          #
+
+          dut_clk_decl      = '.clk(clk)',
+          dut_reset_decl    = '.reset(reset)',
+
           dut_signal_decls  = ",\n    ".join(dut_signal_decls), # logic [31:0] xxx, -- packed array, # .x(x), -- packed array
           cases_file_name   = f"{dut_name}_{case_name}_tb.v.cases",
           saif_file_name    = f"{dut_name}_{case_name}.saif",
