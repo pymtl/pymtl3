@@ -1,13 +1,15 @@
 template = \
 '''
-// CYCLE_TIME          : clock period in ns
-// VTB_CLK_INS_SRC_LAT : clock insertion source latency in ns
-// VTB_INPUT_DELAY     : how long after rising clk edge should we write inputs
-// VTB_OUTPUT_DELAY    : how long before rising clk edge should we check outputs
+// CYCLE_TIME           : clock period in ns
+// VTB_NUM_RESET_CYCLES : number of cycles to hold reset high (default = 2)
+// VTB_CLK_INS_SRC_LAT  : clock insertion source latency in ns
+// VTB_INPUT_DELAY      : how long after rising clk edge should we write inputs
+// VTB_OUTPUT_DELAY     : how long before rising clk edge should we check outputs
 // VTB_OUTPUT_ASSERT_DELAY = CYCLE_TIME - VTB_OUTPUT_DELAY
 //  setting VTB_OUTPUT_ASSERT_DELAY takes priority over VTB_OUTPUT_DELAY
 
 `define CYCLE_TIME 10
+`define VTB_NUM_RESET_CYCLES 2
 `define VTB_INPUT_DELAY 1
 `define VTB_OUTPUT_DELAY 1
 `define VTB_CLK_INS_SRC_LAT 0
@@ -141,10 +143,8 @@ module Top;
 
     // Reset sequence
 
-    #`CYCLE_TIME;
-    cycle_count = 1;
-    #`CYCLE_TIME;
-    cycle_count = 2;
+    #(`CYCLE_TIME*`VTB_NUM_RESET_CYCLES);
+    cycle_count = `VTB_NUM_RESET_CYCLES;
     reset = 1'b0;
 
     `ifdef VTB_DUMP_SAIF
