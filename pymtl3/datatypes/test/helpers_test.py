@@ -17,6 +17,17 @@ def test_concat():
   assert x.nbits == 380
   assert x == mk_bits(380)(0x1234567890abcdef1234567890abcdeffffffffff22222222222222222444441234567890abcdef1234567890abcdef)
 
+def test_concat_list():
+  x = concat([Bits2(2) for _ in range(4)])
+  assert x.nbits == 8
+  assert x == Bits8(0b10101010)
+
+
+def test_concat_generator():
+  x = concat(Bits2(2) for _ in range(4))
+  assert x.nbits == 8
+  assert x == Bits8(0b10101010)
+
 def test_zext():
   assert zext( Bits8(0xe), 24 ) == Bits24(0xe)
 
