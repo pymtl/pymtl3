@@ -47,6 +47,12 @@ class VerilogPlaceholderConfigs( PlaceholderConfigs ):
 
     # The separator used for name mangling
     "separator" : '__',
+
+    # The name of the clock signal
+    "clk_name" : "clk",
+
+    # The name of the reset signal
+    "reset_name" : "rst",
   }
 
   VerilogCheckers = {
@@ -65,6 +71,11 @@ class VerilogPlaceholderConfigs( PlaceholderConfigs ):
 
     "v_include": Checker( lambda v: isinstance(v, list) and all(os.path.isdir(expand(p)) for p in v),
                             "expects a list of paths to directory"),
+    
+    "has_clk": Checker( lambda v: isinstance(v, bool), "expects a bool" ),
+    "has_reset": Checker( lambda v: isinstance(v, bool), "expects a bool" ),
+    "clk_name": Checker( lambda v: isinstance(v, str) and v, "expects a non-empty string" ),
+    "reset_name": Checker( lambda v: isinstance(v, str) and v, "expects a non-empty string" ),
   }
 
   Pass = VerilogPlaceholderPass
