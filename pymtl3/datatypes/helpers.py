@@ -42,8 +42,8 @@ def zext( value, new_width ):
     return new_width( value.uint() )
 
 def clog2( N ):
-  assert N > 0
-  return int( math.ceil( math.log( N, 2 ) ) )
+  assert N > 0  
+  return (N - 1).bit_length()
 
 def sext( value, new_width ):
   if isinstance( new_width, int ):
