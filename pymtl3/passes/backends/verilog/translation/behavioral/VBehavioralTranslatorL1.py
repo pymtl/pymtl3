@@ -328,6 +328,11 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     if padded_nbits == 0:
       return value
 
+    if isinstance( node.value, bir.BinOp ):
+      # Wrap at the operand width before sign extension, and keep the
+      # result unsigned as required by Bits operations.
+      return f"$unsigned( {target_nbits}'( $signed( {current_nbits}'( {value} ) ) ) )"
+
     template = "{{ {{ {padded_nbits} {{ {value}[{last_bit}] }} }}, {value} }}"
     one_bit_template = "{{ {{ {padded_nbits} {{ {_value} }} }}, {value} }}"
 
