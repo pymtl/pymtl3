@@ -7,11 +7,11 @@
 
 import pytest
 
-from pymtl3.datatypes import Bits16, Bits32, bitstruct, concat
+from pymtl3.datatypes import Bits4, Bits8, Bits16, Bits32, bitstruct, concat, sext
 from pymtl3.dsl import Component, InPort, Interface, OutPort, update
 from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
-from pymtl3.stdlib.test_utils import TestVectorSimulator
+from pymtl3.stdlib.test_utils import TestVectorSimulator, run_test_vector_sim
 
 from .. import VerilogTranslationImportPass
 from ..testcases import (
@@ -79,6 +79,29 @@ def run_test( case ):
 )
 def test_verilog_translation_import_adhoc( case ):
   run_test( case )
+
+def test_sext_add():
+  class DUT( Component ):
+    def construct( s ):
+      s.a = InPort( Bits4 )
+      s.b = InPort( Bits4 )
+      s.out = OutPort( Bits8 )
+
+      @update
+      def upblk():
+        s.out @= sext( s.a + s.b, 8 )
+
+  test_vectors = [ 'a b out*' ]
+  for a in range(16):
+    for b in range(16):
+      # Extend the four-bit modular sum, including sign changes and overflow.
+      low = (a + b) % 16
+      expected = low if low < 8 else low + 240
+      test_vectors.append( [ a, b, expected ] )
+
+  m = DUT()
+  m.set_metadata( VerilogTranslationImportPass.enable, True )
+  run_test_vector_sim( m, test_vectors )
 
 def test_pymtl_top_multi_placeholder():
   case = CaseMultiPlaceholderImport
